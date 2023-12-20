@@ -37,6 +37,8 @@
 #include "qmlinprocapplicationmanagerwindowimpl.h"
 #include "systemframetimerimpl.h"
 
+using namespace Qt::StringLiterals;
+
 
 /*!
     \qmltype WindowManager
@@ -271,7 +273,7 @@ bool WindowManager::isRunningOnDesktop() const
 #if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
     return true;
 #else
-    return qApp->platformName() == qSL("xcb");
+    return qApp->platformName() == u"xcb";
 #endif
 }
 
@@ -481,7 +483,7 @@ QVariantMap WindowManager::get(int index) const
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(qL1S(it.value()), data(QAbstractListModel::index(index), it.key()));
+        map.insert(QString::fromLatin1(it.value()), data(QAbstractListModel::index(index), it.key()));
     return map;
 }
 
@@ -919,7 +921,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
         for (int i = 0; i < filename.size(); ++i) {
             QChar c = filename.at(i);
             if (!percent) {
-                if (c != QLatin1Char('%'))
+                if (c != u'%')
                     result.append(c);
                 else
                     percent = true;
@@ -941,7 +943,7 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
         return result;
     };
 
-    static const QRegularExpression re(qSL("^([a-z.-]+)?(\\[([a-zA-Z0-9_.]+)=([^\\]]*)\\])?(:([0-9]+))?"));
+    static const QRegularExpression re(u"^([a-z.-]+)?(\\[([a-zA-Z0-9_.]+)=([^\\]]*)\\])?(:([0-9]+))?"_s);
     auto match = re.match(selector);
     QString screenId = match.captured(6);
     QString appId = match.captured(1);
@@ -1063,9 +1065,9 @@ QString WindowManagerPrivate::applicationId(Application *app, WindowSurface *win
     if (app)
         return app->id();
     else if (windowSurface && windowSurface->surface() && windowSurface->surface()->client())
-        return qSL("pid: ") + QString::number(windowSurface->surface()->client()->processId());
+        return u"pid: "_s + QString::number(windowSurface->surface()->client()->processId());
     else
-        return qSL("<unknown client>");
+        return u"<unknown client>"_s;
 }
 
 #endif // QT_CONFIG(am_multi_process)

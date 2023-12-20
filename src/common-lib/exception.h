@@ -57,9 +57,9 @@ public:
     {
         QString s;
         for (int i = 0; i < c.size(); ++i) {
-            s += qSL("%1").arg(c.at(i));
+            s += QStringLiteral("%1").arg(c.at(i));
             if (i < (c.size() - 1))
-                s.append(qL1S(", "));
+                s.append(u", ");
         }
         m_errorString = m_errorString.arg(s);
         return *this;

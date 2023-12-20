@@ -32,6 +32,8 @@
 
 #include <memory>
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 /*! \internal
@@ -61,8 +63,8 @@ YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
 
     const auto map = docs.constFirst().toMap();
     YamlFormat actualFormatTypeAndVersion = {
-        map.value(qSL("formatType")).toString(),
-        map.value(qSL("formatVersion")).toInt()
+        map.value(u"formatType"_s).toString(),
+        map.value(u"formatVersion"_s).toInt()
     };
 
     class StringifyTypeAndVersion
@@ -80,9 +82,9 @@ YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
         void operator()(const QPair<QString, int> &typeAndVersion)
         {
             if (!m_str.isEmpty())
-                m_str += qSL(" or ");
-            m_str = m_str + qSL("type '") + typeAndVersion.first + qSL("', version '")
-                    + QString::number(typeAndVersion.second) + qL1C('\'');
+                m_str += u" or ";
+            m_str = m_str + u"type '" + typeAndVersion.first + u"', version '"
+                    + QString::number(typeAndVersion.second) + u'\'';
         }
     private:
         QString m_str;
@@ -125,8 +127,7 @@ qint64 getParentPid(qint64 pid)
     qint64 ppid = 0;
 
 #if defined(Q_OS_LINUX)
-    static QString proc = qSL("/proc/%1/stat");
-    QFile f(proc.arg(pid));
+    QFile f(u"/proc/%1/stat"_s.arg(pid));
     if (f.open(QIODevice::ReadOnly)) {
         // we need just the 4th field, but the 2nd is the binary name, which could be long
         QByteArray ba = f.read(512);
@@ -271,9 +272,9 @@ QString translateFromMap(const QMap<QString, QString> &languageToName, const QSt
     if (!languageToName.isEmpty()) {
         QString name = languageToName.value(QLocale::system().name()); //TODO: language changes
         if (name.isNull())
-            name = languageToName.value(qSL("en"));
+            name = languageToName.value(u"en"_s);
         if (name.isNull())
-            name = languageToName.value(qSL("en_US"));
+            name = languageToName.value(u"en_US"_s);
         if (name.isNull())
             name = languageToName.first();
         return name;
@@ -288,14 +289,14 @@ void loadResource(const QString &resource) Q_DECL_NOEXCEPT_EXPR(false)
     QStringList errors;
     QString debugSuffix;
 #if defined(Q_OS_WINDOWS)
-    debugSuffix = qSL("d");
+    debugSuffix = u"d"_s;
 #elif defined(Q_OS_MACOS)
-    debugSuffix = qSL("_debug");
+    debugSuffix = u"_debug"_s;
 #endif
 
     if (QResource::registerResource(resource))
         return;
-    errors.append(qL1S("Cannot load as Qt Resource file"));
+    errors.append(u"Cannot load as Qt Resource file"_s);
 
     QLibrary lib(afp);
     if (lib.load())
@@ -308,7 +309,7 @@ void loadResource(const QString &resource) Q_DECL_NOEXCEPT_EXPR(false)
             return;
         errors.append(libd.errorString());
     }
-    throw Exception("Failed to load resource %1:\n  * %2").arg(resource).arg(errors.join(qSL("\n  * ")));
+    throw Exception("Failed to load resource %1:\n  * %2").arg(resource).arg(errors.join(u"\n  * "_s));
 }
 
 void closeAndClearFileDescriptors(QVector<int> &fdList)

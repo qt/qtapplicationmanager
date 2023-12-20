@@ -10,6 +10,8 @@
 #include "exception.h"
 #include "installationreport.h"
 
+using namespace Qt::StringLiterals;
+
 QT_USE_NAMESPACE_AM
 
 class tst_InstallationReport : public QObject
@@ -28,9 +30,9 @@ tst_InstallationReport::tst_InstallationReport()
 
 void tst_InstallationReport::test()
 {
-    QStringList files { qSL("test"), qSL("more/test"), qSL("another/test/file") };
+    QStringList files { u"test"_s, u"more/test"_s, u"another/test/file"_s };
 
-    InstallationReport ir(qSL("com.pelagicore.test"));
+    InstallationReport ir(u"com.pelagicore.test"_s);
     QVERIFY(!ir.isValid());
     ir.addFile(files.first());
     QVERIFY(!ir.isValid());
@@ -43,7 +45,7 @@ void tst_InstallationReport::test()
     ir.setStoreSignature("$$store-sig$$");
 
     QVERIFY(ir.isValid());
-    QCOMPARE(ir.packageId(), qSL("com.pelagicore.test"));
+    QCOMPARE(ir.packageId(), u"com.pelagicore.test"_s);
     QCOMPARE(ir.files(), files);
     QCOMPARE(ir.diskSpaceUsed(), 42ULL);
     QCOMPARE(ir.digest().constData(), "##digest##");
@@ -64,7 +66,7 @@ void tst_InstallationReport::test()
     buffer.seek(0);
 
     QVERIFY(ir2.isValid());
-    QCOMPARE(ir2.packageId(), qSL("com.pelagicore.test"));
+    QCOMPARE(ir2.packageId(), u"com.pelagicore.test"_s);
     QCOMPARE(ir2.files(), files);
     QCOMPARE(ir2.diskSpaceUsed(), 42ULL);
     QCOMPARE(ir2.digest().constData(), "##digest##");

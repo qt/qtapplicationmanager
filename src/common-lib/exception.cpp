@@ -12,7 +12,7 @@ QT_BEGIN_NAMESPACE_AM
 
 Exception::Exception(const char *errorString) Q_DECL_NOEXCEPT
     : m_errorCode(Error::System)
-    , m_errorString(errorString ? qL1S(errorString) : QString())
+    , m_errorString(errorString ? QString::fromLatin1(errorString) : QString())
 { }
 
 Exception::Exception(const QString &errorString) Q_DECL_NOEXCEPT
@@ -22,7 +22,7 @@ Exception::Exception(const QString &errorString) Q_DECL_NOEXCEPT
 
 Exception::Exception(Error errorCode, const char *errorString) Q_DECL_NOEXCEPT
     : m_errorCode(errorCode)
-    , m_errorString(errorString ? qL1S(errorString) : QString())
+    , m_errorString(errorString ? QString::fromLatin1(errorString) : QString())
 { }
 
 Exception::Exception(Error errorCode, const QString &errorString) Q_DECL_NOEXCEPT
@@ -32,12 +32,12 @@ Exception::Exception(Error errorCode, const QString &errorString) Q_DECL_NOEXCEP
 
 Exception::Exception(int _errno, const char *errorString) Q_DECL_NOEXCEPT
     : m_errorCode(_errno == EACCES ? Error::Permissions : Error::IO)
-    , m_errorString(qL1S(errorString) + qSL(": ") + QString::fromLocal8Bit(strerror(_errno)))
+    , m_errorString(QString::fromLatin1(errorString) + u": " + QString::fromLocal8Bit(strerror(_errno)))
 { }
 
 Exception::Exception(const QFileDevice &file, const char *errorString) Q_DECL_NOEXCEPT
     : m_errorCode(file.error() == QFileDevice::PermissionsError ? Error::Permissions : Error::IO)
-    , m_errorString(qL1S(errorString) + qSL(" (") + file.fileName() + qSL("): ") + file.errorString())
+    , m_errorString(QString::fromLatin1(errorString) + u" (" + file.fileName() + u"): " + file.errorString())
 { }
 
 Exception::Exception(const Exception &copy) Q_DECL_NOEXCEPT

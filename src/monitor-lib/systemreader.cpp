@@ -9,10 +9,12 @@
 #include "global.h"
 #include "logging.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 #if defined(Q_OS_LINUX)
-QString g_systemRootDir(qSL("/"));
+QString g_systemRootDir(u"/"_s);
 #endif
 
 quint64 MemoryReader::s_totalValue = 0;
@@ -164,11 +166,11 @@ public:
         : QProcess(qApp)
     {
         if (GpuVendor::get() == GpuVendor::Intel) {
-            setProgram(qSL("intel_gpu_top"));
-            setArguments({ qSL("-o-"), qSL("-s 1000") });
+            setProgram(u"intel_gpu_top"_s);
+            setArguments({ u"-o-"_s, u"-s 1000"_s });
         } else if (GpuVendor::get() == GpuVendor::Nvidia) {
-            setProgram(qSL("nvidia-smi"));
-            setArguments({ qSL("dmon"), qSL("--select"), qSL("u") });
+            setProgram(u"nvidia-smi"_s);
+            setArguments({ u"dmon"_s, u"--select"_s, u"u"_s });
         }
 
         connect(this, static_cast<void(QProcess::*)(QProcess::ProcessError error)>(&QProcess::errorOccurred),
@@ -289,7 +291,8 @@ MemoryReader::MemoryReader() : MemoryReader(QString())
 MemoryReader::MemoryReader(const QString &groupPath)
     : m_groupPath(groupPath)
 {
-    const QString path = g_systemRootDir + cGroupsMemoryBaseDir + m_groupPath + qSL("/memory.stat");
+    const QString path = g_systemRootDir + QString::fromLatin1(cGroupsMemoryBaseDir)
+                         + m_groupPath + u"/memory.stat"_s;
 
     m_sysFs.reset(new SysFsReader(path.toLocal8Bit(), 1500));
     if (!m_sysFs->isOpen()) {
@@ -313,7 +316,8 @@ MemoryReader::MemoryReader(const QString &groupPath)
 
 quint64 MemoryReader::groupLimit()
 {
-    QString path = g_systemRootDir + cGroupsMemoryBaseDir + m_groupPath + qSL("/memory.limit_in_bytes");
+    QString path = g_systemRootDir + QString::fromLatin1(cGroupsMemoryBaseDir)
+                   + m_groupPath + u"/memory.limit_in_bytes"_s;
     QByteArray ba = SysFsReader(path.toLocal8Bit(), 41).readValue();
     return ::strtoull(ba, nullptr, 10);
 }
@@ -421,11 +425,11 @@ bool MemoryThreshold::setEnabled(bool enabled, const QString &groupPath, MemoryR
         m_eventFd = ::eventfd(0, EFD_CLOEXEC);
 
         if (m_eventFd >= 0) {
-            const QString usagePath = cGroup + qL1S("/memory.usage_in_bytes");
+            const QString usagePath = cGroup + u"/memory.usage_in_bytes";
             m_usageFd = QT_OPEN(usagePath.toLocal8Bit().constData(), QT_OPEN_RDONLY);
 
             if (m_usageFd >= 0) {
-                const QString eventControlPath = cGroup + qSL("/cgroup.event_control");
+                const QString eventControlPath = cGroup + u"/cgroup.event_control"_s;
                 m_controlFd = QT_OPEN(eventControlPath.toLocal8Bit().constData(), QT_OPEN_WRONLY);
 
                 if (m_controlFd >= 0) {
@@ -536,7 +540,7 @@ QMap<QByteArray, QByteArray> fetchCGroupProcessInfo(qint64 pid)
 {
     QMap<QByteArray, QByteArray> result;
 
-    auto cgroupPath = QString(qSL("%1/proc/%2/cgroup"))
+    auto cgroupPath = QString(u"%1/proc/%2/cgroup"_s)
         .arg(g_systemRootDir)
         .arg(pid);
 

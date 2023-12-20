@@ -13,13 +13,15 @@ QT_AM_MAIN()
 #include <QtAppManMain/main.h>
 #include <QtAppManMain/configuration.h>
 
+using namespace Qt::StringLiterals;
+
 
 QT_USE_NAMESPACE_AM
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
-    QCoreApplication::setApplicationName(QStringLiteral("Custom Application Manager"));
-    QCoreApplication::setApplicationVersion(QStringLiteral("0.1"));
+    QCoreApplication::setApplicationName(u"Custom Application Manager"_s);
+    QCoreApplication::setApplicationVersion(u"0.1"_s);
 
     try {
         Main a(argc, argv, Main::InitFlag::ForkSudoServer | Main::InitFlag::InitializeLogging);

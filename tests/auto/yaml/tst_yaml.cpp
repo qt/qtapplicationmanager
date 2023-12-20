@@ -12,6 +12,8 @@
 #include "exception.h"
 #include "global.h"
 
+using namespace Qt::StringLiterals;
+
 QT_USE_NAMESPACE_AM
 
 class tst_Yaml : public QObject
@@ -53,24 +55,24 @@ void tst_Yaml::parser()
         { "null-literal", vnull },
         { "null-tilde", vnull },
         { "null-empty", vnull },
-        { "string-unquoted", QVariant::fromValue<QString>(qSL("unquoted")) },
-        { "string-singlequoted", QVariant::fromValue<QString>(qSL("singlequoted")) },
-        { "string-doublequoted", QVariant::fromValue<QString>(qSL("doublequoted")) },
+        { "string-unquoted", QVariant::fromValue<QString>(u"unquoted"_s) },
+        { "string-singlequoted", QVariant::fromValue<QString>(u"singlequoted"_s) },
+        { "string-doublequoted", QVariant::fromValue<QString>(u"doublequoted"_s) },
         { "list-int", QVariantList { 1, 2, 3 } },
-        { "list-mixed", QVariantList { 1, qSL("two"), QVariantList { true, vnull } } },
-        { "map1", QVariantMap { { qSL("a"), 1 }, { qSL("b"), qSL("two") },
-                                { qSL("c"), QVariantList { 1, 2, 3 } } } }
+        { "list-mixed", QVariantList { 1, u"two"_s, QVariantList { true, vnull } } },
+        { "map1", QVariantMap { { u"a"_s, 1 }, { u"b"_s, u"two"_s },
+                                { u"c"_s, QVariantList { 1, 2, 3 } } } }
     };
 
     try {
-        QFile f(qSL(":/data/test.yaml"));
+        QFile f(u":/data/test.yaml"_s);
         QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
         QByteArray ba = f.readAll();
         QVERIFY(!ba.isEmpty());
         YamlParser p(ba);
         auto header = p.parseHeader();
 
-        QCOMPARE(header.first, qSL("testfile"));
+        QCOMPARE(header.first, u"testfile"_s);
         QCOMPARE(header.second, 42);
 
         QVERIFY(p.nextDocument());
@@ -114,20 +116,20 @@ void tst_Yaml::parser()
                       QVERIFY(p->isScalar());
                       QVariant v = p->parseScalar();
                       QCOMPARE(v.metaType(), QMetaType::fromType<QString>());
-                      QCOMPARE(v.toString(), qSL("ext string"));
+                      QCOMPARE(v.toString(), u"ext string"_s);
                   } }
             };
             p->parseFields(extFields);
         });
 
         fields.emplace_back("stringlist-string", true, YamlParser::Scalar | YamlParser::List, [](YamlParser *p) {
-            QCOMPARE(p->parseStringOrStringList(), QStringList { qSL("string") });
+            QCOMPARE(p->parseStringOrStringList(), QStringList { u"string"_s });
         });
         fields.emplace_back("stringlist-list1", true, YamlParser::Scalar | YamlParser::List, [](YamlParser *p) {
-            QCOMPARE(p->parseStringOrStringList(), QStringList { qSL("string") });
+            QCOMPARE(p->parseStringOrStringList(), QStringList { u"string"_s });
         });
         fields.emplace_back("stringlist-list2", true, YamlParser::Scalar | YamlParser::List, [](YamlParser *p) {
-            QCOMPARE(p->parseStringOrStringList(), QStringList({ qSL("string1"), qSL("string2") }));
+            QCOMPARE(p->parseStringOrStringList(), QStringList({ u"string1"_s, u"string2"_s }));
         });
 
         fields.emplace_back("list-of-maps", true, YamlParser::List, [](YamlParser *p) {
@@ -159,48 +161,48 @@ void tst_Yaml::parser()
 static const QVariant vnull = QVariant::fromValue(nullptr);
 
 static const QVariantMap testHeaderDoc = {
-    { qSL("formatVersion"), 42 }, { qSL("formatType"), qSL("testfile") }
+    { u"formatVersion"_s, 42 }, { u"formatType"_s, u"testfile"_s }
 };
 
 static const QVariantMap testMainDoc = {
-    { qSL("dec"), 10 },
-    { qSL("hex"), 16 },
-    { qSL("bin"), 2 },
-    { qSL("oct"), 8 },
-    { qSL("float1"), 10.1 },
-    { qSL("float2"), .1 },
-    { qSL("float3"), .1 },
-    { qSL("number-separators"), 1234567 },
-    { qSL("bool-true"), true },
-    { qSL("bool-yes"), true },
-    { qSL("bool-false"), false },
-    { qSL("bool-no"), false },
-    { qSL("null-literal"), vnull },
-    { qSL("null-tilde"), vnull },
-    { qSL("null-empty"), vnull },
-    { qSL("string-unquoted"), qSL("unquoted") },
-    { qSL("string-singlequoted"), qSL("singlequoted") },
-    { qSL("string-doublequoted"), qSL("doublequoted") },
-    { qSL("list-int"), QVariantList { 1, 2, 3 } },
-    { qSL("list-mixed"), QVariantList { 1, qSL("two"), QVariantList { true, vnull } } },
-    { qSL("map1"), QVariantMap { { qSL("a"), 1 }, { qSL("b"), qSL("two") },
-                                 { qSL("c"), QVariantList { 1, 2, 3 } } } },
+    { u"dec"_s, 10 },
+    { u"hex"_s, 16 },
+    { u"bin"_s, 2 },
+    { u"oct"_s, 8 },
+    { u"float1"_s, 10.1 },
+    { u"float2"_s, .1 },
+    { u"float3"_s, .1 },
+    { u"number-separators"_s, 1234567 },
+    { u"bool-true"_s, true },
+    { u"bool-yes"_s, true },
+    { u"bool-false"_s, false },
+    { u"bool-no"_s, false },
+    { u"null-literal"_s, vnull },
+    { u"null-tilde"_s, vnull },
+    { u"null-empty"_s, vnull },
+    { u"string-unquoted"_s, u"unquoted"_s },
+    { u"string-singlequoted"_s, u"singlequoted"_s },
+    { u"string-doublequoted"_s, u"doublequoted"_s },
+    { u"list-int"_s, QVariantList { 1, 2, 3 } },
+    { u"list-mixed"_s, QVariantList { 1, u"two"_s, QVariantList { true, vnull } } },
+    { u"map1"_s, QVariantMap { { u"a"_s, 1 }, { u"b"_s, u"two"_s },
+                                 { u"c"_s, QVariantList { 1, 2, 3 } } } },
 
 
-    { qSL("extended"), QVariantMap { { qSL("ext-string"), qSL("ext string") } } },
+    { u"extended"_s, QVariantMap { { u"ext-string"_s, u"ext string"_s } } },
 
-    { qSL("stringlist-string"), qSL("string") },
-    { qSL("stringlist-list1"), QVariantList { qSL("string") } },
-    { qSL("stringlist-list2"), QVariantList { qSL("string1"), qSL("string2") } },
+    { u"stringlist-string"_s, u"string"_s },
+    { u"stringlist-list1"_s, QVariantList { u"string"_s } },
+    { u"stringlist-list2"_s, QVariantList { u"string1"_s, u"string2"_s } },
 
-    { qSL("list-of-maps"), QVariantList { QVariantMap { { qSL("index"), 1 }, { qSL("name"), qSL("1") } },
-                                          QVariantMap { { qSL("index"), 2 }, { qSL("name"), qSL("2") } } } }
+    { u"list-of-maps"_s, QVariantList { QVariantMap { { u"index"_s, 1 }, { u"name"_s, u"1"_s } },
+                                          QVariantMap { { u"index"_s, 2 }, { u"name"_s, u"2"_s } } } }
 };
 
 void tst_Yaml::documentParser()
 {
     try {
-        QFile f(qSL(":/data/test.yaml"));
+        QFile f(u":/data/test.yaml"_s);
         QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
         QByteArray ba = f.readAll();
         QVERIFY(!ba.isEmpty());
@@ -253,7 +255,7 @@ public:
     void merge(CacheTest *ct1, const CacheTest *ct2)
     {
         ct1->name = ct2->name;
-        ct1->file = ct1->file + qSL(",") + ct2->file;
+        ct1->file = ct1->file + u","_s + ct2->file;
         ct1->value.append(ct2->value);
     }
     void preProcessSourceContent(QByteArray &sourceContent, const QString &fileName)
@@ -264,11 +266,11 @@ public:
 
 void tst_Yaml::cache()
 {
-    QStringList files = { qSL(":/data/cache1.yaml"), qSL(":/data/cache2.yaml") };
+    QStringList files = { u":/data/cache1.yaml"_s, u":/data/cache2.yaml"_s };
 
     for (int step = 0; step < 2; ++step) {
         try {
-            ConfigCache<CacheTest> cache(files, qSL("cache-test"), { 'C','T','S','T' }, 1,
+            ConfigCache<CacheTest> cache(files, u"cache-test"_s, { 'C','T','S','T' }, 1,
                                          step == 0 ? AbstractConfigCache::ClearCache
                                                    : AbstractConfigCache::None);
             cache.parse();
@@ -276,12 +278,12 @@ void tst_Yaml::cache()
             QVERIFY(cache.parseWroteToCache() == (step == 0));
             CacheTest *ct1 = cache.takeResult(0);
             QVERIFY(ct1);
-            QCOMPARE(ct1->name, qSL("cache1"));
-            QCOMPARE(ct1->file, qSL(":/data/cache1.yaml"));
+            QCOMPARE(ct1->name, u"cache1"_s);
+            QCOMPARE(ct1->file, u":/data/cache1.yaml"_s);
             CacheTest *ct2 = cache.takeResult(1);
             QVERIFY(ct2);
-            QCOMPARE(ct2->name, qSL("cache2"));
-            QCOMPARE(ct2->file, qSL(":/data/cache2.yaml"));
+            QCOMPARE(ct2->name, u"cache2"_s);
+            QCOMPARE(ct2->file, u":/data/cache2.yaml"_s);
 
             delete ct1;
             delete ct2;
@@ -290,41 +292,41 @@ void tst_Yaml::cache()
         }
     }
 
-    ConfigCache<CacheTest> wrongVersion(files, qSL("cache-test"), { 'C','T','S','T' }, 2,
+    ConfigCache<CacheTest> wrongVersion(files, u"cache-test"_s, { 'C','T','S','T' }, 2,
                                         AbstractConfigCache::None);
     QTest::ignoreMessage(QtWarningMsg, "Failed to read cache: failed to parse cache header");
     wrongVersion.parse();
     QVERIFY(!wrongVersion.parseReadFromCache());
 
-    ConfigCache<CacheTest> wrongType(files, qSL("cache-test"), { 'X','T','S','T' }, 1,
+    ConfigCache<CacheTest> wrongType(files, u"cache-test"_s, { 'X','T','S','T' }, 1,
                                      AbstractConfigCache::None);
     QTest::ignoreMessage(QtWarningMsg, "Failed to read cache: failed to parse cache header");
     wrongType.parse();
     QVERIFY(!wrongType.parseReadFromCache());
 
-    ConfigCache<CacheTest> duplicateCache({ qSL(":/cache1.yaml"), qSL(":/cache1.yaml") },
-                                          qSL("cache-test"), { 'D','T','S','T' }, 1,
+    ConfigCache<CacheTest> duplicateCache({ u":/cache1.yaml"_s, u":/cache1.yaml"_s },
+                                          u"cache-test"_s, { 'D','T','S','T' }, 1,
                                           AbstractConfigCache::None);
     try {
         duplicateCache.parse();
         QVERIFY(false);
     }  catch (const Exception &e) {
-        QVERIFY(e.errorString().contains(qSL("duplicate")));
+        QVERIFY(e.errorString().contains(u"duplicate"_s));
     }
 }
 
 void tst_Yaml::mergedCache()
 {
     // we need cache2 modifieable, so we copy it to a temp file
-    QTemporaryFile cache2File(qSL("cache2"));
+    QTemporaryFile cache2File(u"cache2"_s);
     QVERIFY(cache2File.open());
-    QFile cache2Resource(qSL(":/data/cache2.yaml"));
+    QFile cache2Resource(u":/data/cache2.yaml"_s);
     QVERIFY(cache2Resource.open(QIODevice::ReadOnly));
     QVERIFY(cache2File.write(cache2Resource.readAll()) > 0);
     QVERIFY(cache2File.flush());
 
     const QString cache2FileName = QFileInfo(cache2File).absoluteFilePath();
-    QStringList files = { qSL(":/data/cache1.yaml"), cache2FileName };
+    QStringList files = { u":/data/cache1.yaml"_s, cache2FileName };
 
     for (int step = 0; step < 4; ++step) {
         AbstractConfigCache::Options options = AbstractConfigCache::MergedResult;
@@ -334,14 +336,14 @@ void tst_Yaml::mergedCache()
             std::reverse(files.begin(), files.end());
 
         try {
-            ConfigCache<CacheTest> cache(files, qSL("cache-test"), { 'M','T','S','T' }, 1, options);
+            ConfigCache<CacheTest> cache(files, u"cache-test"_s, { 'M','T','S','T' }, 1, options);
             cache.parse();
             QVERIFY(cache.parseReadFromCache() == (step % 2 == 1));
             QVERIFY(cache.parseWroteToCache() == (step % 2 == 0));
             CacheTest *ct = cache.takeMergedResult();
             QVERIFY(ct);
             QCOMPARE(ct->name, QFileInfo(files.last()).baseName());
-            QCOMPARE(ct->file, files.join(qSL(",")));
+            QCOMPARE(ct->file, files.join(u","_s));
 
             delete ct;
         } catch (const Exception &e) {
@@ -361,13 +363,13 @@ void tst_Yaml::mergedCache()
     QCOMPARE(cache2File.write(ba2), ba2.size());
     QVERIFY(cache2File.flush());
 
-    ConfigCache<CacheTest> brokenCache(files, qSL("cache-test"), { 'M','T','S','T' }, 1,
+    ConfigCache<CacheTest> brokenCache(files, u"cache-test"_s, { 'M','T','S','T' }, 1,
                                        AbstractConfigCache::MergedResult);
     QTest::ignoreMessage(QtWarningMsg, "Failed to read Cache: cached file checksums do not match");
     brokenCache.parse();
     QVERIFY(brokenCache.parseReadFromCache());
     CacheTest *ct = brokenCache.takeMergedResult();
-    QCOMPARE(ct->value, qSL("foobar"));
+    QCOMPARE(ct->value, u"foobar"_s);
     delete ct;
 }
 
@@ -405,7 +407,7 @@ private:
 
 void tst_Yaml::parallel()
 {
-    QFile f(qSL(":/data/test.yaml"));
+    QFile f(u":/data/test.yaml"_s);
     QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
     QByteArray ba = f.readAll();
     QVERIFY(!ba.isEmpty());

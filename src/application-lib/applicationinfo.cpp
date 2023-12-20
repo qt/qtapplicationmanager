@@ -12,6 +12,8 @@
 
 #include <memory>
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 //TODO Make this really unique
@@ -119,33 +121,33 @@ QVariantMap ApplicationInfo::toVariantMap() const
     //      ApplicationManager::get().
     //      This is used for RuntimeInterface::startApplication() and the ContainerInterface
 
-    map[qSL("id")] = m_id;
-    map[qSL("uniqueNumber")] = m_uniqueNumber;
+    map[u"id"_s] = m_id;
+    map[u"uniqueNumber"_s] = m_uniqueNumber;
 
     {
         QVariantMap displayName;
         const auto n = names();
         for (auto it = n.constBegin(); it != n.constEnd(); ++it)
             displayName.insert(it.key(), it.value());
-        map[qSL("displayName")] = displayName;
+        map[u"displayName"_s] = displayName;
     }
 
-    map[qSL("displayIcon")] = icon();
-    map[qSL("applicationProperties")] = m_allAppProperties;
-    map[qSL("codeFilePath")] = m_codeFilePath;
-    map[qSL("runtimeName")] = m_runtimeName;
-    map[qSL("runtimeParameters")] = m_runtimeParameters;
-    map[qSL("capabilities")] = m_capabilities;
-    map[qSL("mimeTypes")] = m_supportedMimeTypes;
+    map[u"displayIcon"_s] = icon();
+    map[u"applicationProperties"_s] = m_allAppProperties;
+    map[u"codeFilePath"_s] = m_codeFilePath;
+    map[u"runtimeName"_s] = m_runtimeName;
+    map[u"runtimeParameters"_s] = m_runtimeParameters;
+    map[u"capabilities"_s] = m_capabilities;
+    map[u"mimeTypes"_s] = m_supportedMimeTypes;
 
-    map[qSL("categories")] = categories();
-    map[qSL("version")] = packageInfo()->version();
-    map[qSL("baseDir")] = packageInfo()->baseDir().absolutePath();
-    map[qSL("codeDir")] = map[qSL("baseDir")];     // 5.12 backward compatibility
-    map[qSL("manifestDir")] = map[qSL("baseDir")]; // 5.12 backward compatibility
-    map[qSL("installationLocationId")] = packageInfo()->installationReport() ? qSL("internal-0") : QString();
-    map[qSL("supportsApplicationInterface")] = m_supportsApplicationInterface;
-    map[qSL("dlt")] = m_dltConfiguration;
+    map[u"categories"_s] = categories();
+    map[u"version"_s] = packageInfo()->version();
+    map[u"baseDir"_s] = packageInfo()->baseDir().absolutePath();
+    map[u"codeDir"_s] = map[u"baseDir"_s];     // 5.12 backward compatibility
+    map[u"manifestDir"_s] = map[u"baseDir"_s]; // 5.12 backward compatibility
+    map[u"installationLocationId"_s] = packageInfo()->installationReport() ? u"internal-0"_s : QString();
+    map[u"supportsApplicationInterface"_s] = m_supportsApplicationInterface;
+    map[u"dlt"_s] = m_dltConfiguration;
 
     return map;
 }

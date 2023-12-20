@@ -96,6 +96,8 @@
 
 #include "../plugin-interfaces/startupinterface.h"
 
+using namespace Qt::StringLiterals;
+
 
 AM_QML_REGISTER_TYPES(QtApplicationManager_SystemUI)
 AM_QML_REGISTER_TYPES(QtApplicationManager)
@@ -115,28 +117,28 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, 
 
     if (dbusName.isEmpty()) {
         return;
-    } else if (dbusName == qL1S("system")) {
+    } else if (dbusName == u"system") {
         dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SYSTEM_BUS_ADDRESS"));
 #  if defined(Q_OS_LINUX)
         if (dbusAddress.isEmpty())
-            dbusAddress = qL1S("unix:path=/var/run/dbus/system_bus_socket");
+            dbusAddress = u"unix:path=/var/run/dbus/system_bus_socket"_s;
 #  endif
         conn = QDBusConnection::systemBus();
-    } else if (dbusName == qL1S("session")) {
+    } else if (dbusName == u"session") {
         dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
         conn = QDBusConnection::sessionBus();
-    } else if (dbusName == qL1S("auto")) {
+    } else if (dbusName == u"auto") {
         dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
         // we cannot be using QDBusConnection::sessionBus() here, because some plugin
         // might have called that function before we could spawn our own session bus. In
         // this case, Qt has cached the bus name and we would get the old one back.
-        conn = QDBusConnection::connectToBus(dbusAddress, qSL("qtam_session"));
+        conn = QDBusConnection::connectToBus(dbusAddress, u"qtam_session"_s);
         if (!conn.isConnected())
             return;
-        dbusName = qL1S("session");
+        dbusName = u"session"_s;
     } else {
         dbusAddress = dbusName;
-        conn = QDBusConnection::connectToBus(dbusAddress, qSL("custom"));
+        conn = QDBusConnection::connectToBus(dbusAddress, u"custom"_s);
     }
 
     if (!conn.isConnected()) {
@@ -150,14 +152,14 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, 
         adaptor->parent()->parent()->setProperty("_am_dbus_address", dbusAddress);
     }
 
-    if (!conn.registerObject(qL1S(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
+    if (!conn.registerObject(QString::fromLatin1(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
         throw Exception("could not register object %1 on D-Bus (%2): %3")
-            .arg(qL1S(path)).arg(dbusName).arg(conn.lastError().message());
+            .arg(QString::fromLatin1(path)).arg(dbusName).arg(conn.lastError().message());
     }
 
-    if (!conn.registerService(qL1S(serviceName))) {
+    if (!conn.registerService(QString::fromLatin1(serviceName))) {
         throw Exception("could not register service %1 on D-Bus (%2): %3")
-            .arg(qL1S(serviceName)).arg(dbusName).arg(conn.lastError().message());
+            .arg(QString::fromLatin1(serviceName)).arg(dbusName).arg(conn.lastError().message());
     }
 
     qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
@@ -166,14 +168,14 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, 
         // Write the bus address of the interface to a file in /tmp. This is needed for the
         // controller tool, which does not even have a session bus, when started via ssh.
 
-        QString fileName = qL1S(interfaceName) % qSL(".dbus");
+        QString fileName = QString::fromLatin1(interfaceName) % u".dbus"_s;
         if (!instanceId.isEmpty())
             fileName = instanceId % u'-' % fileName;
 
         QFile f(QDir::temp().absoluteFilePath(fileName));
         QByteArray dbusUtf8 = dbusAddress.isEmpty() ? dbusName.toUtf8() : dbusAddress.toUtf8();
         if (!f.open(QFile::WriteOnly | QFile::Truncate) || (f.write(dbusUtf8) != dbusUtf8.size()))
-            throw Exception(f, "Could not write D-Bus address of interface %1").arg(qL1S(interfaceName));
+            throw Exception(f, "Could not write D-Bus address of interface %1").arg(QString::fromLatin1(interfaceName));
 
         static QStringList filesToDelete;
         if (filesToDelete.isEmpty())
@@ -212,7 +214,7 @@ Main::Main(int &argc, char **argv, InitFlags initFlags)
 #endif
 
     // this might be needed later on by the native runtime to find a suitable qml runtime launcher
-    setProperty("_am_build_dir", qSL(AM_BUILD_DIR));
+    setProperty("_am_build_dir", QString::fromLatin1(AM_BUILD_DIR));
 
     UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
                                            { SIGINT, SIGTERM },
@@ -363,13 +365,13 @@ void Main::shutDown(int exitCode)
     QTimer::singleShot(5000, this, [exitCode] {
         QStringList resources;
         if (!(down & ApplicationManagerDown))
-            resources << qSL("runtimes");
+            resources << u"runtimes"_s;
         if (!(down & QuickLauncherDown))
-            resources << qSL("quick-launchers");
+            resources << u"quick-launchers"_s;
         if (!(down & WindowManagerDown))
-            resources << qSL("windows");
+            resources << u"windows"_s;
         qCCritical(LogSystem, "There are still resources in use (%s). Check your System UI implementation. "
-                              "Exiting anyhow.", resources.join(qSL(", ")).toLocal8Bit().constData());
+                              "Exiting anyhow.", resources.join(u", "_s).toLocal8Bit().constData());
         QCoreApplication::exit(exitCode);
     });
 }
@@ -401,7 +403,7 @@ void Main::registerResources(const QStringList &resources) const
 void Main::loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false)
 {
     QStringList systemStartupPluginPaths;
-    const QDir systemStartupPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + qSL("appman_startup"));
+    const QDir systemStartupPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + u"appman_startup"_s);
     for (const auto &pluginName : systemStartupPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot)) {
         const QString filePath = systemStartupPluginDir.absoluteFilePath(pluginName);
         if (!QLibrary::isLibrary(filePath))
@@ -418,15 +420,15 @@ void Main::parseSystemProperties(const QVariantMap &rawSystemProperties)
     m_systemProperties.resize(SP_SystemUi + 1);
     QVariantMap rawMap = rawSystemProperties;
 
-    m_systemProperties[SP_ThirdParty] = rawMap.value(qSL("public")).toMap();
+    m_systemProperties[SP_ThirdParty] = rawMap.value(u"public"_s).toMap();
 
     m_systemProperties[SP_BuiltIn] = m_systemProperties.at(SP_ThirdParty);
-    const QVariantMap pro = rawMap.value(qSL("protected")).toMap();
+    const QVariantMap pro = rawMap.value(u"protected"_s).toMap();
     for (auto it = pro.cbegin(); it != pro.cend(); ++it)
         m_systemProperties[SP_BuiltIn].insert(it.key(), it.value());
 
     m_systemProperties[SP_SystemUi] = m_systemProperties.at(SP_BuiltIn);
-    const QVariantMap pri = rawMap.value(qSL("private")).toMap();
+    const QVariantMap pri = rawMap.value(u"private"_s).toMap();
     for (auto it = pri.cbegin(); it != pri.cend(); ++it)
         m_systemProperties[SP_SystemUi].insert(it.key(), it.value());
 
@@ -474,12 +476,12 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
 
     if (m_isSingleProcessMode) {
         RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager());
-        RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager(qSL("qml")));
+        RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager(u"qml"_s));
     } else {
         RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager());
 #if QT_CONFIG(am_multi_process)
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager());
-        RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(qSL("qml")));
+        RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(u"qml"_s));
 
         for (const QString &runtimeId : runtimeAdditionalLaunchers)
             RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(runtimeId));
@@ -490,7 +492,7 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
             qCWarning(LogSystem) << "Addtional runtime launchers are ignored in single-process mode";
 #endif
         QStringList systemContainerPluginPaths;
-        const QDir systemContainerPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + qSL("appman_container"));
+        const QDir systemContainerPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + u"appman_container"_s);
         for (const auto &pluginName : systemContainerPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot)) {
             const QString filePath = systemContainerPluginDir.absoluteFilePath(pluginName);
             if (!QLibrary::isLibrary(filePath))
@@ -722,14 +724,14 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
         for (const auto &v : waylandExtraSockets) {
             const QVariantMap &wes = v.toMap();
 
-            const QString path = wes.value(qSL("path")).toString();
+            const QString path = wes.value(u"path"_s).toString();
 
             if (path.isEmpty())
                 continue;
 
             try {
                 QFileInfo fi(path);
-                if (!fi.dir().mkpath(qSL(".")))
+                if (!fi.dir().mkpath(u"."_s))
                     throw Exception("could not create path to extra Wayland socket: %1").arg(path);
 
                 auto sudo = SudoClient::instance();
@@ -748,9 +750,9 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
                     throw Exception("could not listen on extra Wayland socket %1: %2")
                         .arg(path, extraSocket->errorString());
                 }
-                int mode = wes.value(qSL("permissions"), -1).toInt();
-                int uid = wes.value(qSL("userId"), -1).toInt();
-                int gid = wes.value(qSL("groupId"), -1).toInt();
+                int mode = wes.value(u"permissions"_s, -1).toInt();
+                int uid = wes.value(u"userId"_s, -1).toInt();
+                int gid = wes.value(u"groupId"_s, -1).toInt();
 
                 QByteArray encodedPath = QFile::encodeName(path);
 
@@ -881,7 +883,7 @@ void Main::showWindow(bool showFullscreen)
 #endif
                 auto st = StartupTimer::instance();
                 st->checkFirstFrame();
-                st->createAutomaticReport(qSL("System UI"));
+                st->createAutomaticReport(u"System UI"_s);
             }
         });
 
@@ -906,7 +908,7 @@ void Main::showWindow(bool showFullscreen)
                 checkOpenGLFormat("first window", win->format());
             }
         });
-        StartupTimer::instance()->createAutomaticReport(qSL("System UI"));
+        StartupTimer::instance()->createAutomaticReport(u"System UI"_s);
     }
 }
 
@@ -932,7 +934,7 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
         int idx = adaptor->parent()->metaObject()->indexOfClassInfo("D-Bus Interface");
         if (idx < 0) {
             throw Exception("Could not get class-info \"D-Bus Interface\" for D-Bus adapter %1")
-                    .arg(qL1S(adaptor->parent()->metaObject()->className()));
+                    .arg(QString::fromLatin1(adaptor->parent()->metaObject()->className()));
         }
         const char *interfaceName = adaptor->parent()->metaObject()->classInfo(idx).value();
         ifaces.emplace_back(adaptor, busForInterface(interfaceName), service, path, interfaceName);
@@ -953,9 +955,9 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
     // check if all interfaces are on the "auto" bus and replace the "none" bus with nullptr
     for (auto &&iface : ifaces) {
         QString dbusName = std::get<1>(iface);
-        if (dbusName != qSL("auto"))
+        if (dbusName != u"auto"_s)
             autoOnly = false;
-        if (dbusName == qSL("none"))
+        if (dbusName == u"none")
             std::get<1>(iface).clear();
         else
             noneOnly = false;
@@ -989,7 +991,7 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
                                std::get<2>(iface),interfaceName, std::get<3>(iface),
                                instanceId);
             if (!DBusPolicy::instance()->add(generatedAdaptor, policyForInterface(interfaceName)))
-                throw Exception(Error::DBus, "could not set DBus policy for %1").arg(qL1S(interfaceName));
+                throw Exception(Error::DBus, "could not set DBus policy for %1").arg(QString::fromLatin1(interfaceName));
         }
     }
 #else
@@ -1005,7 +1007,7 @@ QString Main::hardwareId() const
     if (hardwareId.isEmpty()) {
 #if defined(QT_AM_HARDWARE_ID)
         hardwareId = QString::fromLocal8Bit(QT_AM_HARDWARE_ID);
-        if (hardwareId.startsWith(qL1C('@'))) {
+        if (hardwareId.startsWith(u'@')) {
             QFile f(hardwareId.mid(1));
             hardwareId.clear();
             if (f.open(QFile::ReadOnly))
@@ -1025,7 +1027,7 @@ QString Main::hardwareId() const
             std::sort(candidateIfaces.begin(), candidateIfaces.end(), [](const QNetworkInterface &first, const QNetworkInterface &second) {
                 return first.name().compare(second.name()) < 0;
             });
-            hardwareId = candidateIfaces.constFirst().hardwareAddress().replace(qL1C(':'), qL1S("-"));
+            hardwareId = candidateIfaces.constFirst().hardwareAddress().replace(u':', u'-');
         }
 #endif
     }

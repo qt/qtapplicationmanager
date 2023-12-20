@@ -5,6 +5,8 @@
 
 #include "debugwrapper.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 namespace DebugWrapper {
@@ -20,8 +22,8 @@ bool parseSpecification(const QString &debugWrapperSpecification, QStringList &r
     bool escaped = false;
     bool canBeEnvVar = true;
     bool isEnvVar = false;
-    static const QString program = qSL("%program%");
-    static const QString arguments = qSL("%arguments%");
+    static const QString program = u"%program%"_s;
+    static const QString arguments = u"%arguments%"_s;
     int foundProgram = 0;
     int foundArguments = 0;
     QString str;
@@ -42,7 +44,7 @@ bool parseSpecification(const QString &debugWrapperSpecification, QStringList &r
                 if (isEnvVar && current == &str)
                     current = &value;
                 else
-                    current->append(qL1C('='));
+                    current->append(u'=');
                 break;
             case ' ':
             case '\0':
@@ -69,9 +71,9 @@ bool parseSpecification(const QString &debugWrapperSpecification, QStringList &r
             }
         } else {
             switch (c.unicode()) {
-            case '\\': current->append(qL1C('\\')); break;
-            case ' ':  current->append(qL1C(' ')); break;
-            case 'n':  current->append(qL1C('\n')); break;
+            case '\\': current->append(u'\\'); break;
+            case ' ':  current->append(u' '); break;
+            case 'n':  current->append(u'\n'); break;
             default:   return false;
             }
             escaped = false;
@@ -95,16 +97,16 @@ bool parseSpecification(const QString &debugWrapperSpecification, QStringList &r
 QStringList substituteCommand(const QStringList &debugWrapperCommand, const QString &program,
                               const QStringList &arguments)
 {
-    QString stringifiedArguments = arguments.join(qL1C(' '));
+    QString stringifiedArguments = arguments.join(u' ');
     QStringList result;
 
     for (const QString &s : debugWrapperCommand) {
-        if (s == qSL("%arguments%")) {
+        if (s == u"%arguments%") {
             result << arguments;
         } else {
             QString str(s);
-            str.replace(qL1S("%program%"), program);
-            str.replace(qL1S("%arguments%"), stringifiedArguments);
+            str.replace(u"%program%"_s, program);
+            str.replace(u"%arguments%"_s, stringifiedArguments);
             result << str;
         }
     }

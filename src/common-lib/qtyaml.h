@@ -92,14 +92,14 @@ public:
     Q_DECLARE_FLAGS(FieldTypes, FieldType)
     struct Field
     {
-        QByteArray name;
+        QString name;
         bool required;
         FieldTypes types;
         std::function<void(YamlParser *)> callback;
 
         Field(const char *_name, bool _required, FieldTypes _types,
               const std::function<void(YamlParser *)> &_callback)
-            : name(_name)
+            : name(QString::fromLatin1(_name))
             , required(_required)
             , types(_types)
             , callback(_callback)

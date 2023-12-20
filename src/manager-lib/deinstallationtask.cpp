@@ -12,6 +12,8 @@
 #include "scopeutilities.h"
 #include "deinstallationtask.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 DeinstallationTask::DeinstallationTask(const QString &packageId, const QString &installationPath,
@@ -24,7 +26,7 @@ DeinstallationTask::DeinstallationTask(const QString &packageId, const QString &
 {
     Q_UNUSED(forceDeinstallation) // this was used in the past to deal with SD-Card problems
 
-    setObjectName(qSL("QtAM-DeinstallationTask"));
+    setObjectName(u"QtAM-DeinstallationTask"_s);
 
     m_packageId = packageId; // in base class
 }
@@ -102,8 +104,8 @@ void DeinstallationTask::execute()
 
         for (ScopedRenamer *toDelete : { &docDirRename, &appDirRename }) {
             if (toDelete->isRenamed()) {
-                if (!removeRecursiveHelper(toDelete->baseName() + qL1C('-')))
-                    qCCritical(LogInstaller) << "ERROR: could not remove" << (toDelete->baseName() + qL1C('-'));
+                if (!removeRecursiveHelper(toDelete->baseName() + u'-'))
+                    qCCritical(LogInstaller) << "ERROR: could not remove" << (toDelete->baseName() + u'-');
             }
         }
 

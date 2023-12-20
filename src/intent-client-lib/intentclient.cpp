@@ -15,6 +15,9 @@
 #include <exception>
 #include <memory>
 
+using namespace Qt::StringLiterals;
+
+
 QT_BEGIN_NAMESPACE_AM
 
 /*!
@@ -77,7 +80,7 @@ IntentClient *IntentClient::instance()
 */
 QString IntentClient::systemUiId() const
 {
-    return qSL(":sysui:");
+    return u":sysui:"_s;
 }
 
 int IntentClient::replyFromSystemTimeout() const
@@ -169,7 +172,7 @@ IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, co
 {
     if (intentId.isEmpty())
         return nullptr;
-    if (applicationId == qSL(":broadcast:")) // reserved
+    if (applicationId == u":broadcast:") // reserved
         return nullptr;
 
     //TODO: check that parameters only contains basic datatypes. convertFromJSVariant() does most of
@@ -200,7 +203,7 @@ bool IntentClient::broadcastIntentRequest(const QString &intentId, const QVarian
     //TODO: check that parameters only contains basic datatypes. convertFromJSVariant() does most of
     //      this already, but doesn't bail out on unconvertible types (yet)
 
-    requestToSystem(m_systemInterface->currentApplicationId(this), intentId, qSL(":broadcast:"), parameters);
+    requestToSystem(m_systemInterface->currentApplicationId(this), intentId, u":broadcast:"_s, parameters);
     return true;
 }
 
@@ -211,7 +214,7 @@ IntentClientRequest *IntentClient::requestToSystem(const QString &requestingAppl
     IntentClientRequest *ir = new IntentClientRequest(IntentClientRequest::Direction::ToSystem,
                                                       requestingApplicationId, QUuid(),
                                                       intentId, applicationId, parameters,
-                                                      applicationId == qSL(":broadcast:"));
+                                                      applicationId == u":broadcast:");
 
     qCDebug(LogIntents) << "Application" << requestingApplicationId << "created an intent request for"
                         << intentId << "(application:" << applicationId << ")";
@@ -232,7 +235,7 @@ void IntentClient::requestToSystemFinished(IntentClientRequest *icr, const QUuid
     if (error) {
         icr->setErrorMessage(errorMessage);
     } else if (newRequestId.isNull()) {
-        icr->setErrorMessage(qL1S("No matching Intent found in the system"));
+        icr->setErrorMessage(u"No matching Intent found in the system"_s);
     } else {
         icr->setRequestId(newRequestId);
         m_waiting << icr;
@@ -250,7 +253,7 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
     if (it == m_waiting.cend()) {
         qCWarning(LogIntents) << "IntentClient received an unexpected intent reply for request"
                               << requestId << " succeeded:" << !error << "error:"
-                              << result.value(qL1S("errorMessage")).toString() << "result:" << result;
+                              << result.value(u"errorMessage"_s).toString() << "result:" << result;
         return;
     }
     icr = *it;
@@ -263,7 +266,7 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
     }
 
     if (error)
-        icr->setErrorMessage(result.value(qSL("errorMessage")).toString());
+        icr->setErrorMessage(result.value(u"errorMessage"_s).toString());
     else
         icr->setResult(result);
 
@@ -276,7 +279,7 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
                                         const QString &requestingApplicationId,
                                         const QString &applicationId, const QVariantMap &parameters)
 {
-    bool broadcast = (requestingApplicationId == qSL(":broadcast:"));
+    bool broadcast = (requestingApplicationId == u":broadcast:");
 
     qCDebug(LogIntents) << "Client: Incoming intent request" << requestId << "to application" << applicationId
                         << "for intent" << intentId << (broadcast ? "(broadcast)" : "") << "parameters" << parameters;
@@ -294,7 +297,7 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
         handler->internalRequestReceived(icr);
     } else {
         qCDebug(LogIntents) << "No Intent handler registered for intent" << intentId;
-        errorReplyFromApplication(icr, qSL("No matching IntentHandler found."));
+        errorReplyFromApplication(icr, u"No matching IntentHandler found."_s);
         delete icr;
     }
 }
@@ -316,7 +319,7 @@ void IntentClient::errorReplyFromApplication(IntentClientRequest *icr, const QSt
         return;
     icr->m_succeeded = false;
     icr->m_finished = true;
-    icr->m_result = QVariantMap{ { qSL("errorMessage"), errorMessage } };
+    icr->m_result = QVariantMap{ { u"errorMessage"_s, errorMessage } };
 
     m_systemInterface->replyFromApplication(icr);
 }

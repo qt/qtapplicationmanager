@@ -38,15 +38,17 @@
 
 #include "../plugin-interfaces/startupinterface.h"
 
+using namespace Qt::StringLiterals;
+
 
 QT_BEGIN_NAMESPACE_AM
 
 static const QMap<int, QString> &openGLProfileNames()
 {
     static const QMap<int, QString> map = {
-        { QSurfaceFormat::NoProfile,            qSL("default") },
-        { QSurfaceFormat::CoreProfile,          qSL("core") },
-        { QSurfaceFormat::CompatibilityProfile, qSL("compatibility") }
+        { QSurfaceFormat::NoProfile,            u"default"_s },
+        { QSurfaceFormat::CoreProfile,          u"core"_s },
+        { QSurfaceFormat::CompatibilityProfile, u"compatibility"_s }
     };
     return map;
 }
@@ -139,15 +141,15 @@ void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
                               const QString &messagePattern, const QVariant &useAMConsoleLogger)
 {
     static const QStringList verboseRules {
-        qSL("*=true"),
-        qSL("qt.*.debug=false"),
-        qSL("am.wayland.debug=false"),
-        qSL("qt.qml.overloadresolution.info=false"),
-        qSL("qt.widgets.painting.info=false"),
+        u"*=true"_s,
+        u"qt.*.debug=false"_s,
+        u"am.wayland.debug=false"_s,
+        u"qt.qml.overloadresolution.info=false"_s,
+        u"qt.widgets.painting.info=false"_s,
     };
 
     const QStringList rules = verbose ? verboseRules
-                                      : loggingRules.isEmpty() ? QStringList(qSL("*.debug=false"))
+                                      : loggingRules.isEmpty() ? QStringList(u"*.debug=false"_s)
                                                                : loggingRules;
     Logging::setFilterRules(rules);
     Logging::setMessagePattern(messagePattern);
@@ -159,9 +161,9 @@ void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
 void SharedMain::setupOpenGL(const QVariantMap &openGLConfiguration)
 {
 #if !defined(QT_NO_OPENGL)
-    QString profileName = openGLConfiguration.value(qSL("desktopProfile")).toString();
-    int majorVersion = openGLConfiguration.value(qSL("esMajorVersion"), -1).toInt();
-    int minorVersion = openGLConfiguration.value(qSL("esMinorVersion"), -1).toInt();
+    QString profileName = openGLConfiguration.value(u"desktopProfile"_s).toString();
+    int majorVersion = openGLConfiguration.value(u"esMajorVersion"_s, -1).toInt();
+    int minorVersion = openGLConfiguration.value(u"esMinorVersion"_s, -1).toInt();
 
     QOpenGLContext *globalContext = qt_gl_global_share_context();
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();

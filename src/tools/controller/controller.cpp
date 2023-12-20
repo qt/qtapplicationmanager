@@ -31,6 +31,8 @@
 
 #include "interrupthandler.h"
 
+using namespace Qt::StringLiterals;
+
 QT_USE_NAMESPACE_AM
 
 class DBus : public QObject
@@ -55,8 +57,8 @@ public:
         if (m_manager)
             return;
 
-        auto conn = connectTo(qSL("io.qt.ApplicationManager"));
-        m_manager = new IoQtApplicationManagerInterface(qSL("io.qt.ApplicationManager"), qSL("/ApplicationManager"), conn, this);
+        auto conn = connectTo(u"io.qt.ApplicationManager"_s);
+        m_manager = new IoQtApplicationManagerInterface(u"io.qt.ApplicationManager"_s, u"/ApplicationManager"_s, conn, this);
     }
 
     void connectToPackager() Q_DECL_NOEXCEPT_EXPR(false)
@@ -64,8 +66,8 @@ public:
         if (m_packager)
             return;
 
-        auto conn = connectTo(qSL("io.qt.PackageManager"));
-        m_packager = new IoQtPackageManagerInterface(qSL("io.qt.ApplicationManager"), qSL("/PackageManager"), conn, this);
+        auto conn = connectTo(u"io.qt.PackageManager"_s);
+        m_packager = new IoQtPackageManagerInterface(u"io.qt.ApplicationManager"_s, u"/PackageManager"_s, conn, this);
     }
 
 signals:
@@ -76,18 +78,18 @@ private:
     {
         QDBusConnection conn(iface);
 
-        QFile f(QDir::temp().absoluteFilePath(m_instanceId % QString(qSL("%1.dbus")).arg(iface)));
+        QFile f(QDir::temp().absoluteFilePath(m_instanceId % QString(u"%1.dbus"_s).arg(iface)));
         QString dbus;
         if (f.open(QFile::ReadOnly)) {
             dbus = QString::fromUtf8(f.readAll());
-            if (dbus == qL1S("system")) {
+            if (dbus == u"system") {
                 conn = QDBusConnection::systemBus();
-                dbus = qSL("[system-bus]");
+                dbus = u"[system-bus]"_s;
             } else if (dbus.isEmpty()) {
                 conn = QDBusConnection::sessionBus();
-                dbus = qSL("[session-bus]");
+                dbus = u"[session-bus]"_s;
             } else {
-                conn = QDBusConnection::connectToBus(dbus, qSL("custom"));
+                conn = QDBusConnection::connectToBus(dbus, u"custom"_s);
             }
         } else {
             throw Exception(Error::IO, "Could not find the D-Bus interface of a running application manager instance.\n(did you start the appman with '--dbus none'?");
@@ -98,7 +100,7 @@ private:
                 .arg(iface, dbus, conn.lastError().message());
         }
 
-        installDisconnectWatcher(conn, qSL("io.qt.ApplicationManager"));
+        installDisconnectWatcher(conn, u"io.qt.ApplicationManager"_s);
         return conn;
     }
 
@@ -111,7 +113,7 @@ private:
             auto *watcher = new QDBusServiceWatcher(serviceName, conn, QDBusServiceWatcher::WatchForOwnerChange, this);
             connect(watcher, &QDBusServiceWatcher::serviceOwnerChanged,
                     this, [this](const QString &, const QString &, const QString &) {
-                disconnectDetected(qSL("owner changed"));
+                disconnectDetected(u"owner changed"_s);
             });
             m_connections.append(conn.name());
         }
@@ -125,7 +127,7 @@ private:
             connect(m_disconnectTimer, &QTimer::timeout, this, [this]() {
                 for (const auto &name : std::as_const(m_connections)) {
                     if (!QDBusConnection(name).isConnected()) {
-                        disconnectDetected(qSL("bus died"));
+                        disconnectDetected(u"bus died"_s);
                         break;
                     }
                 }
@@ -219,7 +221,9 @@ static Command command(QCommandLineParser &clp)
         for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
             if (cmd == commandTable[i].name) {
                 clp.clearPositionalArguments();
-                clp.addPositionalArgument(qL1S(cmd), qL1S(commandTable[i].description), qL1S(cmd));
+                clp.addPositionalArgument(QString::fromLatin1(cmd),
+                                          QString::fromLatin1(commandTable[i].description),
+                                          QString::fromLatin1(cmd));
                 return commandTable[i].command;
             }
         }
@@ -283,10 +287,10 @@ private:
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setApplicationName(qSL("Qt Application Manager Controller"));
-    QCoreApplication::setOrganizationName(qSL("QtProject"));
-    QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
-    QCoreApplication::setApplicationVersion(qSL(QT_AM_VERSION_STR));
+    QCoreApplication::setApplicationName(u"Qt Application Manager Controller"_s);
+    QCoreApplication::setOrganizationName(u"QtProject"_s);
+    QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
+    QCoreApplication::setApplicationVersion(QString::fromLatin1(QT_AM_VERSION_STR));
 
     ThrowingApplication a(argc, argv);
 
@@ -307,11 +311,11 @@ int main(int argc, char *argv[])
 
     QCommandLineParser clp;
 
-    clp.addOption({ { qSL("instance-id") }, qSL("Connect to the named instance."), qSL("instance-id") });
+    clp.addOption({ { u"instance-id"_s }, u"Connect to the named instance."_s, u"instance-id"_s });
     clp.addHelpOption();
     clp.addVersionOption();
 
-    clp.addPositionalArgument(qSL("command"), qSL("The command to execute."));
+    clp.addPositionalArgument(u"command"_s, u"The command to execute."_s);
 
     // ignore unknown options for now -- the sub-commands may need them later
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsPositionalArguments);
@@ -322,28 +326,28 @@ int main(int argc, char *argv[])
     clp.parse(QCoreApplication::arguments());
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
 
-    dbus.setInstanceId(clp.value(qSL("instance-id")));
+    dbus()->setInstanceId(clp.value(u"instance-id"_s));
 
     // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
     try {
         switch (command(clp)) {
         case NoCommand:
-            if (clp.isSet(qSL("version")))
+            if (clp.isSet(u"version"_s))
                 clp.showVersion();
 
-            clp.setApplicationDescription(qSL("\n") + QCoreApplication::applicationName() + qL1S(desc));
-            if (clp.isSet(qSL("help")))
+            clp.setApplicationDescription(u"\n"_s + QCoreApplication::applicationName() + QString::fromLatin1(desc));
+            if (clp.isSet(u"help"_s))
                 clp.showHelp(0);
             clp.showHelp(1);
             break;
 
         case StartApplication: {
-            clp.addOption({ { qSL("i"), qSL("attach-stdin") }, qSL("Attach the app's stdin to the controller's stdin") });
-            clp.addOption({ { qSL("o"), qSL("attach-stdout") }, qSL("Attach the app's stdout to the controller's stdout") });
-            clp.addOption({ { qSL("e"), qSL("attach-stderr") }, qSL("Attach the app's stderr to the controller's stderr") });
-            clp.addOption({ { qSL("r"), qSL("restart") }, qSL("Before starting, stop the application if it is already running") });
-            clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
-            clp.addPositionalArgument(qSL("document-url"),   qSL("The optional document-url."), qSL("[document-url]"));
+            clp.addOption({ { u"i"_s, u"attach-stdin"_s }, u"Attach the app's stdin to the controller's stdin"_s });
+            clp.addOption({ { u"o"_s, u"attach-stdout"_s }, u"Attach the app's stdout to the controller's stdout"_s });
+            clp.addOption({ { u"e"_s, u"attach-stderr"_s }, u"Attach the app's stderr to the controller's stderr"_s });
+            clp.addOption({ { u"r"_s, u"restart"_s }, u"Before starting, stop the application if it is already running"_s });
+            clp.addPositionalArgument(u"application-id"_s, u"The id of an installed application."_s);
+            clp.addPositionalArgument(u"document-url"_s,   u"The optional document-url."_s, u"[document-url]"_s);
             clp.process(a);
 
             int args = int(clp.positionalArguments().size());
@@ -351,13 +355,13 @@ int main(int argc, char *argv[])
                 clp.showHelp(1);
 
             QMap<QString, int> stdRedirections;
-            if (clp.isSet(qSL("attach-stdin")))
-                stdRedirections[qSL("in")] = 0;
-            if (clp.isSet(qSL("attach-stdout")))
-                stdRedirections[qSL("out")] = 1;
-            if (clp.isSet(qSL("attach-stderr")))
-                stdRedirections[qSL("err")] = 2;
-            bool restart = clp.isSet(qSL("restart"));
+            if (clp.isSet(u"attach-stdin"_s))
+                stdRedirections[u"in"_s] = 0;
+            if (clp.isSet(u"attach-stdout"_s))
+                stdRedirections[u"out"_s] = 1;
+            if (clp.isSet(u"attach-stderr"_s))
+                stdRedirections[u"err"_s] = 2;
+            bool restart = clp.isSet(u"restart"_s);
 
             a.runLater(std::bind(startOrDebugApplication,
                                  QString(),
@@ -368,13 +372,13 @@ int main(int argc, char *argv[])
             break;
         }
         case DebugApplication: {
-            clp.addOption({ { qSL("i"), qSL("attach-stdin") }, qSL("Attach the app's stdin to the controller's stdin") });
-            clp.addOption({ { qSL("o"), qSL("attach-stdout") }, qSL("Attach the app's stdout to the controller's stdout") });
-            clp.addOption({ { qSL("e"), qSL("attach-stderr") }, qSL("Attach the app's stderr to the controller's stderr") });
-            clp.addOption({ { qSL("r"), qSL("restart") }, qSL("Before starting, stop the application if it is already running") });
-            clp.addPositionalArgument(qSL("debug-wrapper"),  qSL("The debug-wrapper specification."));
-            clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
-            clp.addPositionalArgument(qSL("document-url"),   qSL("The optional document-url."), qSL("[document-url]"));
+            clp.addOption({ { u"i"_s, u"attach-stdin"_s }, u"Attach the app's stdin to the controller's stdin"_s });
+            clp.addOption({ { u"o"_s, u"attach-stdout"_s }, u"Attach the app's stdout to the controller's stdout"_s });
+            clp.addOption({ { u"e"_s, u"attach-stderr"_s }, u"Attach the app's stderr to the controller's stderr"_s });
+            clp.addOption({ { u"r"_s, u"restart"_s }, u"Before starting, stop the application if it is already running"_s });
+            clp.addPositionalArgument(u"debug-wrapper"_s,  u"The debug-wrapper specification."_s);
+            clp.addPositionalArgument(u"application-id"_s, u"The id of an installed application."_s);
+            clp.addPositionalArgument(u"document-url"_s,   u"The optional document-url."_s, u"[document-url]"_s);
             clp.process(a);
 
             int args = int(clp.positionalArguments().size());
@@ -382,13 +386,13 @@ int main(int argc, char *argv[])
                 clp.showHelp(1);
 
             QMap<QString, int> stdRedirections;
-            if (clp.isSet(qSL("attach-stdin")))
-                stdRedirections[qSL("in")] = 0;
-            if (clp.isSet(qSL("attach-stdout")))
-                stdRedirections[qSL("out")] = 1;
-            if (clp.isSet(qSL("attach-stderr")))
-                stdRedirections[qSL("err")] = 2;
-            bool restart = clp.isSet(qSL("restart"));
+            if (clp.isSet(u"attach-stdin"_s))
+                stdRedirections[u"in"_s] = 0;
+            if (clp.isSet(u"attach-stdout"_s))
+                stdRedirections[u"out"_s] = 1;
+            if (clp.isSet(u"attach-stderr"_s))
+                stdRedirections[u"err"_s] = 2;
+            bool restart = clp.isSet(u"restart"_s);
 
             a.runLater(std::bind(startOrDebugApplication,
                                  clp.positionalArguments().at(1),
@@ -407,8 +411,8 @@ int main(int argc, char *argv[])
             break;
 
         case StopApplication:
-            clp.addOption({ { qSL("f"), qSL("force") }, qSL("Force kill the application.") });
-            clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
+            clp.addOption({ { u"f"_s, u"force"_s }, u"Force kill the application."_s });
+            clp.addPositionalArgument(u"application-id"_s, u"The id of an installed application."_s);
             clp.process(a);
 
             if (clp.positionalArguments().size() != 2)
@@ -416,7 +420,7 @@ int main(int argc, char *argv[])
 
             a.runLater(std::bind(stopApplication,
                                  clp.positionalArguments().at(1),
-                                 clp.isSet(qSL("f"))));
+                                 clp.isSet(u"f"_s)));
             break;
 
         case ListApplications:
@@ -425,8 +429,8 @@ int main(int argc, char *argv[])
             break;
 
         case ShowApplication:
-            clp.addOption({ qSL("json"), qSL("Output in JSON format instead of YAML.") });
-            clp.addPositionalArgument(qSL("application-id"), qSL("The id of an installed application."));
+            clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
+            clp.addPositionalArgument(u"application-id"_s, u"The id of an installed application."_s);
             clp.process(a);
 
             if (clp.positionalArguments().size() != 2)
@@ -434,7 +438,7 @@ int main(int argc, char *argv[])
 
             a.runLater(std::bind(showApplication,
                                  clp.positionalArguments().at(1),
-                                 clp.isSet(qSL("json"))));
+                                 clp.isSet(u"json"_s)));
             break;
 
         case ListPackages:
@@ -443,8 +447,8 @@ int main(int argc, char *argv[])
             break;
 
         case ShowPackage:
-            clp.addOption({ qSL("json"), qSL("Output in JSON format instead of YAML.") });
-            clp.addPositionalArgument(qSL("package-id"), qSL("The id of an installed package."));
+            clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
+            clp.addPositionalArgument(u"package-id"_s, u"The id of an installed package."_s);
             clp.process(a);
 
             if (clp.positionalArguments().size() != 2)
@@ -452,29 +456,29 @@ int main(int argc, char *argv[])
 
             a.runLater(std::bind(showPackage,
                                  clp.positionalArguments().at(1),
-                                 clp.isSet(qSL("json"))));
+                                 clp.isSet(u"json"_s)));
             break;
 
         case InstallPackage:
-            clp.addOption({ { qSL("l"), qSL("location") }, qSL("Set a custom installation location (deprecated and ignored)."), qSL("installation-location"), qSL("internal-0") });
-            clp.addOption({ { qSL("a"), qSL("acknowledge") }, qSL("Automatically acknowledge the installation (unattended mode).") });
-            clp.addPositionalArgument(qSL("package"), qSL("The file name of the package; can be - for stdin."));
+            clp.addOption({ { u"l"_s, u"location"_s }, u"Set a custom installation location (deprecated and ignored)."_s, u"installation-location"_s, u"internal-0"_s });
+            clp.addOption({ { u"a"_s, u"acknowledge"_s }, u"Automatically acknowledge the installation (unattended mode)."_s });
+            clp.addPositionalArgument(u"package"_s, u"The file name of the package; can be - for stdin."_s);
             clp.process(a);
 
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
-            if (clp.isSet(qSL("l")))
+            if (clp.isSet(u"l"_s))
                 fprintf(stderr, "Ignoring the deprecated -l option.\n");
 
             a.runLater(std::bind(installPackage,
                                  clp.positionalArguments().at(1),
-                                 clp.isSet(qSL("a"))));
+                                 clp.isSet(u"a"_s)));
             break;
 
         case RemovePackage:
-            clp.addOption({ { qSL("f"), qSL("force") }, qSL("Force removal of package.") });
-            clp.addOption({ { qSL("k"), qSL("keep-documents") }, qSL("Keep the document folder of the application.") });
-            clp.addPositionalArgument(qSL("package-id"), qSL("The id of an installed package."));
+            clp.addOption({ { u"f"_s, u"force"_s }, u"Force removal of package."_s });
+            clp.addOption({ { u"k"_s, u"keep-documents"_s }, u"Keep the document folder of the application."_s });
+            clp.addPositionalArgument(u"package-id"_s, u"The id of an installed package."_s);
             clp.process(a);
 
             if (clp.positionalArguments().size() != 2)
@@ -482,8 +486,8 @@ int main(int argc, char *argv[])
 
             a.runLater(std::bind(removePackage,
                                  clp.positionalArguments().at(1),
-                                 clp.isSet(qSL("k")),
-                                 clp.isSet(qSL("f"))));
+                                 clp.isSet(u"k"_s),
+                                 clp.isSet(u"f"_s)));
             break;
 
         case ListInstallationTasks:
@@ -492,12 +496,12 @@ int main(int argc, char *argv[])
             break;
 
         case CancelInstallationTask: {
-            clp.addPositionalArgument(qSL("task-id"), qSL("The id of an active installation task."));
-            clp.addOption({ { qSL("a"), qSL("all") }, qSL("Cancel all active installation tasks.") });
+            clp.addPositionalArgument(u"task-id"_s, u"The id of an active installation task."_s);
+            clp.addOption({ { u"a"_s, u"all"_s }, u"Cancel all active installation tasks."_s });
             clp.process(a);
 
             int args = clp.positionalArguments().size();
-            bool all = clp.isSet(qSL("a"));
+            bool all = clp.isSet(u"a"_s);
             if (!(((args == 1) && all) || ((args == 2) && !all)))
                 clp.showHelp(1);
 
@@ -512,8 +516,8 @@ int main(int argc, char *argv[])
             break;
 
         case ShowInstallationLocation:
-            clp.addPositionalArgument(qSL("installation-location"), qSL("The id of an installation location (deprecated and ignored)."));
-            clp.addOption({ qSL("json"), qSL("Output in JSON format instead of YAML.") });
+            clp.addPositionalArgument(u"installation-location"_s, u"The id of an installation location (deprecated and ignored)."_s);
+            clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
             clp.process(a);
 
             if (clp.positionalArguments().size() > 2)
@@ -522,7 +526,7 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "Ignoring the deprecated installation-location.\n");
 
             a.runLater(std::bind(showInstallationLocation,
-                                 clp.isSet(qSL("json"))));
+                                 clp.isSet(u"json"_s)));
             break;
 
         case ListInstances:
@@ -531,16 +535,16 @@ int main(int argc, char *argv[])
             break;
 
         case InjectIntentRequest:
-            clp.addPositionalArgument(qSL("intent-id"), qSL("The id of the intent."));
-            clp.addPositionalArgument(qSL("parameters"), qSL("The optional parameters for this request."), qSL("[json-parameters]"));
-            clp.addOption({ qSL("requesting-application-id"), qSL("Fake the requesting application id."), qSL("id"), qSL(":sysui:") });
-            clp.addOption({ qSL("application-id"), qSL("Specify the handling application id."), qSL("id") });
-            clp.addOption({ qSL("broadcast"), qSL("Create a broadcast request.") });
+            clp.addPositionalArgument(u"intent-id"_s, u"The id of the intent."_s);
+            clp.addPositionalArgument(u"parameters"_s, u"The optional parameters for this request."_s, u"[json-parameters]"_s);
+            clp.addOption({ u"requesting-application-id"_s, u"Fake the requesting application id."_s, u"id"_s, u":sysui:"_s });
+            clp.addOption({ u"application-id"_s, u"Specify the handling application id."_s, u"id"_s });
+            clp.addOption({ u"broadcast"_s, u"Create a broadcast request."_s });
             clp.process(a);
 
-            bool isBroadcast = clp.isSet(qSL("broadcast"));
-            QString appId = clp.value(qSL("application-id"));
-            QString requestingAppId = clp.value(qSL("requesting-application-id"));
+            bool isBroadcast = clp.isSet(u"broadcast"_s);
+            QString appId = clp.value(u"application-id"_s);
+            QString requestingAppId = clp.value(u"requesting-application-id"_s);
 
             if (!appId.isEmpty() && isBroadcast)
                 throw Exception("You cannot use --application-id and --broadcast at the same time.");
@@ -621,7 +625,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                     throw Exception(Error::IO, "failed to get exit code from application manager: %1").arg(getReply.error().message());
                 fprintf(stdout, "\n --- application has quit ---\n\n");
                 auto app = getReply.value();
-                qApp->exit(app.value(qSL("lastExitCode"), 1).toInt());
+                qApp->exit(app.value(u"lastExitCode"_s, 1).toInt());
             }
         });
     }
@@ -744,7 +748,7 @@ void installPackage(const QString &package, bool acknowledge) Q_DECL_NOEXCEPT_EX
 {
     QString packageFile = package;
 
-    if (package == qL1S("-")) { // sent via stdin
+    if (package == u"-") { // sent via stdin
         bool success = false;
 
         QTemporaryFile *tf = new QTemporaryFile(qApp);
@@ -788,7 +792,7 @@ void installPackage(const QString &package, bool acknowledge) Q_DECL_NOEXCEPT_EX
                          qApp, [](const QString &taskId, const QVariantMap &metadata) {
             if (taskId != installationId)
                 return;
-            QString packageId = metadata.value(qSL("packageId")).toString();
+            QString packageId = metadata.value(u"packageId"_s).toString();
             if (packageId.isEmpty())
                 throw Exception(Error::IO, "could not find a valid package id in the package");
             fprintf(stdout, "Acknowledging package installation for '%s'...\n", qPrintable(packageId));
@@ -993,7 +997,7 @@ void showInstallationLocation(bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
 void listInstances()
 {
     QString dir = QDir::temp().absolutePath() % u'/';
-    QString suffix = qSL("io.qt.ApplicationManager.dbus");
+    QString suffix = u"io.qt.ApplicationManager.dbus"_s;
 
     QDirIterator dit(dir, { u'*' % suffix });
     while (dit.hasNext()) {
@@ -1001,7 +1005,7 @@ void listInstances()
         name.chop(suffix.length());
         name = name.mid(dir.length());
         if (name.isEmpty()) {
-            name = qSL("(no instance id)");
+            name = u"(no instance id)"_s;
         } else {
             name.chop(1); // remove the '-' separator
             name = u'"' % name % u'"';

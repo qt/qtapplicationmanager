@@ -12,6 +12,8 @@
 #include "notification.h"
 #include "notificationmanager.h"
 
+using namespace Qt::StringLiterals;
+
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -30,7 +32,7 @@ void QmlInProcNotificationImpl::componentComplete()
 {
     QQmlContext *ctxt = QQmlEngine::contextForObject(notification());
     if (ctxt) {
-        QQmlExpression expr(ctxt, nullptr, qSL("ApplicationInterface.applicationId"), nullptr);
+        QQmlExpression expr(ctxt, nullptr, u"ApplicationInterface.applicationId"_s, nullptr);
         QVariant v = expr.evaluate();
         if (!v.isNull())
             m_applicationId = v.toString();

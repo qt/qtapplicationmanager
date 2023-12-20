@@ -19,6 +19,8 @@
 #include "exception.h"
 #include "logging.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 #if defined(Q_OS_LINUX)
@@ -42,29 +44,29 @@ static QVersionNumber dbusVersion()
 DBusDaemonProcess::DBusDaemonProcess(QObject *parent)
     : QProcess(parent)
 {
-    QString program = qSL("dbus-daemon");
-    QStringList arguments = { qSL("--nofork"), qSL("--print-address"), qSL("--session") };
+    QString program = u"dbus-daemon"_s;
+    QStringList arguments = { u"--nofork"_s, u"--print-address"_s, u"--session"_s };
 
 #if defined(Q_OS_MACOS)
     // there's no native dbus support on macOS, so we try to use brew's dbus support
-    program = qSL("/usr/local/bin/dbus-daemon");
+    program = u"/usr/local/bin/dbus-daemon"_s;
     // brew's dbus-daemon needs an address, because it will otherwise assume that it was
     // started via launchd and expects its address in $DBUS_LAUNCHD_SESSION_BUS_SOCKET
-    QString address = qSL("--address=unix:path=") + QDir::tempPath() + qSL("/am-")
-            + QString::number(QCoreApplication::applicationPid()) + qSL("-session.bus");
+    QString address = u"--address=unix:path="_s + QDir::tempPath() + u"/am-"_s
+            + QString::number(QCoreApplication::applicationPid()) + u"-session.bus"_s;
 
     arguments << address;
 #elif defined(Q_OS_WIN)
-    arguments << qSL("--address=tcp:host=localhost");
+    arguments << u"--address=tcp:host=localhost"_s;
 #elif defined(Q_OS_LINUX)
     // some dbus implementations create an abstract socket by default, while others create
     // a file based one. we need a file based one however, because that socket might get
     // mapped into a container.
     if (dbusVersion() >= QVersionNumber(1, 11, 14)) {
-        arguments << qSL("--address=unix:dir=/tmp");
+        arguments << u"--address=unix:dir=/tmp"_s;
     } else {
-        arguments << QString(qSL("--address=unix:path=") + QDir::tempPath() + qSL("/am-")
-                             + QString::number(QCoreApplication::applicationPid()) + qSL("-session.bus"));
+        arguments << QString(u"--address=unix:path="_s + QDir::tempPath() + u"/am-"_s
+                             + QString::number(QCoreApplication::applicationPid()) + u"-session.bus"_s);
     }
 #endif
     setProgram(program);

@@ -5,6 +5,8 @@
 
 #include "memorystatus.h"
 
+using namespace Qt::StringLiterals;
+
 /*!
     \qmltype MemoryStatus
     \inqmlmodule QtApplicationManager
@@ -100,7 +102,7 @@ quint64 MemoryStatus::memoryUsed() const
 */
 QStringList MemoryStatus::roleNames() const
 {
-    return { qSL("memoryUsed") };
+    return { u"memoryUsed"_s };
 }
 
 /*!

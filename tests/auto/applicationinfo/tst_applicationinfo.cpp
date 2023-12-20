@@ -16,6 +16,9 @@
 #include "yamlpackagescanner.h"
 #include "exception.h"
 
+using namespace Qt::StringLiterals;
+
+
 QT_USE_NAMESPACE_AM
 
 class tst_ApplicationInfo : public QObject
@@ -37,11 +40,11 @@ class TestPackageLoader
 {
 public:
     TestPackageLoader(const char *name)
-        : m_dataDir(qL1S(":/data"))
+        : m_dataDir(u":/data"_s)
     {
         try {
             static YamlPackageScanner scanner;
-            QString path = QString::fromLatin1(name) % qL1S("/info.yaml");
+            QString path = QString::fromLatin1(name) % u"/info.yaml"_s;
 
             m_pi = scanner.scan(m_dataDir.absoluteFilePath(path));
             if (m_pi) {
@@ -114,86 +117,86 @@ void tst_ApplicationInfo::full()
     QVERIFY2(pl.info(), qPrintable(pl.lastLoadFailure()));
 
     QCOMPARE(pl.info()->baseDir(), pl.dataDir().absoluteFilePath(pl.info()->id()));
-    QCOMPARE(pl.info()->id(), qL1S("full"));
-    QCOMPARE(pl.info()->icon(), qL1S("full.png"));
-    QCOMPARE(pl.info()->version(), qL1S("v1"));
-    QMap<QString, QString> names { { qL1S("en"), qL1S("pkg.name.en") }, { qL1S("de"), qL1S("pkg.name.de") } };
+    QCOMPARE(pl.info()->id(), u"full"_s);
+    QCOMPARE(pl.info()->icon(), u"full.png"_s);
+    QCOMPARE(pl.info()->version(), u"v1"_s);
+    QMap<QString, QString> names { { u"en"_s, u"pkg.name.en"_s }, { u"de"_s, u"pkg.name.de"_s } };
     QCOMPARE(pl.info()->names(), names);
-    QMap<QString, QString> descs { { qL1S("en"), qL1S("pkg.desc.en") }, { qL1S("de"), qL1S("pkg.desc.de") } };
+    QMap<QString, QString> descs { { u"en"_s, u"pkg.desc.en"_s }, { u"de"_s, u"pkg.desc.de"_s } };
     QCOMPARE(pl.info()->descriptions(), descs);
-    QStringList cats { qL1S("pkg.cat.1"), qL1S("pkg.cat.2") };
+    QStringList cats { u"pkg.cat.1"_s, u"pkg.cat.2"_s };
     QCOMPARE(pl.info()->categories(), cats);
     QCOMPARE(pl.info()->applications().size(), 2);
     QCOMPARE(pl.info()->intents().size(), 2);
 
     const ApplicationInfo *ai = pl.info()->applications().constFirst();
 
-    QCOMPARE(ai->id(), qSL("full.app.1"));
-    QCOMPARE(ai->icon(), qSL("app1.png"));
-    QMap<QString, QString> app1names { { qL1S("en"), qL1S("app1.name.en") }, { qL1S("de"), qL1S("app1.name.de") } };
+    QCOMPARE(ai->id(), u"full.app.1"_s);
+    QCOMPARE(ai->icon(), u"app1.png"_s);
+    QMap<QString, QString> app1names { { u"en"_s, u"app1.name.en"_s }, { u"de"_s, u"app1.name.de"_s } };
     QCOMPARE(ai->names(), app1names);
-    QMap<QString, QString> app1descs { { qL1S("en"), qL1S("app1.desc.en") }, { qL1S("de"), qL1S("app1.desc.de") } };
+    QMap<QString, QString> app1descs { { u"en"_s, u"app1.desc.en"_s }, { u"de"_s, u"app1.desc.de"_s } };
     QCOMPARE(ai->descriptions(), app1descs);
-    QStringList app1cats { qL1S("app1.cat.1"), qL1S("app1.cat.2") };
+    QStringList app1cats { u"app1.cat.1"_s, u"app1.cat.2"_s };
     QCOMPARE(ai->categories(), app1cats);
-    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), qSL("app1.qml"));
-    QCOMPARE(ai->runtimeName(), qSL("qml"));
+    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), u"app1.qml"_s);
+    QCOMPARE(ai->runtimeName(), u"qml"_s);
     QCOMPARE(ai->runtimeParameters().size(), 5);
     QCOMPARE(ai->supportsApplicationInterface(), true);
-    QCOMPARE(ai->capabilities(), QStringList { qSL("app1.cap") });
-    QVariantMap app1ogl { { qSL("desktopProfile"), qSL("core") }, { qSL("esMajorVersion"), 3 }, { qSL("esMinorVersion"), 2 }};
+    QCOMPARE(ai->capabilities(), QStringList { u"app1.cap"_s });
+    QVariantMap app1ogl { { u"desktopProfile"_s, u"core"_s }, { u"esMajorVersion"_s, 3 }, { u"esMinorVersion"_s, 2 }};
     QCOMPARE(ai->openGLConfiguration(), app1ogl);
-    QVariantMap app1prop { { qSL("custom.app1.key"), 42 } };
+    QVariantMap app1prop { { u"custom.app1.key"_s, 42 } };
     QCOMPARE(ai->applicationProperties(), app1prop);
-    QVariantMap app1dlt { { qSL("id"), qSL("app1.dlt.id") }, { qSL("description"), qSL("app1.dlt.desc") } };
+    QVariantMap app1dlt { { u"id"_s, u"app1.dlt.id"_s }, { u"description"_s, u"app1.dlt.desc"_s } };
     QCOMPARE(ai->dltConfiguration(), app1dlt);
 
     ai = pl.info()->applications().constLast();
 
-    QCOMPARE(ai->id(), qSL("full.app.2"));
-    QCOMPARE(ai->icon(), qSL("app2.png"));
-    QMap<QString, QString> app2names { { qL1S("en"), qL1S("app2.name.en") }, { qL1S("de"), qL1S("app2.name.de") } };
+    QCOMPARE(ai->id(), u"full.app.2"_s);
+    QCOMPARE(ai->icon(), u"app2.png"_s);
+    QMap<QString, QString> app2names { { u"en"_s, u"app2.name.en"_s }, { u"de"_s, u"app2.name.de"_s } };
     QCOMPARE(ai->names(), app2names);
-    QMap<QString, QString> app2descs { { qL1S("en"), qL1S("app2.desc.en") }, { qL1S("de"), qL1S("app2.desc.de") } };
+    QMap<QString, QString> app2descs { { u"en"_s, u"app2.desc.en"_s }, { u"de"_s, u"app2.desc.de"_s } };
     QCOMPARE(ai->descriptions(), app2descs);
-    QStringList app2cats { qL1S("app2.cat.1"), qL1S("app2.cat.2") };
+    QStringList app2cats { u"app2.cat.1"_s, u"app2.cat.2"_s };
     QCOMPARE(ai->categories(), app2cats);
-    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), qSL("app2.exe"));
-    QCOMPARE(ai->runtimeName(), qSL("native"));
+    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), u"app2.exe"_s);
+    QCOMPARE(ai->runtimeName(), u"native"_s);
     QCOMPARE(ai->runtimeParameters().size(), 2);
 
     IntentInfo *ii = pl.info()->intents().constFirst();
 
-    QCOMPARE(ii->id(), qSL("full.int.1"));
-    QCOMPARE(ii->icon(), qSL("int1.png"));
-    QMap<QString, QString> int1names { { qL1S("en"), qL1S("int1.name.en") }, { qL1S("de"), qL1S("int1.name.de") } };
+    QCOMPARE(ii->id(), u"full.int.1"_s);
+    QCOMPARE(ii->icon(), u"int1.png"_s);
+    QMap<QString, QString> int1names { { u"en"_s, u"int1.name.en"_s }, { u"de"_s, u"int1.name.de"_s } };
     QCOMPARE(ii->names(), int1names);
-    QMap<QString, QString> int1descs { { qL1S("en"), qL1S("int1.desc.en") }, { qL1S("de"), qL1S("int1.desc.de") } };
+    QMap<QString, QString> int1descs { { u"en"_s, u"int1.desc.en"_s }, { u"de"_s, u"int1.desc.de"_s } };
     QCOMPARE(ii->descriptions(), int1descs);
-    QStringList int1cats { qL1S("int1.cat.1"), qL1S("int1.cat.2") };
+    QStringList int1cats { u"int1.cat.1"_s, u"int1.cat.2"_s };
     QCOMPARE(ii->categories(), int1cats);
     QCOMPARE(ii->handlingApplicationId(), pl.info()->applications().constFirst()->id());
     QCOMPARE(ii->visibility(), IntentInfo::Private);
-    QStringList req1caps { qSL("int1.cap.1"), qSL("int1.cap.2") };
+    QStringList req1caps { u"int1.cap.1"_s, u"int1.cap.2"_s };
     QCOMPARE(ii->requiredCapabilities(), req1caps);
-    QVariantMap param1match { { qSL("mimeType"), qSL("^image/.*\\.png$") } };
+    QVariantMap param1match { { u"mimeType"_s, u"^image/.*\\.png$"_s } };
     QCOMPARE(ii->parameterMatch(), param1match);
 
     ii = pl.info()->intents().constLast();
 
-    QCOMPARE(ii->id(), qSL("full.int.2"));
-    QCOMPARE(ii->icon(), qSL("int2.png"));
-    QMap<QString, QString> int2names { { qL1S("en"), qL1S("int2.name.en") }, { qL1S("de"), qL1S("int2.name.de") } };
+    QCOMPARE(ii->id(), u"full.int.2"_s);
+    QCOMPARE(ii->icon(), u"int2.png"_s);
+    QMap<QString, QString> int2names { { u"en"_s, u"int2.name.en"_s }, { u"de"_s, u"int2.name.de"_s } };
     QCOMPARE(ii->names(), int2names);
-    QMap<QString, QString> int2descs { { qL1S("en"), qL1S("int2.desc.en") }, { qL1S("de"), qL1S("int2.desc.de") } };
+    QMap<QString, QString> int2descs { { u"en"_s, u"int2.desc.en"_s }, { u"de"_s, u"int2.desc.de"_s } };
     QCOMPARE(ii->descriptions(), int2descs);
-    QStringList int2cats { qL1S("int2.cat.1"), qL1S("int2.cat.2") };
+    QStringList int2cats { u"int2.cat.1"_s, u"int2.cat.2"_s };
     QCOMPARE(ii->categories(), int2cats);
     QCOMPARE(ii->handlingApplicationId(), pl.info()->applications().constLast()->id());
     QCOMPARE(ii->visibility(), IntentInfo::Public);
-    QStringList req2caps { qSL("int2.cap.1"), qSL("int2.cap.2") };
+    QStringList req2caps { u"int2.cap.1"_s, u"int2.cap.2"_s };
     QCOMPARE(ii->requiredCapabilities(), req2caps);
-    QVariantMap param2match { { qSL("test"), qSL("foo") } };
+    QVariantMap param2match { { u"test"_s, u"foo"_s } };
     QCOMPARE(ii->parameterMatch(), param2match);
 
     // now the QML interface
@@ -248,7 +251,7 @@ void tst_ApplicationInfo::minimal()
     QVERIFY2(pl.info(), qPrintable(pl.lastLoadFailure()));
 
     QCOMPARE(pl.info()->baseDir(), pl.dataDir().absoluteFilePath(pl.info()->id()));
-    QCOMPARE(pl.info()->id(), qL1S("minimal"));
+    QCOMPARE(pl.info()->id(), u"minimal"_s);
     QCOMPARE(pl.info()->icon(), QString { });
     QCOMPARE(pl.info()->version(), QString { });
     QMap<QString, QString> emptyMap;
@@ -260,13 +263,13 @@ void tst_ApplicationInfo::minimal()
 
     const ApplicationInfo *ai = pl.info()->applications().constFirst();
 
-    QCOMPARE(ai->id(), qSL("minimal.app"));
+    QCOMPARE(ai->id(), u"minimal.app"_s);
     QCOMPARE(ai->icon(), pl.info()->icon());
     QCOMPARE(ai->names(), pl.info()->names());
     QCOMPARE(ai->descriptions(), pl.info()->descriptions());
     QCOMPARE(ai->categories(), pl.info()->categories());
-    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), qSL("minimal.qml"));
-    QCOMPARE(ai->runtimeName(), qSL("qml"));
+    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), u"minimal.qml"_s);
+    QCOMPARE(ai->runtimeName(), u"qml"_s);
     QCOMPARE(ai->runtimeParameters().size(), 0);
 }
 
@@ -276,43 +279,43 @@ void tst_ApplicationInfo::inherit()
     QVERIFY2(pl.info(), qPrintable(pl.lastLoadFailure()));
 
     QCOMPARE(pl.info()->baseDir(), pl.dataDir().absoluteFilePath(pl.info()->id()));
-    QCOMPARE(pl.info()->id(), qL1S("inherit"));
-    QCOMPARE(pl.info()->icon(), qL1S("pkg.png"));
+    QCOMPARE(pl.info()->id(), u"inherit"_s);
+    QCOMPARE(pl.info()->icon(), u"pkg.png"_s);
     QCOMPARE(pl.info()->version(), QString { });
-    QMap<QString, QString> names { { qL1S("en"), qL1S("pkg.name.en") }, { qL1S("de"), qL1S("pkg.name.de") } };
+    QMap<QString, QString> names { { u"en"_s, u"pkg.name.en"_s }, { u"de"_s, u"pkg.name.de"_s } };
     QCOMPARE(pl.info()->names(), names);
-    QMap<QString, QString> descs { { qL1S("en"), qL1S("pkg.desc.en") }, { qL1S("de"), qL1S("pkg.desc.de") } };
+    QMap<QString, QString> descs { { u"en"_s, u"pkg.desc.en"_s }, { u"de"_s, u"pkg.desc.de"_s } };
     QCOMPARE(pl.info()->descriptions(), descs);
-    QStringList cats { qL1S("pkg.cat.1"), qL1S("pkg.cat.2") };
+    QStringList cats { u"pkg.cat.1"_s, u"pkg.cat.2"_s };
     QCOMPARE(pl.info()->categories(), cats);
     QCOMPARE(pl.info()->applications().size(), 2);
     QCOMPARE(pl.info()->intents().size(), 2);
 
     const ApplicationInfo *ai = pl.info()->applications().constFirst();
 
-    QCOMPARE(ai->id(), qSL("inherit.app.1"));
+    QCOMPARE(ai->id(), u"inherit.app.1"_s);
     QCOMPARE(ai->icon(), pl.info()->icon());
     QCOMPARE(ai->names(), pl.info()->names());
     QCOMPARE(ai->descriptions(), pl.info()->descriptions());
     QCOMPARE(ai->categories(), pl.info()->categories());
-    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), qSL("app1.qml"));
-    QCOMPARE(ai->runtimeName(), qSL("qml"));
+    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), u"app1.qml"_s);
+    QCOMPARE(ai->runtimeName(), u"qml"_s);
     QCOMPARE(ai->runtimeParameters().size(), 0);
 
     ai = pl.info()->applications().constLast();
 
-    QCOMPARE(ai->id(), qSL("inherit.app.2"));
+    QCOMPARE(ai->id(), u"inherit.app.2"_s);
     QCOMPARE(ai->icon(), pl.info()->icon());
     QCOMPARE(ai->names(), pl.info()->names());
     QCOMPARE(ai->descriptions(), pl.info()->descriptions());
     QCOMPARE(ai->categories(), pl.info()->categories());
-    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), qSL("app2.exe"));
-    QCOMPARE(ai->runtimeName(), qSL("native"));
+    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), u"app2.exe"_s);
+    QCOMPARE(ai->runtimeName(), u"native"_s);
     QCOMPARE(ai->runtimeParameters().size(), 0);
 
     IntentInfo *ii = pl.info()->intents().constFirst();
 
-    QCOMPARE(ii->id(), qSL("inherit.int.1"));
+    QCOMPARE(ii->id(), u"inherit.int.1"_s);
     QCOMPARE(ii->icon(), pl.info()->icon());
     QCOMPARE(ii->names(), pl.info()->names());
     QCOMPARE(ii->descriptions(), pl.info()->descriptions());
@@ -321,7 +324,7 @@ void tst_ApplicationInfo::inherit()
 
     ii = pl.info()->intents().constLast();
 
-    QCOMPARE(ii->id(), qSL("inherit.int.2"));
+    QCOMPARE(ii->id(), u"inherit.int.2"_s);
     QCOMPARE(ii->icon(), pl.info()->icon());
     QCOMPARE(ii->names(), pl.info()->names());
     QCOMPARE(ii->descriptions(), pl.info()->descriptions());
@@ -364,12 +367,12 @@ void tst_ApplicationInfo::legacy()
     QVERIFY2(pl.info(), qPrintable(pl.lastLoadFailure()));
 
     QCOMPARE(pl.info()->baseDir(), pl.dataDir().absoluteFilePath(pl.info()->id()));
-    QCOMPARE(pl.info()->id(), qL1S("legacy"));
-    QCOMPARE(pl.info()->icon(), qL1S("icon.png"));
-    QCOMPARE(pl.info()->version(), qL1S("v1"));
-    QMap<QString, QString> names { { qL1S("en"), qL1S("legacy.en") }, { qL1S("de"), qL1S("legacy.de") } };
+    QCOMPARE(pl.info()->id(), u"legacy"_s);
+    QCOMPARE(pl.info()->icon(), u"icon.png"_s);
+    QCOMPARE(pl.info()->version(), u"v1"_s);
+    QMap<QString, QString> names { { u"en"_s, u"legacy.en"_s }, { u"de"_s, u"legacy.de"_s } };
     QCOMPARE(pl.info()->names(), names);
-    QStringList cats { qL1S("bar"), qL1S("foo") };
+    QStringList cats { u"bar"_s, u"foo"_s };
     QVERIFY(pl.info()->descriptions().isEmpty());
     QCOMPARE(pl.info()->categories(), cats);
     QCOMPARE(pl.info()->applications().size(), 1);
@@ -382,14 +385,14 @@ void tst_ApplicationInfo::legacy()
     QCOMPARE(ai->names(), pl.info()->names());
     QVERIFY(ai->descriptions().isEmpty());
     QCOMPARE(ai->categories(), pl.info()->categories());
-    QStringList mimes { qL1S("text/plain"), qL1S("x-scheme-handler/mailto") };
+    QStringList mimes { u"text/plain"_s, u"x-scheme-handler/mailto"_s };
     QCOMPARE(ai->supportedMimeTypes(), mimes);
-    QStringList caps { qL1S("cameraAccess"), qL1S("locationAccess") };
+    QStringList caps { u"cameraAccess"_s, u"locationAccess"_s };
     QCOMPARE(ai->capabilities(), caps);
-    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), qSL("legacy.qml"));
-    QCOMPARE(ai->runtimeName(), qSL("qml"));
+    QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), u"legacy.qml"_s);
+    QCOMPARE(ai->runtimeName(), u"qml"_s);
     QCOMPARE(ai->runtimeParameters().size(), 1);
-    QCOMPARE(ai->runtimeParameters().value(qSL("loadDummyData")).toBool(), true);
+    QCOMPARE(ai->runtimeParameters().value(u"loadDummyData"_s).toBool(), true);
 }
 
 void tst_ApplicationInfo::validApplicationId_data()

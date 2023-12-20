@@ -9,7 +9,7 @@
 
 // sadly this has to be a define for QVERIFY2() to work
 #define QT_AM_CHECK_ERRORSTRING(_actual_errstr, _expected_errstr) do { \
-    if (_expected_errstr.startsWith(QLatin1String("~"))) { \
+    if (_expected_errstr.startsWith(u"~")) { \
         QRegularExpression re(_expected_errstr.mid(1)); \
         QVERIFY2(re.match(_actual_errstr).hasMatch(), \
                  QByteArray("\n    Got     : ") + _actual_errstr.toLocal8Bit() + \

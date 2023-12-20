@@ -17,6 +17,8 @@
 #include "dbuspolicy.h"
 #include "dbuscontextadaptor.h"
 
+using namespace Qt::StringLiterals;
+
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -69,16 +71,16 @@ bool DBusPolicy::add(const QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap 
         DBusPolicyEntry dbp;
 
         bool ok;
-        const QVariantList uidList = policy.value(qSL("uids")).toList();
+        const QVariantList uidList = policy.value(u"uids"_s).toList();
         for (const QVariant &v : uidList) {
             uint uid = v.toUInt(&ok);
             if (ok)
                 dbp.m_uids << uid;
         }
         std::sort(dbp.m_uids.begin(), dbp.m_uids.end());
-        dbp.m_executables = variantToStringList(policy.value(qSL("executables")));
+        dbp.m_executables = variantToStringList(policy.value(u"executables"_s));
         dbp.m_executables.sort();
-        dbp.m_capabilities = variantToStringList(policy.value(qSL("capabilities")));
+        dbp.m_capabilities = variantToStringList(policy.value(u"capabilities"_s));
         dbp.m_capabilities.sort();
 
         result.insert(func, dbp);
@@ -136,7 +138,7 @@ bool DBusPolicy::check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray
 #  if defined(Q_OS_LINUX)
             if (pid == uint(-1))
                 pid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
-            QString executable = QFileInfo(qSL("/proc/") + QString::number(pid) + qSL("/exe")).symLinkTarget();
+            QString executable = QFileInfo(u"/proc/"_s + QString::number(pid) + u"/exe"_s).symLinkTarget();
             if (executable.isEmpty())
                 throw "cannot get executable";
             if (std::binary_search(ip->m_executables.cbegin(), ip->m_executables.cend(), executable))
@@ -154,7 +156,7 @@ bool DBusPolicy::check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray
         return true;
 
     } catch (const char *msg) {
-        dbusContext->sendErrorReply(QDBusError::AccessDenied, QString::fromLatin1("Protected function call (%1)").arg(qL1S(msg)));
+        dbusContext->sendErrorReply(QDBusError::AccessDenied, u"Protected function call (%1)"_s.arg(QString::fromLatin1(msg)));
         return false;
     }
 #endif // !defined(Q_OS_UNIX)

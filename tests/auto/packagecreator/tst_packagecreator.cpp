@@ -13,6 +13,8 @@
 
 #include "../error-checking.h"
 
+using namespace Qt::StringLiterals;
+
 QT_USE_NAMESPACE_AM
 
 static int processTimeout = 3000;
@@ -40,7 +42,7 @@ private:
 };
 
 tst_PackageCreator::tst_PackageCreator()
-    : m_baseDir(qSL(AM_TESTDATA_DIR))
+    : m_baseDir(QString::fromLatin1(AM_TESTDATA_DIR))
 { }
 
 void tst_PackageCreator::initTestCase()
@@ -49,14 +51,14 @@ void tst_PackageCreator::initTestCase()
 
     // check if tar command is available at all
     QProcess tar;
-    tar.start(qSL("tar"), { qSL("--version") });
+    tar.start(u"tar"_s, { u"--version"_s });
     m_tarAvailable = tar.waitForStarted(processTimeout)
             && tar.waitForFinished(processTimeout)
             && (tar.exitStatus() == QProcess::NormalExit);
 
     m_isCygwin = tar.readAllStandardOutput().contains("Cygwin");
 
-    if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
+    if (!QDir(QString::fromLatin1(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 }
 
@@ -66,8 +68,8 @@ void tst_PackageCreator::createAndVerify_data()
     QTest::addColumn<bool>("expectedSuccess");
     QTest::addColumn<QString>("errorString");
 
-    QTest::newRow("basic") << QStringList { qSL("testfile") } << true << "";
-    QTest::newRow("no-such-file") << QStringList { qSL("tastfile") } << false << "~file not found: .*";
+    QTest::newRow("basic") << QStringList { u"testfile"_s } << true << "";
+    QTest::newRow("no-such-file") << QStringList { u"tastfile"_s } << false << "~file not found: .*";
 }
 
 void tst_PackageCreator::createAndVerify()
@@ -79,7 +81,7 @@ void tst_PackageCreator::createAndVerify()
     QTemporaryFile output;
     QVERIFY(output.open());
 
-    InstallationReport report(qSL("com.pelagicore.test"));
+    InstallationReport report(u"com.pelagicore.test"_s);
     report.addFiles(files);
 
     PackageCreator creator(m_baseDir, &output, report);
@@ -102,7 +104,7 @@ void tst_PackageCreator::createAndVerify()
         QSKIP("No tar command found in PATH - skipping the verification part of the test!");
 
     QProcess tar;
-    tar.start(qSL("tar"), { qSL("-tzf"), escapeFilename(output.fileName()) });
+    tar.start(u"tar"_s, { u"-tzf"_s, escapeFilename(output.fileName()) });
     QVERIFY2(tar.waitForStarted(processTimeout) &&
              tar.waitForFinished(processTimeout) &&
              (tar.exitStatus() == QProcess::NormalExit) &&
@@ -110,12 +112,12 @@ void tst_PackageCreator::createAndVerify()
 
     QStringList expectedContents = files;
     expectedContents.sort();
-    expectedContents.prepend(qSL("--PACKAGE-HEADER--"));
-    expectedContents.append(qSL("--PACKAGE-FOOTER--"));
+    expectedContents.prepend(u"--PACKAGE-HEADER--"_s);
+    expectedContents.append(u"--PACKAGE-FOOTER--"_s);
 
-    QStringList actualContents = QString::fromLocal8Bit(tar.readAllStandardOutput()).split(qL1C('\n'), Qt::SkipEmptyParts);
+    QStringList actualContents = QString::fromLocal8Bit(tar.readAllStandardOutput()).split(u'\n', Qt::SkipEmptyParts);
 #if defined(Q_OS_WIN)
-    actualContents.replaceInStrings(qSL("\r"), QString());
+    actualContents.replaceInStrings(u"\r"_s, QString());
 #endif
     QCOMPARE(actualContents, expectedContents);
 
@@ -126,7 +128,7 @@ void tst_PackageCreator::createAndVerify()
         QVERIFY2(src.open(QFile::ReadOnly), qPrintable(src.errorString()));
         QByteArray data = src.readAll();
 
-        tar.start(qSL("tar"), { qSL("-xzOf"), escapeFilename(output.fileName()), file });
+        tar.start(u"tar"_s, { u"-xzOf"_s, escapeFilename(output.fileName()), file });
         QVERIFY2(tar.waitForStarted(processTimeout) &&
                  tar.waitForFinished(processTimeout) &&
                  (tar.exitStatus() == QProcess::NormalExit) &&
@@ -142,7 +144,7 @@ QString tst_PackageCreator::escapeFilename(const QString &name)
         return name;
     } else {
         QString s = QFileInfo(name).absoluteFilePath();
-        QString t = qSL("/cygdrive/");
+        QString t = u"/cygdrive/"_s;
         t.append(s.at(0));
         return t + s.mid(2);
     }

@@ -7,6 +7,8 @@
 
 #include "architecture.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 
@@ -33,8 +35,8 @@ QString Architecture::identify(const QString &fileName)
         QString cpu;
 
         switch (cpuId & ~0x01000000u) {
-        case 0x07: cpu = qSL("x86"); break;
-        case 0x0c: cpu = qSL("arm"); break;
+        case 0x07: cpu = u"x86"_s; break;
+        case 0x0c: cpu = u"arm"_s; break;
         }
         if (!cpu.isEmpty())
             return cpu + u'_' + QString::number(bits);
@@ -58,14 +60,14 @@ QString Architecture::identify(const QString &fileName)
                             QString cpu;
 
                             switch (qFromLittleEndian<quint16>(peHeader.constData() + 4)) {
-                            case 0x014c: bits = 32; cpu = qSL("x86"); break;
-                            case 0x8664: bits = 64; cpu = qSL("x86"); break;
-                            case 0xaa64: bits = 64; cpu = qSL("arm"); break;
+                            case 0x014c: bits = 32; cpu = u"x86"_s; break;
+                            case 0x8664: bits = 64; cpu = u"x86"_s; break;
+                            case 0xaa64: bits = 64; cpu = u"arm"_s; break;
                             }
                             if (!cpu.isEmpty())
-                                arch = qSL("windows_") + cpu + u'_' + QString::number(bits);
+                                arch = u"windows_"_s + cpu + u'_' + QString::number(bits);
                             else
-                                arch = qSL("windows_unknown");
+                                arch = u"windows_unknown"_s;
                         }
                     }
                 }
@@ -76,7 +78,7 @@ QString Architecture::identify(const QString &fileName)
                 const int endianness = (elfHeader[5 /*EI_DATA*/] == 2) ? Q_BIG_ENDIAN : Q_LITTLE_ENDIAN;
                 if ((elfHeader[6 /*EI_VERSION*/] == 1)
                         && ((elfHeader[7 /*EI_OSABI*/] == 0) || (elfHeader[7 /*EI_OSABI*/] == 3))) {
-                    QString os = qSL("linux");
+                    QString os = u"linux"_s;
 
                     auto elfValue = [endianness, bits](const QByteArray &data, qsizetype baseOff,
                                                       qsizetype size32, qsizetype off32,
@@ -116,7 +118,7 @@ QString Architecture::identify(const QString &fileName)
 
                                         if ((type == 0x07 /*SHT_NOTE*/) && (name < strings.size())
                                                 && QByteArray(strings.constData() + name).startsWith(".note.android")) {
-                                            os = qSL("android");
+                                            os = u"android"_s;
                                             break;
                                         }
                                     }
@@ -129,16 +131,16 @@ QString Architecture::identify(const QString &fileName)
 
                     switch (elfValue(elfHeader, 0, 2, 0x12, 2, 0x12)) {
                     case 0x03:
-                    case 0x3e: cpu = qSL("x86"); break;
+                    case 0x3e: cpu = u"x86"_s; break;
                     case 0x28:
-                    case 0xb7: cpu = qSL("arm"); break;
+                    case 0xb7: cpu = u"arm"_s; break;
                     }
                     if (!cpu.isEmpty())
                         arch = os + u'_' + cpu + u'_' + QString::number(bits);
                     else
-                        arch = os + qSL("_unknown");
+                        arch = os + u"_unknown"_s;
                     if (endianness == Q_BIG_ENDIAN)
-                        arch = arch + qSL("_be");
+                        arch = arch + u"_be"_s;
                 }
             }
         } else if (magic == machoMagic) {
@@ -146,9 +148,9 @@ QString Architecture::identify(const QString &fileName)
             if (machoHeader.size() == 8) {
                 const quint32 cpuId = qFromLittleEndian<quint32>(machoHeader.constData() + 4);
                 if (const QString s = machoCpuAndBits(cpuId); !s.isEmpty())
-                    arch = qSL("macos_") + s;
+                    arch = u"macos_"_s + s;
                 else
-                    arch = qSL("macos_unknown");
+                    arch = u"macos_unknown"_s;
             }
         } else if (magic == machoUniversalMagic) {
             const QByteArray machoUniversalHeader = f.read(8);
@@ -167,9 +169,9 @@ QString Architecture::identify(const QString &fileName)
                     }
                     if (!cpuAndBits.isEmpty()) {
                         cpuAndBits.sort();
-                        arch = qSL("macos_universal_") + cpuAndBits.join(u'+');
+                        arch = u"macos_universal_"_s + cpuAndBits.join(u'+');
                     } else {
-                        arch = qSL("macos_universal_unknown");
+                        arch = u"macos_universal_unknown"_s;
                     }
                 }
             }

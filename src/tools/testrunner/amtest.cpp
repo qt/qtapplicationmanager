@@ -12,6 +12,8 @@
 #include "amtest.h"
 #include "utilities.h"
 
+using namespace Qt::StringLiterals;
+
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -41,7 +43,7 @@ QVariant AmTest::buildConfig() const
 
 QString AmTest::qtVersion() const
 {
-    return QLatin1String(QT_VERSION_STR);
+    return QString::fromLatin1(QT_VERSION_STR);
 }
 
 static QtMsgType convertMsgType(AmTest::MsgType type)
@@ -94,31 +96,31 @@ bool AmTest::dirExists(const QString &dir)
 QVariantMap AmTest::runProgram(const QStringList &commandLine)
 {
     QVariantMap result {
-        { qSL("stdout"), QString() },
-        { qSL("stderr"), QString() },
-        { qSL("exitCode"), -1 },
-        { qSL("error"), QString() },
+        { u"stdout"_s, QString() },
+        { u"stderr"_s, QString() },
+        { u"exitCode"_s, -1 },
+        { u"error"_s, QString() },
     };
 
     if (commandLine.isEmpty()) {
-        result[qSL("error")] = qL1S("no command");
+        result[u"error"_s] = u"no command"_s;
     } else {
 #if QT_CONFIG(process)
         QProcess process;
         process.start(commandLine[0], commandLine.mid(1));
         if (!process.waitForStarted(5000 * timeoutFactor())) {
-            result[qSL("error")] = qL1S("could not start process");
+            result[u"error"_s] = u"could not start process"_s;
         } else {
             if (!process.waitForFinished(5000 * timeoutFactor()))
-                result[qSL("error")] = qL1S("process did not exit");
+                result[u"error"_s] = u"process did not exit"_s;
             else
-                result[qSL("exitCode")] = process.exitCode();
+                result[u"exitCode"_s] = process.exitCode();
 
-            result[qSL("stdout")] = QString::fromLocal8Bit(process.readAllStandardOutput());
-            result[qSL("stderr")] = QString::fromLocal8Bit(process.readAllStandardError());
+            result[u"stdout"_s] = QString::fromLocal8Bit(process.readAllStandardOutput());
+            result[u"stderr"_s] = QString::fromLocal8Bit(process.readAllStandardError());
         }
 #else
-        result[qSL("error")] = qL1S("runProgram is not available in this build");
+        result[u"error"_s] = u"runProgram is not available in this build"_s;
 #endif
     }
     return result;

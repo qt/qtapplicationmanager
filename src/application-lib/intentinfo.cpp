@@ -9,6 +9,8 @@
 
 #include <memory>
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 
@@ -76,7 +78,7 @@ void IntentInfo::writeToDataStream(QDataStream &ds) const
     //NOTE: increment dataStreamVersion() above, if you make any changes here
 
     ds << m_id
-       << (m_visibility == Public ? qSL("public") : qSL("private"))
+       << (m_visibility == Public ? u"public"_s : u"private"_s)
        << m_requiredCapabilities
        << m_parameterMatch
        << m_handlingApplicationId
@@ -105,7 +107,7 @@ IntentInfo *IntentInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
        >> intent->m_icon
        >> intent->m_handleOnlyWhenRunning;
 
-    intent->m_visibility = (visibilityStr == qSL("public")) ? Public : Private;
+    intent->m_visibility = (visibilityStr == u"public") ? Public : Private;
     intent->m_categories.sort();
 
     return intent.release();

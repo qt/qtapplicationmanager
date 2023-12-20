@@ -18,6 +18,8 @@
 #include <memory>
 #include <cstdlib>
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 // the templated adaptor class needed to instantiate ConfigCache<PackageInfo> in parse() below
@@ -106,7 +108,7 @@ QStringList PackageDatabase::findManifestsInDir(const QDir &manifestDir, bool sc
     for (const QString &pkgDirName : pkgDirNames) {
         try {
             // ignore left-overs from the installer
-            if (pkgDirName.endsWith(qL1C('+')) || pkgDirName.endsWith(qL1C('-')))
+            if (pkgDirName.endsWith(u'+') || pkgDirName.endsWith(u'-'))
                 continue;
 
             // ignore filesystem problems
@@ -119,12 +121,12 @@ QStringList PackageDatabase::findManifestsInDir(const QDir &manifestDir, bool sc
             if (!PackageInfo::isValidApplicationId(pkgDirName, &pkgIdError))
                 throw Exception("not a valid package-id: %1").arg(pkgIdError);
 
-            if (!pkgDir.exists(qSL("info.yaml")))
+            if (!pkgDir.exists(u"info.yaml"_s))
                 throw Exception("couldn't find an info.yaml manifest");
-            if (!scanningBuiltInApps && !pkgDir.exists(qSL(".installation-report.yaml")))
+            if (!scanningBuiltInApps && !pkgDir.exists(u".installation-report.yaml"_s))
                 throw Exception("found a non-built-in package without an installation report");
 
-            QString manifestPath = pkgDir.absoluteFilePath(qSL("info.yaml"));
+            QString manifestPath = pkgDir.absoluteFilePath(u"info.yaml"_s);
             files << manifestPath;
 
         } catch (const Exception &e) {
@@ -159,7 +161,7 @@ void PackageDatabase::parse(PackageLocations packageLocations)
             for (const QString &dir : m_builtInPackagesDirs)
                 manifestFiles << findManifestsInDir(dir, true);
 
-            ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb-builtin"), { 'P','K','G','B' },
+            ConfigCache<PackageInfo> cache(manifestFiles, u"appdb-builtin"_s, { 'P','K','G','B' },
                                            PackageInfo::dataStreamVersion(), cacheOptions);
             cache.parse();
 
@@ -245,7 +247,7 @@ void PackageDatabase::parseInstalled()
     if (!m_loadFromCache && !m_saveToCache)
         cacheOptions |= AbstractConfigCache::NoCache;
 
-    ConfigCache<PackageInfo> cache(manifestFiles, qSL("appdb-installed"), { 'P','K','G','I' },
+    ConfigCache<PackageInfo> cache(manifestFiles, u"appdb-installed"_s, { 'P','K','G','I' },
                                    PackageInfo::dataStreamVersion(), cacheOptions);
     cache.parse();
 
@@ -268,7 +270,7 @@ void PackageDatabase::parseInstalled()
                     .arg(pkg->id(), pkgDir.path());
             }
 
-            QFile f(pkgDir.absoluteFilePath(qSL(".installation-report.yaml")));
+            QFile f(pkgDir.absoluteFilePath(u".installation-report.yaml"_s));
             if (!f.open(QFile::ReadOnly))
                 throw Exception(f, "failed to open the installation report");
 

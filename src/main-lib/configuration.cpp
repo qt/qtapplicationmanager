@@ -34,24 +34,26 @@
 #include "configuration.h"
 #include "configuration_p.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 
 template<> bool Configuration::value(const char *clname, const bool &cfvalue) const
 {
-    return (clname && m_clp.isSet(qL1S(clname))) || cfvalue;
+    return (clname && m_clp.isSet(QString::fromLatin1(clname))) || cfvalue;
 }
 
 template<> QString Configuration::value(const char *clname, const QString &cfvalue) const
 {
-    return (clname && m_clp.isSet(qL1S(clname))) ? m_clp.value(qL1S(clname)) : cfvalue;
+    return (clname && m_clp.isSet(QString::fromLatin1(clname))) ? m_clp.value(QString::fromLatin1(clname)) : cfvalue;
 }
 
 template<> QStringList Configuration::value(const char *clname, const QStringList &cfvalue) const
 {
     QStringList result;
     if (clname)
-        result = m_clp.values(qL1S(clname));
+        result = m_clp.values(QString::fromLatin1(clname));
     if (!cfvalue.isEmpty())
         result += cfvalue;
     return result;
@@ -87,7 +89,7 @@ public:
 
 Configuration::Configuration(const char *additionalDescription,
                              bool onlyOnePositionalArgument)
-    : Configuration(QStringList(), qSL(":/build-config.yaml"),
+    : Configuration(QStringList(), u":/build-config.yaml"_s,
                     additionalDescription, onlyOnePositionalArgument)
 { }
 
@@ -123,62 +125,62 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
         "                         this, if the application manager's crash handler is\n"
         "                         interfering with other debugging tools you are using.\n";
 
-    m_clp.setApplicationDescription(qSL("\n") + QCoreApplication::applicationName() + qSL("\n\n")
-                                    + (additionalDescription ? (qL1S(additionalDescription) + qSL("\n\n")) : QString())
-                                    + qL1S(description));
+    m_clp.setApplicationDescription(u"\n"_s + QCoreApplication::applicationName() + u"\n\n"_s
+                                    + (additionalDescription ? (QString::fromLatin1(additionalDescription) + u"\n\n"_s) : QString())
+                                    + QString::fromLatin1(description));
 
-    m_clp.addOption({ { qSL("h"), qSL("help")
+    m_clp.addOption({ { u"h"_s, u"help"_s
 #if defined(Q_OS_WINDOWS)
-                        , qSL("?")
+                        , u"?"_s
 #endif
-                      },                           qSL("Displays this help.") });
-    m_clp.addOption({ qSL("version"),              qSL("Displays version information.") });
-    QCommandLineOption cf { { qSL("c"), qSL("config-file") },
-                                                   qSL("Load configuration from file (can be given multiple times)."), qSL("files") };
+                      },                         u"Displays this help."_s });
+    m_clp.addOption({ u"version"_s,              u"Displays version information."_s });
+    QCommandLineOption cf { { u"c"_s, u"config-file"_s },
+                                                 u"Load configuration from file (can be given multiple times)."_s, u"files"_s };
     cf.setDefaultValues(m_defaultConfigFilePaths);
     m_clp.addOption(cf);
-    m_clp.addOption({ { qSL("o"), qSL("option") }, qSL("Override a specific config option."), qSL("yaml-snippet") });
-    m_clp.addOption({ { qSL("no-cache"), qSL("no-config-cache") },
-                                                   qSL("Disable the use of the config and appdb file cache.") });
-    m_clp.addOption({ { qSL("clear-cache"), qSL("clear-config-cache") },
-                                                   qSL("Ignore an existing config and appdb file cache.") });
-    m_clp.addOption({ { qSL("r"), qSL("recreate-database") },
-                                                   qSL("Backwards compatibility: synonyms for --clear-cache.") });
+    m_clp.addOption({ { u"o"_s, u"option"_s },   u"Override a specific config option."_s, u"yaml-snippet"_s });
+    m_clp.addOption({ { u"no-cache"_s, u"no-config-cache"_s },
+                                                 u"Disable the use of the config and appdb file cache."_s });
+    m_clp.addOption({ { u"clear-cache"_s, u"clear-config-cache"_s },
+                                                 u"Ignore an existing config and appdb file cache."_s });
+    m_clp.addOption({ { u"r"_s, u"recreate-database"_s },
+                                                 u"Backwards compatibility: synonyms for --clear-cache."_s });
     if (!buildConfigFilePath.isEmpty())
-        m_clp.addOption({ qSL("build-config"),     qSL("Dumps the build configuration and exits.") });
+        m_clp.addOption({ u"build-config"_s,     u"Dumps the build configuration and exits."_s });
 
-    m_clp.addPositionalArgument(qSL("qml-file"),   qSL("The main QML file."));
-    m_clp.addOption({ qSL("log-instant"),          qSL("Log instantly at start-up, neglect logging configuration.") });
-    m_clp.addOption({ qSL("database"),             qSL("Deprecated (ignored)."), qSL("file") });
-    m_clp.addOption({ qSL("builtin-apps-manifest-dir"), qSL("Base directory for built-in application manifests."), qSL("dir") });
-    m_clp.addOption({ qSL("installation-dir"),     qSL("Base directory for package installations."), qSL("dir") });
-    m_clp.addOption({ qSL("document-dir"),         qSL("Base directory for per-package document directories."), qSL("dir") });
-    m_clp.addOption({ qSL("installed-apps-manifest-dir"), qSL("Deprecated (ignored)."), qSL("dir") });
-    m_clp.addOption({ qSL("app-image-mount-dir"),  qSL("Deprecated (ignored)."), qSL("dir") });
-    m_clp.addOption({ qSL("disable-installer"),    qSL("Disable the application installer sub-system.") });
-    m_clp.addOption({ qSL("disable-intents"),      qSL("Disable the intents sub-system.") });
-    m_clp.addOption({ qSL("dbus"),                 qSL("Register on the specified D-Bus."), qSL("<bus>|system|session|none|auto"), qSL("auto") });
-    m_clp.addOption({ qSL("fullscreen"),           qSL("Display in full-screen.") });
-    m_clp.addOption({ qSL("no-fullscreen"),        qSL("Do not display in full-screen.") });
-    m_clp.addOption({ qSL("I"),                    qSL("Additional QML import path."), qSL("dir") });
-    m_clp.addOption({ { qSL("v"), qSL("verbose") }, qSL("Verbose output.") });
-    m_clp.addOption({ qSL("slow-animations"),      qSL("Run all animations in slow motion.") });
-    m_clp.addOption({ qSL("load-dummydata"),       qSL("Deprecated. Loads QML dummy-data.") });
-    m_clp.addOption({ qSL("no-security"),          qSL("Disables all security related checks (dev only!)") });
-    m_clp.addOption({ qSL("development-mode"),     qSL("Enable development mode, allowing installation of dev-signed packages.") });
-    m_clp.addOption({ qSL("no-ui-watchdog"),       qSL("Disables detecting hung UI applications (e.g. via Wayland's ping/pong).") });
-    m_clp.addOption({ qSL("no-dlt-logging"),       qSL("Disables logging using automotive DLT.") });
-    m_clp.addOption({ qSL("force-single-process"), qSL("Forces single-process mode even on a wayland enabled build.") });
-    m_clp.addOption({ qSL("force-multi-process"),  qSL("Forces multi-process mode. Will exit immediately if this is not possible.") });
-    m_clp.addOption({ qSL("wayland-socket-name"),  qSL("Use this file name to create the wayland socket."), qSL("socket") });
-    m_clp.addOption({ qSL("single-app"),           qSL("Runs a single application only (ignores the database)"), qSL("info.yaml file") }); // rename single-package
-    m_clp.addOption({ qSL("logging-rule"),         qSL("Adds a standard Qt logging rule."), qSL("rule") });
-    m_clp.addOption({ qSL("qml-debug"),            qSL("Enables QML debugging and profiling.") });
-    m_clp.addOption({ qSL("enable-touch-emulation"), qSL("Deprecated (ignored).") });
-    m_clp.addOption({ qSL("instance-id"),          qSL("Use this id to distinguish between multiple instances."), qSL("id") });
+    m_clp.addPositionalArgument(u"qml-file"_s,   u"The main QML file."_s);
+    m_clp.addOption({ u"log-instant"_s,          u"Log instantly at start-up, neglect logging configuration."_s });
+    m_clp.addOption({ u"database"_s,             u"Deprecated (ignored)."_s, u"file"_s });
+    m_clp.addOption({ u"builtin-apps-manifest-dir"_s, u"Base directory for built-in application manifests."_s, u"dir"_s });
+    m_clp.addOption({ u"installation-dir"_s,     u"Base directory for package installations."_s, u"dir"_s });
+    m_clp.addOption({ u"document-dir"_s,         u"Base directory for per-package document directories."_s, u"dir"_s });
+    m_clp.addOption({ u"installed-apps-manifest-dir"_s, u"Deprecated (ignored)."_s, u"dir"_s });
+    m_clp.addOption({ u"app-image-mount-dir"_s,  u"Deprecated (ignored)."_s, u"dir"_s });
+    m_clp.addOption({ u"disable-installer"_s,    u"Disable the application installer sub-system."_s });
+    m_clp.addOption({ u"disable-intents"_s,      u"Disable the intents sub-system."_s });
+    m_clp.addOption({ u"dbus"_s,                 u"Register on the specified D-Bus."_s, u"<bus>|system|session|none|auto"_s, u"auto"_s });
+    m_clp.addOption({ u"fullscreen"_s,           u"Display in full-screen."_s });
+    m_clp.addOption({ u"no-fullscreen"_s,        u"Do not display in full-screen."_s });
+    m_clp.addOption({ u"I"_s,                    u"Additional QML import path."_s, u"dir"_s });
+    m_clp.addOption({ { u"v"_s, u"verbose"_s }, u"Verbose output."_s });
+    m_clp.addOption({ u"slow-animations"_s,      u"Run all animations in slow motion."_s });
+    m_clp.addOption({ u"load-dummydata"_s,       u"Deprecated. Loads QML dummy-data."_s });
+    m_clp.addOption({ u"no-security"_s,          u"Disables all security related checks (dev only!)"_s });
+    m_clp.addOption({ u"development-mode"_s,     u"Enable development mode, allowing installation of dev-signed packages."_s });
+    m_clp.addOption({ u"no-ui-watchdog"_s,       u"Disables detecting hung UI applications (e.g. via Wayland's ping/pong)."_s });
+    m_clp.addOption({ u"no-dlt-logging"_s,       u"Disables logging using automotive DLT."_s });
+    m_clp.addOption({ u"force-single-process"_s, u"Forces single-process mode even on a wayland enabled build."_s });
+    m_clp.addOption({ u"force-multi-process"_s,  u"Forces multi-process mode. Will exit immediately if this is not possible."_s });
+    m_clp.addOption({ u"wayland-socket-name"_s,  u"Use this file name to create the wayland socket."_s, u"socket"_s });
+    m_clp.addOption({ u"single-app"_s,           u"Runs a single application only (ignores the database)"_s, u"info.yaml file"_s }); // rename single-package
+    m_clp.addOption({ u"logging-rule"_s,         u"Adds a standard Qt logging rule."_s, u"rule"_s });
+    m_clp.addOption({ u"qml-debug"_s,            u"Enables QML debugging and profiling."_s });
+    m_clp.addOption({ u"enable-touch-emulation"_s, u"Deprecated (ignored)."_s });
+    m_clp.addOption({ u"instance-id"_s,          u"Use this id to distinguish between multiple instances."_s, u"id"_s });
 
     { // qmltestrunner specific, necessary for CI blacklisting
-        QCommandLineOption qtrsf { qSL("qmltestrunner-source-file"), qSL("appman-qmltestrunner only: set the source file path of the test."), qSL("file") };
+        QCommandLineOption qtrsf { u"qmltestrunner-source-file"_s, u"appman-qmltestrunner only: set the source file path of the test."_s, u"file"_s };
         qtrsf.setFlags(QCommandLineOption::HiddenFromHelp);
         m_clp.addOption(qtrsf);
     }
@@ -204,13 +206,13 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     if (!m_clp.parse(arguments))
         throw Exception(m_clp.errorText());
 
-    if (m_clp.isSet(qSL("version")))
+    if (m_clp.isSet(u"version"_s))
         m_clp.showVersion();
 
-    if (m_clp.isSet(qSL("help")))
+    if (m_clp.isSet(u"help"_s))
         m_clp.showHelp();
 
-    if (!m_buildConfigFilePath.isEmpty() && m_clp.isSet(qSL("build-config"))) {
+    if (!m_buildConfigFilePath.isEmpty() && m_clp.isSet(u"build-config"_s)) {
         QFile f(m_buildConfigFilePath);
         if (f.open(QFile::ReadOnly)) {
             ::fprintf(stdout, "%s\n", f.readAll().constData());
@@ -220,8 +222,8 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         }
     }
 
-    if (m_clp.isSet(qSL("instance-id"))) {
-        auto id = m_clp.value(qSL("instance-id"));
+    if (m_clp.isSet(u"instance-id"_s)) {
+        auto id = m_clp.value(u"instance-id"_s);
         try {
             validateIdForFilesystemUsage(id);
         } catch (const Exception &e) {
@@ -234,12 +236,12 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     timer.start();
 #endif
 
-    const QStringList rawConfigFilePaths = m_clp.values(qSL("config-file"));
+    const QStringList rawConfigFilePaths = m_clp.values(u"config-file"_s);
     QStringList configFilePaths;
     configFilePaths.reserve(rawConfigFilePaths.size());
     for (const auto &path : rawConfigFilePaths) {
         if (QFileInfo(path).isDir()) {
-            const auto entries = QDir(path).entryInfoList({ qSL("*.yaml") }, QDir::Files, QDir::Name);
+            const auto entries = QDir(path).entryInfoList({ u"*.yaml"_s }, QDir::Files, QDir::Name);
             for (const auto &entry : entries)
                 configFilePaths << entry.filePath();
         } else {
@@ -256,7 +258,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     if (configFilePaths.isEmpty()) {
         m_data.reset(new ConfigurationData());
     } else {
-        ConfigCache<ConfigurationData> cache(configFilePaths, qSL("config"), { 'C','F','G','D' },
+        ConfigCache<ConfigurationData> cache(configFilePaths, u"config"_s, { 'C','F','G','D' },
                                              ConfigurationData::dataStreamVersion(), cacheOptions);
 
         cache.parse();
@@ -265,14 +267,14 @@ void Configuration::parseWithArguments(const QStringList &arguments)
             m_data.reset(new ConfigurationData());
     }
 
-    const QStringList options = m_clp.values(qSL("o"));
+    const QStringList options = m_clp.values(u"o"_s);
     for (const QString &option : options) {
         QByteArray yaml("formatVersion: 1\nformatType: am-configuration\n---\n");
         yaml.append(option.toUtf8());
         QBuffer buffer(&yaml);
         buffer.open(QIODevice::ReadOnly);
         try {
-            ConfigurationData *cd = ConfigCacheAdaptor<ConfigurationData>::loadFromSource(&buffer, qSL("command line"));
+            ConfigurationData *cd = ConfigCacheAdaptor<ConfigurationData>::loadFromSource(&buffer, u"command line"_s);
             if (cd) {
                 ConfigCacheAdaptor<ConfigurationData>::merge(m_data.get(), cd);
                 delete cd;
@@ -295,10 +297,10 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 
         for (const auto &iloc : ilocs) {
             QVariantMap map = iloc.toMap();
-            QString id = map.value(qSL("id")).toString();
-            if (id == qSL("internal-0")) {
-                m_installationDir = map.value(qSL("installationPath")).toString();
-                m_documentDir = map.value(qSL("documentPath")).toString();
+            QString id = map.value(u"id"_s).toString();
+            if (id == u"internal-0") {
+                m_installationDir = map.value(u"installationPath"_s).toString();
+                m_documentDir = map.value(u"documentPath"_s).toString();
                 qCWarning(LogDeployment) << " * still using installation location \"internal-0\" for backward "
                                             "compatibility";
             } else {
@@ -597,7 +599,7 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
     try {
         YamlParser p(source->readAll(), fileName);
         auto header = p.parseHeader();
-        if (!(header.first == qL1S("am-configuration") && header.second == 1))
+        if (!(header.first == u"am-configuration" && header.second == 1))
             throw Exception("Unsupported format type and/or version");
         p.nextDocument();
 
@@ -619,13 +621,13 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
               } },
             { "runtimes", false, YamlParser::Map, [&cd](YamlParser *p) {
                   cd->runtimes.configurations = p->parseMap();
-                  QVariant additionalLaunchers = cd->runtimes.configurations.take(qSL("additionalLaunchers"));
+                  QVariant additionalLaunchers = cd->runtimes.configurations.take(u"additionalLaunchers"_s);
                   cd->runtimes.additionalLaunchers = variantToStringList(additionalLaunchers);
               } },
             { "containers", false, YamlParser::Map, [&cd](YamlParser *p) {
                   cd->containers.configurations = p->parseMap();
 
-                  QVariant containerSelection = cd->containers.configurations.take(qSL("selection"));
+                  QVariant containerSelection = cd->containers.configurations.take(u"selection"_s);
 
 
                   QList<QPair<QString, QString>> config;
@@ -636,7 +638,7 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                       containerSelection = QVariantList { containerSelection };
 
                   if (containerSelection.metaType() == QMetaType::fromType<QString>()) {
-                      config.append(qMakePair(qSL("*"), containerSelection.toString()));
+                      config.append(qMakePair(u"*"_s, containerSelection.toString()));
                   } else if (containerSelection.metaType() == QMetaType::fromType<QVariantList>()) {
                       QVariantList list = containerSelection.toList();
                       for (const QVariant &v : list) {
@@ -682,7 +684,7 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                                       cd->logging.dlt.description = p->parseScalar().toString(); } },
                                 { "longMessageBehavior", false, YamlParser::Scalar, [&cd](YamlParser *p) {
                                       static const QStringList validValues {
-                                          qL1S("split"), qL1S("truncate"), qL1S("pass")
+                                          u"split"_s, u"truncate"_s, u"pass"_s
                                       };
                                       QString s = p->parseScalar().toString().trimmed();
                                       if (!s.isEmpty() && !validValues.contains(s)) {
@@ -709,7 +711,7 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                             //  - a "<container-id>": mapping -> you can map to
                             //    - just a number -> the same count for any runtime in these containers
                             //    - a "<runtime-id>": mapping -> a specific count for this container/runtime combo
-                            static const QString anyId = qSL("*");
+                            static const QString anyId = u"*"_s;
 
                             if (p->isScalar()) {
                                 bool ok;
@@ -779,11 +781,11 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                       { "opengl", false, YamlParser::Map, [&cd](YamlParser *p) {
                             p->parseFields({
                                 { "desktopProfile", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->ui.opengl.insert(qSL("desktopProfile"), p->parseScalar().toString()); } },
+                                      cd->ui.opengl.insert(u"desktopProfile"_s, p->parseScalar().toString()); } },
                                 { "esMajorVersion", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->ui.opengl.insert(qSL("esMajorVersion"), p->parseScalar().toInt()); } },
+                                      cd->ui.opengl.insert(u"esMajorVersion"_s, p->parseScalar().toInt()); } },
                                 { "esMinorVersion", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->ui.opengl.insert(qSL("esMinorVersion"), p->parseScalar().toInt()); } }
+                                      cd->ui.opengl.insert(u"esMinorVersion"_s, p->parseScalar().toInt()); } }
                             });
                         } },
                   }); } },
@@ -833,13 +835,13 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                                 QVariantMap wes;
                                 p->parseFields({
                                     { "path", true, YamlParser::Scalar, [&wes](YamlParser *p) {
-                                          wes.insert(qSL("path"), p->parseScalar().toString()); } },
+                                          wes.insert(u"path"_s, p->parseScalar().toString()); } },
                                     { "permissions", false, YamlParser::Scalar, [&wes](YamlParser *p) {
-                                          wes.insert(qSL("permissions"), p->parseScalar().toInt()); } },
+                                          wes.insert(u"permissions"_s, p->parseScalar().toInt()); } },
                                     { "userId", false, YamlParser::Scalar, [&wes](YamlParser *p) {
-                                          wes.insert(qSL("userId"), p->parseScalar().toInt()); } },
+                                          wes.insert(u"userId"_s, p->parseScalar().toInt()); } },
                                     { "groupId", false, YamlParser::Scalar, [&wes](YamlParser *p) {
-                                          wes.insert(qSL("groupId"), p->parseScalar().toInt()); } }
+                                          wes.insert(u"groupId"_s, p->parseScalar().toInt()); } }
                                 });
                                 cd->wayland.extraSockets.append(wes);
                             }); } }
@@ -870,11 +872,11 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                       const QString &ifaceName = it.key();
                       const QVariantMap &ifaceData = it.value().toMap();
 
-                      auto rit = ifaceData.constFind(qSL("register"));
+                      auto rit = ifaceData.constFind(u"register"_s);
                       if (rit != ifaceData.cend())
                           cd->dbus.registrations.insert(ifaceName, rit->toString());
 
-                      auto pit = ifaceData.constFind(qSL("policy"));
+                      auto pit = ifaceData.constFind(u"policy"_s);
                       if (pit != ifaceData.cend())
                           cd->dbus.policies.insert(ifaceName, pit->toMap());
                   }
@@ -885,7 +887,7 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
         return cd.release();
     } catch (const Exception &e) {
         throw Exception(e.errorCode(), "Failed to parse config file %1: %2")
-                .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : qSL("<stream>"), e.errorString());
+                .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : u"<stream>"_s, e.errorString());
     }
 }
 
@@ -1162,17 +1164,17 @@ QVariantMap Configuration::runtimeConfigurations() const
 
 QVariantMap Configuration::dbusPolicy(const char *interfaceName) const
 {
-    return m_data->dbus.policies.value(qL1S(interfaceName)).toMap();
+    return m_data->dbus.policies.value(QString::fromLatin1(interfaceName)).toMap();
 }
 
 QString Configuration::dbusRegistration(const char *interfaceName) const
 {
-    auto hasConfig = m_data->dbus.registrations.constFind(qL1S(interfaceName));
+    auto hasConfig = m_data->dbus.registrations.constFind(QString::fromLatin1(interfaceName));
 
     if (hasConfig != m_data->dbus.registrations.cend())
         return hasConfig->toString();
     else
-        return m_clp.value(qSL("dbus"));
+        return m_clp.value(u"dbus"_s);
 }
 
 QVariantMap Configuration::rawSystemProperties() const
@@ -1202,7 +1204,7 @@ int Configuration::quickLaunchFailedStartLimitIntervalSec() const
 
 QString Configuration::waylandSocketName() const
 {
-    QString socketName = m_clp.value(qSL("wayland-socket-name")); // get the default value
+    QString socketName = m_clp.value(u"wayland-socket-name"_s); // get the default value
     if (!socketName.isEmpty())
         return socketName;
 
@@ -1211,9 +1213,9 @@ QString Configuration::waylandSocketName() const
 
 #if defined(Q_OS_LINUX)
     // modelled after wl_socket_lock() in wayland_server.c
-    const QString xdgDir = qEnvironmentVariable("XDG_RUNTIME_DIR") + qSL("/");
-    const QString pattern = qSL("qtam-wayland-%1");
-    const QString lockSuffix = qSL(".lock");
+    const QString xdgDir = qEnvironmentVariable("XDG_RUNTIME_DIR") + u"/"_s;
+    const QString pattern = u"qtam-wayland-%1"_s;
+    const QString lockSuffix = u".lock"_s;
 
     for (int i = 0; i < 32; ++i) {
         socketName = pattern.arg(i);
@@ -1259,7 +1261,7 @@ QStringList Configuration::pluginFilePaths(const char *type) const
 QStringList Configuration::testRunnerArguments() const
 {
     QStringList targs = m_clp.positionalArguments();
-    if (!targs.isEmpty() && targs.constFirst().endsWith(qL1S(".qml")))
+    if (!targs.isEmpty() && targs.constFirst().endsWith(u".qml"))
         targs.removeFirst();
     targs.prepend(QCoreApplication::arguments().constFirst());
     return targs;
@@ -1267,7 +1269,7 @@ QStringList Configuration::testRunnerArguments() const
 
 QString Configuration::testRunnerSourceFile() const
 {
-    return m_clp.value(qSL("qmltestrunner-source-file"));
+    return m_clp.value(u"qmltestrunner-source-file"_s);
 }
 
 QT_END_NAMESPACE_AM

@@ -10,6 +10,8 @@
 #include <QQuickWindow>
 #include <qqmlinfo.h>
 
+using namespace Qt::StringLiterals;
+
 /*!
     \qmltype FrameTimer
     \inqmlmodule QtApplicationManager
@@ -203,7 +205,7 @@ void FrameTimer::setWindow(QObject *window)
 */
 QStringList FrameTimer::roleNames() const
 {
-    return { qSL("averageFps"), qSL("minimumFps"), qSL("maximumFps"), qSL("jitterFps") };
+    return { u"averageFps"_s, u"minimumFps"_s, u"maximumFps"_s, u"jitterFps"_s };
 }
 
 /*!

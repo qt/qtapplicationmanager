@@ -23,6 +23,9 @@
 
 #include <memory>
 
+using namespace Qt::StringLiterals;
+
+
 QT_BEGIN_NAMESPACE_AM
 
 /*!
@@ -369,7 +372,7 @@ QVariantMap IntentServer::get(int index) const
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(qL1S(it.value()), data(this->index(index), it.key()));
+        map.insert(QString::fromLatin1(it.value()), data(this->index(index), it.key()));
     return map;
 }
 
@@ -517,7 +520,7 @@ void IntentServer::processRequestQueue()
                 if (m_disambiguationTimeout > 0) {
                     QTimer::singleShot(m_disambiguationTimeout, this, [this, isr]() {
                         if (m_disambiguationQueue.removeOne(isr)) {
-                            isr->setRequestFailed(qSL("Disambiguation timed out after %1 ms").arg(m_disambiguationTimeout));
+                            isr->setRequestFailed(u"Disambiguation timed out after %1 ms"_s.arg(m_disambiguationTimeout));
                             enqueueRequest(isr);
                         }
                     });
@@ -539,14 +542,14 @@ void IntentServer::processRequestQueue()
 
             if (isr->selectedIntent()->handleOnlyWhenRunning()) {
                 qCDebug(LogIntents) << " * skipping, because 'handleOnlyWhenRunning' is set";
-                isr->setRequestFailed(qSL("Skipping delivery due to handleOnlyWhenRunning"));
+                isr->setRequestFailed(u"Skipping delivery due to handleOnlyWhenRunning"_s);
             } else {
                 m_startingAppQueue.enqueue(isr);
                 isr->setState(IntentServerRequest::State::WaitingForApplicationStart);
                 if (m_startingAppTimeout > 0) {
                     QTimer::singleShot(m_startingAppTimeout, this, [this, isr]() {
                         if (m_startingAppQueue.removeOne(isr)) {
-                            isr->setRequestFailed(qSL("Starting handler application timed out after %1 ms").arg(m_startingAppTimeout));
+                            isr->setRequestFailed(u"Starting handler application timed out after %1 ms"_s.arg(m_startingAppTimeout));
                             enqueueRequest(isr);
                         }
                     });
@@ -565,7 +568,7 @@ void IntentServer::processRequestQueue()
             qCWarning(LogIntents) << "Could not find an IPC connection for application"
                                   << isr->selectedIntent()->applicationId() << "to forward the intent request"
                                   << isr->requestId();
-            isr->setRequestFailed(qSL("No IPC channel to reach target application."));
+            isr->setRequestFailed(u"No IPC channel to reach target application."_s);
         } else {
             qCDebug(LogIntents) << "Sending intent request to handler application"
                                 << isr->selectedIntent()->applicationId();
@@ -575,7 +578,7 @@ void IntentServer::processRequestQueue()
                 if (m_sentToAppTimeout > 0) {
                     QTimer::singleShot(m_sentToAppTimeout, this, [this, isr]() {
                         if (m_sentToAppQueue.removeOne(isr)) {
-                            isr->setRequestFailed(qSL("Waiting for reply from handler application timed out after %1 ms").arg(m_sentToAppTimeout));
+                            isr->setRequestFailed(u"Waiting for reply from handler application timed out after %1 ms"_s.arg(m_sentToAppTimeout));
                             enqueueRequest(isr);
                         }
                     });
@@ -679,7 +682,7 @@ void IntentServer::internalDisambiguateRequest(const QUuid &requestId, bool reje
                          << ", but no disambiguation was expected for this intent";
     } else {
         if (reject) {
-            isr->setRequestFailed(qSL("Disambiguation was rejected"));
+            isr->setRequestFailed(u"Disambiguation was rejected"_s);
         } else if (isr->potentialIntents().contains(selectedIntent)) {
             isr->setSelectedIntent(selectedIntent);
             isr->setState(IntentServerRequest::State::Disambiguated);
@@ -688,7 +691,7 @@ void IntentServer::internalDisambiguateRequest(const QUuid &requestId, bool reje
                                   << requestId << "tried to disambiguate to the intent" << selectedIntent->intentId()
                                   << "which was not in the list of potential disambiguations";
 
-            isr->setRequestFailed(qSL("Failed to disambiguate"));
+            isr->setRequestFailed(u"Failed to disambiguate"_s);
         }
         enqueueRequest(isr);
     }
@@ -736,11 +739,11 @@ void IntentServer::replyFromApplication(const QString &replyingApplicationId, co
             qCWarning(LogIntents) << "Got a reply for intent" << isr->requestId() << "from application"
                                   << replyingApplicationId << "but expected a reply from"
                                   << isr->selectedIntent()->applicationId() << "instead";
-            isr->setRequestFailed(qSL("Request reply received from wrong application"));
+            isr->setRequestFailed(u"Request reply received from wrong application"_s);
         } else {
             QString errorMessage;
             if (error) {
-                errorMessage = result.value(qSL("errorMessage")).toString();
+                errorMessage = result.value(u"errorMessage"_s).toString();
                 qCDebug(LogIntents) << "Got an error reply for intent" << isr->requestId() << "from application"
                                     << replyingApplicationId << ":" << errorMessage;
                 isr->setRequestFailed(errorMessage);
@@ -768,7 +771,7 @@ IntentServerRequest *IntentServer::requestToSystem(const QString &requestingAppl
     }
 
     QVector<Intent *> intents;
-    bool broadcast = (applicationId == qSL(":broadcast:"));
+    bool broadcast = (applicationId == u":broadcast:");
     if (applicationId.isEmpty() || broadcast) {
         intents = filterByIntentId(m_intents, intentId, parameters);
     } else {

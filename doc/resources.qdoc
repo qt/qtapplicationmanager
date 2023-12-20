@@ -111,10 +111,10 @@ If your files aren't found in the resource file system, you can list the content
 resource file system with the following code snippet:
 
 \code
-QDirIterator it(qSL(":"), QDirIterator::Subdirectories);
+QDirIterator it(u":"_s, QDirIterator::Subdirectories);
 while (it.hasNext()) {
     const QString fn = it.next();
-    if (!fn.startsWith(qSL(":/qt-project.org")))  // exclude Qt internal files
+    if (!fn.startsWith(u":/qt-project.org"_s))  // exclude Qt internal files
         qDebug() << fn;
 }
 \endcode

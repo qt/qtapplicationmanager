@@ -95,14 +95,14 @@ bool ScopedRenamer::rename(const QString &baseName, ScopedRenamer::Modes modes)
     bool backupDone = false;
 
     if (m_requested & NameToNameMinus) {
-        backupDone = internalRename(m_basePath, m_name, m_name + qL1C('-'));
+        backupDone = internalRename(m_basePath, m_name, m_name + u'-');
         if (backupDone)
             m_done |= NameToNameMinus;
     }
     if (m_requested & NamePlusToName) {
         // only try if no backup required, or it worked
         if (!backupRequired || backupDone) {
-            if (internalRename(m_basePath, m_name + qL1C('+'), m_name)) {
+            if (internalRename(m_basePath, m_name + u'+', m_name)) {
                 m_done |= NamePlusToName;
             }
             else if (backupDone && !undoRename()) {
@@ -149,11 +149,11 @@ bool ScopedRenamer::undoRename()
 bool ScopedRenamer::interalUndoRename()
 {
     if (m_done & NamePlusToName) {
-        if (internalRename(m_basePath, m_name, m_name + qL1C('+')))
+        if (internalRename(m_basePath, m_name, m_name + u'+'))
             m_done &= ~NamePlusToName;
     }
     if (m_done & NameToNameMinus) {
-        if (internalRename(m_basePath, m_name + qL1C('-'), m_name))
+        if (internalRename(m_basePath, m_name + u'-', m_name))
             m_done &= ~NameToNameMinus;
     }
 

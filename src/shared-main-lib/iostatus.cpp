@@ -7,6 +7,8 @@
 
 #include <QFile>
 
+using namespace Qt::StringLiterals;
+
 /*!
     \qmltype IoStatus
     \inqmlmodule QtApplicationManager
@@ -120,7 +122,7 @@ QVariantMap IoStatus::ioLoad() const
 */
 QStringList IoStatus::roleNames() const
 {
-    return { qSL("ioLoad") };
+    return { u"ioLoad"_s };
 }
 
 /*!
@@ -142,7 +144,7 @@ void IoStatus::update()
 
 void IoStatus::addIoReader(const QString &deviceName)
 {
-    if (!QFile::exists(qSL("/dev/") + deviceName))
+    if (!QFile::exists(u"/dev/"_s + deviceName))
         return;
     if (m_ioHash.contains(deviceName))
         return;

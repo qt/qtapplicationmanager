@@ -19,6 +19,8 @@
 #include "utilities.h"
 #include <QtAppManMain/configuration.h>
 
+using namespace Qt::StringLiterals;
+
 
 QT_USE_NAMESPACE_AM
 
@@ -66,7 +68,7 @@ tst_Main::~tst_Main()
 
 void tst_Main::initTestCase()
 {
-    if (!QDir(qL1S(AM_TESTDATA_DIR "/packages")).exists())
+    if (!QDir(QString::fromLatin1(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
     m_verbose = qEnvironmentVariableIsSet("AM_VERBOSE_TEST");
@@ -92,12 +94,12 @@ void tst_Main::copyRecursively(const QString &sourcePath, const QString &destPat
 void tst_Main::cleanUpInstallationDir()
 {
     {
-        QDir testTmpDir(qSL("/tmp/am-test-main"));
+        QDir testTmpDir(u"/tmp/am-test-main"_s);
         if (testTmpDir.exists())
             testTmpDir.removeRecursively();
     }
-    QDir tmpDir(qSL("/tmp"));
-    tmpDir.mkdir(qSL("am-test-main"));
+    QDir tmpDir(u"/tmp"_s);
+    tmpDir.mkdir(u"am-test-main"_s);
 }
 
 void tst_Main::init()
@@ -199,29 +201,29 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
     QCOMPARE(intents->count(), 2);
 
     auto app1 = appMan->application(0);
-    QCOMPARE(app1->names().value(qSL("en")), qSL("Hello Red"));
-    QCOMPARE(app1->id(), qSL("red1"));
+    QCOMPARE(app1->names().value(u"en"_s), u"Hello Red"_s);
+    QCOMPARE(app1->id(), u"red1"_s);
     auto app2 = appMan->application(1);
-    QCOMPARE(app2->names().value(qSL("en")), qSL("Hello Red"));
-    QCOMPARE(app2->id(), qSL("red2"));
+    QCOMPARE(app2->names().value(u"en"_s), u"Hello Red"_s);
+    QCOMPARE(app2->id(), u"red2"_s);
 
-    auto intent1 = intents->applicationIntent(qSL("red.intent1"), qSL("red1"));
+    auto intent1 = intents->applicationIntent(u"red.intent1"_s, u"red1"_s);
     QVERIFY(intent1);
-    QCOMPARE(intent1->intentId(), qSL("red.intent1"));
-    QCOMPARE(intent1->applicationId(), qSL("red1"));
-    QCOMPARE(intent1->packageId(), qSL("hello-world.red"));
-    QVERIFY(intent1->categories().contains(qSL("one")));
-    QVERIFY(intent1->categories().contains(qSL("launcher")));
+    QCOMPARE(intent1->intentId(), u"red.intent1"_s);
+    QCOMPARE(intent1->applicationId(), u"red1"_s);
+    QCOMPARE(intent1->packageId(), u"hello-world.red"_s);
+    QVERIFY(intent1->categories().contains(u"one"_s));
+    QVERIFY(intent1->categories().contains(u"launcher"_s));
 
-    auto intent2 = intents->applicationIntent(qSL("red.intent2"), qSL("red2"));
+    auto intent2 = intents->applicationIntent(u"red.intent2"_s, u"red2"_s);
     QVERIFY(intent2);
-    QCOMPARE(intent2->intentId(), qSL("red.intent2"));
-    QCOMPARE(intent2->applicationId(), qSL("red2"));
-    QCOMPARE(intent2->packageId(), qSL("hello-world.red"));
-    QVERIFY(intent2->categories().contains(qSL("two")));
-    QVERIFY(intent2->categories().contains(qSL("launcher")));
+    QCOMPARE(intent2->intentId(), u"red.intent2"_s);
+    QCOMPARE(intent2->applicationId(), u"red2"_s);
+    QCOMPARE(intent2->packageId(), u"hello-world.red"_s);
+    QVERIFY(intent2->categories().contains(u"two"_s));
+    QVERIFY(intent2->categories().contains(u"launcher"_s));
 
-    installPackage(qL1S(AM_TESTDATA_DIR "packages/hello-world.red.appkg"));
+    installPackage(QString::fromLatin1(AM_TESTDATA_DIR "packages/hello-world.red.appkg"));
 
     QCOMPARE(appMan->count(), 1);
     QCOMPARE(intents->count(), 0);
@@ -231,11 +233,11 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
     app1 = appMan->application(0);
 
     // but with different contents
-    QCOMPARE(app1->names().value(qSL("en")), qSL("Hello Updated Red"));
-    intent1 = intents->applicationIntent(qSL("red.intent1"), qSL("red1"));
+    QCOMPARE(app1->names().value(u"en"_s), u"Hello Updated Red"_s);
+    intent1 = intents->applicationIntent(u"red.intent1"_s, u"red1"_s);
     QVERIFY(!intent1);
 
-    removePackage(qSL("hello-world.red"));
+    removePackage(u"hello-world.red"_s);
 
     // After removal of the updated version all data in Application should be as before the
     // installation took place.
@@ -243,13 +245,13 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
     QCOMPARE(intents->count(), 2);
 
     app1 = appMan->application(0);
-    QCOMPARE(app1->names().value(qSL("en")), qSL("Hello Red"));
-    intent1 = intents->applicationIntent(qSL("red.intent1"), qSL("red1"));
+    QCOMPARE(app1->names().value(u"en"_s), u"Hello Red"_s);
+    intent1 = intents->applicationIntent(u"red.intent1"_s, u"red1"_s);
     QVERIFY(intent1);
-    QCOMPARE(intent1->intentId(), qSL("red.intent1"));
-    intent2 = intents->applicationIntent(qSL("red.intent2"), qSL("red2"));
+    QCOMPARE(intent1->intentId(), u"red.intent1"_s);
+    intent2 = intents->applicationIntent(u"red.intent2"_s, u"red2"_s);
     QVERIFY(intent2);
-    QCOMPARE(intent2->intentId(), qSL("red.intent2"));
+    QCOMPARE(intent2->intentId(), u"red.intent2"_s);
 }
 
 /*
@@ -263,7 +265,7 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
  */
 void tst_Main::updateForBuiltInAlreadyInstalled()
 {
-    copyRecursively(QFINDTESTDATA("dir-with-update-already-installed"), qSL("/tmp/am-test-main"));
+    copyRecursively(QFINDTESTDATA("dir-with-update-already-installed"), u"/tmp/am-test-main"_s);
 
     initMain();
 
@@ -271,7 +273,7 @@ void tst_Main::updateForBuiltInAlreadyInstalled()
     QCOMPARE(appMan->count(), 1);
 
     auto app = appMan->application(0);
-    QCOMPARE(app->names().value(qSL("en")), qSL("Hello Updated Red"));
+    QCOMPARE(app->names().value(u"en"_s), u"Hello Updated Red"_s);
 }
 
 /*
@@ -283,7 +285,7 @@ void tst_Main::updateForBuiltInAlreadyInstalled()
 void tst_Main::loadDatabaseWithUpdatedBuiltInApp()
 {
     initMain();
-    installPackage(qL1S(AM_TESTDATA_DIR "packages/hello-world.red.appkg"));
+    installPackage(QString::fromLatin1(AM_TESTDATA_DIR "packages/hello-world.red.appkg"));
     destroyMain();
 
     initMain();
@@ -292,7 +294,7 @@ void tst_Main::loadDatabaseWithUpdatedBuiltInApp()
     QCOMPARE(appMan->count(), 1);
 
     auto app = appMan->application(0);
-    QCOMPARE(app->names().value(qSL("en")), qSL("Hello Updated Red"));
+    QCOMPARE(app->names().value(u"en"_s), u"Hello Updated Red"_s);
 }
 
 void tst_Main::mainQmlFile_data()
@@ -351,7 +353,7 @@ void tst_Main::startupTimer()
 
     initMain();
 
-    StartupTimer::instance()->createReport(qSL("TEST"));
+    StartupTimer::instance()->createReport(u"TEST"_s);
 
     QFile f(fn);
     QVERIFY(f.open(QIODevice::ReadOnly));

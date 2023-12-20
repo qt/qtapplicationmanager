@@ -42,9 +42,9 @@ void PSHttpInterface::listen()
 {
     const auto hostStr = d->cfg->listenUrl.host();
     QHostAddress host;
-    if (hostStr == u"any"_s)
+    if (hostStr == u"any")
         host = QHostAddress(QHostAddress::Any);
-    else if (hostStr == u"localhost"_s)
+    else if (hostStr == u"localhost")
         host = QHostAddress(QHostAddress::LocalHost);
     else
         host = QHostAddress(hostStr);

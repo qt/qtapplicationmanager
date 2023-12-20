@@ -35,6 +35,9 @@
 #  undef interface
 #endif
 
+using namespace Qt::StringLiterals;
+
+
 AM_QML_REGISTER_TYPES(QtApplicationManager)
 AM_QML_REGISTER_TYPES(QtApplicationManager_Application)
 
@@ -124,12 +127,12 @@ QString ApplicationMain::dltLongMessageBehavior() const
 
 QString ApplicationMain::p2pDBusName() const
 {
-    return qSL("am");
+    return u"am"_s;
 }
 
 QString ApplicationMain::notificationDBusName() const
 {
-    return m_dbusAddressNotifications.isEmpty() ? QString() : qSL("am_notification_bus");
+    return m_dbusAddressNotifications.isEmpty() ? QString() : u"am_notification_bus"_s;
 }
 
 QVariantMap ApplicationMain::openGLConfiguration() const
@@ -183,27 +186,27 @@ void ApplicationMain::clearWindowPropertyCache(QWindow *window)
 
 QString ApplicationMain::applicationId() const
 {
-    return m_application.value(qSL("id")).toString();
+    return m_application.value(u"id"_s).toString();
 }
 
 QVariantMap ApplicationMain::applicationName() const
 {
-    return m_application.value(qSL("displayName")).toMap();
+    return m_application.value(u"displayName"_s).toMap();
 }
 
 QUrl ApplicationMain::applicationIcon() const
 {
-    return m_application.value(qSL("displayIcon")).toUrl();
+    return m_application.value(u"displayIcon"_s).toUrl();
 }
 
 QString ApplicationMain::applicationVersion() const
 {
-    return m_application.value(qSL("version")).toString();
+    return m_application.value(u"version"_s).toString();
 }
 
 QVariantMap ApplicationMain::applicationProperties() const
 {
-    return m_application.value(qSL("applicationProperties")).toMap();
+    return m_application.value(u"applicationProperties"_s).toMap();
 }
 
 QVariantMap ApplicationMain::systemProperties() const
@@ -243,27 +246,27 @@ void ApplicationMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOE
                         "application manager: %1").arg(e.errorString());
     }
 
-    m_baseDir = m_configuration.value(qSL("baseDir")).toString() + qL1C('/');
-    m_runtimeConfiguration = m_configuration.value(qSL("runtimeConfiguration")).toMap();
-    m_securityToken = QByteArray::fromHex(m_configuration.value(qSL("")).toString().toLatin1());
-    m_systemProperties = m_configuration.value(qSL("systemProperties")).toMap();
+    m_baseDir = m_configuration.value(u"baseDir"_s).toString() + u'/';
+    m_runtimeConfiguration = m_configuration.value(u"runtimeConfiguration"_s).toMap();
+    m_securityToken = QByteArray::fromHex(m_configuration.value(u""_s).toString().toLatin1());
+    m_systemProperties = m_configuration.value(u"systemProperties"_s).toMap();
 
-    QVariantMap loggingConfig = m_configuration.value(qSL("logging")).toMap();
-    m_loggingRules = variantToStringList(loggingConfig.value(qSL("rules")));
-    m_useAMConsoleLogger = loggingConfig.value(qSL("useAMConsoleLogger"));
-    m_dltLongMessageBehavior = loggingConfig.value(qSL("dltLongMessageBehavior")).toString();
+    QVariantMap loggingConfig = m_configuration.value(u"logging"_s).toMap();
+    m_loggingRules = variantToStringList(loggingConfig.value(u"rules"_s));
+    m_useAMConsoleLogger = loggingConfig.value(u"useAMConsoleLogger"_s);
+    m_dltLongMessageBehavior = loggingConfig.value(u"dltLongMessageBehavior"_s).toString();
 
-    QVariantMap dbusConfig = m_configuration.value(qSL("dbus")).toMap();
-    m_dbusAddressP2P = dbusConfig.value(qSL("p2p")).toString();
-    m_dbusAddressNotifications = dbusConfig.value(qSL("org.freedesktop.Notifications")).toString();
+    QVariantMap dbusConfig = m_configuration.value(u"dbus"_s).toMap();
+    m_dbusAddressP2P = dbusConfig.value(u"p2p"_s).toString();
+    m_dbusAddressNotifications = dbusConfig.value(u"org.freedesktop.Notifications"_s).toString();
 
-    QVariantMap uiConfig = m_configuration.value(qSL("ui")).toMap();
-    m_slowAnimations = uiConfig.value(qSL("slowAnimations")).toBool();
-    m_openGLConfiguration = uiConfig.value(qSL("opengl")).toMap();
-    m_iconThemeName = uiConfig.value(qSL("iconThemeName")).toString();
-    m_iconThemeSearchPaths = uiConfig.value(qSL("iconThemeSearchPaths")).toStringList();
+    QVariantMap uiConfig = m_configuration.value(u"ui"_s).toMap();
+    m_slowAnimations = uiConfig.value(u"slowAnimations"_s).toBool();
+    m_openGLConfiguration = uiConfig.value(u"opengl"_s).toMap();
+    m_iconThemeName = uiConfig.value(u"iconThemeName"_s).toString();
+    m_iconThemeSearchPaths = uiConfig.value(u"iconThemeSearchPaths"_s).toStringList();
 
-    m_application = m_configuration.value(qSL("application")).toMap();
+    m_application = m_configuration.value(u"application"_s).toMap();
 
     // un-comment this if things go south:
     //qWarning() << "### LOG " << m_loggingRules;
@@ -275,7 +278,7 @@ void ApplicationMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOE
     //qWarning() << "### APP " << m_application;
 
     // sanity checks
-    if (m_baseDir == qL1S("/"))
+    if (m_baseDir == u"/")
         throw Exception("Runtime launcher received an empty baseDir");
     if (loggingConfig.isEmpty())
         throw Exception("Runtime launcher received no logging configuration");
@@ -296,9 +299,9 @@ void ApplicationMain::setupDBusConnections() Q_DECL_NOEXCEPT_EXPR(false)
     qCDebug(LogRuntime) << "Connected to the P2P D-Bus via:" << m_dbusAddressP2P;
 
     if (!m_dbusAddressNotifications.isEmpty()) {
-        if (m_dbusAddressNotifications == qL1S("system"))
+        if (m_dbusAddressNotifications == u"system")
             dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SystemBus, notificationDBusName());
-        else if (m_dbusAddressNotifications == qL1S("session"))
+        else if (m_dbusAddressNotifications == u"session")
             dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SessionBus, notificationDBusName());
         else
             dbusConnection = QDBusConnection::connectToBus(m_dbusAddressNotifications, notificationDBusName());
@@ -348,7 +351,7 @@ static T *tryConnectToDBusInterface(const QString &service, const QString &path,
 void ApplicationMain::connectDBusInterfaces(bool isRuntimeLauncher) Q_DECL_NOEXCEPT_EXPR(false)
 {
     m_dbusApplicationInterface = tryConnectToDBusInterface<IoQtApplicationManagerApplicationInterfaceInterface>(
-        { }, qSL("/ApplicationInterface"), p2pDBusName(), this);
+        { }, u"/ApplicationInterface"_s, p2pDBusName(), this);
 
     if (!m_dbusApplicationInterface)
         throw Exception("could not connect to the ApplicationInterface on the P2P D-Bus");
@@ -377,7 +380,7 @@ void ApplicationMain::connectDBusInterfaces(bool isRuntimeLauncher) Q_DECL_NOEXC
 
     if (isRuntimeLauncher) {
         m_dbusRuntimeInterface = tryConnectToDBusInterface<IoQtApplicationManagerRuntimeInterfaceInterface>(
-            { }, qSL("/RuntimeInterface"), p2pDBusName(), this);
+            { }, u"/RuntimeInterface"_s, p2pDBusName(), this);
 
         if (!m_dbusRuntimeInterface)
             throw Exception("could not connect to the RuntimeInterface on the P2P D-Bus");
@@ -396,7 +399,7 @@ void ApplicationMain::connectDBusInterfaces(bool isRuntimeLauncher) Q_DECL_NOEXC
 
     if (!m_dbusAddressNotifications.isEmpty()) {
         m_dbusNotificationInterface = tryConnectToDBusInterface<OrgFreedesktopNotificationsInterface>(
-            qSL("org.freedesktop.Notifications"), qSL("/org/freedesktop/Notifications"),
+            u"org.freedesktop.Notifications"_s, u"/org/freedesktop/Notifications"_s,
             notificationDBusName(), this);
 
         if (m_dbusNotificationInterface) {
@@ -442,7 +445,7 @@ void ApplicationMain::connectDBusInterfaces(bool isRuntimeLauncher) Q_DECL_NOEXC
     if (!IntentClient::createInstance(intentClientDBusInterface))
         throw Exception("could not connect to the IntentInterface on the P2P D-Bus");
 
-    m_dbusApplicationInterface->asyncCall(qSL("finishedInitialization"));
+    m_dbusApplicationInterface->asyncCall(u"finishedInitialization"_s);
 }
 
 uint QtAM::ApplicationMain::showNotification(Notification *notification)

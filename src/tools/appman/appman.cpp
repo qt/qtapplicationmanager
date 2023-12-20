@@ -20,6 +20,8 @@
 #  include "testrunner.h"
 #endif
 
+using namespace Qt::StringLiterals;
+
 
 QT_USE_NAMESPACE_AM
 
@@ -36,13 +38,13 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         "Use -- -help to show all available testrunner command line options.";
     onlyOnePositionalArgument = false;
 
-    QCoreApplication::setApplicationName(qSL("Qt Application Manager QML Test Runner"));
+    QCoreApplication::setApplicationName(u"Qt Application Manager QML Test Runner"_s);
 #else
-    QCoreApplication::setApplicationName(qSL("Qt Application Manager"));
+    QCoreApplication::setApplicationName(u"Qt Application Manager"_s);
 #endif
-    QCoreApplication::setOrganizationName(qSL("QtProject"));
-    QCoreApplication::setOrganizationDomain(qSL("qt-project.org"));
-    QCoreApplication::setApplicationVersion(qSL(QT_AM_VERSION_STR));
+    QCoreApplication::setOrganizationName(u"QtProject"_s);
+    QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
+    QCoreApplication::setApplicationVersion(QString::fromLatin1(QT_AM_VERSION_STR));
 
     try {
         Main a(argc, argv, Main::InitFlag::ForkSudoServer | Main::InitFlag::InitializeLogging);

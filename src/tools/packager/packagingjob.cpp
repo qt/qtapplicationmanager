@@ -28,6 +28,8 @@
 
 #include "packagingjob.h"
 
+using namespace Qt::StringLiterals;
+
 QT_USE_NAMESPACE_AM
 
 // this corresponds to the -b parameter for mkfs.ext2 in sudo.cpp
@@ -116,7 +118,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         if (m_destinationName.isEmpty())
             throw Exception(Error::Package, "no destination package name given");
 
-        QFileInfo(m_destinationName).absoluteDir().mkpath(qSL("."));
+        QFileInfo(m_destinationName).absoluteDir().mkpath(u"."_s);
 
         QSaveFile destination(m_destinationName);
         if (!destination.open(QIODevice::WriteOnly | QIODevice::Truncate))
@@ -129,7 +131,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
             throw Exception(Error::Package, "source %1 is not a directory").arg(m_sourceDir);
 
         // check metadata
-        QString infoName = qSL("info.yaml");
+        QString infoName = u"info.yaml"_s;
         std::unique_ptr<PackageInfo> package(PackageInfo::fromManifest(source.absoluteFilePath(infoName)));
 
         // warn the user that old-style manifests are going to be deprecated in the future
@@ -139,7 +141,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
             YamlParser p(f.readAll());
 
             auto header = p.parseHeader();
-            if (header.first == qL1S("am-application") && header.second == 1) {
+            if (header.first == u"am-application" && header.second == 1) {
                 fprintf(stderr, "WARNING: 'info.yaml' is still using the old format (type '%s', version '%d').\n"
                                 "         This is going to be deprecated in a future release.\n",
                         qPrintable(header.first), header.second);
@@ -205,7 +207,7 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
             // QDirIterator::filePath() returns absolute paths, although the naming suggests otherwise
             entryPath = entryPath.mid(canonicalSourcePath.size() + 1);
 
-            if (entryInfo.fileName().startsWith(qL1S("--PACKAGE-")))
+            if (entryInfo.fileName().startsWith(u"--PACKAGE-"))
                 throw Exception(Error::Package, "file names starting with --PACKAGE- are reserved by the packager (found: %1)").arg(entryPath);
 
             estimatedImageSize += (quint64(entryInfo.size()) + Ext2BlockSize - 1) / Ext2BlockSize;
@@ -266,22 +268,22 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         // check signatures
         if (m_mode == DeveloperVerify) {
             if (report.developerSignature().isEmpty()) {
-                m_output = qSL("no developer signature");
+                m_output = u"no developer signature"_s;
                 m_resultCode = 1;
             } else {
                 Signature sig(report.digest());
                 if (!sig.verify(report.developerSignature(), certificates)) {
-                    m_output = qSL("invalid developer signature (") + sig.errorString() + qSL(")");
+                    m_output = u"invalid developer signature ("_s + sig.errorString() + u")"_s;
                     m_resultCode = 2;
                 } else {
-                    m_output = qSL("valid developer signature");
+                    m_output = u"valid developer signature"_s;
                 }
             }
             break; // done with DeveloperVerify
 
         } else if (m_mode == StoreVerify) {
             if (report.storeSignature().isEmpty()) {
-                m_output = qSL("no store signature");
+                m_output = u"no store signature"_s;
                 m_resultCode = 1;
             } else {
                 QByteArray sigDigest = report.digest();
@@ -290,10 +292,10 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
 
                 Signature sig(sigDigest);
                 if (!sig.verify(report.storeSignature(), certificates)) {
-                    m_output = qSL("invalid store signature (") + sig.errorString() + qSL(")");
+                    m_output = u"invalid store signature ("_s + sig.errorString() + u")"_s;
                     m_resultCode = 2;
                 } else {
-                    m_output = qSL("valid store signature");
+                    m_output = u"valid store signature"_s;
                 }
 
             }

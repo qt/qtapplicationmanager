@@ -5,6 +5,8 @@
 
 #include "intentserverrequest.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 IntentServerRequest::IntentServerRequest(const QString &requestingApplicationId, const QString &intentId,
@@ -87,7 +89,7 @@ void IntentServerRequest::setRequestFailed(const QString &errorMessage)
 {
     m_succeeded = false;
     m_result.clear();
-    m_result[qSL("errorMessage")] = errorMessage;
+    m_result[u"errorMessage"_s] = errorMessage;
     m_state = State::ReceivedReplyFromApplication;
 }
 

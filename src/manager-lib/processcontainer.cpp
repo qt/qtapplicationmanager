@@ -21,6 +21,9 @@
 #  include <fcntl.h>
 #endif
 
+using namespace Qt::StringLiterals;
+
+
 QT_BEGIN_NAMESPACE_AM
 
 
@@ -161,7 +164,7 @@ bool ProcessContainer::setControlGroup(const QString &groupName)
     if (groupName == m_currentControlGroup)
         return true;
 
-    QVariantMap map = m_manager->configuration().value(qSL("controlGroups")).toMap();
+    QVariantMap map = m_manager->configuration().value(u"controlGroups"_s).toMap();
     auto git = map.constFind(groupName);
     if (git != map.constEnd()) {
         QVariantMap mapping = (*git).toMap();
@@ -174,7 +177,7 @@ bool ProcessContainer::setControlGroup(const QString &groupName)
 
             //qWarning() << "Setting cgroup for" << m_program << ", pid" << m_process->processId() << ":" << resource << "->" << userclass;
 
-            QString file = QString(qSL("/sys/fs/cgroup/%1/%2/cgroup.procs")).arg(resource, userclass);
+            QString file = QString(u"/sys/fs/cgroup/%1/%2/cgroup.procs"_s).arg(resource, userclass);
             QFile f(file);
             bool ok = f.open(QFile::WriteOnly);
             ok = ok && (f.write(pidString) == pidString.size());
@@ -184,7 +187,7 @@ bool ProcessContainer::setControlGroup(const QString &groupName)
                 return false;
             }
 
-            if (resource == qSL("memory")) {
+            if (resource == u"memory") {
                 if (!m_memWatcher) {
                     m_memWatcher = new MemoryWatcher(this);
                     connect(m_memWatcher, &MemoryWatcher::memoryLow,
@@ -240,7 +243,7 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments,
     HostProcess *process = new HostProcess();
     process->setWorkingDirectory(m_baseDirectory);
     process->setProcessEnvironment(penv);
-    process->setStopBeforeExec(configuration().value(qSL("stopBeforeExec")).toBool());
+    process->setStopBeforeExec(configuration().value(u"stopBeforeExec"_s).toBool());
     process->setStdioRedirections(std::move(m_stdioRedirections));
 
     QString command = m_program;
@@ -257,7 +260,7 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments,
     process->start(command, args);
     m_process = process;
 
-    setControlGroup(configuration().value(qSL("defaultControlGroup")).toString());
+    setControlGroup(configuration().value(u"defaultControlGroup"_s).toString());
     return process;
 }
 
@@ -271,7 +274,7 @@ ProcessContainerManager::ProcessContainerManager(const QString &id, QObject *par
 
 QString ProcessContainerManager::defaultIdentifier()
 {
-    return qSL("process");
+    return u"process"_s;
 }
 
 bool ProcessContainerManager::supportsQuickLaunch() const

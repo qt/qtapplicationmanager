@@ -14,6 +14,9 @@
 #include <QJSValue>
 #include <QQmlEngine>
 
+using namespace Qt::StringLiterals;
+
+
 /*!
     \qmltype MonitorModel
     \inqmlmodule QtApplicationManager
@@ -204,14 +207,14 @@ bool MonitorModel::extractRoleNamesFromJsArray(DataSource *dataSource)
 
     QJSValue jsDataSource = engine->toScriptValue<QObject*>(dataSource->obj);
 
-    if (!jsDataSource.hasProperty(qSL("roleNames")))
+    if (!jsDataSource.hasProperty(u"roleNames"_s))
         return false;
 
-    QJSValue jsRoleNames = jsDataSource.property(qSL("roleNames"));
+    QJSValue jsRoleNames = jsDataSource.property(u"roleNames"_s);
     if (!jsRoleNames.isArray())
         return false;
 
-    int length = jsRoleNames.property(qSL("length")).toInt();
+    int length = jsRoleNames.property(u"length"_s).toInt();
     for (int i = 0; i < length; i++)
         addRoleName(jsRoleNames.property(i).toString().toLatin1(), dataSource);
 
@@ -456,7 +459,7 @@ QVariantMap MonitorModel::get(int row) const
     QVariantMap map;
     QHash<int, QByteArray> roles = roleNames();
     for (auto it = roles.cbegin(); it != roles.cend(); ++it)
-        map.insert(qL1S(it.value()), data(index(row), it.key()));
+        map.insert(QString::fromLatin1(it.value()), data(index(row), it.key()));
 
     return map;
 }

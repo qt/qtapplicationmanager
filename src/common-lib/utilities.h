@@ -45,8 +45,8 @@ inline QStringList variantToStringList(const QVariant &v)
 // For some weird reason, QFile cannot cope with "qrc:" and QUrl cannot cope with ":".
 inline QUrl filePathToUrl(const QString &path, const QString &baseDir)
 {
-    return path.startsWith(qSL(":")) ? QUrl(qSL("qrc") + path)
-                                     : QUrl::fromUserInput(path, baseDir, QUrl::AssumeLocalFile);
+    return path.startsWith(u":") ? QUrl(QStringLiteral("qrc") + path)
+                                 : QUrl::fromUserInput(path, baseDir, QUrl::AssumeLocalFile);
 }
 
 // Used in {Package,Application,Intent}::name()
@@ -56,14 +56,14 @@ inline QString urlToLocalFilePath(const QUrl &url)
 {
     if (url.isLocalFile())
         return url.toLocalFile();
-    else if (url.scheme() == qSL("qrc"))
-        return qL1C(':') + url.path();
+    else if (url.scheme() == u"qrc")
+        return u':' + url.path();
     return { };
 }
 
 inline QString toAbsoluteFilePath(const QString &path, const QString &baseDir = QDir::currentPath())
 {
-    return path.startsWith(qSL("qrc:")) ? path.mid(3) : QDir(baseDir).absoluteFilePath(path);
+    return path.startsWith(u"qrc:") ? path.mid(3) : QDir(baseDir).absoluteFilePath(path);
 }
 
 /*! \internal

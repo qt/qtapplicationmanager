@@ -22,6 +22,8 @@
 
 #include <memory>
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 PackageInfo *YamlPackageScanner::scan(const QString &fileName) Q_DECL_NOEXCEPT_EXPR(false)
@@ -40,9 +42,9 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
         bool legacy = false;
         try {
             auto header = p.parseHeader();
-            if (header.first == qL1S("am-application") && header.second == 1)
+            if ((header.first == u"am-application") && (header.second == 1))
                 legacy = true;
-            else if (!(header.first == qL1S("am-package") && header.second == 1))
+            else if (!((header.first == u"am-package") && (header.second == 1)))
                 throw Exception("Unsupported format type and/or version");
             p.nextDocument();
         } catch (const Exception &e) {
@@ -115,9 +117,9 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
 
                 // sanity check - could be rewritten using the "fields" mechanism
                 static QStringList validKeys = {
-                    qSL("desktopProfile"),
-                    qSL("esMajorVersion"),
-                    qSL("esMinorVersion")
+                    u"desktopProfile"_s,
+                    u"esMajorVersion"_s,
+                    u"esMinorVersion"_s
                 };
                 for (auto it = legacyAppInfo->m_openGLConfiguration.cbegin();
                      it != legacyAppInfo->m_openGLConfiguration.cend(); ++it) {
@@ -129,9 +131,9 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
             });
             fields.emplace_back("applicationProperties", false, YamlParser::Map, [&legacyAppInfo](YamlParser *p) {
                 const QVariantMap rawMap = p->parseMap();
-                legacyAppInfo->m_sysAppProperties = rawMap.value(qSL("protected")).toMap();
+                legacyAppInfo->m_sysAppProperties = rawMap.value(u"protected"_s).toMap();
                 legacyAppInfo->m_allAppProperties = legacyAppInfo->m_sysAppProperties;
-                const QVariantMap pri = rawMap.value(qSL("private")).toMap();
+                const QVariantMap pri = rawMap.value(u"private"_s).toMap();
                 for (auto it = pri.cbegin(); it != pri.cend(); ++it)
                     legacyAppInfo->m_allAppProperties.insert(it.key(), it.value());
             });
@@ -145,13 +147,13 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
             fields.emplace_back("logging", false, YamlParser::Map, [&legacyAppInfo](YamlParser *p) {
                 const QVariantMap logging = p->parseMap();
                 if (!logging.isEmpty()) {
-                    if (logging.size() > 1 || logging.firstKey() != qSL("dlt"))
+                    if (logging.size() > 1 || logging.firstKey() != u"dlt"_s)
                         throw YamlParserException(p, "'logging' only supports the 'dlt' key");
-                    legacyAppInfo->m_dltConfiguration = logging.value(qSL("dlt")).toMap();
+                    legacyAppInfo->m_dltConfiguration = logging.value(u"dlt"_s).toMap();
 
                     // sanity check
                     for (auto it = legacyAppInfo->m_dltConfiguration.cbegin(); it != legacyAppInfo->m_dltConfiguration.cend(); ++it) {
-                        if (it.key() != qSL("id") && it.key() != qSL("description"))
+                        if (it.key() != u"id"_s && it.key() != u"description"_s)
                             throw YamlParserException(p, "unsupported key in 'logging/dlt'");
                     }
                 }
@@ -216,9 +218,9 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
 
                         // sanity check - could be rewritten using the "fields" mechanism
                         static QStringList validKeys = {
-                            qSL("desktopProfile"),
-                            qSL("esMajorVersion"),
-                            qSL("esMinorVersion")
+                            u"desktopProfile"_s,
+                            u"esMajorVersion"_s,
+                            u"esMinorVersion"_s
                         };
                         for (auto it = appInfo->m_openGLConfiguration.cbegin();
                              it != appInfo->m_openGLConfiguration.cend(); ++it) {
@@ -230,22 +232,22 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                     });
                     appFields.emplace_back("applicationProperties", false, YamlParser::Map, [&appInfo](YamlParser *p) {
                         const QVariantMap rawMap = p->parseMap();
-                        appInfo->m_sysAppProperties = rawMap.value(qSL("protected")).toMap();
+                        appInfo->m_sysAppProperties = rawMap.value(u"protected"_s).toMap();
                         appInfo->m_allAppProperties = appInfo->m_sysAppProperties;
-                        const QVariantMap pri = rawMap.value(qSL("private")).toMap();
+                        const QVariantMap pri = rawMap.value(u"private"_s).toMap();
                         for (auto it = pri.cbegin(); it != pri.cend(); ++it)
                             appInfo->m_allAppProperties.insert(it.key(), it.value());
                     });
                     appFields.emplace_back("logging", false, YamlParser::Map, [&appInfo](YamlParser *p) {
                         const QVariantMap logging = p->parseMap();
                         if (!logging.isEmpty()) {
-                            if (logging.size() > 1 || logging.firstKey() != qSL("dlt"))
+                            if (logging.size() > 1 || logging.firstKey() != u"dlt")
                                 throw YamlParserException(p, "'logging' only supports the 'dlt' key");
-                            appInfo->m_dltConfiguration = logging.value(qSL("dlt")).toMap();
+                            appInfo->m_dltConfiguration = logging.value(u"dlt"_s).toMap();
 
                             // sanity check
                             for (auto it = appInfo->m_dltConfiguration.cbegin(); it != appInfo->m_dltConfiguration.cend(); ++it) {
-                                if (it.key() != qSL("id") && it.key() != qSL("description"))
+                                if (it.key() != u"id"_s && it.key() != u"description")
                                     throw YamlParserException(p, "unsupported key in 'logging/dlt'");
                             }
                         }
@@ -276,9 +278,9 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                 });
                 intentFields.emplace_back("visibility", false, YamlParser::Scalar, [&intentInfo](YamlParser *p) {
                     const QString visibilityStr = p->parseString();
-                    if (visibilityStr == qL1S("private")) {
+                    if (visibilityStr == u"private") {
                         intentInfo->m_visibility = IntentInfo::Private;
-                    } else if (visibilityStr != qL1S("public")) {
+                    } else if (visibilityStr != u"public") {
                         throw YamlParserException(p, "intent visibilty '%2' is invalid on intent %1 (valid values are either 'public' or 'private'")
                                 .arg(intentInfo->m_id).arg(visibilityStr);
                     }
@@ -346,7 +348,7 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
         return pkgInfo.release();
     } catch (const Exception &e) {
         throw Exception(e.errorCode(), "Failed to parse manifest file %1: %2")
-                .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : qSL("<stream>"), e.errorString());
+                .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : u"<stream>"_s, e.errorString());
     }
 }
 

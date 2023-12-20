@@ -15,6 +15,9 @@
 
 #include <QWaylandWlShellSurface>
 
+using namespace Qt::StringLiterals;
+
+
 QT_BEGIN_NAMESPACE_AM
 
 bool WaylandWindow::m_watchdogEnabled = true;
@@ -151,9 +154,9 @@ QString WaylandWindow::applicationId() const
     if (application())
         return application()->id();
     else if (m_surface && m_surface->client())
-        return qSL("[pid: %1]").arg(m_surface->client()->processId());
+        return u"[pid: %1]"_s.arg(m_surface->client()->processId());
     else
-        return qSL("[external app]");
+        return u"[external app]"_s;
 }
 
 QSize WaylandWindow::size() const

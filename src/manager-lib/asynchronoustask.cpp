@@ -8,6 +8,8 @@
 #include "global.h"
 #include "asynchronoustask.h"
 
+using namespace Qt::StringLiterals;
+
 QT_BEGIN_NAMESPACE_AM
 
 AsynchronousTask::AsynchronousTask(QObject *parent)
@@ -60,7 +62,7 @@ bool AsynchronousTask::cancel()
 bool AsynchronousTask::forceCancel()
 {
     if (state() == Queued) {
-        setError(Error::Canceled, qSL("canceled"));
+        setError(Error::Canceled, u"canceled"_s);
         return true;
     }
     return cancel();

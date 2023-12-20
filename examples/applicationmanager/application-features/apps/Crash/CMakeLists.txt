@@ -7,7 +7,6 @@ qt_standard_project_setup()
 
 qt6_add_qml_module(
     crashmodule
-    VERSION 1.0
     URI "Crash"
     NO_PLUGIN
     SOURCES terminator1.cpp

@@ -21,7 +21,7 @@ multi-process modes.
 \section1 Compiling Resources
 
 You can add resources as \l{External Resource Files}{external binary resources} or as
-\l{Resource Collection Files}{compiled-in resources}; both are generated from a \c .qrc file.
+\l{Resource Collection Files}{compiled-in resources}; both can be generated from a \c .qrc file.
 Typically, external binary resources are stored in a file with the \c .rcc extension, whereas
 compiled-in resources are stored in libraries in the Application Manager context.
 
@@ -60,6 +60,15 @@ For \c grandtheftdolphin the prefix should be "grandtheftdolphin", respectively.
 Generally, all files contained in any \c .qrc file should be unique; this also
 includes files that the System UI uses.
 
+The same applies when resources are added directly, without a \c .qrc file, for instance when
+defining a QML module, \c RESOURCE_PREFIX should be set:
+\badcode
+qt_add_qml_module(spaceinvaders
+    URI "SpaceInvaders"
+    RESOURCE_PREFIX spaceinvaders
+    QML_FILES main.qml
+)
+\endcode
 
 \section1 Loading Resources
 
@@ -73,11 +82,11 @@ into the System UI by adding the following lines to the \c am-config.yaml file:
 \badcode
 ui:
   resources: [ "${CONFIG_PWD}/my.rcc",
-               "${CONFIG_PWD}/myplugin.so" ]
+               "${CONFIG_PWD}/myplugin" ]
 \endcode
 
-You can also load these two files into an application by adding the following snippet to the
-\c info.yaml file:
+As you can see, the library file extension can be omitted. You can also load these two files into
+an application by adding the following snippet to the \c info.yaml file:
 
 \badcode
 runtimeParameters:

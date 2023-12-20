@@ -7,7 +7,7 @@
 \example applicationmanager/application-features
 \title Application Features Example
 \image application-features.png
-\brief Showcases client applications with various features, including a native application.
+\brief Showcases client applications with various features and QML modularization.
 \ingroup applicationmanager-examples
 
 \section1 Introduction
@@ -26,9 +26,12 @@ application, such as:
 Most of these features are only supported properly in
 \l{Single-Process vs. Multi-Process Mode}{multi-process mode}.
 
-\note This example focuses on the application (client) side. The \l{The System UI}{System UI}
+The example focuses on the application (client) side. The \l{The System UI}{System UI}
 (compositor/server) is based on the \l{Desktop System UI Example} with some modifications. Refer
 to that example for more details on how to implement a System UI.
+
+In addition, this example shows how to write and use \l{Writing QML Modules}{QML modules} in the
+application manager context, see \l{Code Structure}{below}.
 
 \section2 Nested Compositor
 
@@ -55,13 +58,11 @@ The QML code for the nested compositor application is as follows:
 \section2 Crash Simulation and Recovery
 
 This application provides various means to force a crash in an application, such as a segmentation
-fault. It utilizes a QML plugin implemented in C++, to provide the \c Terminator QML type to
-trigger crashes. The application manager then prints the cause of the crash and related
-information, like a backtrace. The System UI implements a basic form of crash recovery: restarting
-the application.
-
-This application only works on multi-process mode. In single-process mode a crash affects the entire
-program (the System UI).
+fault. It utilizes QML modules that include C++ and QML code; in particular, the C++ provided QML
+types \c Terminator1 and \c Terminator2 are used to trigger crashes. The application manager then
+prints the cause of the crash and related information, like a backtrace. The System UI implements a
+basic form of crash recovery: restarting the application. Of course, crash recovery only works in
+multi-process mode. In single-process mode, a crash affects the entire program (the System UI).
 
 The QML code for the crash simulation and recovery application is as follows:
 
@@ -114,6 +115,61 @@ requires you to build it explicitly. The code is structured in a way where the r
 folders only contain the artifacts necessary to run the application. Consequently, you can package
 these applications and install them as well.
 
-To build Qt Application Manager including its examples, you need to pass \c qmake the
-\c{-config enable-examples} parameter For more details, see \l{build}{Build}.
+To build Qt Application Manager, including its examples, you need to pass
+\c{-DQT_BUILD_EXAMPLES=ON} to CMake. For more details, see \l{build}{Build}.
+
+The System UI and the Crash application produce QML modules. These modules are generated as
+libraries that include all the C++ and QML code and other resources, like images. Consequently,
+only the libraries need to be loaded from the native file system instead of individual QML files,
+images, or other such assets. As an additional bonus, you get things like pre-compiled QML, linting
+checks, and auto-generation of files like qmldir.
+
+\section2 System UI QML Module
+
+In the \c{SystemUi/CMakeLists.txt} file, the \c systemuimodule is defined:
+\quotefromfile applicationmanager/application-features/SystemUi/CMakeLists.txt
+\printuntil /^\)$/
+
+The default "qt/qml" resource prefix is used here. By providing the \c NO_PLUGIN keyword, only a
+dynamic backing library is created. A QML plugin is unnecessary since the library will be loaded
+explicitly (see below). To keep it simple, the module is kept in a directory with the same name as
+its URI (\c SystemUi). Two images and the \c main.qml file is added to the module (there is no C++
+code used, though).
+
+The \c systemuimodule dynamic library is added to the list of resources that are loaded at startup
+in the \c am-config.yaml file (key \c{ui/resources}):
+\quotefromfile applicationmanager/application-features/am-config.yaml
+\skipto ui:
+\printuntil resources:
+The library is loaded from the native file system, but the \c main.qml file can subsequently be
+loaded from the resource file system (key \c{ui/mainQml}). The path starts with the resource
+prefix, extended with the module URI. Since the images used in \c main.qml have relative URLs they
+are also found in the resource file system.
+
+A general overview how to add and use resources in the application manager context can be found in
+\l{Using Qt Resources}.
+
+\section2 Crash Application QML Modules
+
+The Crash application consists of two QML modules: \c crashmodule and \c sequelmoduleplugin. The
+first is analogous to the \c systemuimodule above, except that it also includes C++ code
+(\c terminator1.cpp). The generated library is loaded explicitly when the application starts
+through the following lines in \c{apps/Crash/info.yaml}:
+\quotefromfile applicationmanager/application-features/apps/Crash/info.yaml
+\skipto runtimeParameters:
+\printuntil resources:
+
+It provides the \c crashapp.qml file, which is the application's main QML file and the
+\c Terminator1 QML singleton type.
+
+The second module, \c sequelmoduleplugin is defined as a QML plugin in
+\c{apps/Crash/Sequel/CMakeLists.txt}:
+\quotefromfile applicationmanager/application-features/apps/Crash/Sequel/CMakeLists.txt
+\printuntil /^\)$/
+For convenience, \c PLUGIN_TARGET is defined with the same argument as the module target name.
+This creates a plugin that already includes the backing target (see
+\l{Plugin target with no backing target}{qt_add_qml_module}). The plugin is loaded implicitly
+at runtime through the "\c{import Sequel}" statement in \c crashapp.qml. It provides the
+\c CrashAnimation and \c Terminator2 QML types.
+
 */

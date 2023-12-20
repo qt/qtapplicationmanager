@@ -1,6 +1,5 @@
 qt6_add_qml_module(
     sequelmoduleplugin
-    VERSION 1.0
     URI "Sequel"
     PLUGIN_TARGET sequelmoduleplugin
     SOURCES terminator2.cpp

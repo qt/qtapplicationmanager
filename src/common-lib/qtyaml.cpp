@@ -156,6 +156,30 @@ public:
 
 };
 
+static QString mapEventNames(const QVector<yaml_event_type_t> &events)
+{
+    static const QHash<yaml_event_type_t, const char *> eventNames = {
+        { YAML_NO_EVENT,             "nothing" },
+        { YAML_STREAM_START_EVENT,   "stream start" },
+        { YAML_STREAM_END_EVENT,     "stream end" },
+        { YAML_DOCUMENT_START_EVENT, "document start" },
+        { YAML_DOCUMENT_END_EVENT,   "document end" },
+        { YAML_ALIAS_EVENT,          "alias" },
+        { YAML_SCALAR_EVENT,         "scalar" },
+        { YAML_SEQUENCE_START_EVENT, "sequence start" },
+        { YAML_SEQUENCE_END_EVENT,   "sequence end" },
+        { YAML_MAPPING_START_EVENT,  "mapping start" },
+        { YAML_MAPPING_END_EVENT,    "mapping end" }
+    };
+    QString names;
+    for (int i = 0; i < events.size(); ++i) {
+        if (i)
+            names.append(i == (events.size() - 1) ? qL1S(" or ") : qL1S(", "));
+        names.append(QString::fromLatin1(eventNames.value(events.at(i), "<unknown>")));
+    }
+    return names;
+}
+
 
 YamlParser::YamlParser(const QByteArray &data, const QString &fileName)
     : d(new YamlParserPrivate)
@@ -489,7 +513,7 @@ void YamlParser::parseList(const std::function<void(YamlParser *p)> &callback)
             callback(this);
             break;
         default:
-            throw YamlParserException(this, "Unexpected event (%1) encountered while parsing a list").arg(d->event.type);
+            throw YamlParserException(this, "Unexpected event (%1) encountered while parsing a list").arg(mapEventNames({ d->event.type }));
         }
     }
 }
@@ -505,7 +529,7 @@ QVariant YamlParser::parseVariant()
         value = parseMap();
     } else {
         throw YamlParserException(this, "Unexpected event (%1) encountered while parsing a variant")
-                .arg(d->event.type);
+            .arg(mapEventNames({ d->event.type }));
     }
     return value;
 }
@@ -534,30 +558,6 @@ QStringList YamlParser::parseStringOrStringList()
     } else {
         throw YamlParserException(this, "Cannot parse a map as string or string-list");
     }
-}
-
-static QString mapEventNames(const QVector<yaml_event_type_t> &events)
-{
-    static const QHash<yaml_event_type_t, const char *> eventNames = {
-        { YAML_NO_EVENT,             "nothing" },
-        { YAML_STREAM_START_EVENT,   "stream start" },
-        { YAML_STREAM_END_EVENT,     "stream end" },
-        { YAML_DOCUMENT_START_EVENT, "document start" },
-        { YAML_DOCUMENT_END_EVENT,   "document end" },
-        { YAML_ALIAS_EVENT,          "alias" },
-        { YAML_SCALAR_EVENT,         "scalar" },
-        { YAML_SEQUENCE_START_EVENT, "sequence start" },
-        { YAML_SEQUENCE_END_EVENT,   "sequence end" },
-        { YAML_MAPPING_START_EVENT,  "mapping start" },
-        { YAML_MAPPING_END_EVENT,    "mapping end" }
-    };
-    QString names;
-    for (int i = 0; i < events.size(); ++i) {
-        if (i)
-            names.append(i == (events.size() - 1) ? qL1S(" or ") : qL1S(", "));
-        names.append(qL1S(eventNames.value(events.at(i), "<unknown>")));
-    }
-    return names;
 }
 
 void YamlParser::parseFields(const std::vector<Field> &fields)
@@ -612,7 +612,7 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
             field->callback(this);
             if (d->event.type != typeAfter) {
                 throw YamlParserException(this, "Invalid YAML event state after field callback for '%3': expected %1, but got %2")
-                    .arg(typeAfter).arg(d->event.type).arg(key);
+                    .arg(mapEventNames({ typeAfter })).arg(mapEventNames({ d->event.type })).arg(key);
             }
         }
     }

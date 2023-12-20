@@ -15,7 +15,6 @@ logging:
     - "*.critical=true"
 
 ui:
-  fullscreen: no
   mainQml: ":/qt/qml/SystemUi/main.qml"
   resources: [ "${CONFIG_PWD}/SystemUi/libsystemuimodule" ]
 

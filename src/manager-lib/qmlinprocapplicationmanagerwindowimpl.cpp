@@ -102,7 +102,7 @@ QmlInProcApplicationManagerWindowImpl::~QmlInProcApplicationManagerWindowImpl()
     QmlInProcApplicationManagerWindowImpl::setVisible(false);
 }
 
-bool QmlInProcApplicationManagerWindowImpl::isInProcess() const
+bool QmlInProcApplicationManagerWindowImpl::isSingleProcess() const
 {
     return true;
 }

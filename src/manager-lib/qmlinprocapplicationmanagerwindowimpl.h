@@ -26,7 +26,7 @@ public:
     QmlInProcApplicationManagerWindowImpl(ApplicationManagerWindow *window);
     ~QmlInProcApplicationManagerWindowImpl() override;
 
-    bool isInProcess() const override;
+    bool isSingleProcess() const override;
     QObject *backingObject() const override;
 
     void classBegin() override;

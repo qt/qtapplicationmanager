@@ -23,7 +23,7 @@ public:
     WaylandApplicationManagerWindowImpl(ApplicationManagerWindow *window, QtAM::ApplicationMain *applicationMain);
     ~WaylandApplicationManagerWindowImpl() override;
 
-    bool isInProcess() const override;
+    bool isSingleProcess() const override;
     QObject *backingObject() const override;
 
     void classBegin() override;

@@ -67,8 +67,9 @@ QT_BEGIN_NAMESPACE_AM
 
     \endlist
 
-    Now you can run your appication for instance with: \c{qml -I <path to base dir>}
+    Now you can run your application for instance with: \c{qml -I <path to base dir>}
 */
+
 
 ApplicationManagerWindow::ApplicationManagerWindow(QObject *parent)
     : QObject(parent)
@@ -134,16 +135,37 @@ void ApplicationManagerWindow::componentComplete()
     m_impl->componentComplete();
 }
 
+/*!
+    \qmlproperty Item ApplicationManagerWindow::contentItem
+    \readonly
+
+    The invisible root item of the scene.
+*/
 QQuickItem *ApplicationManagerWindow::contentItem()
 {
     return m_impl->contentItem();
 }
 
-bool ApplicationManagerWindow::isInProcess() const
+/*! \qmlproperty bool ApplicationManagerWindow::singleProcess
+    \readonly
+
+    This property is \c true when the application is running in single-process mode and \c false
+    when it is running in multi-process mode.
+
+    \sa ApplicationManager::singleProcess
+*/
+bool ApplicationManagerWindow::isSingleProcess() const
 {
-    return m_impl->isInProcess();
+    return m_impl->isSingleProcess();
 }
 
+/*! \qmlproperty QtObject ApplicationManagerWindow::backingObject
+    \readonly
+
+    This property holds the backing object of this window: in single-process mode, this is an
+    an \l Item acting as a container for \l contentItem, but in multi-process mode, it is the
+    actual \l Window instance.
+*/
 QObject *ApplicationManagerWindow::backingObject() const
 {
     return m_impl->backingObject();
@@ -203,46 +225,150 @@ QVariantMap ApplicationManagerWindow::windowProperties() const
     \sa setWindowProperty
 */
 
+/*!
+    \qmlmethod ApplicationManagerWindow::close()
+
+    Closes the window.
+
+    When this method is called, the \l closing signal will be emitted. If there is no handler, or
+    the handler does not revoke permission to close, the window will subsequently close. If the
+    QGuiApplication::quitOnLastWindowClosed  property is \c true, and if there are no other windows
+    open, the application will quit.
+*/
 void ApplicationManagerWindow::close()
 {
     m_impl->close();
 }
 
+/*!
+    \qmlsignal ApplicationManagerWindow::closing(CloseEvent close)
+
+    This signal is emitted when the user tries to close the window.
+
+    This signal includes a \a close parameter. The \c {close.accepted}
+    property is true by default so that the window is allowed to close, but you
+    can implement an \c onClosing handler and set \c {close.accepted = false} if
+    you need to do something else before the window can be closed.
+*/
+
+/*!
+    \qmlmethod void ApplicationManagerWindow::hide()
+
+    Hides the window.
+
+    Equivalent to setting \l visible to \c false or \l visibility to \l {QWindow::}{Hidden}.
+
+    \sa show()
+*/
 void ApplicationManagerWindow::hide()
 {
     m_impl->hide();
 }
 
+/*!
+    \qmlmethod void ApplicationManagerWindow::show()
+
+    Shows the window.
+
+    Equivalent to setting \l visible to \c true.
+
+    \sa hide()
+*/
 void ApplicationManagerWindow::show()
 {
     m_impl->show();
 }
 
+/*!
+    \qmlmethod void ApplicationManagerWindow::showFullScreen()
+
+    This call is passed through to the underlying QWindow object in multi-process mode. The
+    single-process mode does not support window states, so this call gets mapped to a simple show().
+
+    \sa QWindow::showFullScreen()
+*/
 void ApplicationManagerWindow::showFullScreen()
 {
     m_impl->showFullScreen();
 }
 
+/*!
+    \qmlmethod void ApplicationManagerWindow::showMinimized()
+
+    This call is passed through to the underlying QWindow object in multi-process mode. The
+    single-process mode does not support window states, so this call gets mapped to a simple show().
+
+    \sa QWindow::showMinimized()
+*/
 void ApplicationManagerWindow::showMinimized()
 {
     m_impl->showMinimized();
 }
 
+/*!
+    \qmlmethod void ApplicationManagerWindow::showMaximized()
+
+    This call is passed through to the underlying QWindow object in multi-process mode. The
+    single-process mode does not support window states, so this call gets mapped to a simple show().
+
+    \sa QWindow::showMaximized()
+*/
 void ApplicationManagerWindow::showMaximized()
 {
     m_impl->showMaximized();
 }
 
+/*!
+    \qmlmethod void ApplicationManagerWindow::showNormal()
+
+    This call is passed through to the underlying QWindow object in multi-process mode. The
+    single-process mode does not support window states, so this call gets mapped to a simple show().
+
+    \sa QWindow::showNormal()
+*/
 void ApplicationManagerWindow::showNormal()
 {
     m_impl->showNormal();
 }
+
+/*!
+    \qmlsignal void ApplicationManagerWindow::frameSwapped()
+
+    This signal is forwarded from the underlying QQuickWindow object: either the corresponding
+    QQuickWindow for this object in multi-process mode, or the System-UI's QQuickWindow in
+    single-process mode.
+
+    \sa QQuickWindow::frameSwapped()
+*/
+
+/*!
+    \qmlsignal void ApplicationManagerWindow::sceneGraphError(QQuickWindow::SceneGraphError error, string message)
+
+    This signal with its parameters \a error and \a message is forwarded from the underlying
+    QQuickWindow object: either the corresponding QQuickWindow for this object in multi-process
+    mode, or the System-UI's QQuickWindow in single-process mode.
+
+    \sa QQuickWindow::sceneGraphError()
+*/
+
+/*!
+    \qmlsignal void ApplicationManagerWindow::afterAnimating()
+
+    This signal is forwarded from the underlying QQuickWindow object: either the corresponding
+    QQuickWindow for this object in multi-process mode, or the System-UI's QQuickWindow in
+    single-process mode.
+*/
 
 ApplicationManagerWindowImpl *ApplicationManagerWindow::implementation()
 {
     return m_impl.get();
 }
 
+/*!
+    \qmlproperty string ApplicationManagerWindow::title
+
+    The window's title in the windowing system.
+*/
 QString ApplicationManagerWindow::title() const
 {
     return m_impl->title();
@@ -253,6 +379,16 @@ void ApplicationManagerWindow::setTitle(const QString &title)
     m_impl->setTitle(title);
 }
 
+/*!
+    \qmlproperty int ApplicationManagerWindow::x
+    \qmlproperty int ApplicationManagerWindow::y
+    \qmlproperty int ApplicationManagerWindow::width
+    \qmlproperty int ApplicationManagerWindow::height
+
+    Defines the window's position and size.
+
+    The (x,y) position is relative to the compositors screens.
+*/
 int ApplicationManagerWindow::x() const
 {
     return m_impl->x();
@@ -293,6 +429,15 @@ void ApplicationManagerWindow::setHeight(int h)
     m_impl->setHeight(h);
 }
 
+/*!
+    \qmlproperty int ApplicationManagerWindow::minimumWidth
+    \qmlproperty int ApplicationManagerWindow::minimumHeight
+
+    Defines the window's minimum size.
+
+    This is a hint to the compositor to prevent resizing below the specified
+    width and height.
+*/
 int ApplicationManagerWindow::minimumWidth() const
 {
     return m_impl->minimumWidth();
@@ -313,6 +458,15 @@ void ApplicationManagerWindow::setMinimumHeight(int minh)
     m_impl->setMinimumHeight(minh);
 }
 
+/*!
+    \qmlproperty int ApplicationManagerWindow::maximumWidth
+    \qmlproperty int ApplicationManagerWindow::maximumHeight
+
+    Defines the window's maximum size.
+
+    This is a hint to the compositor to prevent resizing above the specified
+    width and height.
+*/
 int ApplicationManagerWindow::maximumWidth() const
 {
     return m_impl->maximumWidth();
@@ -333,6 +487,14 @@ void ApplicationManagerWindow::setMaximumHeight(int maxh)
     m_impl->setMaximumHeight(maxh);
 }
 
+/*! \qmlproperty bool ApplicationManagerWindow::visible
+
+    Whether the window is visible on the screen.
+
+    Setting visible to false is the same as setting \l visibility to \l {QWindow::}{Hidden}.
+
+    \sa visibility
+*/
 bool ApplicationManagerWindow::isVisible() const
 {
     return m_impl->isVisible();
@@ -343,6 +505,17 @@ void ApplicationManagerWindow::setVisible(bool visible)
     m_impl->setVisible(visible);
 }
 
+/*!
+    \qmlproperty real ApplicationManagerWindow::opacity
+
+    The opacity of the window.
+
+    A value of 1.0 or above is treated as fully opaque, whereas a value of 0.0 or below
+    is treated as fully transparent. Values in between represent varying levels of
+    translucency between the two extremes.
+
+    The default value is 1.0.
+*/
 qreal ApplicationManagerWindow::opacity() const
 {
     return m_impl->opacity();
@@ -353,6 +526,13 @@ void ApplicationManagerWindow::setOpacity(qreal opacity)
     m_impl->setOpacity(opacity);
 }
 
+/*!
+    \qmlproperty color ApplicationManagerWindow::color
+
+    The background color for the window.
+
+    Setting this property is more efficient than using a separate Rectangle.
+*/
 QColor ApplicationManagerWindow::color() const
 {
     return m_impl->color();
@@ -363,16 +543,38 @@ void ApplicationManagerWindow::setColor(const QColor &c)
     m_impl->setColor(c);
 }
 
+/*!
+    \qmlproperty bool ApplicationManagerWindow::active
+
+    The active status of the window.
+ */
 bool ApplicationManagerWindow::isActive() const
 {
     return m_impl->isActive();
 }
 
+/*!
+    \qmlproperty Item ApplicationManagerWindow::activeFocusItem
+
+    The item which currently has active focus or \c null if there is no item with active focus.
+*/
 QQuickItem *ApplicationManagerWindow::activeFocusItem() const
 {
     return m_impl->activeFocusItem();
 }
 
+/*!
+    \keyword qml-amwindow-visibility-prop
+    \qmlproperty QWindow::Visibility ApplicationManagerWindow::visibility
+
+    The screen-occupation state of the window.
+
+    Visibility is whether the window should appear in the windowing system as
+    normal, minimized, maximized, fullscreen or hidden.
+
+    See Window::visibility for more details. In single-process mode, the minimized, maximized and
+    fullscreen states are not supported and simply map to normal.
+*/
 QWindow::Visibility ApplicationManagerWindow::visibility() const
 {
     return m_impl->visibility();
@@ -427,36 +629,92 @@ void ApplicationManagerWindowAttached::reconnect(ApplicationManagerWindow *newWi
     }
 }
 
+/*!
+    \qmlattachedproperty ApplicationManagerWindow ApplicationManagerWindow::window
+    \readonly
+
+    This attached property holds the item's ApplicationManagerWindow.
+    The ApplicationManagerWindow attached property can be attached to any Item.
+*/
 ApplicationManagerWindow *ApplicationManagerWindowAttached::window() const
 {
     return m_amwindow.get();
 }
 
+/*!
+    \qmlattachedproperty QtObject ApplicationManagerWindow::backingObject
+    \readonly
+
+    This attached property holds backingObject of the ApplicationManagerWindow.
+
+    \sa ApplicationManagerWindow::backingObject
+*/
 QObject *ApplicationManagerWindowAttached::backingObject() const
 {
     return m_amwindow ? m_amwindow->backingObject() : nullptr;
 }
 
+/*!
+    \qmlattachedproperty QWindow::Visibility ApplicationManagerWindow::visibility
+    \readonly
+
+    This attached property holds whether the window is currently shown
+    in the windowing system as normal, minimized, maximized, fullscreen or
+    hidden. The \c ApplicationManagerWindow attached property can be attached to any Item. If the
+    item is not shown in any ApplicationManagerWindow, the value will be \l {QWindow::}{Hidden}.
+
+    \sa visible, {qml-amwindow-visibility-prop}{visibility}
+*/
 QWindow::Visibility ApplicationManagerWindowAttached::visibility() const
 {
     return m_amwindow ? m_amwindow->visibility() : QWindow::Hidden;
 }
 
+/*!
+    \qmlattachedproperty bool ApplicationManagerWindow::active
+
+    This attached property tells whether the window is active. The ApplicationManagerWindow
+    attached property can be attached to any Item.
+*/
 bool ApplicationManagerWindowAttached::isActive() const
 {
     return m_amwindow ? m_amwindow->isActive() : false;
 }
 
+/*!
+    \qmlattachedproperty Item ApplicationManagerWindow::activeFocusItem
+    \readonly
+
+    This attached property holds the item which currently has active focus or
+    \c null if there is no item with active focus. The ApplicationManagerWindow attached property
+    can be attached to any Item.
+*/
 QQuickItem *ApplicationManagerWindowAttached::activeFocusItem() const
 {
     return m_amwindow ? m_amwindow->activeFocusItem() : nullptr;
 }
 
+/*!
+    \qmlattachedproperty Item ApplicationManagerWindow::contentItem
+    \readonly
+
+    This attached property holds the invisible root item of the scene or
+    \c null if the item is not in a window. The ApplicationManagerWindow attached property
+    can be attached to any Item.
+*/
 QQuickItem *ApplicationManagerWindowAttached::contentItem() const
 {
     return m_amwindow ? m_amwindow->contentItem() : nullptr;
 }
 
+/*!
+    \qmlattachedproperty int ApplicationManagerWindow::width
+    \qmlattachedproperty int ApplicationManagerWindow::height
+    \readonly
+
+    These attached properties hold the size of the item's window.
+    The ApplicationManagerWindow attached property can be attached to any Item.
+*/
 int ApplicationManagerWindowAttached::width() const
 {
     return m_amwindow ? m_amwindow->height() : 0;

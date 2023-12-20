@@ -172,7 +172,7 @@ void FrameTimer::setWindow(QObject *window)
 
         QQuickWindow *quickWindow = qobject_cast<QQuickWindow*>(m_window);
         if (auto *amWindow = qobject_cast<ApplicationManagerWindow *>(m_window)) {
-            if (amWindow->isInProcess()) {
+            if (amWindow->isSingleProcess()) {
                 qmlWarning(this) << "It makes no sense to measure the FPS of an application's window in single-process mode."
                                     " FrameTimer won't operate with the given window.";
                 return;

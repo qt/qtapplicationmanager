@@ -12,32 +12,32 @@ TestStartupInterface::TestStartupInterface()
     qCWarning(LogMe) << "Startup plugin was built against QT_AM_VERSION =" << QT_AM_VERSION_STR;
 }
 
-void TestStartupInterface::initialize(const QVariantMap &systemProperties) Q_DECL_NOEXCEPT_EXPR(false)
+void TestStartupInterface::initialize(const QVariantMap &systemProperties) noexcept(false)
 {
     qCWarning(LogMe) << "Startup initialize - systemProperties:" << systemProperties;
 }
 
-void TestStartupInterface::afterRuntimeRegistration() Q_DECL_NOEXCEPT_EXPR(false)
+void TestStartupInterface::afterRuntimeRegistration() noexcept(false)
 {
     qCWarning(LogMe) << "Startup afterRuntimeRegistration";
 }
 
-void TestStartupInterface::beforeQmlEngineLoad(QQmlEngine *engine) Q_DECL_NOEXCEPT_EXPR(false)
+void TestStartupInterface::beforeQmlEngineLoad(QQmlEngine *engine) noexcept(false)
 {
     qCWarning(LogMe) << "Startup beforeQmlEngineLoad - engine:" << engine;
 }
 
-void TestStartupInterface::afterQmlEngineLoad(QQmlEngine *engine) Q_DECL_NOEXCEPT_EXPR(false)
+void TestStartupInterface::afterQmlEngineLoad(QQmlEngine *engine) noexcept(false)
 {
     qCWarning(LogMe) << "Startup afterQmlEngineLoad - engine:" << engine;
 }
 
-void TestStartupInterface::beforeWindowShow(QWindow *window) Q_DECL_NOEXCEPT_EXPR(false)
+void TestStartupInterface::beforeWindowShow(QWindow *window) noexcept(false)
 {
     qCWarning(LogMe) << "Startup beforeWindowShow - window:" << window;
 }
 
-void TestStartupInterface::afterWindowShow(QWindow *window) Q_DECL_NOEXCEPT_EXPR(false)
+void TestStartupInterface::afterWindowShow(QWindow *window) noexcept(false)
 {
     qCWarning(LogMe) << "Startup afterWindowShow - window:" << window;
 }

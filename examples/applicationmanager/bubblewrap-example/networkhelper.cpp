@@ -6,14 +6,12 @@
 #include <QNetworkInterface>
 
 NetworkHelper::NetworkHelper(QObject *parent)
-    : QObject{parent}
+    : QObject(parent)
 {
     const auto addresses = QNetworkInterface::allAddresses();
-    for (const auto &address : addresses) {
-        m_ipAddresses += address.toString();
-    }
-
-    qDebug() << "FOOOO" << addresses << m_ipAddresses;
+    m_ipAddresses.reserve(addresses.size());
+    for (const auto &address : addresses)
+        m_ipAddresses << address.toString();
 }
 
 QStringList NetworkHelper::ipAddresses() const

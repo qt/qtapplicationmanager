@@ -84,7 +84,7 @@ public slots:
     void setActions(const QVariantList &actions);
     void setShowActionsAsIcons(bool showActionsAsIcons);
     void setDismissOnAction(bool dismissOnAction);
-    void setExtended(QVariantMap extended);
+    void setExtended(const QVariantMap &extended);
     void setVisible(bool visible);
 
 signals:

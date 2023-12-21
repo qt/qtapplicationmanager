@@ -72,7 +72,7 @@ void PSConfiguration::parse(const QStringList &args)
     if (dd.isEmpty()) {
         if (!QDir::current().exists(DefaultConfigFile))
             clp.showHelp();
-        dataDirectory = QDir::current();
+        dataDirectory = QDir::current(); // clazy:exclude=qt6-deprecated-api-fixes
     } else {
         dataDirectory.setPath(dd);
     }

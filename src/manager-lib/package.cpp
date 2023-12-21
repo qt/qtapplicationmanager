@@ -219,14 +219,15 @@ QUrl Package::icon() const
     switch (state()) {
     default:
     case Installed:
-        dir = info()->baseDir();
+        dir = info()->baseDir(); // clazy:exclude=qt6-deprecated-api-fixes
         break;
     case BeingInstalled:
     case BeingUpdated:
-        dir = QDir(info()->baseDir().absolutePath() + QLatin1Char('+'));
+    case BeingDowngraded:
+        dir.setPath(info()->baseDir().absolutePath() + u'+');
         break;
     case BeingRemoved:
-        dir = QDir(info()->baseDir().absolutePath() + QLatin1Char('-'));
+        dir.setPath(info()->baseDir().absolutePath() + u'-');
         break;
     }
     return QUrl::fromLocalFile(dir.absoluteFilePath(info()->icon()));
@@ -291,7 +292,7 @@ bool Package::block()
     bool blockedNow = (m_blocked.fetchAndAddOrdered(1) == 0);
     if (blockedNow) {
         m_blockedApps = info()->applications();
-        m_blockedAppsCount = m_blockedApps.count();
+        m_blockedAppsCount = int(m_blockedApps.count());
         emit blockedChanged(true);
     }
     return blockedNow;
@@ -319,7 +320,7 @@ void Package::applicationStoppedDueToBlock(const QString &appId)
     });
     if (it != m_blockedApps.cend())
         m_blockedApps.removeOne(*it);
-    m_blockedAppsCount = m_blockedApps.count();
+    m_blockedAppsCount = int(m_blockedApps.count());
 }
 
 bool Package::areAllApplicationsStoppedDueToBlock() const

@@ -59,7 +59,7 @@ bool WaylandQtAMServerExtension::setWindowPropertyHelper(QWaylandSurface *surfac
 
 void WaylandQtAMServerExtension::qtam_extension_set_window_property(QtWaylandServer::qtam_extension::Resource *resource, wl_resource *surface_resource, const QString &name, wl_array *value)
 {
-    Q_UNUSED(resource);
+    Q_UNUSED(resource)
     QWaylandSurface *surface = QWaylandSurface::fromResource(surface_resource);
     const QByteArray byteValue(static_cast<const char *>(value->data), static_cast<int>(value->size));
     QDataStream ds(byteValue);

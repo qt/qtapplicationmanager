@@ -62,7 +62,7 @@ void InProcessWindow::setContentState(ContentState newState)
 
 QSize InProcessWindow::size() const
 {
-    return QSize(m_surfaceItem->width(), m_surfaceItem->height());
+    return m_surfaceItem->size().toSize();
 }
 
 void InProcessWindow::resize(const QSize &size)

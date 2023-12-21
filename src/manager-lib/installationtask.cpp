@@ -163,7 +163,7 @@ void InstallationTask::execute()
         if (!m_foundInfo || !m_foundIcon)
             throw Exception(Error::Package, "package did not contain a valid info.yaml and icon file");
 
-        QList<QByteArray> chainOfTrust = m_pm->caCertificates();
+        QByteArrayList chainOfTrust = m_pm->caCertificates();
 
         if (!m_pm->allowInstallationOfUnsignedPackages()) {
             if (!m_extractor->installationReport().storeSignature().isEmpty()) {
@@ -374,7 +374,7 @@ void InstallationTask::startInstallation() noexcept(false)
     // 4. create new installation
     if (!m_installationDirCreator.create(installationDir.absoluteFilePath(installationTarget)))
         throw Exception("could not create installation directory %1/%2").arg(installationDir).arg(installationTarget);
-    m_extractionDir = installationDir;
+    m_extractionDir = installationDir;  // clazy:exclude=qt6-deprecated-api-fixes
     if (!m_extractionDir.cd(installationTarget))
         throw Exception("could not cd into installation directory %1/%2").arg(installationDir).arg(installationTarget);
     m_applicationDir.setPath(installationDir.absoluteFilePath(m_packageId));

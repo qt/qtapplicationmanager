@@ -245,7 +245,8 @@ void PackagingJob::execute() noexcept(false)
             throw Exception(Error::Package, "package file %1 does not exist").arg(m_sourceName);
 
         // read certificates
-        QList<QByteArray> certificates;
+        QByteArrayList certificates;
+        certificates.reserve(m_certificateFiles.count());
         for (const QString &cert : std::as_const(m_certificateFiles)) {
             QFile cf(cert);
             if (!cf.open(QIODevice::ReadOnly))

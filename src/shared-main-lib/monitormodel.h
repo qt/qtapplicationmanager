@@ -82,10 +82,10 @@ private:
     void trimHistory();
     bool extractRoleNamesFromJsArray(DataSource *dataSource);
     bool extractRoleNamesFromStringList(DataSource *dataSource);
-    void addRoleName(QByteArray roleName, DataSource *dataSource);
+    void addRoleName(const QByteArray &roleName, DataSource *dataSource);
 
     QList<DataSource*> m_dataSources;
-    QList<QByteArray> m_roleNamesList; // also maps a role index to its name
+    QByteArrayList m_roleNamesList; // also maps a role index to its name
     QHash<QByteArray, int> m_roleNameToIndex;
 
     QList<DataRow*> m_rows;

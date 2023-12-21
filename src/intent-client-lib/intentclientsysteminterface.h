@@ -23,17 +23,17 @@ class IntentClientSystemInterface : public QObject
 
 public:
     IntentClientSystemInterface(QObject *parent = nullptr);
-    virtual ~IntentClientSystemInterface() = default;
+    ~IntentClientSystemInterface() override = default;
 
     virtual void initialize(IntentClient *intentClient) noexcept(false);
 
     virtual QString currentApplicationId(QObject *hint) = 0;
 
-    virtual void requestToSystem(QPointer<IntentClientRequest> icr) = 0;
-    virtual void replyFromApplication(QPointer<IntentClientRequest> icr) = 0;
+    virtual void requestToSystem(const QPointer<IntentClientRequest> &icr) = 0;
+    virtual void replyFromApplication(const QPointer<IntentClientRequest> &icr) = 0;
 
 signals:
-    void requestToSystemFinished(QPointer<QtAM::IntentClientRequest> icr,
+    void requestToSystemFinished(const QPointer<QtAM::IntentClientRequest> &icr,
                                  const QUuid &newRequestId, bool error, const QString &errorMessage);
     void replyFromSystem(const QUuid &requestId, bool error, const QVariantMap &result);
 

@@ -14,6 +14,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class IntentClientDBusImplementation : public IntentClientSystemInterface
 {
+    Q_OBJECT
 public:
     IntentClientDBusImplementation(const QString &dbusName, QObject *parent = nullptr);
 
@@ -21,8 +22,8 @@ public:
 
     QString currentApplicationId(QObject *hint) override;
 
-    void requestToSystem(QPointer<IntentClientRequest> icr) override;
-    void replyFromApplication(QPointer<IntentClientRequest> icr) override;
+    void requestToSystem(const QPointer<IntentClientRequest> &icr) override;
+    void replyFromApplication(const QPointer<IntentClientRequest> &icr) override;
 
 private:
     IoQtApplicationManagerIntentInterfaceInterface *m_dbusInterface;

@@ -257,7 +257,7 @@ void IntentClientAMImplementation::initialize(IntentClient *intentClient) noexce
     IntentClientSystemInterface::initialize(intentClient);
 }
 
-void IntentClientAMImplementation::requestToSystem(QPointer<IntentClientRequest> icr)
+void IntentClientAMImplementation::requestToSystem(const QPointer<IntentClientRequest> &icr)
 {
     // we need to delay the request by one event loop iteration to (a) avoid a race condition
     // on app startup and (b) have consistent behavior in single- and multi-process mode
@@ -277,7 +277,7 @@ void IntentClientAMImplementation::requestToSystem(QPointer<IntentClientRequest>
     }, Qt::QueuedConnection);
 }
 
-void IntentClientAMImplementation::replyFromApplication(QPointer<IntentClientRequest> icr)
+void IntentClientAMImplementation::replyFromApplication(const QPointer<IntentClientRequest> &icr)
 {
     if (icr) {
         emit m_issi->replyFromApplication(icr->applicationId(), icr->requestId(), !icr->succeeded(),
@@ -419,14 +419,14 @@ void IntentServerInProcessIpcConnection::replyFromSystem(IntentServerRequest *is
 
 #if QT_CONFIG(am_multi_process)
 
-IntentServerDBusIpcConnection::IntentServerDBusIpcConnection(QDBusConnection connection,
+IntentServerDBusIpcConnection::IntentServerDBusIpcConnection(const QDBusConnection &connection,
                                                              Application *application,
                                                              IntentServerAMImplementation *iface)
     : IntentServerIpcConnection(false /* !inProcess*/, application, iface)
 {
     m_connectionName = connection.name();
     m_adaptor = new IntentInterfaceAdaptor(this);
-    connection.registerObject(u"/IntentServer"_s, this, QDBusConnection::ExportAdaptors);
+    QDBusConnection(connection).registerObject(u"/IntentServer"_s, this, QDBusConnection::ExportAdaptors);
 }
 
 IntentServerDBusIpcConnection::~IntentServerDBusIpcConnection()
@@ -434,7 +434,7 @@ IntentServerDBusIpcConnection::~IntentServerDBusIpcConnection()
     QDBusConnection(m_connectionName).unregisterObject(u"/IntentServer"_s);
 }
 
-IntentServerDBusIpcConnection *IntentServerDBusIpcConnection::create(QDBusConnection connection,
+IntentServerDBusIpcConnection *IntentServerDBusIpcConnection::create(const QDBusConnection &connection,
                                                                      Application *application,
                                                                      IntentServerAMImplementation *iface)
 {
@@ -443,7 +443,7 @@ IntentServerDBusIpcConnection *IntentServerDBusIpcConnection::create(QDBusConnec
     return ipcConnection;
 }
 
-IntentServerDBusIpcConnection *IntentServerDBusIpcConnection::find(QDBusConnection connection)
+IntentServerDBusIpcConnection *IntentServerDBusIpcConnection::find(const QDBusConnection &connection)
 {
     QString connectionName = connection.name();
 

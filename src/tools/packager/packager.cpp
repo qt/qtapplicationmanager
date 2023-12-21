@@ -81,13 +81,13 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
     QByteArray desc = "\n\nAvailable commands are:\n";
-    uint longestName = 0;
+    size_t longestName = 0;
     for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i)
         longestName = qMax(longestName, qstrlen(commandTable[i].name));
     for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
         desc += "  ";
         desc += commandTable[i].name;
-        desc += QByteArray(1 + int(longestName - qstrlen(commandTable[i].name)), ' ');
+        desc += QByteArray(1 + qsizetype(longestName - qstrlen(commandTable[i].name)), ' ');
         desc += commandTable[i].description;
         desc += '\n';
     }

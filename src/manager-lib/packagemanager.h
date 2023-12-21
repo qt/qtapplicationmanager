@@ -100,7 +100,7 @@ public:
     QString hardwareId() const;
     void setHardwareId(const QString &hwId);
     QString architecture() const;
-    void setCACertificates(const QList<QByteArray> &chainOfTrust);
+    void setCACertificates(const QByteArrayList &chainOfTrust);
 
     void cleanupBrokenInstallations() noexcept(false);
 
@@ -175,7 +175,7 @@ private:
     void registerApplicationsAndIntentsOfPackage(Package *package);
     void unregisterApplicationsAndIntentsOfPackage(Package *package);
     static void registerQmlTypes();
-    QList<QByteArray> caCertificates() const;
+    QByteArrayList caCertificates() const;
 
 private:
     explicit PackageManager(PackageDatabase *packageDatabase,

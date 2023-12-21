@@ -66,7 +66,7 @@ class AbstractContainer : public QObject
     Q_PROPERTY(QString controlGroup READ controlGroup WRITE setControlGroup NOTIFY controlGroupChanged FINAL)
 
 public:
-    virtual ~AbstractContainer();
+    ~AbstractContainer() override;
 
     virtual QString controlGroup() const;
     virtual bool setControlGroup(const QString &groupName);

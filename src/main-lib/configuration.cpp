@@ -558,8 +558,8 @@ QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, co
 {
     QByteArray string = sourceContent;
     QByteArray path;
-    int posBeg = -1;
-    int posEnd = -1;
+    qsizetype posBeg = -1;
+    qsizetype posEnd = -1;
     while (true) {
         if ((posBeg = string.indexOf("${", posEnd + 1)) < 0)
             break;
@@ -597,11 +597,11 @@ QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, co
 ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QString &fileName)
 {
     try {
-        YamlParser p(source->readAll(), fileName);
-        auto header = p.parseHeader();
+        YamlParser yp(source->readAll(), fileName);
+        auto header = yp.parseHeader();
         if (!(header.first == u"am-configuration" && header.second == 1))
             throw Exception("Unsupported format type and/or version");
-        p.nextDocument();
+        yp.nextDocument();
 
         QString pwd;
         if (!fileName.isEmpty())
@@ -883,7 +883,7 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
               } }
         };
 
-        p.parseFields(fields);
+        yp.parseFields(fields);
         return cd.release();
     } catch (const Exception &e) {
         throw Exception(e.errorCode(), "Failed to parse config file %1: %2")

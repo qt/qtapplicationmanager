@@ -10,11 +10,11 @@ QT_BEGIN_NAMESPACE_AM
 
 struct ConfigCacheEntry
 {
-    QString filePath;    // abs. file path
-    QByteArray checksum; // sha1 (fast and sufficient for this use-case)
-    QByteArray rawContent;  // raw YAML content
-    void *content = nullptr;  // parsed YAML content
-    bool checksumMatches = false;
+    QString m_filePath;    // abs. file path
+    QByteArray m_checksum; // sha1 (fast and sufficient for this use-case)
+    QByteArray m_rawContent;  // raw YAML m_content
+    void *m_content = nullptr;  // parsed YAML content
+    bool m_checksumMatches = false;
 };
 
 struct CacheHeader
@@ -22,12 +22,12 @@ struct CacheHeader
     enum { Magic = 0x23d39366, // dd if=/dev/random bs=4 count=1 status=none | xxd -p
            Version = 3 | (QT_VERSION_MAJOR << 24) };
 
-    quint32 magic = Magic;
-    quint32 version = Version;
-    quint32 typeId = 0;
-    quint32 typeVersion = 0;
-    QString baseName;
-    quint32 entries = 0;
+    quint32 m_magic = Magic;
+    quint32 m_version = Version;
+    quint32 m_typeId = 0;
+    quint32 m_typeVersion = 0;
+    QString m_baseName;
+    quint32 m_entries = 0;
 
     bool isValid(const QString &baseName, quint32 typeId = 0, quint32 typeVersion = 0) const;
 };

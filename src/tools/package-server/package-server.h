@@ -5,7 +5,9 @@
 
 #include <QtAppManCommon/colorprint.h>
 
-QT_USE_NAMESPACE_AM
+QT_BEGIN_NAMESPACE_AM
 
 extern ColorPrint colorOut();
 extern ColorPrint colorErr();
+
+QT_END_NAMESPACE_AM

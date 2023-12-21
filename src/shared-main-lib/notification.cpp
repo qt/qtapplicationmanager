@@ -501,7 +501,7 @@ void Notification::setShowActionsAsIcons(bool showActionsAsIcons)
     }
 }
 
-void Notification::setExtended(QVariantMap extended)
+void Notification::setExtended(const QVariantMap &extended)
 {
     if (m_extended != extended) {
         m_extended = extended;

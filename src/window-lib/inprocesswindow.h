@@ -19,7 +19,7 @@ class InProcessWindow : public Window
 
 public:
     InProcessWindow(Application *app, const QSharedPointer<InProcessSurfaceItem> &surfaceItem);
-    virtual ~InProcessWindow();
+    ~InProcessWindow() override;
 
     bool isInProcess() const override { return true; }
 

@@ -674,7 +674,6 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
         case Am::NotRunning:
             throw Exception("Application %1 is not running, but still has a Runtime object attached")
                     .arg(app->id());
-            break;
         }
     }
 
@@ -933,7 +932,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 */
 void ApplicationManager::stopApplication(const QString &id, bool forceKill)
 {
-    return stopApplicationInternal(fromId(id), forceKill);
+    stopApplicationInternal(fromId(id), forceKill);
 }
 
 /*!
@@ -1215,13 +1214,14 @@ void ApplicationManager::openUrlRelay(const QUrl &url)
 
 void ApplicationManager::emitDataChanged(Application *app, const QVector<int> &roles)
 {
-    int row = d->apps.indexOf(app);
+    auto row = d->apps.indexOf(app);
     if (row >= 0) {
-        emit dataChanged(index(row), index(row), roles);
+        emit dataChanged(index(int(row)), index(int(row)), roles);
 
         static const auto appChanged = QMetaMethod::fromSignal(&ApplicationManager::applicationChanged);
         if (isSignalConnected(appChanged)) {
             QStringList stringRoles;
+            stringRoles.reserve(roles.size());
             for (auto role : roles)
                 stringRoles << QString::fromLatin1(d->roleNames[role]);
             emit applicationChanged(app->id(), stringRoles);
@@ -1241,7 +1241,7 @@ int ApplicationManager::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
-    return d->apps.count();
+    return int(d->apps.count());
 }
 
 QVariant ApplicationManager::data(const QModelIndex &index, int role) const
@@ -1390,7 +1390,7 @@ int ApplicationManager::indexOfApplication(const QString &id) const
 */
 int ApplicationManager::indexOfApplication(Application *application) const
 {
-    return d->apps.indexOf(application);
+    return int(d->apps.indexOf(application));
 }
 
 /*!
@@ -1463,7 +1463,7 @@ void ApplicationManager::addApplication(ApplicationInfo *appInfo, Package *packa
         emitDataChanged(app);
     });
 
-    beginInsertRows(QModelIndex(), d->apps.count(), d->apps.count());
+    beginInsertRows(QModelIndex(), int(d->apps.count()), int(d->apps.count()));
     d->apps << app;
 
     endInsertRows();

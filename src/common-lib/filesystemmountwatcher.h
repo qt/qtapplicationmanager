@@ -17,7 +17,7 @@ class FileSystemMountWatcher : public QObject
 
 public:
     FileSystemMountWatcher(QObject *parent = nullptr);
-    ~FileSystemMountWatcher();
+    ~FileSystemMountWatcher() override;
 
     static QMultiMap<QString, QString> currentMountPoints();
 

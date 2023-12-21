@@ -5,8 +5,10 @@
 
 #include "containerinterface.h"
 
+ContainerInterface::ContainerInterface() { }
 ContainerInterface::~ContainerInterface() { }
 
+ContainerManagerInterface::ContainerManagerInterface() { }
 ContainerManagerInterface::~ContainerManagerInterface() { }
 
 bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return true; }

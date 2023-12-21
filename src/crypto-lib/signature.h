@@ -19,7 +19,7 @@ public:
     ~Signature();
 
     QByteArray create(const QByteArray &signingCertificatePkcs12, const QByteArray &signingCertificatePassword);
-    bool verify(const QByteArray &signaturePkcs7, const QList<QByteArray> &chainOfTrust);
+    bool verify(const QByteArray &signaturePkcs7, const QByteArrayList &chainOfTrust);
 
     QString errorString() const;
 

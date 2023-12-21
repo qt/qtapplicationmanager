@@ -67,7 +67,7 @@ extern "C" int capget(cap_user_header_t header, const cap_user_data_t data);
 
 
 // Declared as weak symbol here, so we can check at runtime if we were compiled against libgcov
-extern "C" void __gcov_init() __attribute__((weak));
+extern "C" void __gcov_init() __attribute__((weak)); // NOLINT(reserved-identifier)
 
 
 #ifndef OPEN_TREE_CLONE
@@ -515,7 +515,7 @@ bool SudoServer::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t
     try {
         if (!recursiveOperation(fileOrDir, setOwnerAndPermissions)) {
             throw Exception(errno, "could not recursively set owner and permission on %1 to %2:%3 / %4")
-                .arg(fileOrDir).arg(user).arg(group).arg(permissions, 4, 8, QLatin1Char('0'));
+                .arg(fileOrDir).arg(user).arg(group).arg(int(permissions), 4, 8, QChar(u'0'));
         }
         return true;
     } catch (const Exception &e) {
@@ -539,7 +539,7 @@ bool SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
 
     try {
         // Create a detached mount point for our source location
-        int fromFd = ::syscall(SYS_open_tree, -EBADF, from.toLocal8Bit().constData(), OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE);
+        int fromFd = int(::syscall(SYS_open_tree, -EBADF, from.toLocal8Bit().constData(), OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE));
         if (fromFd < 0)
             throw Exception(errno, "could not create a detached mount point for %1").arg(from);
 
@@ -555,7 +555,7 @@ bool SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
             if (oldNsFd < 0)
                 throw Exception(errno, "could not open our own mount namespace");
 
-            int pidFd = ::syscall(SYS_pidfd_open, pid_t(namespacePid), 0);
+            int pidFd = int(::syscall(SYS_pidfd_open, pid_t(namespacePid), 0));
             if (pidFd < 0)
                 throw Exception(errno, "process %1 is not available").arg(namespacePid);
             if (::setns(pidFd, CLONE_NEWNS) < 0)

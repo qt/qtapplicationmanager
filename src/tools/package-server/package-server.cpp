@@ -19,8 +19,8 @@
 QT_USE_NAMESPACE_AM
 using namespace Qt::StringLiterals;
 
-ColorPrint colorOut() { return ColorPrint(stdout, Console::stdoutSupportsAnsiColor()); }
-ColorPrint colorErr() { return ColorPrint(stderr, Console::stderrSupportsAnsiColor()); }
+ColorPrint QtAM::colorOut() { return ColorPrint(stdout, Console::stdoutSupportsAnsiColor()); }
+ColorPrint QtAM::colorErr() { return ColorPrint(stderr, Console::stderrSupportsAnsiColor()); }
 
 
 int main(int argc, char **argv)

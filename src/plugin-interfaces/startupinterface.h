@@ -15,7 +15,10 @@ QT_FORWARD_DECLARE_CLASS(QWindow)
 
 class StartupInterface
 {
+    Q_DISABLE_COPY_MOVE(StartupInterface)
+
 public:
+    StartupInterface();
     virtual ~StartupInterface();
 
     virtual void initialize(const QVariantMap &systemProperties) noexcept(false) = 0;

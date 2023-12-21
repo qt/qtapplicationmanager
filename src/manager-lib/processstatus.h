@@ -33,7 +33,7 @@ class ProcessStatus : public QObject
     Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT FINAL)
 public:
     ProcessStatus(QObject *parent = nullptr);
-    ~ProcessStatus();
+    ~ProcessStatus() override;
 
     QStringList roleNames() const;
 

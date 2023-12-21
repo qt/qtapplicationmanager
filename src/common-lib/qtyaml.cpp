@@ -481,12 +481,12 @@ QVariantMap YamlParser::parseMap()
         if (d->event.type == YAML_MAPPING_END_EVENT)
             return map;
 
-        QString key = parseMapKey();
+        const QString key = parseMapKey();
         if (map.contains(key))
             throw YamlParserException(this, "Found duplicate key '%1' in mapping").arg(key);
 
         nextEvent(); // read value
-        QVariant value = parseVariant();
+        const QVariant value = parseVariant();
 
         map.insert(key, value);
     }

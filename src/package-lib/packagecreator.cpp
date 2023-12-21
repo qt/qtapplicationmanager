@@ -162,10 +162,10 @@ bool PackageCreatorPrivate::create()
 //            throw ArchiveException(ar, "could not enable XZ compression");
 
         auto dummyCallback = [](archive *, void *){ return ARCHIVE_OK; };
-        auto writeCallback = [](archive *, void *user, const void *buffer, size_t size) {
+        auto writeCallback = [](archive *, void *user, const void *writeBuffer, size_t size) {
             // this could be simpler, if we had an event loop ... but we do not
             QIODevice *output = reinterpret_cast<QIODevice *>(user);
-            qint64 written = output->write(static_cast<const char *>(buffer), size);
+            qint64 written = output->write(static_cast<const char *>(writeBuffer), qint64(size));
             output->waitForBytesWritten(-1);
             return static_cast<__LA_SSIZE_T>(written);
         };

@@ -255,7 +255,7 @@ static void logQmlBacktrace(LogToDestination logTo)
             // buffers doesn't really help.
 
             const QV4::StackTrace stackTrace = qv4engine->stackTrace();
-            if (stackTrace.size()) {
+            if (!stackTrace.isEmpty()) {
                 logMsg(logTo, "\n > QML backtrace:");
                 for (int frame = 0; frame < stackTrace.size(); ++frame) {
                     const auto &stackFrame = stackTrace.at(frame);

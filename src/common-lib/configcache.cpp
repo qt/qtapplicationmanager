@@ -28,40 +28,40 @@ QT_BEGIN_NAMESPACE_AM
 QDataStream &operator>>(QDataStream &ds, ConfigCacheEntry &ce)
 {
     bool contentValid = false;
-    ds >> ce.filePath >> ce.checksum >> contentValid;
-    ce.rawContent.clear();
-    ce.content = contentValid ? reinterpret_cast<void *>(-1) : nullptr;
+    ds >> ce.m_filePath >> ce.m_checksum >> contentValid;
+    ce.m_rawContent.clear();
+    ce.m_content = contentValid ? reinterpret_cast<void *>(-1) : nullptr;
     return ds;
 }
 
 QDataStream &operator<<(QDataStream &ds, const ConfigCacheEntry &ce)
 {
-    ds << ce.filePath << ce.checksum << static_cast<bool>(ce.content);
+    ds << ce.m_filePath << ce.m_checksum << static_cast<bool>(ce.m_content);
     return ds;
 }
 
 QDataStream &operator>>(QDataStream &ds, CacheHeader &ch)
 {
-    ds >> ch.magic >> ch.version >> ch.typeId >> ch.typeVersion >> ch.baseName >> ch.entries;
+    ds >> ch.m_magic >> ch.m_version >> ch.m_typeId >> ch.m_typeVersion >> ch.m_baseName >> ch.m_entries;
     return ds;
 }
 
 QDataStream &operator<<(QDataStream &ds, const CacheHeader &ch)
 {
-    ds << ch.magic << ch.version << ch.typeId << ch.typeVersion << ch.baseName << ch.entries;
+    ds << ch.m_magic << ch.m_version << ch.m_typeId << ch.m_typeVersion << ch.m_baseName << ch.m_entries;
     return ds;
 }
 
 QDebug operator<<(QDebug dbg, const ConfigCacheEntry &ce)
 {
-    dbg << "CacheEntry {\n  " << ce.filePath << "\n  " << ce.checksum.toHex() << "\n  valid:"
-        << (ce.content ? "yes" : "no") << ce.content
+    dbg << "CacheEntry {\n  " << ce.m_filePath << "\n  " << ce.m_checksum.toHex() << "\n  valid:"
+        << (ce.m_content ? "yes" : "no") << ce.m_content
         << "\n}\n";
     return dbg;
 }
 
 
-static quint32 makeTypeId(const std::array<char, 4> &typeIdStr)
+static quint32 makeTypeId(std::array<char, 4> typeIdStr)
 {
     return (quint32(typeIdStr[0])) | (quint32(typeIdStr[1]) << 8)
            | (quint32(typeIdStr[2]) << 16) | (quint32(typeIdStr[3]) << 24);
@@ -69,17 +69,17 @@ static quint32 makeTypeId(const std::array<char, 4> &typeIdStr)
 
 bool CacheHeader::isValid(const QString &baseName, quint32 typeId, quint32 typeVersion) const
 {
-    return magic == Magic
-            && version == Version
-            && this->typeId == typeId
-            && this->typeVersion == typeVersion
-            && this->baseName == baseName
-            && entries < 1000;
+    return m_magic == Magic
+           && m_version == Version
+           && m_typeId == typeId
+           && m_typeVersion == typeVersion
+           && m_baseName == baseName
+           && m_entries < 1000;
 }
 
 
 AbstractConfigCache::AbstractConfigCache(const QStringList &configFiles, const QString &cacheBaseName,
-                                         const std::array<char, 4> &typeId, quint32 version, Options options)
+                                         std::array<char, 4> typeId, quint32 version, Options options)
     : d(new ConfigCachePrivate)
 {
     d->options = options;
@@ -108,7 +108,7 @@ void *AbstractConfigCache::takeResult(int index) const
     Q_ASSERT(!(d->options & MergedResult));
     void *result = nullptr;
     if (index >= 0 && index < d->cache.size())
-        std::swap(result, d->cache[index].content);
+        std::swap(result, d->cache[index].m_content);
     return result;
 }
 
@@ -130,6 +130,7 @@ void AbstractConfigCache::parse()
 
     // normalize all yaml file names
     QStringList rawFilePaths;
+    rawFilePaths.reserve(d->rawFiles.size());
     for (const auto &rawFile : std::as_const(d->rawFiles)) {
         const auto path = QFileInfo(rawFile).canonicalFilePath();
         if (path.isEmpty())
@@ -164,12 +165,12 @@ void AbstractConfigCache::parse()
                 if (!cacheHeader.isValid(d->cacheBaseName, d->typeId, d->typeVersion))
                     throw Exception("failed to parse cache header");
 
-                cache.resize(int(cacheHeader.entries));
-                for (int i = 0; i < int(cacheHeader.entries); ++i) {
+                cache.resize(int(cacheHeader.m_entries));
+                for (int i = 0; i < int(cacheHeader.m_entries); ++i) {
                     ConfigCacheEntry &ce = cache[i];
                     ds >> ce;
-                    if (ce.content)
-                        ce.content = loadFromCache(ds);
+                    if (ce.m_content)
+                        ce.m_content = loadFromCache(ds);
                 }
                 if (d->options & MergedResult) {
                     bool hasMerged = false;
@@ -196,7 +197,7 @@ void AbstractConfigCache::parse()
                     for (int i = 0; i < rawFilePaths.count(); ++i) {
                         const ConfigCacheEntry &ce = cache.at(i);
 
-                        if ((rawFilePaths.at(i) != ce.filePath) || !ce.content)
+                        if ((rawFilePaths.at(i) != ce.m_filePath) || !ce.m_content)
                             cacheIsComplete = false;
                     }
                 }
@@ -230,17 +231,17 @@ void AbstractConfigCache::parse()
             // if we already got this file in the cache, then use the entry
             bool found = false;
             for (const auto &c : std::as_const(cache)) {
-                if ((c.filePath == rawFilePath) && c.content) {
+                if ((c.m_filePath == rawFilePath) && c.m_content) {
                     ce = c;
                     found = true;
-                    qCDebug(LogCache) << d->cacheBaseName << "found cache entry for" << c.filePath;
+                    qCDebug(LogCache) << d->cacheBaseName << "found cache entry for" << c.m_filePath;
                     break;
                 }
             }
 
             // if it's not yet cached, then add it to the list
             if (!found) {
-                ce.filePath = rawFilePath;
+                ce.m_filePath = rawFilePath;
                 qCDebug(LogCache) << d->cacheBaseName << "missing cache entry for" << rawFilePath;
             }
         }
@@ -250,24 +251,24 @@ void AbstractConfigCache::parse()
     // reads a single config file and calculates its hash - defined as lambda to be usable
     // both via QtConcurrent and via std:for_each
     auto readConfigFile = [&cacheIsComplete, this](ConfigCacheEntry &ce) {
-        QFile file(ce.filePath);
+        QFile file(ce.m_filePath);
         if (!file.open(QIODevice::ReadOnly))
             throw Exception("Failed to open file '%1' for reading.\n").arg(file.fileName());
 
         if (file.size() > 1024*1024)
             throw Exception("File '%1' is too big (> 1MB).\n").arg(file.fileName());
 
-        ce.rawContent = file.readAll();
-        preProcessSourceContent(ce.rawContent, ce.filePath);
+        ce.m_rawContent = file.readAll();
+        preProcessSourceContent(ce.m_rawContent, ce.m_filePath);
 
-        QByteArray checksum = QCryptographicHash::hash(ce.rawContent, QCryptographicHash::Sha1);
-        ce.checksumMatches = (checksum == ce.checksum);
-        ce.checksum = checksum;
-        if (!ce.checksumMatches) {
-            if (ce.content) {
+        QByteArray checksum = QCryptographicHash::hash(ce.m_rawContent, QCryptographicHash::Sha1);
+        ce.m_checksumMatches = (checksum == ce.m_checksum);
+        ce.m_checksum = checksum;
+        if (!ce.m_checksumMatches) {
+            if (ce.m_content) {
                 qWarning(LogCache) << "Failed to read Cache: cached file checksums do not match";
-                destruct(ce.content);
-                ce.content = nullptr;
+                destruct(ce.m_content);
+                ce.m_content = nullptr;
             }
             cacheIsComplete = false;
         }
@@ -293,22 +294,22 @@ void AbstractConfigCache::parse()
         QAtomicInt count;
 
         auto parseConfigFile = [this, &count](ConfigCacheEntry &ce) {
-            if (ce.content)
+            if (ce.m_content)
                 return;
 
             ++count;
             try {
-                QBuffer buffer(&ce.rawContent);
+                QBuffer buffer(&ce.m_rawContent);
                 buffer.open(QIODevice::ReadOnly);
-                ce.content = loadFromSource(&buffer, ce.filePath);
+                ce.m_content = loadFromSource(&buffer, ce.m_filePath);
             } catch (const Exception &e) {
                 if (d->options.testFlag(IgnoreBroken)) {
                     qCWarning(LogCache, "Could not parse file '%s': %s (file will be ignored)",
-                              qPrintable(ce.filePath), qPrintable(e.errorString()));
-                    ce.content = nullptr;
+                              qPrintable(ce.m_filePath), qPrintable(e.errorString()));
+                    ce.m_content = nullptr;
                 } else {
                     throw Exception("Could not parse file '%1': %2")
-                            .arg(ce.filePath).arg(e.errorString());
+                        .arg(ce.m_filePath).arg(e.errorString());
                 }
             }
         };
@@ -323,11 +324,11 @@ void AbstractConfigCache::parse()
             // we cannot parallelize this step, since subsequent config files can overwrite
             // or append to values
             for (const ConfigCacheEntry &ce : std::as_const(cache)) {
-                if (ce.content) {
+                if (ce.m_content) {
                     if (!mergedContent)
-                        mergedContent = clone(ce.content);
+                        mergedContent = clone(ce.m_content);
                     else
-                        merge(mergedContent, ce.content);
+                        merge(mergedContent, ce.m_content);
                 }
             }
         }
@@ -345,17 +346,17 @@ void AbstractConfigCache::parse()
 
                 QDataStream ds(&newCacheFile);
                 CacheHeader cacheHeader;
-                cacheHeader.baseName = d->cacheBaseName;
-                cacheHeader.typeId = d->typeId;
-                cacheHeader.typeVersion = d->typeVersion;
-                cacheHeader.entries = quint32(cache.size());
+                cacheHeader.m_baseName = d->cacheBaseName;
+                cacheHeader.m_typeId = d->typeId;
+                cacheHeader.m_typeVersion = d->typeVersion;
+                cacheHeader.m_entries = quint32(cache.size());
                 ds << cacheHeader;
 
                 for (const ConfigCacheEntry &ce : std::as_const(cache)) {
                     ds << ce;
                     // qCDebug(LogCache) << "SAVING" << ce << ce.content;
-                    if (ce.content)
-                        saveToCache(ds, ce.content);
+                    if (ce.m_content)
+                        saveToCache(ds, ce.m_content);
                 }
 
                 if (d->options & MergedResult) {
@@ -387,7 +388,7 @@ void AbstractConfigCache::parse()
 void AbstractConfigCache::clear()
 {
     for (auto &ce : std::as_const(d->cache))
-        destruct(ce.content);
+        destruct(ce.m_content);
     d->cache.clear();
     d->cacheIndex.clear();
     destruct(d->mergedContent);

@@ -89,6 +89,8 @@ private:
     QByteArray m_internal;
     QByteArray &m_buffer;
     bool m_colorSupport;
+
+    Q_DISABLE_COPY_MOVE(ColorPrint)
 };
 
 QT_END_NAMESPACE_AM

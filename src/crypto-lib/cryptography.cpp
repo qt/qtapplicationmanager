@@ -105,7 +105,7 @@ QString Cryptography::errorString(qint64 osCryptoError, const char *errorDescrip
         msg[sizeof(msg) - 1] = 0;
 
         //void ERR_error_string_n(unsigned long e, char *buf, size_t len);
-        am_ERR_error_string_n((unsigned long) osCryptoError, msg, sizeof(msg) - 1);
+        am_ERR_error_string_n(static_cast<unsigned long>(osCryptoError), msg, sizeof(msg) - 1);
         result.append(QString::fromLocal8Bit(msg));
     }
 #elif defined(Q_OS_WIN)

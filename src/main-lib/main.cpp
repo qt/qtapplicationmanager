@@ -501,6 +501,7 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
         }
 
         auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", systemContainerPluginPaths + containerPluginPaths);
+        pluginContainerManagers.reserve(containerPlugins.size());
         for (auto iface : std::as_const(containerPlugins)) {
             auto pcm = new PluginContainerManager(iface);
             pluginContainerManagers << pcm;
@@ -629,7 +630,8 @@ void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePa
         m_packageManager->setAllowInstallationOfUnsignedPackages(true);
 
     if (!m_noSecurity) {
-        QList<QByteArray> caCertificateList;
+        QByteArrayList caCertificateList;
+        caCertificateList.reserve(caCertificatePaths.size());
 
         for (const auto &caFile : caCertificatePaths) {
             QFile f(caFile);

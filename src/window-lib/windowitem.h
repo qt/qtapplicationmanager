@@ -42,7 +42,7 @@ class WindowItem : public QQuickFocusScope
 
 public:
     WindowItem(QQuickItem *parent = nullptr);
-    ~WindowItem();
+    ~WindowItem() override;
 
     Window *window() const;
     void setWindow(Window *window);
@@ -69,7 +69,7 @@ protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 
 signals:
-    void windowChanged();
+    void windowChanged(); // clazy:exclude=overloaded-signal
     void primaryChanged();
     void objectFollowsItemSizeChanged();
     void contentItemDataChanged();
@@ -79,7 +79,8 @@ private slots:
 private:
     void createImpl(bool inProcess);
 
-    struct Impl {
+    struct Impl
+    {
         Impl(WindowItem *windowItem) : q(windowItem) {}
         virtual ~Impl() {}
         virtual void setup(Window *window) = 0;
@@ -94,9 +95,12 @@ private:
         virtual void setFocusOnClick(bool focusOnClick) = 0;
         virtual QQuickItem *backingItem() = 0;
         WindowItem *q;
+
+        Q_DISABLE_COPY_MOVE(Impl)
     };
 
-    struct InProcessImpl : public Impl {
+    struct InProcessImpl : public Impl
+    {
         InProcessImpl(WindowItem *windowItem) : Impl(windowItem) {}
         void setup(Window *window) override;
         void tearDown() override;
@@ -115,9 +119,10 @@ private:
     };
 
 #if QT_CONFIG(am_multi_process)
-    struct WaylandImpl : public Impl {
+    struct WaylandImpl : public Impl
+    {
         WaylandImpl(WindowItem *windowItem) : Impl(windowItem) {}
-        ~WaylandImpl();
+        ~WaylandImpl() override;
         void setup(Window *window) override;
         void tearDown() override;
         void updateSize(const QSizeF &newSize) override;

@@ -216,7 +216,7 @@ bool MonitorModel::extractRoleNamesFromJsArray(DataSource *dataSource)
 
     int length = jsRoleNames.property(u"length"_s).toInt();
     for (int i = 0; i < length; i++)
-        addRoleName(jsRoleNames.property(i).toString().toLatin1(), dataSource);
+        addRoleName(jsRoleNames.property(quint32(i)).toString().toLatin1(), dataSource);
 
     return true;
 }
@@ -243,15 +243,15 @@ bool MonitorModel::extractRoleNamesFromStringList(DataSource *dataSource)
     return true;
 }
 
-void MonitorModel::addRoleName(QByteArray roleName, DataSource *dataSource)
+void MonitorModel::addRoleName(const QByteArray &roleName, DataSource *dataSource)
 {
     dataSource->roleNames.append(roleName);
 
     if (m_roleNamesList.contains(roleName))
         qmlWarning(this) << "roleName" << roleName << "already exists. Model won't function correctly.";
 
-    m_roleNamesList.append(dataSource->roleNames.last());
-    m_roleNameToIndex[dataSource->roleNames.last()] = m_roleNamesList.count() - 1;
+    m_roleNamesList.append(dataSource->roleNames.constLast());
+    m_roleNameToIndex[dataSource->roleNames.constLast()] = int(m_roleNamesList.count()) - 1;
 }
 
 /*!
@@ -264,7 +264,7 @@ void MonitorModel::addRoleName(QByteArray roleName, DataSource *dataSource)
 */
 int MonitorModel::count() const
 {
-    return m_rows.count();
+    return int(m_rows.count());
 }
 
 int MonitorModel::rowCount(const QModelIndex &parent) const
@@ -282,7 +282,7 @@ QVariant MonitorModel::data(const QModelIndex &index, int role) const
     if (index.parent().isValid() || !index.isValid() || index.row() < 0 || index.row() >= m_rows.count())
         return QVariant();
 
-    return m_rows.at(index.row())->dataFromRoleIndex[role];
+    return m_rows.at(index.row())->dataFromRoleIndex.value(role);
 }
 
 QHash<int, QByteArray> MonitorModel::roleNames() const
@@ -347,34 +347,32 @@ void MonitorModel::readDataSourcesAndAddRow()
     if (m_dataSources.count() == 0)
         return;
 
-    if (m_rows.count() < m_maximumCount) {
+    int cnt = count();
+    if (cnt < m_maximumCount) {
         // create a new row
         DataRow *dataRow = new DataRow;
         fillDataRow(dataRow);
-        beginInsertRows(QModelIndex(), /* first */ m_rows.count(), /* last */ m_rows.count());
+        beginInsertRows(QModelIndex(), cnt, cnt);
         m_rows.append(dataRow);
         endInsertRows();
         emit countChanged();
     } else {
         // recycle the oldest row
         beginMoveRows(QModelIndex(), /* sourceFirst */ 0, /* sourceLast */ 0,
-                QModelIndex(), /* destination */ m_rows.count());
+                      QModelIndex(), /* destination */ cnt);
         m_rows.append(m_rows.takeFirst());
         endMoveRows();
 
-        {
-            fillDataRow(m_rows.last());
-            QModelIndex modelIndex = index(m_rows.count() - 1 /* row */, 0 /* column */);
-            emit dataChanged(modelIndex, modelIndex);
-        }
+        fillDataRow(m_rows.last());
+        QModelIndex modelIndex = index(cnt /* row */, 0 /* column */);
+        emit dataChanged(modelIndex, modelIndex);
     }
 }
 
 void MonitorModel::fillDataRow(DataRow *dataRow)
 {
-    for (int i = 0; i < m_dataSources.count(); ++i) {
-        readDataSource(m_dataSources[i], dataRow);
-    }
+    for (int i = 0; i < m_dataSources.count(); ++i)
+        readDataSource(m_dataSources.at(i), dataRow);
 }
 
 void MonitorModel::readDataSource(DataSource *dataSource, DataRow *dataRow)
@@ -414,13 +412,13 @@ void MonitorModel::setMaximumCount(int value)
 
 void MonitorModel::trimHistory()
 {
-    int excess = m_rows.count() - m_maximumCount;
+    int excess = count() - m_maximumCount;
     if (excess <= 0)
         return;
 
     beginRemoveRows(QModelIndex(), /* first */ 0, /* last */ excess - 1);
 
-    while (m_rows.count() > m_maximumCount)
+    while (count() > m_maximumCount)
         delete m_rows.takeFirst();
 
     endRemoveRows();

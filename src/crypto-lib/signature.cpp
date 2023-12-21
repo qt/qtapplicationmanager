@@ -51,7 +51,7 @@ QByteArray Signature::create(const QByteArray &signingCertificatePkcs12, const Q
     }
 }
 
-bool Signature::verify(const QByteArray &signaturePkcs7, const QList<QByteArray> &chainOfTrust)
+bool Signature::verify(const QByteArray &signaturePkcs7, const QByteArrayList &chainOfTrust)
 {
     d->error.clear();
 

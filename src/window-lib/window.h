@@ -41,7 +41,7 @@ public:
     Q_ENUM(ContentState)
 
     Window(Application *app);
-    virtual ~Window();
+    ~Window() override;
 
     virtual bool isInProcess() const = 0;
     virtual Application *application() const;

@@ -166,7 +166,7 @@ private:
     bool m_disconnectedEmitted = false;
 };
 
-static class DBus dbus;
+Q_GLOBAL_STATIC(DBus, dbus)
 
 
 enum Command {
@@ -500,7 +500,7 @@ int main(int argc, char *argv[])
             clp.addOption({ { u"a"_s, u"all"_s }, u"Cancel all active installation tasks."_s });
             clp.process(a);
 
-            int args = clp.positionalArguments().size();
+            qsizetype args = clp.positionalArguments().size();
             bool all = clp.isSet(u"a"_s);
             if (!(((args == 1) && all) || ((args == 2) && !all)))
                 clp.showHelp(1);
@@ -576,7 +576,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                              const QMap<QString, int> &stdRedirections, bool restart,
                              const QString &documentUrl = QString()) noexcept(false)
 {
-    dbus.connectToManager();
+    dbus()->connectToManager();
 
     if (restart) {
         bool isStopped = false;
@@ -589,7 +589,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
 
             // check if application has quit for max. 3sec
             for (int i = 0; !isStopped && (i < (3 * checksPerSecond)); ++i) {
-                auto stateReply = dbus.manager()->applicationRunState(appId);
+                auto stateReply = dbus()->manager()->applicationRunState(appId);
                 stateReply.waitForFinished();
                 if (stateReply.isError())
                     throw Exception(Error::IO, "failed to get the current run-state from application manager: %1").arg(stateReply.error().message());
@@ -610,16 +610,16 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
 
     if (!stdRedirections.isEmpty()) {
         // just bail out, if the AM or bus dies
-        QObject::connect(&dbus, &DBus::disconnected,
+        QObject::connect(dbus(), &DBus::disconnected,
                          qApp, [](const QString &reason) {
             throw Exception(Error::IO, "application might not be running: lost connection to the D-Bus service (%1)").arg(reason);
         });
 
         // in case application quits -> quit the controller
-        QObject::connect(dbus.manager(), &IoQtApplicationManagerInterface::applicationRunStateChanged,
+        QObject::connect(dbus()->manager(), &IoQtApplicationManagerInterface::applicationRunStateChanged,
                          qApp, [appId](const QString &id, uint runState) {
             if (isStarted && id == appId && runState == 0 /* NotRunning */) {
-                auto getReply = dbus.manager()->get(id);
+                auto getReply = dbus()->manager()->get(id);
                 getReply.waitForFinished();
                 if (getReply.isError())
                     throw Exception(Error::IO, "failed to get exit code from application manager: %1").arg(getReply.error().message());
@@ -633,15 +633,15 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
     bool isDebug = !debugWrapper.isEmpty();
     QDBusPendingReply<bool> reply;
     if (stdRedirections.isEmpty()) {
-        reply = isDebug ? dbus.manager()->debugApplication(appId, debugWrapper, documentUrl)
-                        : dbus.manager()->startApplication(appId, documentUrl);
+        reply = isDebug ? dbus()->manager()->debugApplication(appId, debugWrapper, documentUrl)
+                        : dbus()->manager()->startApplication(appId, documentUrl);
     } else {
         UnixFdMap fdMap;
         for (auto it = stdRedirections.cbegin(); it != stdRedirections.cend(); ++it)
             fdMap.insert(it.key(), QDBusUnixFileDescriptor(it.value()));
 
-        reply = isDebug ? dbus.manager()->debugApplication(appId, debugWrapper, fdMap, documentUrl)
-                        : dbus.manager()->startApplication(appId, fdMap, documentUrl);
+        reply = isDebug ? dbus()->manager()->debugApplication(appId, debugWrapper, fdMap, documentUrl)
+                        : dbus()->manager()->startApplication(appId, fdMap, documentUrl);
     }
 
     reply.waitForFinished();
@@ -655,7 +655,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
         qApp->exit(isStarted ? 0 : 2);
     } else {
         InterruptHandler::install([appId](int) {
-            auto stopReply = dbus.manager()->stopApplication(appId, true);
+            auto stopReply = dbus()->manager()->stopApplication(appId, true);
             stopReply.waitForFinished();
             qApp->exit(1);
         });
@@ -664,9 +664,9 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
 
 void stopApplication(const QString &appId, bool forceKill) noexcept(false)
 {
-    dbus.connectToManager();
+    dbus()->connectToManager();
 
-    auto reply = dbus.manager()->stopApplication(appId, forceKill);
+    auto reply = dbus()->manager()->stopApplication(appId, forceKill);
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call stopApplication via DBus: %1").arg(reply.error().message());
@@ -675,9 +675,9 @@ void stopApplication(const QString &appId, bool forceKill) noexcept(false)
 
 void stopAllApplications() noexcept(false)
 {
-    dbus.connectToManager();
+    dbus()->connectToManager();
 
-    auto reply = dbus.manager()->stopAllApplications();
+    auto reply = dbus()->manager()->stopAllApplications();
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call stopAllApplications via DBus: %1").arg(reply.error().message());
@@ -686,9 +686,9 @@ void stopAllApplications() noexcept(false)
 
 void listApplications() noexcept(false)
 {
-    dbus.connectToManager();
+    dbus()->connectToManager();
 
-    auto reply = dbus.manager()->applicationIds();
+    auto reply = dbus()->manager()->applicationIds();
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call applicationIds via DBus: %1").arg(reply.error().message());
@@ -701,9 +701,9 @@ void listApplications() noexcept(false)
 
 void showApplication(const QString &appId, bool asJson) noexcept(false)
 {
-    dbus.connectToManager();
+    dbus()->connectToManager();
 
-    auto reply = dbus.manager()->get(appId);
+    auto reply = dbus()->manager()->get(appId);
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to get application via DBus: %1").arg(reply.error().message());
@@ -716,9 +716,9 @@ void showApplication(const QString &appId, bool asJson) noexcept(false)
 
 void listPackages() noexcept(false)
 {
-    dbus.connectToPackager();
+    dbus()->connectToPackager();
 
-    auto reply = dbus.packager()->packageIds();
+    auto reply = dbus()->packager()->packageIds();
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call packageIds via DBus: %1").arg(reply.error().message());
@@ -731,9 +731,9 @@ void listPackages() noexcept(false)
 
 void showPackage(const QString &packageId, bool asJson) noexcept(false)
 {
-    dbus.connectToPackager();
+    dbus()->connectToPackager();
 
-    auto reply = dbus.packager()->get(packageId);
+    auto reply = dbus()->packager()->get(packageId);
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to get package via DBus: %1").arg(reply.error().message());
@@ -774,11 +774,11 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
 
     fprintf(stdout, "Starting installation of package %s ...\n", qPrintable(packageFile));
 
-    dbus.connectToManager();
-    dbus.connectToPackager();
+    dbus()->connectToManager();
+    dbus()->connectToPackager();
 
     // just bail out, if the AM or bus dies
-    QObject::connect(&dbus, &DBus::disconnected,
+    QObject::connect(dbus(), &DBus::disconnected,
                      qApp, [](const QString &reason) {
         throw Exception(Error::IO, "package might not be installed: lost connection to the D-Bus service (%1)").arg(reason);
     });
@@ -788,7 +788,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
 
     // as soon as we have the manifest available: get the app id and acknowledge the installation
     if (acknowledge) {
-        QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskRequestingInstallationAcknowledge,
+        QObject::connect(dbus()->packager(), &IoQtPackageManagerInterface::taskRequestingInstallationAcknowledge,
                          qApp, [](const QString &taskId, const QVariantMap &metadata) {
             if (taskId != installationId)
                 return;
@@ -796,12 +796,12 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
             if (packageId.isEmpty())
                 throw Exception(Error::IO, "could not find a valid package id in the package");
             fprintf(stdout, "Acknowledging package installation for '%s'...\n", qPrintable(packageId));
-            dbus.packager()->acknowledgePackageInstallation(taskId);
+            dbus()->packager()->acknowledgePackageInstallation(taskId);
         });
     }
 
     // on failure: quit
-    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFailed,
+    QObject::connect(dbus()->packager(), &IoQtPackageManagerInterface::taskFailed,
                      qApp, [](const QString &taskId, int errorCode, const QString &errorString) {
         if (taskId != installationId)
             return;
@@ -809,7 +809,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
     });
 
     // on success
-    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFinished,
+    QObject::connect(dbus()->packager(), &IoQtPackageManagerInterface::taskFinished,
                      qApp, [](const QString &taskId) {
         if (taskId != installationId)
             return;
@@ -819,7 +819,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
 
     // start the package installation
 
-    auto reply = dbus.packager()->startPackageInstallation(fi.absoluteFilePath());
+    auto reply = dbus()->packager()->startPackageInstallation(fi.absoluteFilePath());
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call startPackageInstallation via DBus: %1").arg(reply.error().message());
@@ -832,7 +832,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
 
     InterruptHandler::install([](int) {
         fprintf(stdout, "Cancelling package installation.\n");
-        auto cancelReply = dbus.packager()->cancelTask(installationId);
+        auto cancelReply = dbus()->packager()->cancelTask(installationId);
         cancelReply.waitForFinished();
         qApp->exit(1);
     });
@@ -842,11 +842,11 @@ void removePackage(const QString &packageId, bool keepDocuments, bool force) noe
 {
     fprintf(stdout, "Starting removal of package %s...\n", qPrintable(packageId));
 
-    dbus.connectToManager();
-    dbus.connectToPackager();
+    dbus()->connectToManager();
+    dbus()->connectToPackager();
 
     // just bail out, if the AM or bus dies
-    QObject::connect(&dbus, &DBus::disconnected,
+    QObject::connect(dbus(), &DBus::disconnected,
                      qApp, [](const QString &reason) {
         throw Exception(Error::IO, "package might not be removed: lost connection to the D-Bus service (%1)").arg(reason);
     });
@@ -855,7 +855,7 @@ void removePackage(const QString &packageId, bool keepDocuments, bool force) noe
     static QString installationId;
 
     // on failure: quit
-    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFailed,
+    QObject::connect(dbus()->packager(), &IoQtPackageManagerInterface::taskFailed,
                      qApp, [](const QString &taskId, int errorCode, const QString &errorString) {
         if (taskId != installationId)
             return;
@@ -863,7 +863,7 @@ void removePackage(const QString &packageId, bool keepDocuments, bool force) noe
     });
 
     // on success
-    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFinished,
+    QObject::connect(dbus()->packager(), &IoQtPackageManagerInterface::taskFinished,
                      qApp, [](const QString &taskId) {
         if (taskId != installationId)
             return;
@@ -872,7 +872,7 @@ void removePackage(const QString &packageId, bool keepDocuments, bool force) noe
     });
 
     // start the package removal
-    auto reply = dbus.packager()->removePackage(packageId, keepDocuments, force);
+    auto reply = dbus()->packager()->removePackage(packageId, keepDocuments, force);
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call removePackage via DBus: %1").arg(reply.error().message());
@@ -884,9 +884,9 @@ void removePackage(const QString &packageId, bool keepDocuments, bool force) noe
 
 void listInstallationTasks() noexcept(false)
 {
-    dbus.connectToPackager();
+    dbus()->connectToPackager();
 
-    auto reply = dbus.packager()->activeTaskIds();
+    auto reply = dbus()->packager()->activeTaskIds();
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
@@ -900,10 +900,10 @@ void listInstallationTasks() noexcept(false)
 
 void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(false)
 {
-    dbus.connectToPackager();
+    dbus()->connectToPackager();
 
     // just bail out, if the AM or bus dies
-    QObject::connect(&dbus, &DBus::disconnected,
+    QObject::connect(dbus(), &DBus::disconnected,
                      qApp, [](const QString &reason) {
         throw Exception(Error::IO, "installation task(s) might not be canceled: lost connection to the D-Bus service (%1)").arg(reason);
     });
@@ -913,9 +913,9 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
     static int result = 0;
 
     if (all) {
-        dbus.connectToPackager();
+        dbus()->connectToPackager();
 
-        auto reply = dbus.packager()->activeTaskIds();
+        auto reply = dbus()->packager()->activeTaskIds();
         reply.waitForFinished();
         if (reply.isError())
             throw Exception(Error::IO, "failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
@@ -932,7 +932,7 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
         qApp->quit();
 
     // on task failure
-    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFailed,
+    QObject::connect(dbus()->packager(), &IoQtPackageManagerInterface::taskFailed,
                      qApp, [](const QString &taskId, int errorCode, const QString &errorString) {
         if (cancelTaskIds.removeOne(taskId)) {
             if (errorCode != int(Error::Canceled)) {
@@ -948,7 +948,7 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
     });
 
     // on success
-    QObject::connect(dbus.packager(), &IoQtPackageManagerInterface::taskFinished,
+    QObject::connect(dbus()->packager(), &IoQtPackageManagerInterface::taskFinished,
                      qApp, [](const QString &taskId) {
         if (cancelTaskIds.removeOne(taskId)) {
             fprintf(stdout, "Could not cancel task %s anymore - the installation task already finished successfully.\n",
@@ -964,7 +964,7 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
 
         // cancel the task
 
-        auto reply = dbus.packager()->cancelTask(cancelTaskId);
+        auto reply = dbus()->packager()->cancelTask(cancelTaskId);
         reply.waitForFinished();
         if (reply.isError())
             throw Exception(Error::IO, "failed to call cancelTask via DBus: %1").arg(reply.error().message());
@@ -976,9 +976,9 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
 
 void listInstallationLocations() noexcept(false)
 {
-    dbus.connectToPackager();
+    dbus()->connectToPackager();
 
-    auto installationLocation = dbus.packager()->installationLocation();
+    auto installationLocation = dbus()->packager()->installationLocation();
     if (!installationLocation.isEmpty())
         fputs("internal-0\n", stdout);
     qApp->quit();
@@ -986,9 +986,9 @@ void listInstallationLocations() noexcept(false)
 
 void showInstallationLocation(bool asJson) noexcept(false)
 {
-    dbus.connectToPackager();
+    dbus()->connectToPackager();
 
-    auto installationLocation = dbus.packager()->installationLocation();
+    auto installationLocation = dbus()->packager()->installationLocation();
     fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(installationLocation).toJson().constData()
                                    : QtYaml::yamlFromVariantDocuments({ installationLocation }).constData());
     qApp->quit();
@@ -1019,17 +1019,17 @@ void injectIntentRequest(const QString &intentId, bool isBroadcast,
                          const QString &requestingApplicationId, const QString &applicationId,
                          const QString &jsonParameters) noexcept(false)
 {
-    dbus.connectToManager();
+    dbus()->connectToManager();
 
     if (isBroadcast) {
-        auto reply = dbus.manager()->broadcastIntentRequestAs(requestingApplicationId,
+        auto reply = dbus()->manager()->broadcastIntentRequestAs(requestingApplicationId,
                     intentId,
                     jsonParameters);
         reply.waitForFinished();
         if (reply.isError())
             throw Exception(Error::IO, "failed to call broadcastIntentRequest via DBus: %1").arg(reply.error().message());
     } else {
-        auto reply = dbus.manager()->sendIntentRequestAs(requestingApplicationId,
+        auto reply = dbus()->manager()->sendIntentRequestAs(requestingApplicationId,
                     intentId,
                     applicationId,
                     jsonParameters);

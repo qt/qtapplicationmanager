@@ -96,7 +96,7 @@ const QDir &PackageInfo::baseDir() const
 
 void PackageInfo::setBaseDir(const QDir &dir)
 {
-    m_baseDir = dir;
+    m_baseDir = dir; // clazy:exclude=qt6-deprecated-api-fixes
 }
 
 QVector<ApplicationInfo *> PackageInfo::applications() const

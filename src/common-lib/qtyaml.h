@@ -120,7 +120,7 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(YamlParser::FieldTypes)
 
-class YamlParserException : public Exception
+class YamlParserException : public Exception  // clazy:exclude=copyable-polymorphic
 {
 public:
     explicit YamlParserException(YamlParser *p, const char *errorString);

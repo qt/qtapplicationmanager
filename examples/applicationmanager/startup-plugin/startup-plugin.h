@@ -18,12 +18,12 @@ public:
     TestStartupInterface();
 
     // StartupInterface
-    void initialize(const QVariantMap &systemProperties) Q_DECL_NOEXCEPT_EXPR(false) override;
-    void afterRuntimeRegistration() Q_DECL_NOEXCEPT_EXPR(false) override;
+    void initialize(const QVariantMap &systemProperties) noexcept(false) override;
+    void afterRuntimeRegistration() noexcept(false) override;
 
-    void beforeQmlEngineLoad(QQmlEngine *engine) Q_DECL_NOEXCEPT_EXPR(false) override;
-    void afterQmlEngineLoad(QQmlEngine *engine) Q_DECL_NOEXCEPT_EXPR(false) override;
+    void beforeQmlEngineLoad(QQmlEngine *engine) noexcept(false) override;
+    void afterQmlEngineLoad(QQmlEngine *engine) noexcept(false) override;
 
-    void beforeWindowShow(QWindow *window) Q_DECL_NOEXCEPT_EXPR(false) override;
-    void afterWindowShow(QWindow *window) Q_DECL_NOEXCEPT_EXPR(false) override;
+    void beforeWindowShow(QWindow *window) noexcept(false) override;
+    void afterWindowShow(QWindow *window) noexcept(false) override;
 };

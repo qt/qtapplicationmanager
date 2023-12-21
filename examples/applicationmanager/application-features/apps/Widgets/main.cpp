@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
         QDialog *popup1 = new QDialog(&window);
         (new QPushButton(QStringLiteral("I'm a popup!"), popup1))->resize(340, 140);
         popup1->setStyleSheet(QStringLiteral("QPushButton { background-color : limegreen; color : white; font-size: 24px; }"));
-        QObject::connect(&button1, &QPushButton::clicked, [&popup1, &am] () {
+        QObject::connect(&button1, &QPushButton::clicked, popup1, [&popup1, &am] () {
             popup1->setVisible(!popup1->isVisible());
             am.setWindowProperty(popup1->windowHandle(), QStringLiteral("type"), QStringLiteral("pop-up"));
         });

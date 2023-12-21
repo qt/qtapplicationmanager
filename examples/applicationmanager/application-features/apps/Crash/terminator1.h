@@ -17,7 +17,7 @@ class Terminator1 : public QObject
 public:
     Terminator1(QObject *parent = nullptr);
 
-    Q_INVOKABLE void abort() const;
-    Q_INVOKABLE void throwUnhandledException() const;
-    Q_INVOKABLE void exitGracefully() const;
+    [[noreturn]] Q_INVOKABLE void abort() const;
+    [[noreturn]] Q_INVOKABLE void throwUnhandledException() const;
+    [[noreturn]] Q_INVOKABLE void exitGracefully() const;
 };

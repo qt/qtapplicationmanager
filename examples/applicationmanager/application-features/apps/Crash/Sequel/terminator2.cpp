@@ -11,7 +11,7 @@ Terminator2::Terminator2(QObject *parent) : QObject(parent)
 
 void Terminator2::accessIllegalMemory() const
 {
-    *(int*)1 = 42;
+    *reinterpret_cast<int *>(1) = 42;
 }
 
 void Terminator2::accessIllegalMemoryInThread()

@@ -18,7 +18,7 @@ QT_FORWARD_DECLARE_CLASS(QFile)
 
 QT_BEGIN_NAMESPACE_AM
 
-class Exception : public QException
+class Exception : public QException   // clazy:exclude=copyable-polymorphic
 {
 public:
     explicit Exception(const char *errorString) noexcept;

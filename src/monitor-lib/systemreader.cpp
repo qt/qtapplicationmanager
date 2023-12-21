@@ -161,6 +161,7 @@ void GpuVendor::fetch()
 
 class GpuTool : protected QProcess
 {
+    Q_OBJECT
 public:
     GpuTool()
         : QProcess(qApp)
@@ -283,7 +284,7 @@ qreal GpuReader::readLoadValue()
 }
 
 // TODO: can we always expect cgroup FS to be mounted on /sys/fs/cgroup?
-static const QString cGroupsMemoryBaseDir = qSL("/sys/fs/cgroup/memory/");
+static const char *cGroupsMemoryBaseDir = "/sys/fs/cgroup/memory/";
 
 MemoryReader::MemoryReader() : MemoryReader(QString())
 { }
@@ -326,10 +327,10 @@ quint64 MemoryReader::readUsedValue() const
 {
     QByteArray buffer = m_sysFs->readValue();
 
-    int i = buffer.indexOf("total_rss ");
+    qsizetype i = buffer.indexOf("total_rss ");
     if (i == -1)
         return 0;
-    return ::strtoull(buffer.data() + i + sizeof("total_rss ")-1, nullptr, 10);
+    return ::strtoull(buffer.data() + i + sizeof("total_rss ") - 1, nullptr, 10);
 }
 
 
@@ -373,7 +374,7 @@ qreal IoReader::readLoadValue()
     if (values.size() >= 11) {
         qint64 ioTime = values.at(9);
 
-        m_load = qreal(ioTime - m_lastIoTime) / elapsed;
+        m_load = qreal(ioTime - m_lastIoTime) / qreal(elapsed);
         m_lastIoTime = ioTime;
     } else {
         m_load = qreal(1);
@@ -420,7 +421,7 @@ bool MemoryThreshold::setEnabled(bool enabled, const QString &groupPath, MemoryR
 
     if (enabled && !m_initialized) {
         quint64 limit = groupPath.isEmpty() ? reader->totalValue() : reader->groupLimit();
-        const QString cGroup = cGroupsMemoryBaseDir + groupPath;
+        const QString cGroup = QString::fromLatin1(cGroupsMemoryBaseDir) + groupPath;
 
         m_eventFd = ::eventfd(0, EFD_CLOEXEC);
 
@@ -436,7 +437,7 @@ bool MemoryThreshold::setEnabled(bool enabled, const QString &groupPath, MemoryR
                     bool registerOk = true;
 
                     for (qreal percent : std::as_const(m_thresholds)) {
-                        quint64 mem = quint64(limit * percent) / 100;
+                        quint64 mem = quint64(qreal(limit) * percent / 100);
                         registerOk = registerOk && (dprintf(m_controlFd, "%d %d %llu", m_eventFd, m_usageFd, mem) > 0);
                     }
 
@@ -525,7 +526,7 @@ bool MemoryWatcher::startWatching(const QString &groupPath)
 
 void MemoryWatcher::checkMemoryConsumption()
 {
-    qreal percentUsed = m_reader->readUsedValue() / m_memLimit * 100.0;
+    qreal percentUsed = qreal(m_reader->readUsedValue()) / qreal(m_memLimit) * 100;
     bool nowMemoryCritical = (percentUsed >= m_critical);
     bool nowMemoryLow = (percentUsed >= m_warning);
     if (nowMemoryCritical  && !hasMemoryCriticalWarning)
@@ -551,10 +552,9 @@ QMap<QByteArray, QByteArray> fetchCGroupProcessInfo(qint64 pid)
     char textBuffer[250];
     while (file.readLine(textBuffer, sizeof(textBuffer)) > 0) {
         // NB: we don't want the ending '\n' character, hence the -1
-        auto fields = QByteArray::fromRawData(textBuffer, strlen(textBuffer)-1).split(':');
-        if (fields.size() == 3) {
+        auto fields = QByteArray::fromRawData(textBuffer, qstrlen(textBuffer) - 1).split(':');
+        if (fields.size() == 3)
             result[fields[1]] = fields[2];
-        }
     }
 
     return result;
@@ -809,3 +809,4 @@ QT_END_NAMESPACE_AM
 #endif // !defined(Q_OS_LINUX)
 
 #include "moc_systemreader.cpp"
+#include "systemreader.moc"

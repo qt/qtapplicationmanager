@@ -126,7 +126,7 @@ QVariantMap PackageManagerAdaptor::documentLocation() const
 void PackageManagerAdaptor::acknowledgePackageInstallation(const QString &taskId)
 {
     QT_AM_AUTHENTICATE_DBUS(void)
-    return PackageManager::instance()->acknowledgePackageInstallation(taskId);
+    PackageManager::instance()->acknowledgePackageInstallation(taskId);
 }
 
 bool PackageManagerAdaptor::cancelTask(const QString &taskId)

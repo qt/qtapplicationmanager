@@ -111,7 +111,7 @@ qreal GpuStatus::gpuLoad() const
 void GpuStatus::update()
 {
     qreal newLoad = m_gpuReader->readLoadValue();
-    if (newLoad != m_gpuLoad) {
+    if (!qFuzzyCompare(newLoad, m_gpuLoad)) {
         m_gpuLoad = newLoad;
         emit gpuLoadChanged();
     }

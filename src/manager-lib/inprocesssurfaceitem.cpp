@@ -60,7 +60,7 @@ QVariant InProcessSurfaceItem::windowProperty(const QString &name) const
 
 QVariantMap InProcessSurfaceItem::windowPropertiesAsVariantMap() const
 {
-    const QList<QByteArray> keys = m_windowProperties.dynamicPropertyNames();
+    const QByteArrayList keys = m_windowProperties.dynamicPropertyNames();
     QVariantMap map;
 
     for (const QByteArray &key : keys) {

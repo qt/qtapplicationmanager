@@ -40,7 +40,7 @@ public:
     Q_DECLARE_FLAGS(Options, Option)
 
     AbstractConfigCache(const QStringList &configFiles, const QString &cacheBaseName,
-                        const std::array<char, 4> &typeId, quint32 version = 0, Options options = None);
+                        std::array<char, 4> typeId, quint32 version = 0, Options options = None);
     virtual ~AbstractConfigCache();
 
     virtual void parse();
@@ -77,8 +77,8 @@ public:
     using AbstractConfigCache::Option;
     using AbstractConfigCache::Options;
 
-    ConfigCache(const QStringList &configFiles, const QString &cacheBaseName, const std::array<char, 4> &typeId,
-            quint32 typeVersion = 0, Options options = None)
+    ConfigCache(const QStringList &configFiles, const QString &cacheBaseName, std::array<char, 4> typeId,
+                quint32 typeVersion = 0, Options options = None)
         : AbstractConfigCache(configFiles, cacheBaseName, typeId, typeVersion, options)
     { }
 

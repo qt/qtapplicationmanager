@@ -38,7 +38,7 @@ public:
     QString error;
 
     QString hardwareId;
-    QList<QByteArray> chainOfTrust;
+    QByteArrayList chainOfTrust;
     bool cleanupBrokenInstallationsDone = false;
 
 #if QT_CONFIG(am_installer)

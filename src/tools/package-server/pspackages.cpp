@@ -238,14 +238,14 @@ int PSPackages::removeIf(const std::function<bool(PSPackage *)> &pred)
                            << ColorPrint::reset << " [" << sp->architectureOrAll() << "]";
                 QFile::remove(sp->filePath);
                 delete sp;
-                ait = iit->erase(ait);
+                ait = iit->erase(ait); // clazy:exclude=strict-iterators
                 ++count;
             } else {
                 ++ait;
             }
         }
         if (iit->isEmpty())
-            iit = d->packages.erase(iit);
+            iit = d->packages.erase(iit); // clazy:exclude=strict-iterators
         else
             ++iit;
     }

@@ -132,8 +132,8 @@ qint64 getParentPid(qint64 pid)
         // we need just the 4th field, but the 2nd is the binary name, which could be long
         QByteArray ba = f.read(512);
         // the binary name could contain ')' and/or ' ' and the kernel escapes neither...
-        int pos = ba.lastIndexOf(')');
-        if (pos > 0 && ba.length() > (pos + 5))
+        qsizetype pos = ba.lastIndexOf(')');
+        if ((pos > 0) && (ba.length() > (pos + 5)))
             ppid = strtoll(ba.constData() + pos + 4, nullptr, 10);
     }
 

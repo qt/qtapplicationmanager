@@ -34,7 +34,7 @@ public:
     static const char *signalName(int sig);
 
     void resetToDefault(int sig);
-    void resetToDefault(const std::initializer_list<int> &sigs);
+    void resetToDefault(std::initializer_list<int> sigs);
 
     enum Type {
         RawSignalHandler,
@@ -42,7 +42,7 @@ public:
     };
 
     bool install(Type handlerType, int sig, const std::function<void(int)> &handler);
-    bool install(Type handlerType, const std::initializer_list<int> &sigs,
+    bool install(Type handlerType, std::initializer_list<int> sigs,
                  const std::function<void(int)> &handler);
 
 private:

@@ -336,14 +336,14 @@ bool NativeRuntime::start()
     }
 
     if (m_app) {
-        const auto envVars = m_app->runtimeParameters().value(u"environmentVariables"_s).toMap();
+        const auto appEnvVars = m_app->runtimeParameters().value(u"environmentVariables"_s).toMap();
 
-        if (!envVars.isEmpty()) {
+        if (!appEnvVars.isEmpty()) {
             if (ApplicationManager::instance()->securityChecksEnabled()) {
                 qCWarning(LogSystem) << "Due to enabled security checks, the environmentVariables for"
                                      << m_app->id() << "(given in info.yaml) will be ignored";
             } else {
-                for (auto it = envVars.cbegin(); it != envVars.cend(); ++it) {
+                for (auto it = appEnvVars.cbegin(); it != appEnvVars.cend(); ++it) {
                     if (!it.key().isEmpty())
                         env.insert(it.key(), it.value().toString());
                 }

@@ -5,8 +5,8 @@
 
 #include "startupinterface.h"
 
+StartupInterface::StartupInterface() { }
 StartupInterface::~StartupInterface() { }
-
 
 /*! \class StartupInterface
     \inmodule QtApplicationManager

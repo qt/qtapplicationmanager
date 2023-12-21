@@ -251,10 +251,10 @@ Intent *IntentServer::addIntent(const QString &id, const QString &packageId,
 
 void IntentServer::removeIntent(Intent *intent)
 {
-    int index = m_intents.indexOf(intent);
+    qsizetype index = m_intents.indexOf(intent);
     if (index >= 0) {
         emit intentAboutToBeRemoved(intent);
-        beginRemoveRows(QModelIndex(), index, index);
+        beginRemoveRows(QModelIndex(), int(index), int(index));
         m_intents.removeAt(index);
         endRemoveRows();
 
@@ -309,7 +309,7 @@ QVector<Intent *> IntentServer::filterByRequestingApplicationId(const QVector<In
 
 int IntentServer::rowCount(const QModelIndex &parent) const
 {
-    return parent.isValid() ? -1 : m_intents.count();
+    return parent.isValid() ? 0 : int(m_intents.count());
 }
 
 QVariant IntentServer::data(const QModelIndex &index, int role) const
@@ -470,7 +470,7 @@ Intent *IntentServer::packageIntent(const QString &intentId, const QString &pack
 int IntentServer::indexOfIntent(const QString &intentId, const QString &applicationId,
                                 const QVariantMap &parameters) const
 {
-    return m_intents.indexOf(applicationIntent(intentId, applicationId, parameters));
+    return int(m_intents.indexOf(applicationIntent(intentId, applicationId, parameters)));
 }
 
 /*! \qmlmethod int IntentServer::indexOfIntent(IntentObject intent)
@@ -482,7 +482,7 @@ int IntentServer::indexOfIntent(const QString &intentId, const QString &applicat
 */
 int IntentServer::indexOfIntent(Intent *intent)
 {
-    return m_intents.indexOf(intent);
+    return int(m_intents.indexOf(intent));
 }
 
 void IntentServer::triggerRequestQueue()
@@ -711,7 +711,7 @@ void IntentServer::applicationWasStarted(const QString &applicationId)
             m_requestQueue << isr;
             foundOne = true;
 
-            it = m_startingAppQueue.erase(it);
+            it = m_startingAppQueue.erase(it); // clazy:exclude=strict-iterators
         } else {
             ++it;
         }

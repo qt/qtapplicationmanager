@@ -37,25 +37,25 @@ PackageInfo *YamlPackageScanner::scan(const QString &fileName) noexcept(false)
 PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName) noexcept(false)
 {
     try {
-        YamlParser p(source->readAll());
+        YamlParser yp(source->readAll());
 
         bool legacy = false;
         try {
-            auto header = p.parseHeader();
+            auto header = yp.parseHeader();
             if ((header.first == u"am-application") && (header.second == 1))
                 legacy = true;
             else if (!((header.first == u"am-package") && (header.second == 1)))
                 throw Exception("Unsupported format type and/or version");
-            p.nextDocument();
+            yp.nextDocument();
         } catch (const Exception &e) {
-            throw YamlParserException(&p, "not a valid YAML package meta-data file: %1").arg(e.errorString());
+            throw YamlParserException(&yp, "not a valid YAML package meta-data file: %1").arg(e.errorString());
         }
 
         QStringList appIds; // duplicate check
         std::unique_ptr<PackageInfo> pkgInfo(new PackageInfo);
         if (!fileName.isEmpty()) {
             QFileInfo fi(fileName);
-            pkgInfo->m_baseDir = fi.absoluteDir();
+            pkgInfo->m_baseDir = fi.absoluteDir();  // clazy:exclude=qt6-deprecated-api-fixes
             pkgInfo->m_manifestName = fi.fileName();
         }
 
@@ -338,7 +338,7 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
             });
         });
 
-        p.parseFields(fields);
+        yp.parseFields(fields);
 
         if (legacy)
             pkgInfo->m_applications << legacyAppInfo.release();

@@ -89,7 +89,8 @@ qreal ProcessReader::readCpuLoad()
     pos = int(endPtr - str.constData() + 1);
     quint64 stime = strtoull(str.constData() + pos, nullptr, 10); // check missing for overflow
 
-    qreal load = (elapsed != 0) ? ((utime + stime - m_lastCpuUsage) * 1000.0 / sysconf(_SC_CLK_TCK) / elapsed) : 0.0;
+    qreal load = elapsed ? (qreal(utime + stime - m_lastCpuUsage) * 1000 / qreal(sysconf(_SC_CLK_TCK)) / qreal(elapsed))
+                         : 0.0;
     m_lastCpuUsage = utime + stime;
     return load;
 }
@@ -109,15 +110,11 @@ static uint parseValue(const char *pl) {
 
 bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
 {
-    struct ScopedFile {
-        ~ScopedFile() { if (file) fclose(file); }
-        FILE *file = nullptr;
-    };
+    FILE *sf = nullptr;
+    auto closeFile = qScopeGuard([=]() { if (sf) fclose(sf); });
 
-    ScopedFile sf;
-    sf.file = fopen(smapsFile.constData(), "r");
-
-    if (sf.file == nullptr)
+    sf = fopen(smapsFile.constData(), "r");
+    if (!sf)
         return false;
 
     const int lineLen = 100;  // we are not interested in full library paths
@@ -125,17 +122,17 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
     char *pl;                 // pointer to chars within line
     bool ok = true;
 
-    if (fgets(line, lineLen, sf.file) == nullptr)
+    if (!fgets(line, lineLen, sf))
         return false;
 
     // sanity checks
     for (pl = line; pl < (line + 4) && ok; ++pl)
         ok = ((*pl >= '0' && *pl <= '9') || (*pl >= 'a' && *pl <= 'f'));
     while (strlen(line) == lineLen - 1 && line[lineLen - 2] != '\n') {
-        if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
+        if (Q_UNLIKELY(!fgets(line, lineLen, sf)))
             break;
     }
-    if (fgets(line, lineLen, sf.file) == nullptr)
+    if (!fgets(line, lineLen, sf))
         return false;
     static const char strSize[] = "Size: ";
     ok = ok && !qstrncmp(line, strSize, sizeof(strSize) - 1);
@@ -145,7 +142,7 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
     // Determine block size
     ok = false;
     int blockLen = 0;
-    while (fgets(line, lineLen, sf.file) != nullptr && !ok) {
+    while (fgets(line, lineLen, sf) && !ok) {
         if (!(line[0] < '0' || line[0] > '9') && (line[0] < 'a' || line[0] > 'f'))
             ok = true;
         ++blockLen;
@@ -153,13 +150,13 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
     if (!ok || blockLen < 12 || blockLen > 32)
         return false;
 
-    fseek(sf.file, 0, SEEK_SET);
+    fseek(sf, 0, SEEK_SET);
     bool wasPrivateOnly = false;
     ok = false;
 
     while (true) {
-        if (Q_UNLIKELY(!(fgets(line, lineLen, sf.file) != nullptr))) {
-            ok = feof(sf.file);
+        if (Q_UNLIKELY(!fgets(line, lineLen, sf))) {
+            ok = feof(sf);
             break;
         }
 
@@ -190,7 +187,7 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
                             && !qstrncmp(pl + 1, strStack, sizeof(strStack) - 1)));
         // Skip rest of library path
         while (strlen(line) == lineLen - 1 && line[lineLen - 2] != '\n') {
-            if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
+            if (Q_UNLIKELY(!fgets(line, lineLen, sf)))
                 break;
         }
 
@@ -206,7 +203,7 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
 
         while (foundTags < allTags && skipLen > 0) {
             skipLen--;
-            if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
+            if (Q_UNLIKELY(!fgets(line, lineLen, sf)))
                 break;
             pl = line;
 
@@ -260,7 +257,7 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
         wasPrivateOnly = !memcmp(permissions, permP, sizeof(permissions));
 
         for (int skip = skipLen; skip; --skip) {
-            if (Q_UNLIKELY(!fgets(line, lineLen, sf.file)))
+            if (Q_UNLIKELY(!fgets(line, lineLen, sf)))
                 break;
         }
     }

@@ -207,7 +207,7 @@ bool QmlInProcRuntime::hasVisibleSurfaces() const
 void QmlInProcRuntime::onSurfaceItemReleased(InProcessSurfaceItem *surface)
 {
     for (int i = 0; i < m_surfaces.count(); ++i) {
-        if (surface == m_surfaces[i].data()) {
+        if (surface == m_surfaces.at(i).data()) {
             m_surfaces.removeAt(i);
             disconnect(surface, nullptr, this, nullptr);
             break;
@@ -224,9 +224,10 @@ void QmlInProcRuntime::onSurfaceItemReleased(InProcessSurfaceItem *surface)
 
 void QmlInProcRuntime::loadResources(const QStringList &resources, const QString &baseDir)
 {
+    static QStringList cache;
+
     for (const QString &resource : resources) {
         const QString path = QFileInfo(resource).isRelative() ? baseDir + resource : resource;
-        static QStringList cache;
         if (!cache.contains(path)) {
             try {
                 loadResource(path);

@@ -83,7 +83,7 @@ struct OpenSslDeleter {
 template <typename T> using OpenSslPointer = QScopedPointer<T, OpenSslDeleter>;
 
 
-class OpenSslException : public Exception
+class OpenSslException : public Exception  // clazy:exclude=copyable-polymorphic
 {
 public:
     OpenSslException(const char *errorString)

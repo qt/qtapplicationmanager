@@ -25,7 +25,7 @@ public:
     {
 #if defined(Q_OS_LINUX)
         if (s_mountTabFile.isEmpty()) {
-            s_mountTabFile = "/proc/self/mounts";;
+            s_mountTabFile = "/proc/self/mounts";
 
             m_procMountsFd = QT_OPEN(s_mountTabFile.constData(), O_RDONLY);
             if (m_procMountsFd >= 0) {
@@ -77,12 +77,9 @@ public:
 
     bool detach(FileSystemMountWatcher *watcher)
     {
-        for (auto it = m_mountPoints.begin(); it != m_mountPoints.end(); ) {
-            if (it.value() == watcher)
-                it = m_mountPoints.erase(it);
-            else
-                ++it;
-        }
+        m_mountPoints.removeIf([=](decltype(m_mountPoints)::iterator it) {
+            return it.value() == watcher;
+        });
         return !m_ref.deref();
     }
 
@@ -110,11 +107,11 @@ public:
                           QString::fromLocal8Bit(mntPtr->mnt_fsname));
         }
 #  else
-        static const int pathMax = static_cast<int>(pathconf("/", _PC_PATH_MAX)) * 2 + 1024;  // quite big, but better be safe than sorry
+        static const size_t pathMax = static_cast<size_t>(pathconf("/", _PC_PATH_MAX)) * 2 + 1024;  // quite big, but better be safe than sorry
         QScopedArrayPointer<char> strBuf(new char[pathMax]);
         struct mntent mntBuf;
 
-        while (getmntent_r(pm, &mntBuf, strBuf.data(), pathMax - 1)) {
+        while (getmntent_r(pm, &mntBuf, strBuf.data(), int(pathMax) - 1)) {
             result.insert(QString::fromLocal8Bit(mntBuf.mnt_dir),
                           QString::fromLocal8Bit(mntBuf.mnt_fsname));
         }

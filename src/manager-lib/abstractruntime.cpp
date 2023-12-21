@@ -69,13 +69,6 @@ QByteArray AbstractRuntime::securityToken() const
     return m_securityToken;
 }
 
-
-void setOpenGLConfiguration(const QVariantMap &openGLConfiguration)
-{
-    // not every runtime needs this information
-    Q_UNUSED(openGLConfiguration)
-}
-
 void AbstractRuntime::openDocument(const QString &document, const QString &mimeType)
 {
     Q_UNUSED(document)

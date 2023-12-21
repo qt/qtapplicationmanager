@@ -288,7 +288,7 @@ void QmlInProcApplicationManagerWindowImpl::componentComplete()
                 for (auto it = s_inCompleteWindows.cbegin(); it != s_inCompleteWindows.cend(); ) {
                     QmlInProcApplicationManagerWindowImpl *win = *it;
                     if (win->m_attachedCompleteHandlers.isEmpty()) {
-                        it = s_inCompleteWindows.erase(it);
+                        it = s_inCompleteWindows.erase(it); // clazy:exclude=strict-iterators
                         win->notifyRuntimeAboutSurface();
                     } else {
                         break;
@@ -381,7 +381,7 @@ void QmlInProcApplicationManagerWindowImpl::setY(int y)
 
 int QmlInProcApplicationManagerWindowImpl::width() const
 {
-    return m_surfaceItem->width();
+    return int(m_surfaceItem->width());
 }
 
 void QmlInProcApplicationManagerWindowImpl::setWidth(int w)
@@ -391,7 +391,7 @@ void QmlInProcApplicationManagerWindowImpl::setWidth(int w)
 
 int QmlInProcApplicationManagerWindowImpl::height() const
 {
-    return m_surfaceItem->height();
+    return int(m_surfaceItem->height());
 }
 
 void QmlInProcApplicationManagerWindowImpl::setHeight(int h)
@@ -467,7 +467,7 @@ void QmlInProcApplicationManagerWindowImpl::setVisible(bool visible)
 
 void QmlInProcApplicationManagerWindowImpl::setOpacity(qreal opacity)
 {
-    if (m_opacity != opacity) {
+    if (!qFuzzyCompare(m_opacity, opacity)) {
         m_opacity = opacity;
         emit amWindow()->opacityChanged();
     }

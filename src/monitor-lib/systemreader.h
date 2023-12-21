@@ -113,7 +113,7 @@ class MemoryThreshold : public QObject
 
 public:
     MemoryThreshold(const QList<qreal> &thresholds);
-    ~MemoryThreshold();
+    ~MemoryThreshold() override;
     QList<qreal> thresholdPercentages() const;
 
     bool isEnabled() const;
@@ -159,7 +159,7 @@ signals:
 private:
     qreal m_warning = 75.0;
     qreal m_critical = 90.0;
-    qreal m_memLimit;
+    quint64 m_memLimit;
     bool hasMemoryLowWarning = false;
     bool hasMemoryCriticalWarning = false;
     std::unique_ptr<MemoryThreshold> m_threshold;

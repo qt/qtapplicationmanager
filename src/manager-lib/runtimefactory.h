@@ -23,7 +23,7 @@ class RuntimeFactory : public QObject
     Q_OBJECT
 public:
     static RuntimeFactory *instance();
-    ~RuntimeFactory();
+    ~RuntimeFactory() override;
 
     QStringList runtimeIds() const;
 

@@ -16,6 +16,7 @@
 class ContainerInterface : public QObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(ContainerInterface)
 
 public:
     // keep these enums in sync with those in amnamespace.h
@@ -44,6 +45,7 @@ public:
     };
     Q_ENUM(ProcessError)
 
+    ContainerInterface();
     virtual ~ContainerInterface() override;
 
     virtual bool attachApplication(const QVariantMap &application) = 0;
@@ -99,7 +101,10 @@ public:
 
 class ContainerManagerInterface
 {
+    Q_DISABLE_COPY_MOVE(ContainerManagerInterface)
+
 public:
+    ContainerManagerInterface();
     virtual ~ContainerManagerInterface();
     virtual bool initialize(ContainerHelperFunctions *helpers);
 

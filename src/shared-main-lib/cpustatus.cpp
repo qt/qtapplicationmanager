@@ -94,7 +94,7 @@ int CpuStatus::cpuCores() const
 void CpuStatus::update()
 {
     qreal newLoad = m_cpuReader->readLoadValue();
-    if (newLoad != m_cpuLoad) {
+    if (!qFuzzyCompare(newLoad, m_cpuLoad)) {
         m_cpuLoad = newLoad;
         emit cpuLoadChanged();
     }

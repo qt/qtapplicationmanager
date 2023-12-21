@@ -81,7 +81,7 @@ class AbstractRuntime : public QObject
     Q_PROPERTY(QtAM::AbstractContainer *container READ container CONSTANT FINAL)
 
 public:
-    virtual ~AbstractRuntime();
+    ~AbstractRuntime() override;
 
     AbstractContainer *container() const;
     Application *application() const;

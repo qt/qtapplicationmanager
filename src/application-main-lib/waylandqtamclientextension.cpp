@@ -31,29 +31,27 @@ bool WaylandQtAMClientExtension::eventFilter(QObject *o, QEvent *e)
     if (e->type() == QEvent::Expose) {
         if (!isActive()) {
             qCWarning(LogGraphics) << "WaylandQtAMClientExtension is not active";
-            return false;
-        }
+        } else {
+            QWindow *window = qobject_cast<QWindow *>(o);
+            Q_ASSERT(window);
 
-        QWindow *window = qobject_cast<QWindow *>(o);
-        Q_ASSERT(window);
-
-        // we're only interested in the first expose to setup our mapping
-        if (m_windowToSurface.contains(window))
-            return false;
-
-        auto surface = static_cast<struct ::wl_surface *>
-                       (QGuiApplication::platformNativeInterface()->nativeResourceForWindow("surface", window));
-        if (surface) {
-            m_windowToSurface.insert(window, surface);
-            const QVariantMap wp = windowProperties(window);
-            for (auto it = wp.cbegin(); it != wp.cend(); ++it)
-                sendPropertyToServer(surface, it.key(), it.value());
+            // we're only interested in the first expose to setup our mapping
+            if (!m_windowToSurface.contains(window)) {
+                auto surface = static_cast<struct ::wl_surface *>
+                    (QGuiApplication::platformNativeInterface()->nativeResourceForWindow("surface", window));
+                if (surface) {
+                    m_windowToSurface.insert(window, surface);
+                    const QVariantMap wp = windowProperties(window);
+                    for (auto it = wp.cbegin(); it != wp.cend(); ++it)
+                        sendPropertyToServer(surface, it.key(), it.value());
+                }
+            }
         }
     } else if (e->type() == QEvent::Hide) {
         m_windowToSurface.remove(qobject_cast<QWindow *>(o));
     }
 
-    return false;
+    return QWaylandClientExtensionTemplate<WaylandQtAMClientExtension>::eventFilter(o, e);
 }
 
 QVariantMap WaylandQtAMClientExtension::windowProperties(QWindow *window) const

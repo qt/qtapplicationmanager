@@ -34,7 +34,7 @@ UnixSignalHandler::UnixSignalHandler()
 #if defined(Q_OS_UNIX) && !defined(Q_OS_QNX)
     // Setup alternate signal stack (to get backtrace for stack overflow)
     // Canonical size might not be suffcient to get QML backtrace, so we double it
-    size_t stackSize = SIGSTKSZ * 2;
+    size_t stackSize = size_t(SIGSTKSZ) * 2;
     stack_t sigstack;
     // ASAN and valgrind would report malloc() as a leak. In addition, we avoid the
     // signal stack being close to a possibly corrupted heap this way.
@@ -77,7 +77,7 @@ void UnixSignalHandler::resetToDefault(int sig)
     resetToDefault(sigs);
 }
 
-void UnixSignalHandler::resetToDefault(const std::initializer_list<int> &sigs)
+void UnixSignalHandler::resetToDefault(std::initializer_list<int> sigs)
 {
     for (int sig : sigs) {
         m_resetSignalMask |= am_sigmask(sig);
@@ -91,7 +91,7 @@ bool UnixSignalHandler::install(Type handlerType, int sig, const std::function<v
     return install(handlerType, sigs, handler);
 }
 
-bool UnixSignalHandler::install(Type handlerType, const std::initializer_list<int> &sigs,
+bool UnixSignalHandler::install(Type handlerType, std::initializer_list<int> sigs,
                                 const std::function<void(int)> &handler)
 {
     auto sigHandler = [](int sig) {

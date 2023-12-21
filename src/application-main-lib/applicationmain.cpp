@@ -405,7 +405,7 @@ void ApplicationMain::connectDBusInterfaces(bool isRuntimeLauncher) noexcept(fal
         if (m_dbusNotificationInterface) {
             ok = ok && connect(m_dbusNotificationInterface, &OrgFreedesktopNotificationsInterface::NotificationClosed,
                                this, [this](uint notificationId, uint reason) {
-                     Q_UNUSED(reason);
+                     Q_UNUSED(reason)
 
                      qDebug("Notification was closed signal: %u", notificationId);
                      for (const QPointer<Notification> &n : std::as_const(m_allNotifications)) {

@@ -65,7 +65,7 @@ void IntentClientDBusImplementation::initialize(IntentClient *intentClient) noex
     });
 }
 
-void IntentClientDBusImplementation::requestToSystem(QPointer<IntentClientRequest> icr)
+void IntentClientDBusImplementation::requestToSystem(const QPointer<IntentClientRequest> &icr)
 {
     QDBusPendingReply<QString> reply =
             m_dbusInterface->requestToSystem(icr->intentId(), icr->applicationId(),
@@ -75,13 +75,13 @@ void IntentClientDBusImplementation::requestToSystem(QPointer<IntentClientReques
     connect(watcher, &QDBusPendingCallWatcher::finished, icr, [this, watcher, icr]() {
         watcher->deleteLater();
 
-        QDBusPendingReply<QString> reply = *watcher;
-        emit requestToSystemFinished(icr, QUuid::fromString(reply.argumentAt<0>()),
-                                     reply.isError(), reply.error().message());
+        QDBusPendingReply<QString> replyCopy = *watcher;
+        emit requestToSystemFinished(icr, QUuid::fromString(replyCopy.argumentAt<0>()),
+                                     replyCopy.isError(), replyCopy.error().message());
     });
 }
 
-void IntentClientDBusImplementation::replyFromApplication(QPointer<IntentClientRequest> icr)
+void IntentClientDBusImplementation::replyFromApplication(const QPointer<IntentClientRequest> &icr)
 {
     if (icr) {
         m_dbusInterface->replyFromApplication(icr->requestId().toString(), !icr->succeeded(),
@@ -92,3 +92,5 @@ void IntentClientDBusImplementation::replyFromApplication(QPointer<IntentClientR
 }
 
 QT_END_NAMESPACE_AM
+
+#include "moc_intentclientdbusimplementation.cpp"

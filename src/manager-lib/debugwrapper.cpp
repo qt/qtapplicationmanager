@@ -29,8 +29,8 @@ bool parseSpecification(const QString &debugWrapperSpecification, QStringList &r
     QString str;
     QString value;
     QString *current = &str;
-    int size = debugWrapperSpecification.size();
-    for (int i = 0; i <= size; ++i) {
+    qsizetype size = debugWrapperSpecification.size();
+    for (qsizetype i = 0; i <= size; ++i) {
         const QChar c = (i < size) ? debugWrapperSpecification.at(i) : QChar(0);
         if (!escaped || c.isNull()) {
             switch (c.unicode()) {

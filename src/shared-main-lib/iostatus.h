@@ -26,7 +26,7 @@ class IoStatus : public QObject
 
 public:
     IoStatus(QObject *parent = nullptr);
-    virtual ~IoStatus();
+    ~IoStatus() override;
 
     QStringList deviceNames() const;
     void setDeviceNames(const QStringList &value);

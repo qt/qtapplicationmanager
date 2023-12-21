@@ -21,7 +21,7 @@ class IntentServerSystemInterface : public QObject
     Q_OBJECT
 
 public:
-    virtual ~IntentServerSystemInterface() = default;
+    ~IntentServerSystemInterface() override = default;
 
     virtual void initialize(IntentServer *intentServer);
     IntentServer *intentServer() const;

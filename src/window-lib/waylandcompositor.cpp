@@ -227,7 +227,7 @@ void WaylandCompositor::createWlSurface(QWaylandSurface *surface, const QWayland
 
     connect(windowSurface, &QWaylandSurface::hasContentChanged, this, [this, windowSurface]() {
         if (windowSurface->hasContent())
-            emit this->surfaceMapped(static_cast<WindowSurface*>(windowSurface));
+            emit surfaceMapped(windowSurface);
     });
 }
 

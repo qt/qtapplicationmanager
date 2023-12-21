@@ -378,7 +378,7 @@ Package *PackageManager::registerPackage(PackageInfo *packageInfo, PackageInfo *
     if (currentlyBeingInstalled) {
         Q_ASSERT(package->isBlocked());
 
-        beginInsertRows(QModelIndex(), d->packages.count(), d->packages.count());
+        beginInsertRows(QModelIndex(), int(d->packages.count()), int(d->packages.count()));
         qCDebug(LogSystem) << "Installing package:";
     }
 
@@ -508,13 +508,14 @@ QVariantMap PackageManager::get(Package *package) const
 
 void PackageManager::emitDataChanged(Package *package, const QVector<int> &roles)
 {
-    int row = d->packages.indexOf(package);
+    qsizetype row = d->packages.indexOf(package);
     if (row >= 0) {
-        emit dataChanged(index(row), index(row), roles);
+        emit dataChanged(index(int(row)), index(int(row)), roles);
 
         static const auto pkgChanged = QMetaMethod::fromSignal(&PackageManager::packageChanged);
         if (isSignalConnected(pkgChanged)) {
             QStringList stringRoles;
+            stringRoles.reserve(roles.count());
             for (auto role : roles)
                 stringRoles << QString::fromLatin1(s_roleNames[role]);
             emit packageChanged(package->id(), stringRoles);
@@ -528,7 +529,7 @@ int PackageManager::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
-    return d->packages.count();
+    return int(d->packages.count());
 }
 
 QVariant PackageManager::data(const QModelIndex &index, int role) const
@@ -735,12 +736,12 @@ QString PackageManager::architecture() const
     return Architecture::identify(QCoreApplication::applicationFilePath());
 }
 
-QList<QByteArray> PackageManager::caCertificates() const
+QByteArrayList PackageManager::caCertificates() const
 {
     return d->chainOfTrust;
 }
 
-void PackageManager::setCACertificates(const QList<QByteArray> &chainOfTrust)
+void PackageManager::setCACertificates(const QByteArrayList &chainOfTrust)
 {
     d->chainOfTrust = chainOfTrust;
 }
@@ -904,7 +905,7 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
         const QString currentDir = it.key();
 
         // collect all values for the unique key currentDir
-        QVector<QString> validNames;
+        QStringList validNames;
         for ( ; it != validPaths.cend() && it.key() == currentDir; ++it)
             validNames << it.value();
 
@@ -1177,6 +1178,7 @@ QStringList PackageManager::activeTaskIds() const
 #if QT_CONFIG(am_installer)
     if (d->enableInstaller) {
         const auto allTasks = d->allTasks();
+        result.reserve(allTasks.size());
 
         for (const AsynchronousTask *task : allTasks)
             result << task->id();
@@ -1465,10 +1467,10 @@ bool PackageManager::finishedPackageInstall(const QString &id)
         unregisterApplicationsAndIntentsOfPackage(package);
 
         // remove the package from the model
-        int row = d->packages.indexOf(package);
+        qsizetype row = d->packages.indexOf(package);
         if (row >= 0) {
             emit packageAboutToBeRemoved(package->id());
-            beginRemoveRows(QModelIndex(), row, row);
+            beginRemoveRows(QModelIndex(), int(row), int(row));
             d->packages.removeAt(row);
             endRemoveRows();
         }
@@ -1499,7 +1501,7 @@ bool PackageManager::canceledPackageInstall(const QString &id)
 
     case Package::BeingInstalled: {
         // remove the package from the model
-        int row = d->packages.indexOf(package);
+        int row = int(d->packages.indexOf(package));
         if (row >= 0) {
             emit packageAboutToBeRemoved(package->id());
             beginRemoveRows(QModelIndex(), row, row);
@@ -1549,8 +1551,10 @@ int PackageManager::compareVersions(const QString &version1, const QString &vers
     QVersionNumber vn1 = QVersionNumber::fromString(version1, &vn1Suffix);
     QVersionNumber vn2 = QVersionNumber::fromString(version2, &vn2Suffix);
 
-    int d = QVersionNumber::compare(vn1, vn2);
-    return d < 0 ? -1 : (d > 0 ? 1 : version1.mid(vn1Suffix).compare(version2.mid(vn2Suffix)));
+    int diff = QVersionNumber::compare(vn1, vn2);
+    if (!diff)
+        diff = QStringView{ version1 }.mid(vn1Suffix).compare(QStringView{ version2 }.mid(vn2Suffix));
+    return diff < 0 ? -1 : (diff > 0 ? 1 : 0);
 }
 
 /*!
@@ -1576,12 +1580,12 @@ bool PackageManager::validateDnsName(const QString &name, int minimalPartCount)
         // standard RFC compliance tests (RFC 1035/1123)
 
         auto partCheck = [](const QString &part) {
-            int len = part.length();
+            qsizetype len = part.length();
 
             if (len < 1 || len > 63)
                 throw Exception(Error::Parse, "domain parts must consist of at least 1 and at most 63 characters (found %2 characters)").arg(len);
 
-            for (int pos = 0; pos < len; ++pos) {
+            for (qsizetype pos = 0; pos < len; ++pos) {
                 ushort ch = part.at(pos).unicode();
                 bool isFirst = (pos == 0);
                 bool isLast  = (pos == (len - 1));

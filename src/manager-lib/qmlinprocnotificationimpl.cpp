@@ -61,7 +61,7 @@ void QmlInProcNotificationImpl::initialize()
 
     QObject::connect(nm, &NotificationManager::NotificationClosed,
                      nm, [](uint notificationId, uint reason) {
-        Q_UNUSED(reason);
+        Q_UNUSED(reason)
 
         qDebug("Notification was closed signal: %u", notificationId);
         // quick fix: in case apps have been closed items are null (see AUTOSUITE-14)

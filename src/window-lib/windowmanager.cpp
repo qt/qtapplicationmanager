@@ -408,7 +408,7 @@ bool WindowManager::addWaylandSocket(QLocalServer *waylandSocket)
     }
 
     waylandSocket->setParent(this);
-    d->extraWaylandSockets << waylandSocket->socketDescriptor();
+    d->extraWaylandSockets << int(waylandSocket->socketDescriptor());
     return true;
 #else
     Q_UNUSED(waylandSocket)
@@ -420,7 +420,7 @@ int WindowManager::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
-    return d->windowsInModel.count();
+    return int(d->windowsInModel.count());
 }
 
 QVariant WindowManager::data(const QModelIndex &index, int role) const
@@ -536,7 +536,7 @@ QList<Window *> WindowManager::windowsOfApplication(const QString &id) const
  */
 int WindowManager::indexOfWindow(Window *window) const
 {
-    return d->windowsInModel.indexOf(window);
+    return int(d->windowsInModel.indexOf(window));
 }
 
 /*!
@@ -607,7 +607,7 @@ void WindowManager::setupInProcessRuntime(AbstractRuntime *runtime)
 */
 void WindowManager::releaseWindow(Window *window)
 {
-    int index = d->allWindows.indexOf(window);
+    auto index = d->allWindows.indexOf(window);
     if (index == -1)
         return;
 
@@ -626,7 +626,7 @@ void WindowManager::releaseWindow(Window *window)
  */
 void WindowManager::addWindow(Window *window)
 {
-    beginInsertRows(QModelIndex(), d->windowsInModel.count(), d->windowsInModel.count());
+    beginInsertRows(QModelIndex(), count(), count());
     d->windowsInModel << window;
     endInsertRows();
     emit countChanged();
@@ -638,13 +638,13 @@ void WindowManager::addWindow(Window *window)
  */
 void WindowManager::removeWindow(Window *window)
 {
-    int index = d->windowsInModel.indexOf(window);
+    qsizetype index = d->windowsInModel.indexOf(window);
     if (index == -1)
         return;
 
     emit windowAboutToBeRemoved(window);
 
-    beginRemoveRows(QModelIndex(), index, index);
+    beginRemoveRows(QModelIndex(), int(index), int(index));
     d->windowsInModel.removeAt(index);
     endRemoveRows();
     emit countChanged();
@@ -975,9 +975,9 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
 
         // filter out alias and apps not matching appId (if set)
         QVector<Application *> apps = ApplicationManager::instance()->applications();
-        apps.erase(std::remove_if(apps.begin(), apps.end(), [appId](const Application *app) {
+        apps.removeIf([appId](const Application *app) {
             return app->isAlias() || (!appId.isEmpty() && (appId != app->id()));
-        }), apps.end());
+        });
 
         auto grabbers = new QList<QSharedPointer<const QQuickItemGrabResult>>;
 
@@ -1075,15 +1075,13 @@ QString WindowManagerPrivate::applicationId(Application *app, WindowSurface *win
 bool WindowManager::eventFilter(QObject *watched, QEvent *event)
 {
     if (event->type() == QEvent::PlatformSurface) {
-        auto *window = qobject_cast<QQuickWindow *>(watched);
-        if (!window)
-            return false;
-
-        auto surfaceEventType = static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType();
-        if (surfaceEventType == QPlatformSurfaceEvent::SurfaceCreated)
-            registerCompositorView(window);
+        if (auto *window = qobject_cast<QQuickWindow *>(watched)) {
+            auto surfaceEventType = static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType();
+            if (surfaceEventType == QPlatformSurfaceEvent::SurfaceCreated)
+                registerCompositorView(window);
+        }
     }
-    return false;
+    return QAbstractListModel::eventFilter(watched, event);
 }
 
 QT_END_NAMESPACE_AM

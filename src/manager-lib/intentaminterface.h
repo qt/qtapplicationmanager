@@ -64,14 +64,16 @@ private:
 // the in-process client side
 class IntentClientAMImplementation : public IntentClientSystemInterface
 {
+    Q_OBJECT
+
 public:
     IntentClientAMImplementation(IntentServerAMImplementation *serverInterface);
 
     void initialize(IntentClient *intentClient) noexcept(false) override;
     QString currentApplicationId(QObject *hint) override;
 
-    void requestToSystem(QPointer<IntentClientRequest> icr) override;
-    void replyFromApplication(QPointer<IntentClientRequest> icr) override;
+    void requestToSystem(const QPointer<IntentClientRequest> &icr) override;
+    void replyFromApplication(const QPointer<IntentClientRequest> &icr) override;
 
 private:
     IntentServerSystemInterface *m_issi;
@@ -139,9 +141,10 @@ class IntentServerDBusIpcConnection : public IntentServerIpcConnection, public Q
     Q_OBJECT
 
 public:
-    static IntentServerDBusIpcConnection *create(QDBusConnection connection, Application *application,
+    static IntentServerDBusIpcConnection *create(const QDBusConnection &connection,
+                                                 Application *application,
                                                  IntentServerAMImplementation *iface);
-    static IntentServerDBusIpcConnection *find(QDBusConnection connection);
+    static IntentServerDBusIpcConnection *find(const QDBusConnection &connection);
 
     ~IntentServerDBusIpcConnection() override;
 
@@ -152,14 +155,14 @@ public:
 
 
 private:
-    IntentServerDBusIpcConnection(QDBusConnection connection, Application *application,
+    IntentServerDBusIpcConnection(const QDBusConnection &connection, Application *application,
                                   IntentServerAMImplementation *iface);
 
     QString m_connectionName;
     ::IntentInterfaceAdaptor *m_adaptor = nullptr;
 };
 
-#endif // defined(AM_MULTI_PROCESS)
+#endif // QT_CONFIG(am_multi_process)
 
 // server-side IntentHandlers
 class IntentServerHandler : public AbstractIntentHandler

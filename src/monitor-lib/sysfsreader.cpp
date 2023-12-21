@@ -36,8 +36,8 @@ QByteArray SysFsReader::readValue() const
     if (!m_fd.seek(0))
         return QByteArray();
 
-    int offset = 0;
-    int read = 0;
+    qsizetype offset = 0;
+    qsizetype read = 0;
     do {
         read = m_fd.read(m_buffer.data() + offset, m_buffer.size() - offset);
         if (read < 0)

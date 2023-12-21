@@ -208,8 +208,8 @@ void PackageExtractorPrivate::extract()
 #endif
 
         auto dummyCallback = [](archive *, void *) { return ARCHIVE_OK; };
-        auto readCallback = [](archive *ar, void *user, const void **buffer)
-        { return static_cast<__LA_SSIZE_T>(static_cast<PackageExtractorPrivate *>(user)->readTar(ar, buffer)); };
+        auto readCallback = [](archive *arRead, void *user, const void **buffer)
+        { return static_cast<__LA_SSIZE_T>(static_cast<PackageExtractorPrivate *>(user)->readTar(arRead, buffer)); };
 
         if (archive_read_open(ar, this, dummyCallback, readCallback, dummyCallback) != ARCHIVE_OK)
             throw ArchiveException(ar, "could not open archive");
@@ -354,14 +354,14 @@ void PackageExtractorPrivate::extract()
                     case PackageEntry_File:
                         digest.addData({ buffer, qsizetype(bytesRead) });
 
-                        if (!f.write(buffer, bytesRead))
+                        if (!f.write(buffer, qint64(bytesRead)))
                             throw Exception(f, "could not write to file");
                         break;
                     case PackageEntry_Header:
-                        header.append(buffer, int(bytesRead));
+                        header.append(buffer, qsizetype(bytesRead));
                         break;
                     case PackageEntry_Footer:
-                        footer.append(buffer, int(bytesRead));
+                        footer.append(buffer, qsizetype(bytesRead));
                         break;
                     default:
                         break;

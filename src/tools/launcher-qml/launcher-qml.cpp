@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 
         if (!directLoadManifest.isEmpty()) {
             QString directLoadAppId;
-            int appPos = directLoadManifest.indexOf(u"@"_s);
+            qsizetype appPos = directLoadManifest.indexOf(u"@"_s);
             if (appPos > 0) {
                 directLoadAppId = directLoadManifest.mid(appPos + 1);
                 directLoadManifest.truncate(appPos);

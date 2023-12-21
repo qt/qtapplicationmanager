@@ -30,7 +30,7 @@ class tst_Main : public QObject
 
 public:
     tst_Main();
-    ~tst_Main();
+    ~tst_Main() override;
 
 private slots:
     void initTestCase();
@@ -110,7 +110,7 @@ void tst_Main::init()
 void tst_Main::initMain(const QString &mainQml)
 {
     argc = mainQml.isNull() ? 4 : 5;
-    argv = new char*[argc + 1];
+    argv = new char*[size_t(argc) + 1];
     argv[0] = qstrdup("tst_Main");
     argv[1] = qstrdup("--dbus");
     argv[2] = qstrdup("none");

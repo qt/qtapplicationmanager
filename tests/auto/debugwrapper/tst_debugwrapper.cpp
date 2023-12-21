@@ -18,7 +18,7 @@ class tst_DebugWrapper : public QObject
 
 public:
     tst_DebugWrapper(QObject *parent = nullptr);
-    ~tst_DebugWrapper();
+    ~tst_DebugWrapper() override;
 
 private slots:
     void specification_data();

@@ -30,7 +30,7 @@ private:
     QByteArray m_signingP12;
     QByteArray m_signingNoKeyP12;
     QByteArray m_signingPassword;
-    QList<QByteArray> m_verifyingPEM;
+    QByteArrayList m_verifyingPEM;
 };
 
 tst_Signature::tst_Signature()
@@ -90,11 +90,11 @@ void tst_Signature::check()
     Signature s3(QByteArray(4096, 'x'));
     QVERIFY(!s3.create(m_signingP12, m_signingPassword).isEmpty());
 
-    QVERIFY(!s.verify(signature, QList<QByteArray>()));
+    QVERIFY(!s.verify(signature, QByteArrayList()));
     QVERIFY2(s.errorString().contains(u"Failed to verify"_s), qPrintable(s.errorString()));
-    QVERIFY(!s.verify(signature, QList<QByteArray>() << m_signingP12));
+    QVERIFY(!s.verify(signature, QByteArrayList() << m_signingP12));
     QVERIFY2(s.errorString().contains(u"not load"_s), qPrintable(s.errorString()));
-    QVERIFY(!s.verify(hash, QList<QByteArray>() << m_signingP12));
+    QVERIFY(!s.verify(hash, QByteArrayList() << m_signingP12));
     QVERIFY2(s.errorString().contains(u"not read"_s), qPrintable(s.errorString()));
 
     Signature s4 { QByteArray() };

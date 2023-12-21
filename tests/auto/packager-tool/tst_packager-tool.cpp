@@ -96,7 +96,7 @@ void tst_PackagerTool::initTestCase()
     QVERIFY2(devcaFile.open(QIODevice::ReadOnly), qPrintable(devcaFile.errorString()));
     QVERIFY2(caFile.open(QIODevice::ReadOnly), qPrintable(devcaFile.errorString()));
 
-    QList<QByteArray> chainOfTrust;
+    QByteArrayList chainOfTrust;
     chainOfTrust << devcaFile.readAll() << caFile.readAll();
     QVERIFY(!chainOfTrust.at(0).isEmpty());
     QVERIFY(!chainOfTrust.at(1).isEmpty());

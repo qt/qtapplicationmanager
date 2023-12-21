@@ -10,35 +10,10 @@
 #endif
 
 #include "utilities.h"
+#include "exception.h"
 #include "sudo.h"
 
 QT_USE_NAMESPACE_AM
-
-static int processTimeout = 3000;
-
-static bool startedSudoServer = false;
-static QString sudoServerError;
-
-// sudo RAII style
-class ScopedRootPrivileges
-{
-public:
-    ScopedRootPrivileges()
-    {
-        m_uid = getuid();
-        m_gid = getgid();
-        if (setresuid(0, 0, 0) || setresgid(0, 0, 0))
-            QFAIL("cannot re-gain root privileges");
-    }
-    ~ScopedRootPrivileges()
-    {
-        if (setresgid(m_gid, m_gid, 0) || setresuid(m_uid, m_uid, 0))
-            QFAIL("cannot drop root privileges");
-    }
-private:
-    uid_t m_uid;
-    gid_t m_gid;
-};
 
 
 class tst_Sudo : public QObject
@@ -47,7 +22,10 @@ class tst_Sudo : public QObject
 
 public:
     tst_Sudo(QObject *parent = nullptr);
-    ~tst_Sudo();
+    ~tst_Sudo() override;
+
+    static bool startedSudoServer;
+    static QString sudoServerError;
 
 private slots:
     void initTestCase();
@@ -59,6 +37,9 @@ private:
     SudoClient *m_sudo = nullptr;
 };
 
+bool tst_Sudo::startedSudoServer = false;
+QString tst_Sudo::sudoServerError;
+
 tst_Sudo::tst_Sudo(QObject *parent)
     : QObject(parent)
 { }
@@ -68,8 +49,6 @@ tst_Sudo::~tst_Sudo()
 
 void tst_Sudo::initTestCase()
 {
-    processTimeout *= timeoutFactor();
-
     QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
     m_sudo = SudoClient::instance();
     QVERIFY(m_sudo);
@@ -79,7 +58,13 @@ void tst_Sudo::initTestCase()
 
 void tst_Sudo::privileges()
 {
-    ScopedRootPrivileges sudo;
+    uid_t uid = getuid();
+    gid_t gid = getgid();
+    if (setresuid(0, 0, 0) || setresgid(0, 0, 0))
+        QFAIL("cannot re-gain root privileges");
+
+    if (setresgid(gid, gid, 0) || setresuid(uid, uid, 0))
+        QFAIL("cannot drop root privileges");
 }
 
 void tst_Sudo::cleanupTestCase()
@@ -94,8 +79,10 @@ int main(int argc, char **argv)
 {
     try {
         Sudo::forkServer(Sudo::DropPrivilegesRegainable);
-        startedSudoServer = true;
-    } catch (...) { }
+        tst_Sudo::startedSudoServer = true;
+    } catch (const Exception &e) {
+        tst_Sudo::sudoServerError = e.errorString();
+    }
 
     QCoreApplication a(argc, argv);
     tstSudo = new tst_Sudo(&a);
@@ -104,7 +91,7 @@ int main(int argc, char **argv)
     auto crashHandler = [](int sigNum) -> void {
         // we are doing very unsafe things from a within a signal handler, but
         // we've crashed anyway at this point and the alternative is that we are
-        // leaking mounts and attached loopback devices.
+        // potentially leaking mounts.
 
         tstSudo->~tst_Sudo();
 

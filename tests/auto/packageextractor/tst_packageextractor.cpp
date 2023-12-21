@@ -227,7 +227,7 @@ public:
 #endif
     }
 
-    ~FifoSource()
+    ~FifoSource() override
     {
 #ifdef Q_OS_UNIX
         ::unlink(m_fifoPath);
@@ -251,7 +251,7 @@ public:
         while (!m_file.atEnd()) {
             qint64 bytesRead = m_file.read(buffer.data(), buffer.size());
             QVERIFY(bytesRead >= 0);
-            qint64 bytesWritten = QT_WRITE(fifoFd, buffer.constData(), bytesRead);
+            qint64 bytesWritten = QT_WRITE(fifoFd, buffer.constData(), size_t(bytesRead));
             QCOMPARE(bytesRead, bytesWritten);
         }
         QT_CLOSE(fifoFd);

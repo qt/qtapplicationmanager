@@ -26,8 +26,6 @@ using namespace Qt::StringLiterals;
 
 QT_USE_NAMESPACE_AM
 
-static bool startedSudoServer = false;
-static QString sudoServerError;
 
 static int spyTimeout = 5000; // shorthand for specifying QSignalSpy timeouts
 
@@ -68,6 +66,8 @@ public:
 private:
     bool m_oldUnsigned;
     bool m_oldDevMode;
+
+    Q_DISABLE_COPY_MOVE(AllowInstallations)
 };
 
 class tst_PackageManager : public QObject
@@ -76,7 +76,10 @@ class tst_PackageManager : public QObject
 
 public:
     tst_PackageManager(QObject *parent = nullptr);
-    ~tst_PackageManager();
+    ~tst_PackageManager() override;
+
+    static bool startedSudoServer;
+    static QString sudoServerError;
 
 private slots:
     void initTestCase();
@@ -175,6 +178,8 @@ private:
     QSignalSpy *m_failedSpy = nullptr;
 };
 
+bool tst_PackageManager::startedSudoServer = false;
+QString tst_PackageManager::sudoServerError;
 
 tst_PackageManager::tst_PackageManager(QObject *parent)
     : QObject(parent)
@@ -275,7 +280,7 @@ void tst_PackageManager::initTestCase()
     QVERIFY2(storecaFile.open(QIODevice::ReadOnly), qPrintable(storecaFile.errorString()));
     QVERIFY2(caFile.open(QIODevice::ReadOnly), qPrintable(caFile.errorString()));
 
-    QList<QByteArray> chainOfTrust;
+    QByteArrayList chainOfTrust;
     chainOfTrust << devcaFile.readAll() << caFile.readAll();
     QVERIFY(!chainOfTrust.at(0).isEmpty());
     QVERIFY(!chainOfTrust.at(1).isEmpty());
@@ -789,8 +794,10 @@ int main(int argc, char **argv)
 {
     try {
         Sudo::forkServer(Sudo::DropPrivilegesPermanently);
-        startedSudoServer = true;
-    } catch (...) { }
+        tst_PackageManager::startedSudoServer = true;
+    } catch (const Exception &e) {
+        tst_PackageManager::sudoServerError = e.errorString();
+    }
 
     QCoreApplication a(argc, argv);
     tstPackageManager = new tst_PackageManager(&a);

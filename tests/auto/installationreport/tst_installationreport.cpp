@@ -76,7 +76,7 @@ void tst_InstallationReport::test()
     QByteArray &yaml = buffer.buffer();
     QVERIFY(!yaml.isEmpty());
 
-    int pos = yaml.lastIndexOf("\n---\nhmac: '");
+    qsizetype pos = yaml.lastIndexOf("\n---\nhmac: '");
     QVERIFY(pos > 0);
     pos += 12;
     QByteArray hmac = QMessageAuthenticationCode::hash("data", "key", QCryptographicHash::Sha256).toHex();

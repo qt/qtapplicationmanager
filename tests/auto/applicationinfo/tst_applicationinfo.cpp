@@ -87,6 +87,8 @@ public:
     QString lastLoadFailure() const { return m_lastLoadFailure; }
 
 private:
+    Q_DISABLE_COPY_MOVE(TestPackageLoader)
+
     QDir m_dataDir;
     QString m_lastLoadFailure;
     PackageInfo *m_pi = nullptr;
@@ -215,7 +217,7 @@ void tst_ApplicationInfo::full()
     QCOMPARE(p->applications().size(), pl.info()->applications().size());
     QCOMPARE(pl.intents().size(), pl.info()->intents().size());
 
-    Application *a = qobject_cast<Application *>(p->applications().last());
+    Application *a = p->applications().constLast();
 
     QVERIFY(a);
     QCOMPARE(a->id(), ai->id());
@@ -230,7 +232,7 @@ void tst_ApplicationInfo::full()
     QCOMPARE(a->runtimeName(), ai->runtimeName());
     QCOMPARE(a->runtimeParameters(), ai->runtimeParameters());
 
-    Intent *i = pl.intents().last();
+    Intent *i = pl.intents().constLast();
 
     QVERIFY(i);
     QCOMPARE(i->intentId(), ii->id());
@@ -342,7 +344,7 @@ void tst_ApplicationInfo::inherit()
     QCOMPARE(p->descriptions(), qmlStringMap(pl.info()->descriptions()));
     QCOMPARE(p->categories(), pl.info()->categories());
 
-    Application *a = qobject_cast<Application *>(p->applications().first());
+    Application *a = p->applications().constFirst();
 
     QVERIFY(a);
     QCOMPARE(a->icon(), p->icon());
@@ -351,7 +353,7 @@ void tst_ApplicationInfo::inherit()
     QCOMPARE(a->names(), p->names());
     QCOMPARE(a->descriptions(), p->descriptions());
 
-    Intent *i = pl.intents().first();
+    Intent *i = pl.intents().constFirst();
 
     QVERIFY(i);
     QCOMPARE(i->icon(), p->icon());

@@ -24,7 +24,7 @@ private slots:
     void memAdvanced();
 
 private:
-    void printMem(const ProcessReader &reader);
+    void printMem();
     ProcessReader reader;
 };
 
@@ -62,7 +62,7 @@ void tst_ProcessReader::memTestProcess()
     const QByteArray file = "/proc/" + QByteArray::number(QCoreApplication::applicationPid()) + "/smaps";
 
     QVERIFY(reader.testReadSmaps(file));
-    //printMem(reader);
+    //printMem();
     QVERIFY(reader.memory.totalVm >= reader.memory.totalRss);
     QVERIFY(reader.memory.totalRss >= reader.memory.totalPss);
     QVERIFY(reader.memory.textVm >= reader.memory.textRss);
@@ -74,7 +74,7 @@ void tst_ProcessReader::memTestProcess()
 void tst_ProcessReader::memBasic()
 {
     QVERIFY(reader.testReadSmaps(QFINDTESTDATA("basic.smaps").toLocal8Bit()));
-    //printMem(reader);
+    //printMem();
     QCOMPARE(reader.memory.totalVm, 107384u);
     QCOMPARE(reader.memory.totalRss, 20352u);
     QCOMPARE(reader.memory.totalPss, 13814u);
@@ -89,7 +89,7 @@ void tst_ProcessReader::memBasic()
 void tst_ProcessReader::memAdvanced()
 {
     QVERIFY(reader.testReadSmaps(QFINDTESTDATA("advanced.smaps").toLocal8Bit()));
-    //printMem(reader);
+    //printMem();
     QCOMPARE(reader.memory.totalVm, 77728u);
     QCOMPARE(reader.memory.totalRss, 17612u);
     QCOMPARE(reader.memory.totalPss, 17547u);
@@ -101,7 +101,7 @@ void tst_ProcessReader::memAdvanced()
     QCOMPARE(reader.memory.heapPss, 15740u);
 }
 
-void tst_ProcessReader::printMem(const ProcessReader &reader)
+void tst_ProcessReader::printMem()
 {
     qDebug() << "totalVm:" << reader.memory.totalVm;
     qDebug() << "totalRss:" << reader.memory.totalRss;

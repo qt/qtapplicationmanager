@@ -32,8 +32,8 @@ public:
     Q_INVOKABLE void divideByZero() const;
     Q_INVOKABLE void abort() const;
     Q_INVOKABLE void raise(int sig) const;
-    Q_INVOKABLE void throwUnhandledException() const;
-    Q_INVOKABLE void exitGracefully() const;
+    [[noreturn]] Q_INVOKABLE void throwUnhandledException() const;
+    [[noreturn]] Q_INVOKABLE void exitGracefully() const;
 };
 
 

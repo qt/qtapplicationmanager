@@ -56,7 +56,7 @@ public slots:
 
     void stop(bool forceKill) override
     {
-        Q_UNUSED(forceKill);
+        Q_UNUSED(forceKill)
         m_state = Am::NotRunning;
     }
 };

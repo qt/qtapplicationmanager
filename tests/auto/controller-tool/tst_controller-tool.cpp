@@ -169,7 +169,7 @@ void tst_ControllerTool::initTestCase()
     qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(change by (un)setting $AM_VERBOSE_TEST)";
 
     m_argc = 2;
-    m_argv = new char * [m_argc + 1];
+    m_argv = new char * [size_t(m_argc) + 1];
     m_argv[0] = qstrdup("tst_controller-tool");
     m_argv[1] = qstrdup("--no-cache");
     m_argv[m_argc] = nullptr;

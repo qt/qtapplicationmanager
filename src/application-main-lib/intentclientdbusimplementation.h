@@ -17,7 +17,7 @@ class IntentClientDBusImplementation : public IntentClientSystemInterface
 public:
     IntentClientDBusImplementation(const QString &dbusName, QObject *parent = nullptr);
 
-    void initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false) override;
+    void initialize(IntentClient *intentClient) noexcept(false) override;
 
     QString currentApplicationId(QObject *hint) override;
 

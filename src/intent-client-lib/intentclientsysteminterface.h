@@ -25,7 +25,7 @@ public:
     IntentClientSystemInterface(QObject *parent = nullptr);
     virtual ~IntentClientSystemInterface() = default;
 
-    virtual void initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false);
+    virtual void initialize(IntentClient *intentClient) noexcept(false);
 
     virtual QString currentApplicationId(QObject *hint) = 0;
 

@@ -838,7 +838,7 @@ bool PackageManager::isPackageInstallationActive(const QString &packageId) const
     return false;
 }
 
-void PackageManager::cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false)
+void PackageManager::cleanupBrokenInstallations() noexcept(false)
 {
     if (d->cleanupBrokenInstallationsDone)
         return;

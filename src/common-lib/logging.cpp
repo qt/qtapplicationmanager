@@ -129,7 +129,7 @@ QDLT_FALLBACK_CATEGORY(LogGeneral)
 struct DeferredMessage
 {
     DeferredMessage(QtMsgType _msgType, const QMessageLogContext &_context, const QString &_message);
-    DeferredMessage(DeferredMessage &&other) Q_DECL_NOEXCEPT;
+    DeferredMessage(DeferredMessage &&other) noexcept;
     ~DeferredMessage();
 
     QtMsgType msgType;
@@ -218,7 +218,7 @@ DeferredMessage::DeferredMessage(QtMsgType _msgType, const QMessageLogContext &_
     category = qstrdup(_context.category);
 }
 
-DeferredMessage::DeferredMessage(DeferredMessage &&other) Q_DECL_NOEXCEPT
+DeferredMessage::DeferredMessage(DeferredMessage &&other) noexcept
     : msgType(other.msgType)
     , line(other.line)
     , file(other.file)

@@ -27,7 +27,7 @@ PackageInfo::~PackageInfo()
     qDeleteAll(m_applications);
 }
 
-void PackageInfo::validate() const Q_DECL_NOEXCEPT_EXPR(false)
+void PackageInfo::validate() const noexcept(false)
 {
     QString errorMsg;
     if (!isValidApplicationId(id(), &errorMsg))

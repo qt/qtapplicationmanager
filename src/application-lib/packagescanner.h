@@ -18,8 +18,8 @@ class PackageScanner
 public:
     virtual ~PackageScanner() = default;
 
-    virtual PackageInfo *scan(const QString &fileName) Q_DECL_NOEXCEPT_EXPR(false) = 0;
-    virtual PackageInfo *scan(QIODevice *source, const QString &fileName) Q_DECL_NOEXCEPT_EXPR(false) = 0;
+    virtual PackageInfo *scan(const QString &fileName) noexcept(false) = 0;
+    virtual PackageInfo *scan(QIODevice *source, const QString &fileName) noexcept(false) = 0;
 
 protected:
     PackageScanner() = default;

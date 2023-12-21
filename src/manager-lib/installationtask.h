@@ -43,9 +43,9 @@ protected:
     void execute() override;
 
 private:
-    void startInstallation() Q_DECL_NOEXCEPT_EXPR(false);
-    void finishInstallation() Q_DECL_NOEXCEPT_EXPR(false);
-    void checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_EXPR(false);
+    void startInstallation() noexcept(false);
+    void finishInstallation() noexcept(false);
+    void checkExtractedFile(const QString &file) noexcept(false);
 
 private:
     PackageManager *m_pm;

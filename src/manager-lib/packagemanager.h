@@ -102,7 +102,7 @@ public:
     QString architecture() const;
     void setCACertificates(const QList<QByteArray> &chainOfTrust);
 
-    void cleanupBrokenInstallations() Q_DECL_NOEXCEPT_EXPR(false);
+    void cleanupBrokenInstallations() noexcept(false);
 
     QVariantMap installationLocation() const;
     QVariantMap documentLocation() const;

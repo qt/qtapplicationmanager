@@ -250,7 +250,7 @@ void InstallationTask::execute()
 }
 
 
-void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_EXPR(false)
+void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
 {
     ++m_extractedFileCount;
 
@@ -360,7 +360,7 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
     }
 }
 
-void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
+void InstallationTask::startInstallation() noexcept(false)
 {
     // 2. delete old, partial installation
 
@@ -380,7 +380,7 @@ void InstallationTask::startInstallation() Q_DECL_NOEXCEPT_EXPR(false)
     m_applicationDir.setPath(installationDir.absoluteFilePath(m_packageId));
 }
 
-void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
+void InstallationTask::finishInstallation() noexcept(false)
 {
     QDir documentDirectory(m_documentPath);
     ScopedDirectoryCreator documentDirCreator;

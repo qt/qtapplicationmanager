@@ -52,7 +52,7 @@ public:
             m_instanceId.append(u'-');
     }
 
-    void connectToManager() Q_DECL_NOEXCEPT_EXPR(false)
+    void connectToManager() noexcept(false)
     {
         if (m_manager)
             return;
@@ -61,7 +61,7 @@ public:
         m_manager = new IoQtApplicationManagerInterface(u"io.qt.ApplicationManager"_s, u"/ApplicationManager"_s, conn, this);
     }
 
-    void connectToPackager() Q_DECL_NOEXCEPT_EXPR(false)
+    void connectToPackager() noexcept(false)
     {
         if (m_packager)
             return;
@@ -74,7 +74,7 @@ signals:
     void disconnected(QString reason);
 
 private:
-    QDBusConnection connectTo(const QString &iface) Q_DECL_NOEXCEPT_EXPR(false)
+    QDBusConnection connectTo(const QString &iface) noexcept(false)
     {
         QDBusConnection conn(iface);
 
@@ -233,23 +233,23 @@ static Command command(QCommandLineParser &clp)
 
 static void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                                     const QMap<QString, int> &stdRedirections, bool restart,
-                                    const QString &documentUrl) Q_DECL_NOEXCEPT_EXPR(false);
-static void stopApplication(const QString &appId, bool forceKill = false) Q_DECL_NOEXCEPT_EXPR(false);
-static void stopAllApplications() Q_DECL_NOEXCEPT_EXPR(false);
-static void listApplications() Q_DECL_NOEXCEPT_EXPR(false);
-static void showApplication(const QString &appId, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
-static void listPackages() Q_DECL_NOEXCEPT_EXPR(false);
-static void showPackage(const QString &packageId, bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
-static void installPackage(const QString &packageUrl, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false);
-static void removePackage(const QString &packageId, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false);
-static void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false);
-static void cancelInstallationTask(bool all, const QString &singleTaskId) Q_DECL_NOEXCEPT_EXPR(false);
-static void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false);
-static void showInstallationLocation(bool asJson = false) Q_DECL_NOEXCEPT_EXPR(false);
-static void listInstances() Q_DECL_NOEXCEPT_EXPR(false);
+                                    const QString &documentUrl) noexcept(false);
+static void stopApplication(const QString &appId, bool forceKill = false) noexcept(false);
+static void stopAllApplications() noexcept(false);
+static void listApplications() noexcept(false);
+static void showApplication(const QString &appId, bool asJson = false) noexcept(false);
+static void listPackages() noexcept(false);
+static void showPackage(const QString &packageId, bool asJson = false) noexcept(false);
+static void installPackage(const QString &packageUrl, bool acknowledge) noexcept(false);
+static void removePackage(const QString &packageId, bool keepDocuments, bool force) noexcept(false);
+static void listInstallationTasks() noexcept(false);
+static void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(false);
+static void listInstallationLocations() noexcept(false);
+static void showInstallationLocation(bool asJson = false) noexcept(false);
+static void listInstances() noexcept(false);
 static void injectIntentRequest(const QString &intentId, bool isBroadcast,
                                 const QString &applicationId, const QString &requestingApplicationId,
-                                const QString &jsonParameters) Q_DECL_NOEXCEPT_EXPR(false);
+                                const QString &jsonParameters) noexcept(false);
 
 
 class ThrowingApplication : public QCoreApplication // clazy:exclude=missing-qobject-macro
@@ -574,7 +574,7 @@ int main(int argc, char *argv[])
 
 void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                              const QMap<QString, int> &stdRedirections, bool restart,
-                             const QString &documentUrl = QString()) Q_DECL_NOEXCEPT_EXPR(false)
+                             const QString &documentUrl = QString()) noexcept(false)
 {
     dbus.connectToManager();
 
@@ -662,7 +662,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
     }
 }
 
-void stopApplication(const QString &appId, bool forceKill) Q_DECL_NOEXCEPT_EXPR(false)
+void stopApplication(const QString &appId, bool forceKill) noexcept(false)
 {
     dbus.connectToManager();
 
@@ -673,7 +673,7 @@ void stopApplication(const QString &appId, bool forceKill) Q_DECL_NOEXCEPT_EXPR(
     qApp->quit();
 }
 
-void stopAllApplications() Q_DECL_NOEXCEPT_EXPR(false)
+void stopAllApplications() noexcept(false)
 {
     dbus.connectToManager();
 
@@ -684,7 +684,7 @@ void stopAllApplications() Q_DECL_NOEXCEPT_EXPR(false)
     qApp->quit();
 }
 
-void listApplications() Q_DECL_NOEXCEPT_EXPR(false)
+void listApplications() noexcept(false)
 {
     dbus.connectToManager();
 
@@ -699,7 +699,7 @@ void listApplications() Q_DECL_NOEXCEPT_EXPR(false)
     qApp->quit();
 }
 
-void showApplication(const QString &appId, bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
+void showApplication(const QString &appId, bool asJson) noexcept(false)
 {
     dbus.connectToManager();
 
@@ -714,7 +714,7 @@ void showApplication(const QString &appId, bool asJson) Q_DECL_NOEXCEPT_EXPR(fal
     qApp->quit();
 }
 
-void listPackages() Q_DECL_NOEXCEPT_EXPR(false)
+void listPackages() noexcept(false)
 {
     dbus.connectToPackager();
 
@@ -729,7 +729,7 @@ void listPackages() Q_DECL_NOEXCEPT_EXPR(false)
     qApp->quit();
 }
 
-void showPackage(const QString &packageId, bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
+void showPackage(const QString &packageId, bool asJson) noexcept(false)
 {
     dbus.connectToPackager();
 
@@ -744,7 +744,7 @@ void showPackage(const QString &packageId, bool asJson) Q_DECL_NOEXCEPT_EXPR(fal
     qApp->quit();
 }
 
-void installPackage(const QString &package, bool acknowledge) Q_DECL_NOEXCEPT_EXPR(false)
+void installPackage(const QString &package, bool acknowledge) noexcept(false)
 {
     QString packageFile = package;
 
@@ -838,7 +838,7 @@ void installPackage(const QString &package, bool acknowledge) Q_DECL_NOEXCEPT_EX
     });
 }
 
-void removePackage(const QString &packageId, bool keepDocuments, bool force) Q_DECL_NOEXCEPT_EXPR(false)
+void removePackage(const QString &packageId, bool keepDocuments, bool force) noexcept(false)
 {
     fprintf(stdout, "Starting removal of package %s...\n", qPrintable(packageId));
 
@@ -882,7 +882,7 @@ void removePackage(const QString &packageId, bool keepDocuments, bool force) Q_D
         throw Exception(Error::IO, "removePackage returned an empty taskId");
 }
 
-void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false)
+void listInstallationTasks() noexcept(false)
 {
     dbus.connectToPackager();
 
@@ -898,7 +898,7 @@ void listInstallationTasks() Q_DECL_NOEXCEPT_EXPR(false)
 }
 
 
-void cancelInstallationTask(bool all, const QString &singleTaskId) Q_DECL_NOEXCEPT_EXPR(false)
+void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(false)
 {
     dbus.connectToPackager();
 
@@ -974,7 +974,7 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) Q_DECL_NOEXCE
     }
 }
 
-void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false)
+void listInstallationLocations() noexcept(false)
 {
     dbus.connectToPackager();
 
@@ -984,7 +984,7 @@ void listInstallationLocations() Q_DECL_NOEXCEPT_EXPR(false)
     qApp->quit();
 }
 
-void showInstallationLocation(bool asJson) Q_DECL_NOEXCEPT_EXPR(false)
+void showInstallationLocation(bool asJson) noexcept(false)
 {
     dbus.connectToPackager();
 
@@ -1017,7 +1017,7 @@ void listInstances()
 
 void injectIntentRequest(const QString &intentId, bool isBroadcast,
                          const QString &requestingApplicationId, const QString &applicationId,
-                         const QString &jsonParameters) Q_DECL_NOEXCEPT_EXPR(false)
+                         const QString &jsonParameters) noexcept(false)
 {
     dbus.connectToManager();
 

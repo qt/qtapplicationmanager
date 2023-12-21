@@ -67,8 +67,8 @@ public:
     bool isSingleProcessMode() const;
     bool isRunningOnEmbedded() const;
 
-    void setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false);
-    void loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false);
+    void setup(const Configuration *cfg) noexcept(false);
+    void loadQml(bool loadDummyData) noexcept(false);
     void showWindow(bool showFullscreen);
 
     Q_INVOKABLE void shutDown(int exitCode = 0);
@@ -79,23 +79,23 @@ public:
 
 protected:
     void registerResources(const QStringList &resources) const;
-    void loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false);
+    void loadStartupPlugins(const QStringList &startupPluginPaths) noexcept(false);
     void parseSystemProperties(const QVariantMap &rawSystemProperties);
     void setupDBus(const std::function<QString(const char *)> &busForInterface,
                    const std::function<QVariantMap(const char *)> &policyForInterface, const QString &instanceId);
-    void setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false);
+    void setMainQmlFile(const QString &mainQml) noexcept(false);
+    void setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) noexcept(false);
     void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QStringList &runtimeAdditionalLaunchers,
                                     const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths,
                                     const QVariantMap &openGLConfiguration,
                                     const QStringList &iconThemeSearchPaths, const QString &iconThemeName);
-    void loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) Q_DECL_NOEXCEPT_EXPR(false);
+    void loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) noexcept(false);
     void setupIntents(int disambiguationTimeout, int startApplicationTimeout,
-                      int replyFromApplicationTimeout, int replyFromSystemTimeout) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration) Q_DECL_NOEXCEPT_EXPR(false);
+                      int replyFromApplicationTimeout, int replyFromSystemTimeout) noexcept(false);
+    void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration) noexcept(false);
     void setupQuickLauncher(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
-                            qreal idleLoad, int failedStartLimit, int failedStartLimitIntervalSec) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths) Q_DECL_NOEXCEPT_EXPR(false);
+                            qreal idleLoad, int failedStartLimit, int failedStartLimitIntervalSec) noexcept(false);
+    void setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths) noexcept(false);
     void registerPackages();
 
     void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());

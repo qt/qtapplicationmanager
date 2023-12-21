@@ -86,7 +86,7 @@ DBusDaemonProcess::~DBusDaemonProcess()
     waitForFinished();
 }
 
-void DBusDaemonProcess::start() Q_DECL_NOEXCEPT_EXPR(false)
+void DBusDaemonProcess::start() noexcept(false)
 {
     static const int timeout = 10000 * int(timeoutFactor());
 

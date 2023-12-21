@@ -67,7 +67,7 @@ class IntentClientAMImplementation : public IntentClientSystemInterface
 public:
     IntentClientAMImplementation(IntentServerAMImplementation *serverInterface);
 
-    void initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false) override;
+    void initialize(IntentClient *intentClient) noexcept(false) override;
     QString currentApplicationId(QObject *hint) override;
 
     void requestToSystem(QPointer<IntentClientRequest> icr) override;

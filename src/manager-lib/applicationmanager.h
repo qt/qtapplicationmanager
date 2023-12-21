@@ -74,7 +74,7 @@ public:
     bool startApplicationInternal(const QString &appId, const QString &documentUrl = QString(),
                                   const QString &documentMimeType = QString(),
                                   const QString &debugWrapperSpecification = QString(),
-                                  QVector<int> &&stdioRedirections = QVector<int>()) Q_DECL_NOEXCEPT_EXPR(false);
+                                  QVector<int> &&stdioRedirections = QVector<int>()) noexcept(false);
     void stopApplicationInternal(Application *app, bool forceKill = false);
 
     // only use these two functions for development!

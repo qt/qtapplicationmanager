@@ -36,17 +36,17 @@ class ApplicationMain : public ApplicationMainBase, public SharedMain
 {
     Q_OBJECT
 public:
-    ApplicationMain(int &argc, char **argv) Q_DECL_NOEXCEPT;
-    virtual ~ApplicationMain();
+    ApplicationMain(int &argc, char **argv) noexcept;
+    virtual ~ApplicationMain() override;
 
     static ApplicationMain *instance();
 
 public:
-    void setup() Q_DECL_NOEXCEPT(false);
-    void loadConfiguration(const QByteArray &configYaml = QByteArray()) Q_DECL_NOEXCEPT_EXPR(false);
-    void setupDBusConnections() Q_DECL_NOEXCEPT_EXPR(false);
-    void connectDBusInterfaces(bool isRuntimeLauncher = false) Q_DECL_NOEXCEPT_EXPR(false);
-    void registerWaylandExtensions() Q_DECL_NOEXCEPT;
+    void setup() noexcept(false);
+    void loadConfiguration(const QByteArray &configYaml = QByteArray()) noexcept(false);
+    void setupDBusConnections() noexcept(false);
+    void connectDBusInterfaces(bool isRuntimeLauncher = false) noexcept(false);
+    void registerWaylandExtensions() noexcept;
 
     // D-Bus names (use with QDBusConnection)
     QString p2pDBusName() const;

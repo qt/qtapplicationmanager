@@ -31,7 +31,7 @@ public:
 };
 
 QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
-                                    const QByteArray &signingCertificatePassword) Q_DECL_NOEXCEPT_EXPR(false)
+                                    const QByteArray &signingCertificatePassword) noexcept(false)
 {
     HCERTSTORE certStore = nullptr;
 
@@ -106,7 +106,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
 }
 
 bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
-                              const QList<QByteArray> &chainOfTrust) Q_DECL_NOEXCEPT_EXPR(false)
+                              const QByteArrayList &chainOfTrust) noexcept(false)
 {
     PCCERT_CONTEXT signerCert = nullptr;
     HCERTSTORE msgCertStore = nullptr;

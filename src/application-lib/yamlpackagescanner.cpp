@@ -26,7 +26,7 @@ using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-PackageInfo *YamlPackageScanner::scan(const QString &fileName) Q_DECL_NOEXCEPT_EXPR(false)
+PackageInfo *YamlPackageScanner::scan(const QString &fileName) noexcept(false)
 {
     QFile f(fileName);
     if (!f.open(QIODevice::ReadOnly))
@@ -34,7 +34,7 @@ PackageInfo *YamlPackageScanner::scan(const QString &fileName) Q_DECL_NOEXCEPT_E
     return scan(&f, f.fileName());
 }
 
-PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName) Q_DECL_NOEXCEPT_EXPR(false)
+PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName) noexcept(false)
 {
     try {
         YamlParser p(source->readAll());

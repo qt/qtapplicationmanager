@@ -595,7 +595,7 @@ void ApplicationManager::registerMimeTypes()
 bool ApplicationManager::startApplicationInternal(const QString &appId, const QString &documentUrl,
                                                   const QString &documentMimeType,
                                                   const QString &debugWrapperSpecification,
-                                                  QVector<int> &&stdioRedirections)  Q_DECL_NOEXCEPT_EXPR(false)
+                                                  QVector<int> &&stdioRedirections)  noexcept(false)
 {
     auto redirectionGuard = qScopeGuard([&stdioRedirections]() {
         closeAndClearFileDescriptors(stdioRedirections);

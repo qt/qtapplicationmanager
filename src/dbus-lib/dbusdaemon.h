@@ -16,7 +16,7 @@ public:
     DBusDaemonProcess(QObject *parent = nullptr);
     ~DBusDaemonProcess() override;
 
-    static void start() Q_DECL_NOEXCEPT_EXPR(false);
+    static void start() noexcept(false);
 };
 
 QT_END_NAMESPACE_AM

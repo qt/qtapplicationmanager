@@ -30,7 +30,7 @@ public:
     static PackagingJob *storeVerify(const QString &sourceName, const QStringList &certificateFiles,
                                      const QString &hardwareId);
 
-    void execute() Q_DECL_NOEXCEPT_EXPR(false);
+    void execute() noexcept(false);
 
     QString output() const;
     int resultCode() const;

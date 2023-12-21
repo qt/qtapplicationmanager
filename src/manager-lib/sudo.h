@@ -30,7 +30,7 @@ public:
         DropPrivilegesRegainable, // only use this for auto-tests
     };
 
-    static void forkServer(DropPrivileges dropPrivileges) Q_DECL_NOEXCEPT_EXPR(false);
+    static void forkServer(DropPrivileges dropPrivileges) noexcept(false);
 };
 
 class SudoInterface

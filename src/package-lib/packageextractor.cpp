@@ -417,7 +417,7 @@ void PackageExtractorPrivate::extract()
 }
 
 void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCryptographicHash &digest,
-                                              bool isHeader) Q_DECL_NOEXCEPT_EXPR(false)
+                                              bool isHeader) noexcept(false)
 {
     QVector<QVariant> docs;
     try {

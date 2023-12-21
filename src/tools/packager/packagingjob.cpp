@@ -111,7 +111,7 @@ int PackagingJob::resultCode() const
 PackagingJob::PackagingJob()
 { }
 
-void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
+void PackagingJob::execute() noexcept(false)
 {
     switch (m_mode) {
     case Create: {

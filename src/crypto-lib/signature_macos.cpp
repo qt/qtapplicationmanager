@@ -33,7 +33,7 @@ public:
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
-                                    const QByteArray &signingCertificatePassword) Q_DECL_NOEXCEPT_EXPR(false)
+                                    const QByteArray &signingCertificatePassword) noexcept(false)
 {
     QCFType<SecKeychainRef> localKeyChain;
 
@@ -101,7 +101,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
 }
 
 bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
-                              const QList<QByteArray> &chainOfTrust) Q_DECL_NOEXCEPT_EXPR(false)
+                              const QByteArrayList &chainOfTrust) noexcept(false)
 {
     OSStatus err;
 

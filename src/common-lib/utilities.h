@@ -29,7 +29,7 @@ int timeoutFactor();
 using YamlFormat = QPair<QString, int>;
 
 YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
-                           const QVector<YamlFormat> &formatTypesAndVersions) Q_DECL_NOEXCEPT_EXPR(false);
+                           const QVector<YamlFormat> &formatTypesAndVersions) noexcept(false);
 
 /*! \internal
     Convenience function that makes it easy to accept a plain string where
@@ -100,10 +100,10 @@ bool safeRemove(const QString &path, RecursiveOperationType type);
 
 qint64 getParentPid(qint64 pid);
 
-QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) Q_DECL_NOEXCEPT_EXPR(false);
+QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) noexcept(false);
 
 template <typename T>
-QVector<T *> loadPlugins(const char *type, const QStringList &files) Q_DECL_NOEXCEPT_EXPR(false)
+QVector<T *> loadPlugins(const char *type, const QStringList &files) noexcept(false)
 {
     QVector<T *> result;
     auto plugins = loadPlugins_helper(type, files, qobject_interface_iid<T *>());
@@ -113,7 +113,7 @@ QVector<T *> loadPlugins(const char *type, const QStringList &files) Q_DECL_NOEX
 }
 
 // Load a Qt resource, either in the form of a resource file or a plugin
-void loadResource(const QString &resource) Q_DECL_NOEXCEPT_EXPR(false);
+void loadResource(const QString &resource) noexcept(false);
 
 // Qt6 removed v_cast, but the "replacement" QVariant::Private::get is const only
 template <typename T> T *qt6_v_cast(QVariant::Private *vp)
@@ -125,7 +125,7 @@ template <typename T> T *qt6_v_cast(QVariant::Private *vp)
 void closeAndClearFileDescriptors(QVector<int> &fdList);
 
 // make sure that the given id can be used as a filename
-void validateIdForFilesystemUsage(const QString &id) Q_DECL_NOEXCEPT_EXPR(false);
+void validateIdForFilesystemUsage(const QString &id) noexcept(false);
 
 QJSEngine *getJSEngine(const QObject *obj);
 

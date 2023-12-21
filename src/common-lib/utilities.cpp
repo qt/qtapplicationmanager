@@ -43,7 +43,7 @@ QT_BEGIN_NAMESPACE_AM
     Otherwise, the amount of documents is irrelevant.
 */
 YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
-                           const QVector<YamlFormat> &formatTypesAndVersions) Q_DECL_NOEXCEPT_EXPR(false)
+                           const QVector<YamlFormat> &formatTypesAndVersions) noexcept(false)
 {
     qsizetype actualSize = docs.size();
     if (actualSize < 1)
@@ -218,7 +218,7 @@ bool recursiveOperation(const QDir &path, const std::function<bool (const QStrin
     return recursiveOperation(path.absolutePath(), operation);
 }
 
-QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) Q_DECL_NOEXCEPT_EXPR(false)
+QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) noexcept(false)
 {
     QVector<QObject *> interfaces;
     interfaces.reserve(files.size());
@@ -283,7 +283,7 @@ QString translateFromMap(const QMap<QString, QString> &languageToName, const QSt
     }
 }
 
-void loadResource(const QString &resource) Q_DECL_NOEXCEPT_EXPR(false)
+void loadResource(const QString &resource) noexcept(false)
 {
     QString afp = QDir().absoluteFilePath(resource);
     QStringList errors;
@@ -321,7 +321,7 @@ void closeAndClearFileDescriptors(QVector<int> &fdList)
     fdList.clear();
 }
 
-void validateIdForFilesystemUsage(const QString &id)  Q_DECL_NOEXCEPT_EXPR(false)
+void validateIdForFilesystemUsage(const QString &id)  noexcept(false)
 {
     // we need to make sure that we can use the name as directory in a filesystem and inode names
     // are limited to 255 characters in Linux. We need to subtract a safety margin for prefixes

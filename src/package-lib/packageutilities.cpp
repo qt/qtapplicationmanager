@@ -44,7 +44,7 @@ void PackageUtilities::addFileMetadataToDigest(const QString &entryFilePath, con
     digest.addData(addToDigest);
 }
 
-void PackageUtilities::addHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) Q_DECL_NOEXCEPT_EXPR(false)
+void PackageUtilities::addHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) noexcept(false)
 {
     for (auto it = headerDataForDigest.constBegin(); it != headerDataForDigest.constEnd(); ++it) {
         if (header.contains(it.key())) {

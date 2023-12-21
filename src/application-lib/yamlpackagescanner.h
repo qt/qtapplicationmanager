@@ -16,8 +16,8 @@ class YamlPackageScanner : public PackageScanner
 public:
     YamlPackageScanner() = default;
 
-    PackageInfo *scan(const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;
-    PackageInfo *scan(QIODevice *source, const QString &filePath) Q_DECL_NOEXCEPT_EXPR(false) override;
+    PackageInfo *scan(const QString &filePath) noexcept(false) override;
+    PackageInfo *scan(QIODevice *source, const QString &filePath) noexcept(false) override;
 };
 
 QT_END_NAMESPACE_AM

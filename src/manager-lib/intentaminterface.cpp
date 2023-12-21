@@ -252,7 +252,7 @@ QString IntentClientAMImplementation::currentApplicationId(QObject *hint)
     return runtime ? runtime->application()->info()->id() : IntentClient::instance()->systemUiId();
 }
 
-void IntentClientAMImplementation::initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false)
+void IntentClientAMImplementation::initialize(IntentClient *intentClient) noexcept(false)
 {
     IntentClientSystemInterface::initialize(intentClient);
 }

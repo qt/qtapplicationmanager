@@ -110,7 +110,7 @@ QT_BEGIN_NAMESPACE_AM
 
 static void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, const char *serviceName,
                                const char *interfaceName, const char *path,
-                               const QString &instanceId) Q_DECL_NOEXCEPT_EXPR(false)
+                               const QString &instanceId) noexcept(false)
 {
     QString dbusAddress;
     QDBusConnection conn((QString()));
@@ -252,7 +252,7 @@ Main::~Main()
     The caller has to make sure that cfg will be available even after this function returns:
     we will access the cfg object from delayed init functions via lambdas!
 */
-void Main::setup(const Configuration *cfg) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setup(const Configuration *cfg) noexcept(false)
 {
     StartupTimer::instance()->checkpoint("after configuration parsing");
 
@@ -400,7 +400,7 @@ void Main::registerResources(const QStringList &resources) const
     StartupTimer::instance()->checkpoint("after resource registration");
 }
 
-void Main::loadStartupPlugins(const QStringList &startupPluginPaths) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::loadStartupPlugins(const QStringList &startupPluginPaths) noexcept(false)
 {
     QStringList systemStartupPluginPaths;
     const QDir systemStartupPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + u"appman_startup"_s);
@@ -436,7 +436,7 @@ void Main::parseSystemProperties(const QVariantMap &rawSystemProperties)
         iface->initialize(m_systemProperties.at(SP_SystemUi));
 }
 
-void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setMainQmlFile(const QString &mainQml) noexcept(false)
 {
     // For some weird reason, QFile cannot cope with "qrc:/" and QUrl cannot cope with ":/",
     // so we have to translate ourselves between those two "worlds".
@@ -454,7 +454,7 @@ void Main::setMainQmlFile(const QString &mainQml) Q_DECL_NOEXCEPT_EXPR(false)
     }
 }
 
-void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) noexcept(false)
 {
     m_isSingleProcessMode = forceSingleProcess;
     if (forceMultiProcess && m_isSingleProcessMode)
@@ -528,7 +528,7 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
     StartupTimer::instance()->checkpoint("after runtime registration");
 }
 
-void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) noexcept(false)
 {
     if (!singlePackage.isEmpty()) {
         m_packageDatabase = new PackageDatabase(singlePackage);
@@ -559,7 +559,7 @@ void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePacka
 }
 
 void Main::setupIntents(int disambiguationTimeout, int startApplicationTimeout,
-                        int replyFromApplicationTimeout, int replyFromSystemTimeout) Q_DECL_NOEXCEPT_EXPR(false)
+                        int replyFromApplicationTimeout, int replyFromSystemTimeout) noexcept(false)
 {
     m_intentServer = IntentAMImplementation::createIntentServerAndClientInstance(m_packageManager,
                                                                                  disambiguationTimeout,
@@ -569,7 +569,7 @@ void Main::setupIntents(int disambiguationTimeout, int startApplicationTimeout,
     StartupTimer::instance()->checkpoint("after IntentServer instantiation");
 }
 
-void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration) noexcept(false)
 {
     m_packageManager = PackageManager::createInstance(m_packageDatabase, m_documentDir);
     m_applicationManager = ApplicationManager::createInstance(m_isSingleProcessMode);
@@ -590,7 +590,7 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
 
 void Main::setupQuickLauncher(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
                               qreal idleLoad, int failedStartLimit,
-                              int failedStartLimitIntervalSec) Q_DECL_NOEXCEPT_EXPR(false)
+                              int failedStartLimitIntervalSec) noexcept(false)
 {
     if (!runtimesPerContainer.isEmpty()) {
         m_quickLauncher = QuickLauncher::createInstance(runtimesPerContainer, idleLoad,
@@ -601,7 +601,7 @@ void Main::setupQuickLauncher(const QHash<std::pair<QString, QString>, int> &run
     }
 }
 
-void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths) noexcept(false)
 {
 #if QT_CONFIG(am_installer)
     // make sure the installation and document dirs are valid
@@ -800,7 +800,7 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
                      m_windowManager, &WindowManager::raiseApplicationWindow);
 }
 
-void Main::loadQml(bool loadDummyData) Q_DECL_NOEXCEPT_EXPR(false)
+void Main::loadQml(bool loadDummyData) noexcept(false)
 {
     for (auto iface : std::as_const(m_startupPlugins))
         iface->beforeQmlEngineLoad(m_engine);

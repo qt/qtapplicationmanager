@@ -31,7 +31,7 @@ public:
 
     static quint32 dataStreamVersion();
 
-    void validate() const Q_DECL_NOEXCEPT_EXPR(false);
+    void validate() const noexcept(false);
 
     QString id() const;
 

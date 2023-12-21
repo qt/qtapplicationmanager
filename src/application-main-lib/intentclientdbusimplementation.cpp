@@ -33,7 +33,7 @@ QString IntentClientDBusImplementation::currentApplicationId(QObject *hint)
     return ApplicationMain::instance()->applicationId();
 }
 
-void IntentClientDBusImplementation::initialize(IntentClient *intentClient) Q_DECL_NOEXCEPT_EXPR(false)
+void IntentClientDBusImplementation::initialize(IntentClient *intentClient) noexcept(false)
 {
     IntentClientSystemInterface::initialize(intentClient);
 

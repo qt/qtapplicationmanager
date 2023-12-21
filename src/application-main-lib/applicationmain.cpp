@@ -73,7 +73,7 @@ ApplicationMain *ApplicationMain::instance()
     return s_instance;
 }
 
-void ApplicationMain::registerWaylandExtensions() Q_DECL_NOEXCEPT
+void ApplicationMain::registerWaylandExtensions() noexcept
 {
 #if defined(QT_WAYLANDCLIENT_LIB)
      m_waylandExtension.reset(new WaylandQtAMClientExtension());
@@ -234,7 +234,7 @@ void ApplicationMain::setup()
     connectDBusInterfaces();
 }
 
-void ApplicationMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOEXCEPT_EXPR(false)
+void ApplicationMain::loadConfiguration(const QByteArray &configYaml) noexcept(false)
 {
     try {
         QVector<QVariant> docs = YamlParser::parseAllDocuments(configYaml.isEmpty() ? qgetenv("AM_CONFIG")
@@ -286,7 +286,7 @@ void ApplicationMain::loadConfiguration(const QByteArray &configYaml) Q_DECL_NOE
         throw Exception("Runtime launcher received no D-Bus configuration");
 }
 
-void ApplicationMain::setupDBusConnections() Q_DECL_NOEXCEPT_EXPR(false)
+void ApplicationMain::setupDBusConnections() noexcept(false)
 {
     if (m_dbusAddressP2P.isEmpty())
         throw Exception("No address available to connect to the P2P D-Bus");
@@ -348,7 +348,7 @@ static T *tryConnectToDBusInterface(const QString &service, const QString &path,
     return nullptr;
 }
 
-void ApplicationMain::connectDBusInterfaces(bool isRuntimeLauncher) Q_DECL_NOEXCEPT_EXPR(false)
+void ApplicationMain::connectDBusInterfaces(bool isRuntimeLauncher) noexcept(false)
 {
     m_dbusApplicationInterface = tryConnectToDBusInterface<IoQtApplicationManagerApplicationInterfaceInterface>(
         { }, u"/ApplicationInterface"_s, p2pDBusName(), this);

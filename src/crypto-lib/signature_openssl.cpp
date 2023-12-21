@@ -95,7 +95,7 @@ public:
 
 
 QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
-                                    const QByteArray &signingCertificatePassword) Q_DECL_NOEXCEPT_EXPR(false)
+                                    const QByteArray &signingCertificatePassword) noexcept(false)
 {
     OpenSslPointer<BIO> bioPkcs12(am_BIO_new_mem_buf(signingCertificatePkcs12.constData(), signingCertificatePkcs12.size()));
     if (!bioPkcs12)
@@ -152,7 +152,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
 }
 
 bool SignaturePrivate::verify(const QByteArray &signaturePkcs7,
-                              const QList<QByteArray> &chainOfTrust) Q_DECL_NOEXCEPT_EXPR(false)
+                              const QByteArrayList &chainOfTrust) noexcept(false)
 {
     OpenSslPointer<BIO> bioSignature(am_BIO_new_mem_buf(signaturePkcs7.constData(), signaturePkcs7.size()));
     if (!bioSignature)

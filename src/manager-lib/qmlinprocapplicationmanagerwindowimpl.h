@@ -74,13 +74,6 @@ public:
     void showMaximized() override;
     void showNormal() override;
 
-    // pass-through slots to the actual QQuickWindow
-    void update() override;
-    void releaseResources() override;
-
-    // pass-through slots to the actual QWindow
-    void requestUpdate() override;
-
 private:
     void notifyRuntimeAboutSurface();
     void determineRuntime();

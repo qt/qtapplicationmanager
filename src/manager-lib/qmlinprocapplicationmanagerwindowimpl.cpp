@@ -49,26 +49,10 @@ QmlInProcApplicationManagerWindowImpl::QmlInProcApplicationManagerWindowImpl(App
         // pass-through signals from the actual QQuickWindow
         QObject::connect(qwindow, &QQuickWindow::frameSwapped,
                          window, &ApplicationManagerWindow::frameSwapped);
-        QObject::connect(qwindow, &QQuickWindow::sceneGraphInitialized,
-                         window, &ApplicationManagerWindow::sceneGraphInitialized);
-        QObject::connect(qwindow, &QQuickWindow::sceneGraphInvalidated,
-                         window, &ApplicationManagerWindow::sceneGraphInvalidated);
-        QObject::connect(qwindow, &QQuickWindow::beforeSynchronizing,
-                         window, &ApplicationManagerWindow::beforeSynchronizing);
-        QObject::connect(qwindow, &QQuickWindow::afterSynchronizing,
-                         window, &ApplicationManagerWindow::afterSynchronizing);
-        QObject::connect(qwindow, &QQuickWindow::beforeRendering,
-                         window, &ApplicationManagerWindow::beforeRendering);
-        QObject::connect(qwindow, &QQuickWindow::afterRendering,
-                         window, &ApplicationManagerWindow::afterRendering);
         QObject::connect(qwindow, &QQuickWindow::afterAnimating,
                          window, &ApplicationManagerWindow::afterAnimating);
-        QObject::connect(qwindow, &QQuickWindow::sceneGraphAboutToStop,
-                         window, &ApplicationManagerWindow::sceneGraphAboutToStop);
-        QObject::connect(qwindow, &QQuickWindow::beforeFrameBegin,
-                         window, &ApplicationManagerWindow::beforeFrameBegin);
-        QObject::connect(qwindow, &QQuickWindow::afterFrameEnd,
-                         window, &ApplicationManagerWindow::afterFrameEnd);
+        QObject::connect(qwindow, &QQuickWindow::sceneGraphError,
+                         window, &ApplicationManagerWindow::sceneGraphError);
     };
 
     connectWindowSignals(m_surfaceItem->window());
@@ -218,21 +202,6 @@ void QmlInProcApplicationManagerWindowImpl::showNormal()
 {
     amWindow()->setVisible(true);
     updateVisibility(QWindow::Windowed);
-}
-
-void QmlInProcApplicationManagerWindowImpl::update()
-{
-    m_surfaceItem->window()->update();
-}
-
-void QmlInProcApplicationManagerWindowImpl::releaseResources()
-{
-    m_surfaceItem->window()->releaseResources();
-}
-
-void QmlInProcApplicationManagerWindowImpl::requestUpdate()
-{
-    m_surfaceItem->window()->requestUpdate();
 }
 
 bool QmlInProcApplicationManagerWindowImpl::setWindowProperty(const QString &name, const QVariant &value)

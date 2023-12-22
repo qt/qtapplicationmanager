@@ -132,21 +132,8 @@ public:
 
     // pass-through signals and slots from/to the actual QQuickWindow
     Q_SIGNAL void frameSwapped();
-    Q_SIGNAL void sceneGraphInitialized();
-    Q_SIGNAL void sceneGraphInvalidated();
-    Q_SIGNAL void beforeSynchronizing();
-    Q_SIGNAL void afterSynchronizing();
-    Q_SIGNAL void beforeRendering();
-    Q_SIGNAL void afterRendering();
     Q_SIGNAL void afterAnimating();
-    Q_SIGNAL void sceneGraphAboutToStop();
-    Q_SIGNAL void beforeFrameBegin();
-    Q_SIGNAL void afterFrameEnd();
-    Q_SLOT void update();
-    Q_SLOT void releaseResources();
-
-    // pass-through signals and slots from/to the actual QWindow
-    void requestUpdate();
+    Q_SIGNAL void sceneGraphError(QQuickWindow::SceneGraphError error, const QString &message);
 
     ApplicationManagerWindowImpl *implementation();
 

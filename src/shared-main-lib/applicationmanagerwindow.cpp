@@ -238,21 +238,6 @@ void ApplicationManagerWindow::showNormal()
     m_impl->showNormal();
 }
 
-void QtAM::ApplicationManagerWindow::update()
-{
-    m_impl->update();
-}
-
-void QtAM::ApplicationManagerWindow::releaseResources()
-{
-    m_impl->releaseResources();
-}
-
-void QtAM::ApplicationManagerWindow::requestUpdate()
-{
-    m_impl->requestUpdate();
-}
-
 ApplicationManagerWindowImpl *ApplicationManagerWindow::implementation()
 {
     return m_impl.get();

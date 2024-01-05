@@ -3,13 +3,12 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-import QtQuick 2.4
-import QtApplicationManager.Application 2.0
+import QtQuick
+import QtApplicationManager.Application
 
 ApplicationManagerWindow {
-    id: root
-
     Rectangle {
+        id: rect
         anchors.centerIn: parent
         width: 180; height: 180; radius: width/4
         color: "red"
@@ -18,7 +17,9 @@ ApplicationManagerWindow {
     Connections {
         target: ApplicationInterface
         function onQuit() {
-            target.acknowledgeQuit();
+            // Casual check for attached ApplicationManagerWindow type
+            if (rect.ApplicationManagerWindow.window.visible)
+                target.acknowledgeQuit();
         }
     }
 }

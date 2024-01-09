@@ -89,7 +89,7 @@ WindowManager. The code that populates the window role of this ListModel is show
 now let's focus on what this Repeater's delegate consists of:
 
 \list
-    \li The enclosing type is a \l{FocusSope} that allows to track focus changes.
+    \li The enclosing type is a \l{FocusScope} that allows to track focus changes.
     \li A mostly transparent \l{Image} that acts as the window decoration (border). A blue border
         indicates the focus window, otherwise the border is grey. The location depends on the
         \c model.index, hence each application window has a different initial location.

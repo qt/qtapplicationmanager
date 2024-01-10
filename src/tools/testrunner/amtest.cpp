@@ -46,6 +46,15 @@ QString AmTest::qtVersion() const
     return QString::fromLatin1(QT_VERSION_STR);
 }
 
+bool AmTest::isAsanBuild() const
+{
+#if defined(__SANITIZE_ADDRESS__) || __has_feature(address_sanitizer)
+    return true;
+#else
+    return false;
+#endif
+}
+
 static QtMsgType convertMsgType(AmTest::MsgType type)
 {
     QtMsgType ret;

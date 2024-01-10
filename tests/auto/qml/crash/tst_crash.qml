@@ -39,6 +39,9 @@ TestCase {
     }
 
     function test_crash(data) {
+        if (AmTest.asanBuild)
+            skip("This test is not compatible with ASAN builds")
+
         ApplicationManager.startApplication(appId);
         runStateChangedSpy.wait(spyTimeout);
         runStateChangedSpy.wait(spyTimeout);

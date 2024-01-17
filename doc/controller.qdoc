@@ -16,9 +16,26 @@ communicating directly with its D-Bus interface.
 \note In order to use this tool, the application manager has to be connected to either a session- or
 system-bus; don't run it with \c{--dbus none}.
 
-If you are running multiple application manager instances in the same system, you need to first
-\l{instance-id}{assign unique instance-ids} to each of them and then you can address them
-individually from the \c appman-controller tool by using the \c --instance-id command line option.
+If you are running multiple application manager instances in the same system, you need to tell the
+controller which instance you are addressing.
+The default id for any system-ui is \c appman, but you can \l{instance-id}{assign custom instance-ids}.
+In addition, a unique number is appended to this configured id to make it possible to disambiguate
+between instances with the same id.
+
+A list of all currently running instances can be obtained with the \c list-instances command.
+
+The \c --instance-id option lets you choose which of the running appman instances you want to
+address. This gives you 3 possibilities:
+\list
+    \li You do not specify \c --instance-id at all: if only one appman instance is running, then it
+        will be addressed (ignoring its instance-id). If there are more instances, the tool will
+        stop with an error.
+    \li You only specify the base id without the disambiguating number (e.g. \c appman):  if only
+        one appman instance using the given base id is running, then it will be addressed. If there
+        are more instances, the tool will stop with an error.
+    \li You specify the full id with the disambiguating number (e.g. appman-1): Only the given
+        appman instance will be addressed.
+\endlist
 
 The following commands are available:
 
@@ -105,7 +122,8 @@ The following commands are available:
 \row
     \li \span {style="white-space: nowrap"} {\c list-instances}
     \li (none)
-    \li Lists all currently running \l{instance-id}{named} application manager instances.
+    \li Lists the unique \l{instance-id}{ instance ids} of all currently running application manager
+        instances.
 \row
     \li \span {style="white-space: nowrap"} {\c inject-intent-request}
     \li \c{<intent-id>}

@@ -16,6 +16,8 @@
 #include <QDBusError>
 #include <QMetaObject>
 #include <QStringBuilder>
+#include <QRegularExpression>
+#include <QJsonDocument>
 
 #include <functional>
 
@@ -45,11 +47,9 @@ public:
         registerDBusTypes();
     }
 
-    void setInstanceId(const QString &instanceId)
+    void setInstanceInfo(const QVariantMap &instanceInfo)
     {
-        m_instanceId = instanceId;
-        if (!m_instanceId.isEmpty())
-            m_instanceId.append(u'-');
+        m_dbusAddresses = instanceInfo[u"dbus"_s].toMap();
     }
 
     void connectToManager() noexcept(false)
@@ -78,21 +78,15 @@ private:
     {
         QDBusConnection conn(iface);
 
-        QFile f(QDir::temp().absoluteFilePath(m_instanceId % QString(u"%1.dbus"_s).arg(iface)));
-        QString dbus;
-        if (f.open(QFile::ReadOnly)) {
-            dbus = QString::fromUtf8(f.readAll());
-            if (dbus == u"system") {
-                conn = QDBusConnection::systemBus();
-                dbus = u"[system-bus]"_s;
-            } else if (dbus.isEmpty()) {
-                conn = QDBusConnection::sessionBus();
-                dbus = u"[session-bus]"_s;
-            } else {
-                conn = QDBusConnection::connectToBus(dbus, u"custom"_s);
-            }
+        QString dbus = m_dbusAddresses.value(iface).toString();
+        if (dbus == u"system") {
+            conn = QDBusConnection::systemBus();
+            dbus = u"[system-bus]"_s;
+        } else if (dbus.isEmpty()) {
+            conn = QDBusConnection::sessionBus();
+            dbus = u"[session-bus]"_s;
         } else {
-            throw Exception(Error::IO, "Could not find the D-Bus interface of a running application manager instance.\n(did you start the appman with '--dbus none'?");
+            conn = QDBusConnection::connectToBus(dbus, u"custom"_s);
         }
 
         if (!conn.isConnected()) {
@@ -160,7 +154,7 @@ public:
 private:
     IoQtPackageManagerInterface *m_packager = nullptr;
     IoQtApplicationManagerInterface *m_manager = nullptr;
-    QString m_instanceId;
+    QVariantMap m_dbusAddresses;
     QStringList m_connections;
     QTimer *m_disconnectTimer = nullptr;
     bool m_disconnectedEmitted = false;
@@ -230,6 +224,9 @@ static Command command(QCommandLineParser &clp)
     }
     return NoCommand;
 }
+
+static std::pair<QString, QMultiHash<QString, int>> runningInstanceIds();
+static QVariantMap resolveInstanceInfo(const QString &instanceId);
 
 static void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                                     const QMap<QString, int> &stdRedirections, bool restart,
@@ -321,16 +318,19 @@ int main(int argc, char *argv[])
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsPositionalArguments);
 
     // ignore the return value here, as we also accept options we don't know about yet.
-    // If an option is really not accepted by a command, the comman specific parsing should report
+    // If an option is really not accepted by a command, the command specific parsing should report
     // this.
-    clp.parse(QCoreApplication::arguments());
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
+    clp.parse(QCoreApplication::arguments());
 
-    dbus()->setInstanceId(clp.value(u"instance-id"_s));
 
     // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
     try {
-        switch (command(clp)) {
+        auto cmd = command(clp);
+        if ((cmd != NoCommand) && (cmd != ListInstances))
+            dbus()->setInstanceInfo(resolveInstanceInfo(clp.value(u"instance-id"_s)));
+
+        switch (cmd) {
         case NoCommand:
             if (clp.isSet(u"version"_s))
                 clp.showVersion();
@@ -994,23 +994,98 @@ void showInstallationLocation(bool asJson) noexcept(false)
     qApp->quit();
 }
 
+static std::pair<QString, QMultiHash<QString, int>> runningInstanceIds()
+{
+    QMultiHash<QString, int> result;
+
+    QString rtPath = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+    if (rtPath.isEmpty())
+        rtPath = QDir::tempPath();
+    QDir rtDir(rtPath);
+    if (!rtDir.cd(u"qtapplicationmanager"_s))
+        return { rtDir.path(), result };
+
+    const QString suffix = u".lock"_s;
+    QDirIterator dit(rtDir.path(), { u'*' + suffix });
+    while (dit.hasNext()) {
+        QString path = dit.next();
+        QString name = dit.fileName();
+        name.chop(suffix.length());
+        if (auto dashPos = name.lastIndexOf(u'-'); dashPos > 0) {
+            bool counterOk = false;
+            int counter = QStringView { name }.sliced(dashPos + 1).toInt(&counterOk);
+            if (counterOk)
+                result.insert(name.left(dashPos), counter);
+        }
+    }
+    return { rtDir.path(), result };
+}
+
+static QVariantMap resolveInstanceInfo(const QString &instanceId)
+{
+    static const QString defaultInstanceId = u"appman"_s;
+    static QRegularExpression re(uR"(^(.+?)(?:-(\d+))?$)"_s);
+
+    const auto [baseDir, running] = runningInstanceIds();
+    QString iid = instanceId.isEmpty() ? defaultInstanceId : instanceId;
+    QString result;
+
+    try {
+        QString id;
+        int counter = -1;
+        auto m = re.match(iid);
+        if (!m.hasMatch())
+            throw Exception("Invalid instance-id");
+        id = m.captured(1);
+        bool counterOk = true;
+        counter = m.hasCaptured(2) ? int(m.captured(2).toUInt(&counterOk)) : -1;
+        if (!counterOk)
+            throw Exception("Invalid instance-id");
+
+        if (counter >= 0) {
+            // fully qualified instance id: must match exactly
+            if (running.contains(id, counter))
+                result = instanceId;
+        } else if (running.count(id) == 1) {
+            // id only: matches if there's exactly one instance with that name
+            result = id + u'-' + QString::number(running[id]);
+        } else if (instanceId.isEmpty() && (running.count(id) == 0)
+                   && (running.count() == 1)) {
+            // no id: matches even a named instance, if that is the only instance running
+            result = running.constBegin().key() + u'-' + QString::number(running.constBegin().value());
+        }
+
+        if (result.isEmpty()) {
+            throw Exception("Could not resolve the given instance-id (%1) to any running appman instance.\n  (did you start the appman with '--dbus none'?)")
+                .arg(instanceId);
+        }
+    } catch (const Exception &e) {
+        QStringList allIds;
+        for (auto it = running.cbegin(); it != running.cend(); ++it)
+            allIds.append(it.key() + u'-' + QString::number(it.value()));
+        throw Exception(u"%1\n\nAvailable instances:\n  %2"_s.arg(e.errorString())
+                        .arg(allIds.join(u"\n  ")));
+    }
+
+    QFile infof(baseDir + u'/' + result + u".json"_s);
+    if (!infof.open(QIODevice::ReadOnly))
+        throw Exception(infof, "Could not open instance info file");
+
+    QJsonParseError jsonError;
+    const auto json = QJsonDocument::fromJson(infof.readAll(), &jsonError);
+    if (json.isNull()) {
+        throw Exception("Failed to parse instance info file (%1) as JSON: %2")
+            .arg(infof.fileName()).arg(jsonError.errorString());
+    }
+    return json.toVariant().toMap();
+}
+
 void listInstances()
 {
-    QString dir = QDir::temp().absolutePath() % u'/';
-    QString suffix = u"io.qt.ApplicationManager.dbus"_s;
-
-    QDirIterator dit(dir, { u'*' % suffix });
-    while (dit.hasNext()) {
-        QString name = dit.next();
-        name.chop(suffix.length());
-        name = name.mid(dir.length());
-        if (name.isEmpty()) {
-            name = u"(no instance id)"_s;
-        } else {
-            name.chop(1); // remove the '-' separator
-            name = u'"' % name % u'"';
-        }
-        fprintf(stdout, "%s\n", name.toLocal8Bit().constData());
+    const auto [_, running] = runningInstanceIds();
+    for (auto it = running.cbegin(); it != running.cend(); ++it) {
+        auto &name = it.key();
+        fprintf(stdout, "%s-%d\n", name.toLocal8Bit().constData(), it.value());
     }
     qApp->quit();
 }

@@ -82,7 +82,7 @@ protected:
     void loadStartupPlugins(const QStringList &startupPluginPaths) noexcept(false);
     void parseSystemProperties(const QVariantMap &rawSystemProperties);
     void setupDBus(const std::function<QString(const char *)> &busForInterface,
-                   const std::function<QVariantMap(const char *)> &policyForInterface, const QString &instanceId);
+                   const std::function<QVariantMap(const char *)> &policyForInterface);
     void setMainQmlFile(const QString &mainQml) noexcept(false);
     void setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) noexcept(false);
     void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QStringList &runtimeAdditionalLaunchers,
@@ -102,6 +102,7 @@ protected:
     void setupWindowTitle(const QString &title, const QString &iconPath);
     void setupWindowManager(const QString &waylandSocketName, const QVariantList &waylandExtraSockets,
                             bool slowAnimations, bool noUiWatchdog, bool allowUnknownUiClients);
+    void createInstanceInfoFile(const QString &instanceId) noexcept(false);
 
     enum SystemProperties {
         SP_ThirdParty = 0,
@@ -139,6 +140,7 @@ private:
     QString m_installationDir;
     QString m_documentDir;
     QString m_installationDirMountPoint;
+    QVariantMap m_infoFileContents;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Main::InitFlags)

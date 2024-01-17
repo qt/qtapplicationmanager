@@ -43,6 +43,8 @@
 #include <QInputDevice>
 #include <QLocalServer>
 #include <QLibraryInfo>
+#include <QStandardPaths>
+#include <QLockFile>
 
 #include "global.h"
 #include "logging.h"
@@ -108,15 +110,14 @@ QT_BEGIN_NAMESPACE_AM
 
 #if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
 
-static void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, const char *serviceName,
-                               const char *interfaceName, const char *path,
-                               const QString &instanceId) noexcept(false)
+static QString registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName,
+                                  const char *serviceName, const char *path) noexcept(false)
 {
     QString dbusAddress;
     QDBusConnection conn((QString()));
 
     if (dbusName.isEmpty()) {
-        return;
+        return { };
     } else if (dbusName == u"system") {
         dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SYSTEM_BUS_ADDRESS"));
 #  if defined(Q_OS_LINUX)
@@ -134,7 +135,7 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, 
         // this case, Qt has cached the bus name and we would get the old one back.
         conn = QDBusConnection::connectToBus(dbusAddress, u"qtam_session"_s);
         if (!conn.isConnected())
-            return;
+            return { };
         dbusName = u"session"_s;
     } else {
         dbusAddress = dbusName;
@@ -164,24 +165,7 @@ static void registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName, 
 
     qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
 
-    if (QByteArray::fromRawData(interfaceName, int(qstrlen(interfaceName))).startsWith("io.qt.")) {
-        // Write the bus address of the interface to a file in /tmp. This is needed for the
-        // controller tool, which does not even have a session bus, when started via ssh.
-
-        QString fileName = QString::fromLatin1(interfaceName) % u".dbus"_s;
-        if (!instanceId.isEmpty())
-            fileName = instanceId % u'-' % fileName;
-
-        QFile f(QDir::temp().absoluteFilePath(fileName));
-        QByteArray dbusUtf8 = dbusAddress.isEmpty() ? dbusName.toUtf8() : dbusAddress.toUtf8();
-        if (!f.open(QFile::WriteOnly | QFile::Truncate) || (f.write(dbusUtf8) != dbusUtf8.size()))
-            throw Exception(f, "Could not write D-Bus address of interface %1").arg(QString::fromLatin1(interfaceName));
-
-        static QStringList filesToDelete;
-        if (filesToDelete.isEmpty())
-            atexit([]() { for (const QString &ftd : std::as_const(filesToDelete)) QFile::remove(ftd); });
-        filesToDelete << f.fileName();
-    }
+    return dbusAddress.isEmpty() ? dbusName : dbusAddress;
 }
 
 #endif // defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
@@ -312,8 +296,8 @@ void Main::setup(const Configuration *cfg) noexcept(false)
                        cfg->noUiWatchdog(), cfg->allowUnknownUiClients());
 
     setupDBus(std::bind(&Configuration::dbusRegistration, cfg, std::placeholders::_1),
-              std::bind(&Configuration::dbusPolicy, cfg, std::placeholders::_1),
-              cfg->instanceId());
+              std::bind(&Configuration::dbusPolicy, cfg, std::placeholders::_1));
+    createInstanceInfoFile(cfg->instanceId());
 }
 
 bool Main::isSingleProcessMode() const
@@ -802,6 +786,48 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
                      m_windowManager, &WindowManager::raiseApplicationWindow);
 }
 
+void Main::createInstanceInfoFile(const QString &instanceId) noexcept(false)
+{
+    // This is needed for the appman-controller tool to talk to running appman instances.
+    // (the tool does not even have a session bus, when started via ssh)
+
+    static const QString defaultInstanceId = u"appman"_s;
+
+    QString rtPath = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+    if (rtPath.isEmpty())
+        rtPath = QDir::tempPath();
+    QDir rtDir(rtPath + u"/qtapplicationmanager"_s);
+    if (!rtDir.mkpath(u"."_s))
+        throw Exception("Could not create runtime state directory (%1) for the instance info").arg(rtDir.absolutePath());
+
+    QString fileName;
+    QString filePattern = (instanceId.isEmpty() ? defaultInstanceId : instanceId) + u"-%1";
+
+    static std::unique_ptr<QLockFile> lockf;
+    static std::unique_ptr<QFile, void (*)(QFile *)> infof(nullptr, [](QFile *f) { f->remove(); });
+
+    for (int i = 0; i < 32; ++i) { // Wayland sockets are limited to 32 instances as well
+        QString tryPattern = filePattern.arg(i);
+        lockf.reset(new QLockFile(rtDir.absoluteFilePath(tryPattern + u".lock"_s)));
+        lockf->setStaleLockTime(0);
+        if (lockf->tryLock()) {
+            fileName = tryPattern;
+            break; // found a free instance id
+        }
+    }
+    if (fileName.isEmpty())
+        throw Exception("Could not create a lock file for the instance info at %1").arg(rtDir.absolutePath());;
+
+    infof.reset(new QFile(rtDir.absoluteFilePath(fileName + u".json"_s)));
+
+    const QByteArray json = QJsonDocument::fromVariant(m_infoFileContents).toJson(QJsonDocument::Indented);
+    if (!infof->open(QIODevice::WriteOnly))
+        throw Exception(*infof.get(), "failed to create instance info file");
+    if (infof->write(json) !=json.size())
+        throw Exception(*infof.get(), "failed to write instance info file");
+    infof->close();
+}
+
 void Main::loadQml(bool loadDummyData) noexcept(false)
 {
     for (auto iface : std::as_const(m_startupPlugins))
@@ -915,8 +941,7 @@ void Main::showWindow(bool showFullscreen)
 }
 
 void Main::setupDBus(const std::function<QString(const char *)> &busForInterface,
-                     const std::function<QVariantMap(const char *)> &policyForInterface,
-                     const QString &instanceId)
+                     const std::function<QVariantMap(const char *)> &policyForInterface)
 {
 #if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
     registerDBusTypes();
@@ -989,17 +1014,22 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
             if (dbusName.isEmpty())
                 continue;
 
-            registerDBusObject(generatedAdaptor, dbusName,
-                               std::get<2>(iface),interfaceName, std::get<3>(iface),
-                               instanceId);
+            auto dbusAddress = registerDBusObject(generatedAdaptor, dbusName,
+                                                  std::get<2>(iface), std::get<3>(iface));
             if (!DBusPolicy::instance()->add(generatedAdaptor, policyForInterface(interfaceName)))
                 throw Exception(Error::DBus, "could not set DBus policy for %1").arg(QString::fromLatin1(interfaceName));
+
+            // Write the bus address to our info file for the appman-controller tool
+            if (QByteArrayView { interfaceName }.startsWith("io.qt.")) {
+                auto map = m_infoFileContents[u"dbus"_s].toMap();
+                map.insert(QString::fromLatin1(interfaceName), dbusAddress);
+                m_infoFileContents[u"dbus"_s] = map;
+            }
         }
     }
 #else
     Q_UNUSED(busForInterface)
     Q_UNUSED(policyForInterface)
-    Q_UNUSED(instanceId)
 #endif // defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
 }
 

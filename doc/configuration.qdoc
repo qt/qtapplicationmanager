@@ -143,9 +143,10 @@ ui:
             \br [\c instanceId]
         \li string
         \target instance-id
-        \li Assign an unique name to this application manager instance. Only useful if you are
-            running multiple instances at the same time and you need to address them via the
-            \l{Controller}{appman-controller tool}.
+        \li Assign a name to this application manager instance. Only useful if you are running
+            multiple instances at the same time and you need to address them via the
+            \l{Controller}{appman-controller tool}. A unique number is appended to this id to make
+            it possible to disambiguate between instances with the same id. (default: appman)
     \row
         \li \b --database
             \br [\c applications/database]

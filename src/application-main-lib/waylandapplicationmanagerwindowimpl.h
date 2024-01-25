@@ -73,7 +73,7 @@ public:
 
 private:
     QPointer<ApplicationMain> m_applicationMain;
-    AMQuickWindowQmlImpl *m_qwindow = nullptr;
+    QPointer<AMQuickWindowQmlImpl> m_qwindow;
 };
 
 

@@ -80,13 +80,19 @@ WaylandApplicationManagerWindowImpl::WaylandApplicationManagerWindowImpl(Applica
                      window, &ApplicationManagerWindow::afterAnimating);
     QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::sceneGraphError,
                      window, &ApplicationManagerWindow::sceneGraphError);
+
+    QObject::connect(m_qwindow, &QObject::destroyed,
+                     window, [this, deadWindow = m_qwindow.get()](QObject *) {
+        if (m_applicationMain)
+            m_applicationMain->clearWindowPropertyCache(deadWindow);
+    });
 }
 
 WaylandApplicationManagerWindowImpl::~WaylandApplicationManagerWindowImpl()
 {
     if (m_applicationMain && m_qwindow)
-        m_applicationMain->clearWindowPropertyCache(m_qwindow);
-    delete m_qwindow;
+        m_applicationMain->clearWindowPropertyCache(m_qwindow.get());
+    delete m_qwindow.get();
 }
 
 bool WaylandApplicationManagerWindowImpl::isInProcess() const
@@ -96,7 +102,7 @@ bool WaylandApplicationManagerWindowImpl::isInProcess() const
 
 QObject *WaylandApplicationManagerWindowImpl::backingObject() const
 {
-    return m_qwindow;
+    return m_qwindow.get();
 }
 
 void WaylandApplicationManagerWindowImpl::classBegin()
@@ -167,177 +173,197 @@ QVariantMap WaylandApplicationManagerWindowImpl::windowProperties() const
 
 void WaylandApplicationManagerWindowImpl::close()
 {
-    m_qwindow->close();
+    if (m_qwindow)
+        m_qwindow->close();
 }
 
 QWindow::Visibility WaylandApplicationManagerWindowImpl::visibility() const
 {
-    return m_qwindow->visibility();
+    return m_qwindow ? m_qwindow->visibility() : QWindow::Hidden;
 }
 
 void WaylandApplicationManagerWindowImpl::setVisibility(QWindow::Visibility newVisibility)
 {
-    m_qwindow->setVisibility(newVisibility);
+    if (m_qwindow)
+        m_qwindow->setVisibility(newVisibility);
 }
 
 void WaylandApplicationManagerWindowImpl::hide()
 {
-    m_qwindow->hide();
+    if (m_qwindow)
+        m_qwindow->hide();
 }
 
 void WaylandApplicationManagerWindowImpl::show()
 {
-    m_qwindow->show();
+    if (m_qwindow)
+        m_qwindow->show();
 }
 
 void WaylandApplicationManagerWindowImpl::showFullScreen()
 {
-    m_qwindow->showFullScreen();
+    if (m_qwindow)
+        m_qwindow->showFullScreen();
 }
 
 void WaylandApplicationManagerWindowImpl::showMinimized()
 {
-    m_qwindow->showMinimized();
+    if (m_qwindow)
+        m_qwindow->showMinimized();
 }
 
 void WaylandApplicationManagerWindowImpl::showMaximized()
 {
-    m_qwindow->showMaximized();
+    if (m_qwindow)
+        m_qwindow->showMaximized();
 }
 
 void WaylandApplicationManagerWindowImpl::showNormal()
 {
-    m_qwindow->showNormal();
+    if (m_qwindow)
+        m_qwindow->showNormal();
 }
 
 QString WaylandApplicationManagerWindowImpl::title() const
 {
-    return m_qwindow->title();
+    return m_qwindow ? m_qwindow->title() : QString { };
 }
 
 void WaylandApplicationManagerWindowImpl::setTitle(const QString &title)
 {
-    m_qwindow->setTitle(title);
+    if (m_qwindow)
+        m_qwindow->setTitle(title);
 }
 
 int WaylandApplicationManagerWindowImpl::x() const
 {
-    return m_qwindow->x();
+    return m_qwindow ? m_qwindow->x() : 0;
 }
 
 void WaylandApplicationManagerWindowImpl::setX(int x)
 {
-    m_qwindow->setX(x);
+    if (m_qwindow)
+        m_qwindow->setX(x);
 }
 
 int WaylandApplicationManagerWindowImpl::y() const
 {
-    return m_qwindow->y();
+    return m_qwindow ? m_qwindow->y() : 0;
 }
 
 void WaylandApplicationManagerWindowImpl::setY(int y)
 {
-    m_qwindow->setY(y);
+    if (m_qwindow)
+        m_qwindow->setY(y);
 }
 
 int WaylandApplicationManagerWindowImpl::width() const
 {
-    return m_qwindow->width();
+    return m_qwindow ? m_qwindow->width() : 0;
 }
 
 void WaylandApplicationManagerWindowImpl::setWidth(int w)
 {
-    m_qwindow->setWidth(w);
+    if (m_qwindow)
+        m_qwindow->setWidth(w);
 }
 
 int WaylandApplicationManagerWindowImpl::height() const
 {
-    return m_qwindow->height();
+    return m_qwindow ? m_qwindow->height() : 0;
 }
 
 void WaylandApplicationManagerWindowImpl::setHeight(int h)
 {
-    m_qwindow->setHeight(h);
+    if (m_qwindow)
+        m_qwindow->setHeight(h);
 }
 
 int WaylandApplicationManagerWindowImpl::minimumWidth() const
 {
-    return m_qwindow->minimumWidth();
+    return m_qwindow ? m_qwindow->minimumWidth() : 0;
 }
 
 void WaylandApplicationManagerWindowImpl::setMinimumWidth(int minw)
 {
-    m_qwindow->setMinimumWidth(minw);
+    if (m_qwindow)
+        m_qwindow->setMinimumWidth(minw);
 }
 
 int WaylandApplicationManagerWindowImpl::minimumHeight() const
 {
-    return m_qwindow->minimumHeight();
+    return m_qwindow ? m_qwindow->minimumHeight() : 0;
 }
 
 void WaylandApplicationManagerWindowImpl::setMinimumHeight(int minh)
 {
-    m_qwindow->setMinimumHeight(minh);
+    if (m_qwindow)
+        m_qwindow->setMinimumHeight(minh);
 }
 
 int WaylandApplicationManagerWindowImpl::maximumWidth() const
 {
-    return m_qwindow->maximumWidth();
+    return m_qwindow ? m_qwindow->maximumWidth() : 0;
 }
 
 void WaylandApplicationManagerWindowImpl::setMaximumWidth(int maxw)
 {
-    m_qwindow->setMaximumWidth(maxw);
+    if (m_qwindow)
+        m_qwindow->setMaximumWidth(maxw);
 }
 
 int WaylandApplicationManagerWindowImpl::maximumHeight() const
 {
-    return m_qwindow->maximumHeight();
+    return m_qwindow ? m_qwindow->maximumHeight() : 0;
 }
 
 void WaylandApplicationManagerWindowImpl::setMaximumHeight(int maxh)
 {
-    m_qwindow->setMaximumHeight(maxh);
+    if (m_qwindow)
+        m_qwindow->setMaximumHeight(maxh);
 }
 
 bool WaylandApplicationManagerWindowImpl::isVisible() const
 {
-    return m_qwindow->isVisible();
+    return m_qwindow ? m_qwindow->isVisible() : false;
 }
 
 void WaylandApplicationManagerWindowImpl::setVisible(bool visible)
 {
-    m_qwindow->setVisible(visible);
+    if (m_qwindow)
+        m_qwindow->setVisible(visible);
 }
 
 qreal WaylandApplicationManagerWindowImpl::opacity() const
 {
-    return m_qwindow->opacity();
+    return m_qwindow ? m_qwindow->opacity() : qreal(1);
 }
 
 void WaylandApplicationManagerWindowImpl::setOpacity(qreal opactity)
 {
-    m_qwindow->setOpacity(opactity);
+    if (m_qwindow)
+        m_qwindow->setOpacity(opactity);
 }
 
 QColor WaylandApplicationManagerWindowImpl::color() const
 {
-    return m_qwindow->color();
+    return m_qwindow ? m_qwindow->color() : QColor { };
 }
 
 void WaylandApplicationManagerWindowImpl::setColor(const QColor &c)
 {
-    m_qwindow->setColor(c);
+    if (m_qwindow)
+        m_qwindow->setColor(c);
 }
 
 bool WaylandApplicationManagerWindowImpl::isActive() const
 {
-    return m_qwindow->isActive();
+    return m_qwindow ? m_qwindow->isActive(): false;
 }
 
 QQuickItem *WaylandApplicationManagerWindowImpl::activeFocusItem() const
 {
-    return m_qwindow->activeFocusItem();
+    return m_qwindow ? m_qwindow->activeFocusItem() : nullptr;
 }
 
 

@@ -114,6 +114,8 @@ int main(int argc, char *argv[])
 
         StartupTimer::instance()->checkpoint("after basic initialization");
 
+        std::unique_ptr<Controller> controller; // this needs to die BEFORE qApp does
+
         if (!directLoadManifest.isEmpty()) {
             QString directLoadAppId;
             qsizetype appPos = directLoadManifest.indexOf(u"@"_s);
@@ -126,11 +128,11 @@ int main(int argc, char *argv[])
             if (!fi.exists() || fi.fileName() != u"info.yaml"_s)
                 throw Exception("--directload needs a valid info.yaml file as parameter");
             directLoadManifest = fi.absoluteFilePath();
-            new Controller(&am, quicklaunched, qMakePair(directLoadManifest, directLoadAppId));
+            controller.reset(new Controller(&am, quicklaunched, qMakePair(directLoadManifest, directLoadAppId)));
         } else {
             am.setupDBusConnections();
             StartupTimer::instance()->checkpoint("after dbus initialization");
-            new Controller(&am, quicklaunched);
+            controller.reset(new Controller(&am, quicklaunched));
         }
 
         return am.exec();

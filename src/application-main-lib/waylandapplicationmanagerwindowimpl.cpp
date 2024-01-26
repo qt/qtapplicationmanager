@@ -40,6 +40,8 @@ WaylandApplicationManagerWindowImpl::WaylandApplicationManagerWindowImpl(Applica
     , m_applicationMain(applicationMain)
     , m_qwindow(new AMQuickWindowQmlImpl(window))
 {
+    m_color = qUnpremultiply(m_qwindow->color().rgba64());
+
     QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::windowTitleChanged,
                      window, &ApplicationManagerWindow::titleChanged);
     QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::xChanged,
@@ -347,13 +349,15 @@ void WaylandApplicationManagerWindowImpl::setOpacity(qreal opactity)
 
 QColor WaylandApplicationManagerWindowImpl::color() const
 {
-    return m_qwindow ? m_qwindow->color() : QColor { };
+    return m_qwindow ? m_color : QColor { };
 }
 
 void WaylandApplicationManagerWindowImpl::setColor(const QColor &c)
 {
-    if (m_qwindow)
-        m_qwindow->setColor(c);
+    if (m_qwindow) {
+        m_color = c; // qUnpremultiply(qPremultiply(...)) introduces rounding errors
+        m_qwindow->setColor(qPremultiply(c.rgba64()));
+    }
 }
 
 bool WaylandApplicationManagerWindowImpl::isActive() const

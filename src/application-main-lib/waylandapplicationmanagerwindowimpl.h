@@ -74,6 +74,7 @@ public:
 private:
     QPointer<ApplicationMain> m_applicationMain;
     QPointer<AMQuickWindowQmlImpl> m_qwindow;
+    QColor m_color;
 };
 
 

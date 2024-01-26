@@ -532,6 +532,10 @@ void ApplicationManagerWindow::setOpacity(qreal opacity)
     The background color for the window.
 
     Setting this property is more efficient than using a separate Rectangle.
+
+    \note Since version 6.7, if an alpha channel is used, it needs to be straight alpha. Pre 6.7
+          it needed to be pre-multiplied alpha (which is what the \l{Window} QML type still expects)
+          in multi-process and straight alpha in single-process mode.
 */
 QColor ApplicationManagerWindow::color() const
 {

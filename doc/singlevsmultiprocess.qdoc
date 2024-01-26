@@ -136,11 +136,7 @@ multi-process mode. Windows are exposed from the application to the System UI th
 multi-process mode for your application, you have to use an \l{ApplicationManagerWindow}. There
 are also other benefits to using an ApplicationManagerWindow, such as window properties.
 
-In multi-process mode an ApplicationManagerWindow derives from Window; unlike in single-process
-mode which derives from QtObject. As a result, several properties coming from Window won't have any
-effect in single-process mode, although ApplicationManagerWindow still defines them for
-compatibility. The following are some examples:
-
+Some noteworthy differences between application windows in single- and multi-process mode are:
 \list
 \li An ApplicationManagerWindow is exposed to the System UI in two different ways.
     \list
@@ -152,12 +148,14 @@ compatibility. The following are some examples:
            Items from System UI itself or from any other running application as they are all
            sharing the same QML scene.
     \endlist
-\li Many properties, functions, and signals defined in a Window are not yet re-implemented in the
-    single-process version of ApplicationManagerWindow (amongst others the \c opacity property).
-\li The \c color property needs to be provided with pre-multiplied alpha in multi-process and with
-    straight alpha in single-process mode.
-\li In multi-process mode, when an ApplicationManagerWindow is clicked or touched, it will take
-    the focus, whereas in single-process mode the focus doesn't change.
+\li Some properties, functions, and signals defined in a window will behave differently depending on
+    on the run mode: most importantly the lack of window states (like maximized or fullscreen) in
+    single-process mode. Please refer to the documentation of ApplicationManagerWindow for more
+    details.
+\li Focus handling does work the same in both modes, but you have to be aware that in single-process
+    mode, the focus item is shared between the System UI and the active application.
+    Pre 6.7 the focus didn't change when clicking/tapping into an otherwise passive area of an
+    application window in single-process mode.
 \li An error encountered in a code block due to properties or methods described above will cause
     subsequent statements not to be evaluated in multi-process mode; but this is not the case in
     single-process mode.

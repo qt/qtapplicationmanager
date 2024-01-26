@@ -17,12 +17,25 @@ QT_BEGIN_NAMESPACE_AM
 
     This QML item can be used as the root item in your QML application. In doing so, you enable
     your application to be usable in both single-process (EGL fullscreen, desktop) and
-    multi-process (Wayland) mode. It inherits from \l Window in multi-process and from \l QtObject
-    in single-process mode. In contrast to a \l Window it is visible by default. This documentation
-    reflects the Window inheritance. Note that only a subset of the Window type members have been
-    added to ApplicationManagerWindow when derived from QtObject. Additional details can be found
-    in the section about \l {The Root Element}{the root element} and \l {Application Windows}
-    {application windows}.
+    multi-process (Wayland) mode. In order to achieve this, this class is not derived from
+    QQuickWindow directly, but from QObject.
+
+    The API closely resembles that of \l Window, but there are some things missing, which are
+    either not applicable for the embedded use case or cannot be supported in the single-process
+    case. If you need access to those, you still can via the \l backingObject property. Check the
+    the \l singleProcess property to see if you are in single-process mode and if the actual
+    backingObject is an \l Item or a \l Window.
+
+    In contrast to a \l Window, an ApplicationManagerWindow is visible by default.
+
+    Additional details can be found in the section about \l {The Root Element}{the root element}
+    and \l {Application Windows}{application windows}.
+
+    \note Before version 6.7, this class inherited from \l Window in multi-process and from \l
+          QtObject in single-process mode, but that made it impossible to use qml tooling on this
+          class. There are no "revision" markers in the QML API and no "since" markers in the
+          documentation after re-implementing this class, as it would be ambiguous which of the two
+          old implementations they refer to.
 
     The QML import for this item is
 
@@ -40,34 +53,6 @@ QT_BEGIN_NAMESPACE_AM
         }
     }
     \endqml
-
-    In order to make your applications easily runnable outside of the application manager, even
-    though you are using an ApplicationManagerWindow as a root item, you can simply provide this
-    little dummy import to your application.
-
-    \list 1
-    \li Pick a base dir and create a \c{QtApplicationManager.Application} directory in it
-    \li Add a file named \c qmldir there, consisting of the single line
-        \c{ApplicationManagerWindow 2.0 ApplicationManagerWindow.qml}
-    \li Add a second file named \c ApplicationManagerWindow.qml, with the following content
-
-    \qml
-    import QtQuick
-
-    Window {
-        signal windowPropertyChanged
-        function setWindowProperty(name, value) {}
-        // ... add additional dummy members that are used by your implementation
-
-        width: 1280   // use your screen width here
-        height: 600   // use your screen height here
-        visible: true
-    }
-    \endqml
-
-    \endlist
-
-    Now you can run your application for instance with: \c{qml -I <path to base dir>}
 */
 
 
@@ -272,7 +257,7 @@ void ApplicationManagerWindow::hide()
 
     Equivalent to setting \l visible to \c true.
 
-    \sa hide()
+    \sa hide(), visibility
 */
 void ApplicationManagerWindow::show()
 {

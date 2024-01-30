@@ -38,6 +38,12 @@ ApplicationWindow {
 
             stack.currentIndex = packageModel.count ? 1 : 0
         }
+
+        Component.onCompleted: {
+            console.info("\n\n", "You can start an appman-package-server instance like this:",
+                         "\n\n", "  ", ApplicationManager.systemProperties.serverBinary, "--dd",
+                         ApplicationManager.systemProperties.serverBaseDir, "\n\n")
+        }
     }
 
     AcknowledgeDialog {
@@ -100,11 +106,11 @@ ApplicationWindow {
         icon.source: "package"
         text: "Packages"
 
-        onClicked: { storeDialog.open() }
+        onClicked: { packagesDialog.open() }
     }
 
     Dialog {
-        id: storeDialog
+        id: packagesDialog
         title: "Package-Server"
         standardButtons: Dialog.Close
         modal: true

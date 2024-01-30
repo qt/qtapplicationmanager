@@ -11,4 +11,95 @@
 
 \section1 Introduction
 
+This example demonstrates how to install and remove packages dynamically, using the
+\l{Package-Server}{appman-package-server}.
+The System UI comes with one built-in application (\c Builtin Blue), but gives you the option to
+install as many applications as you want dynamically. The \c Packages button in the lower left
+corner opens a dialog, where you can first connect to a package server and then install or remove
+packages.
+
+You have to run an actual package server to test this example. You can find detailed instructions on
+how to do this in the appman-package-server documentation.
+
+For your convenience, the example comes with two pre-packaged applications (\c hello-world.red and
+\c hello-world.green from the \c installable-apps folder).
+The actual packaging happens in \c CMakeLists.txt, using the \l qt6_am_create_installable_package
+function. Please note that this function is currently in the technical preview state and may change
+in the future.
+
+In addition, this example will also print out a start command to run the package server on these
+packages in the application output: you have to copy and paste that into a shell to run the server.
+
+\section1 Walkthrough
+
+\section2 The Basic UI
+
+The \c main.qml file contains a very basic compositor UI, as seen in other examples: a list of
+icons (showing the installed applications) on the left and a window compositing area on the right.
+
+In addition, it also creates and initializes an instance of the \c PackageServerInterface component
+(see below for more information). Whenever the list of packages available on the server changes,
+\c packageModel within the \c packagesDialog is updated accordingly.
+
+\section2 The PackageServerInterface
+
+The appman-package-server is a separate process that communicates with the System UI via a
+HTTP REST interface. We are using QML's XMLHttpRequest mechanism to talk to the server, but we also
+encapsulate the communication in a separate \c PackageServerInterface component to make it nicer to
+use.
+
+This component expects a few required properties to be set in order to connect to a server instance:
+\quotefromfile applicationmanager/package-installation/system-ui/PackageServerInterface.qml
+\skipto required
+\printto property string statusText
+
+To communicate with the server, the following simple QML API is available. The \c packages property
+is actually a list that will be populated with the package descriptions available on the server.
+
+\printto onUrlChanged:
+
+\section2 The Packages Dialog
+
+The \c packagesDialog is opened when the user clicks on the \e Packages button in the main window.
+It lets you set the URL of the package server and the \c acknowledgeMode (see \l{The Acknowledge
+Dialog} below.
+If the server URL is valid and a connection to an appman-package-server instance is possible, the
+lower part of the dialog will show a list of available packages on the server. The user can then
+select packages to install or remove.
+
+The \c PackageServerInterface component is used to communicate with the server and install and
+remove the packages:
+
+\quotefromfile applicationmanager/package-installation/system-ui/main.qml
+\skipto /onClicked: \{$/
+\printuntil }
+
+\section2 The Acknowledge Dialog
+
+The application manager expects the System UI to acknowledge package installations for security
+reasons. This is done by calling the \l{PackageManager::}{acknowledgePackageInstallation} in
+response to the \l{PackageManager::}{taskRequestingInstallationAcknowledge} signal.
+
+This example shows you three different approaches on how to handle this in regards to user
+interaction:
+
+\quotefromfile applicationmanager/package-installation/system-ui/AcknowledgeDialog.qml
+\skipto enum AcknowledgeMode
+\printuntil }
+
+Depending on the \c acknowledgeMode property, the component will either automatically acknowledge
+any installation request, always ask the user for confirmation, or ask the user for confirmation if
+the package requests \e capabilities (see \l{Manifest Definition}{the manifest definition} for
+more information).
+As an added complexity, a package can contain multiple applications, which can request different
+capabilities. This example will simply collect all capabilities into a flat list.
+
+\skipto property int mode:
+\printto property Component
+
+The actual dialog is a standard \c MessageDialog, which is instantiated dynamically. Depending on
+whether the user accepts or rejects the dialog, the PackageManager is notified accordingly.
+
+\skipto onAccepted
+\printuntil onRejected
 */

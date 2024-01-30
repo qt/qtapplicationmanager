@@ -19,7 +19,6 @@ QtObject {
 
     function install(id) {
         let dlurl = url + "/package/download?id=" + id + "&architecture=" + architecture
-
         let taskId = PackageManager.startPackageInstallation(dlurl)
         return taskId
     }

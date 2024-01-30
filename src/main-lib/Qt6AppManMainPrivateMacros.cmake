@@ -266,3 +266,64 @@ function (qt_am_internal_add_qml_test target)
 
 endfunction()
 
+function(qt_am_internal_create_package target)
+    cmake_parse_arguments(
+        PARSE_ARGV 1
+        ARG
+        "BUILTIN" "SOURCE_DIR;OUTPUT_PACKAGE" ""
+    )
+
+    if (NOT ARG_SOURCE_DIR)
+        message(FATAL_ERROR "SOURCE_DIR needs to be provided")
+    endif()
+    if (NOT EXISTS "${ARG_SOURCE_DIR}/info.yaml")
+        message(FATAL_ERROR "SOURCE_DIR does not contain info.yaml")
+    endif()
+    if (NOT ARG_BUILTIN AND NOT ARG_OUTPUT_PACKAGE)
+        message(FATAL_ERROR "OUTPUT_PACKAGE needs to be provided")
+    endif()
+
+    if (COMMAND qt_internal_collect_command_environment)
+        qt_internal_collect_command_environment(env_path env_plugin_path)
+    else()
+        set(env_path "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}")
+        set(env_plugin_path "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}")
+    endif()
+
+    qt_am_internal_find_host_packager()
+
+    if (ARG_BUILTIN)
+        add_custom_target(${target})
+    else()
+        add_custom_command(
+            OUTPUT  ${ARG_OUTPUT_PACKAGE}
+            COMMAND ${CMAKE_COMMAND} -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
+                        $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>
+                        create-package ${ARG_OUTPUT_PACKAGE} ${ARG_SOURCE_DIR}
+            DEPENDS ${ARG_SOURCE_DIR}
+            VERBATIM
+        )
+        add_custom_target(${target} DEPENDS ${ARG_OUTPUT_PACKAGE})
+    endif()
+
+    target_sources(${target} PRIVATE ${ARG_SOURCE_DIR}/info.yaml)
+
+endfunction()
+
+# in tech-preview state (6.7)
+function(qt6_am_create_installable_package target)
+    qt_am_internal_create_package(${target} ${ARGN})
+endfunction()
+
+function(qt6_am_create_builtin_package target)
+    qt_am_internal_create_package(${target} ${ARGN} BUILTIN)
+endfunction()
+
+if(NOT QT_NO_CREATE_VERSIONLESS_FUNCTIONS)
+    function(qt_am_create_installable_package)
+        qt6_am_create_installable_package(${ARGV})
+    endfunction()
+    function(qt_am_create_builtin_package)
+        qt6_am_create_builtin_package(${ARGV})
+    endfunction()
+endif()

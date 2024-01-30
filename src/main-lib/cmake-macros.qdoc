@@ -68,3 +68,85 @@ used there:
 \printuntil /^\)/
 
 */
+
+/*!
+\page cmake-qt6_am_create_installable_package.html
+\ingroup cmake-macros-qtapplicationmanager
+
+\title qt_am_create_installable_package
+\target qt6_am_create_installable_package
+
+\brief Uses the appman-packager tool to package applications.
+
+\preliminarycmakecommand
+
+\section1 Synopsis
+
+\badcode
+qt_am_create_installable_package(
+    target
+    SOURCE_DIR <dir>
+    OUTPUT_PACKAGE <package.ampkg>
+)
+\endcode
+
+\versionlessCMakeCommandsNote qt6_am_create_installable_package()
+
+\section1 Description
+
+Adds a custom \c target that, when executed, uses the \l{Packager}{appman-packager} tool to create
+a package for the application found in \c SOURCE_DIR. The result is written to \c OUTPUT_PACKAGE.
+
+The complete content of the source directory is packaged, which works out of the box for QML-only
+applications, but needs installation rules to temporary directories for more sophisticated setups
+(e.g. QML plugins).
+
+The \c info.yaml manifest from \c SOURCE_DIR is added as source file to the \c target.
+
+\note This function will serve as an anchor for the application manager's QtCreator integration
+      to discover the available packages in a System UI.
+
+\section1 Examples
+
+Here is a snippet from the \l applicationmanager/package-installation example, showing how this
+function is used there:
+
+\quotefromfile applicationmanager/package-installation/CMakeLists.txt
+\skipto foreach
+\printuntil endforeach
+
+*/
+
+/*!
+\page cmake-qt6_am_create_builtin_package.html
+\ingroup cmake-macros-qtapplicationmanager
+
+\title qt6_am_create_builtin_package
+\target qt6_am_create_builtin_package
+
+\brief Marks a directory containing a package as built-in.
+
+\preliminarycmakecommand
+
+\section1 Synopsis
+
+\badcode
+qt6_am_create_builtin_package(
+    target
+    SOURCE_DIR <dir>
+)
+\endcode
+
+\versionlessCMakeCommandsNote qt6_am_create_builtin_package()
+
+\section1 Description
+
+Adds a custom \c target, containing the \c info.yaml manifest from \c SOURCE_DIR as source file.
+
+This is a dummy function that works exactly like \l qt_am_create_installable_package, but for
+built-in packages.
+
+\note This function will serve as an anchor for the application manager's QtCreator integration
+      to discover the available packages in a System UI.
+
+*/

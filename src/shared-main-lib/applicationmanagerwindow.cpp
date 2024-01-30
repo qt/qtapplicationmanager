@@ -320,7 +320,7 @@ void ApplicationManagerWindow::showNormal()
     \qmlsignal void ApplicationManagerWindow::frameSwapped()
 
     This signal is forwarded from the underlying QQuickWindow object: either the corresponding
-    QQuickWindow for this object in multi-process mode, or the System-UI's QQuickWindow in
+    QQuickWindow for this object in multi-process mode, or the System UI's QQuickWindow in
     single-process mode.
 
     \sa QQuickWindow::frameSwapped()
@@ -331,7 +331,7 @@ void ApplicationManagerWindow::showNormal()
 
     This signal with its parameters \a error and \a message is forwarded from the underlying
     QQuickWindow object: either the corresponding QQuickWindow for this object in multi-process
-    mode, or the System-UI's QQuickWindow in single-process mode.
+    mode, or the System UI's QQuickWindow in single-process mode.
 
     \sa QQuickWindow::sceneGraphError()
 */
@@ -340,7 +340,7 @@ void ApplicationManagerWindow::showNormal()
     \qmlsignal void ApplicationManagerWindow::afterAnimating()
 
     This signal is forwarded from the underlying QQuickWindow object: either the corresponding
-    QQuickWindow for this object in multi-process mode, or the System-UI's QQuickWindow in
+    QQuickWindow for this object in multi-process mode, or the System UI's QQuickWindow in
     single-process mode.
 */
 

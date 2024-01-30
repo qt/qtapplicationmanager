@@ -261,7 +261,7 @@ using namespace Qt::StringLiterals;
     PackageManager. The model has already been update before this signal is sent out.
 
     \note In addition to the normal "low-level" QAbstractListModel signals, the application manager
-          will also emit these "high-level" signals for System-UIs that cannot work directly on the
+          will also emit these "high-level" signals for System UIs that cannot work directly on the
           ApplicationManager model: applicationAdded, applicationAboutToBeRemoved and applicationChanged.
 */
 
@@ -272,7 +272,7 @@ using namespace Qt::StringLiterals;
     PackageManager.
 
     \note In addition to the normal "low-level" QAbstractListModel signals, the application manager
-          will also emit these "high-level" signals for System-UIs that cannot work directly on the
+          will also emit these "high-level" signals for System UIs that cannot work directly on the
           ApplicationManager model: applicationAdded, applicationAboutToBeRemoved and applicationChanged.
 */
 
@@ -284,7 +284,7 @@ using namespace Qt::StringLiterals;
     be considered modified.
 
     \note In addition to the normal "low-level" QAbstractListModel signals, the application manager
-          will also emit these "high-level" signals for System-UIs that cannot work directly on the
+          will also emit these "high-level" signals for System UIs that cannot work directly on the
           ApplicationManager model: applicationAdded, applicationAboutToBeRemoved and applicationChanged.
 */
 

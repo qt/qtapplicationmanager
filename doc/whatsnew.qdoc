@@ -12,8 +12,10 @@
 \section1 Qt ApplicationManager 6.7
 
 The application manager now has full support for QML tooling (like compilation) for System UIs
-and applications. In order to achieve this, large parts of the QML object implementations had to be
-rewritten. This means that some APIs are no longer backwards-compatible.
+and applications. The \l{Application Features Example}{application-features example} was adapted
+to makes use of these new features.
+In order to achieve this, large parts of the QML object implementations had to be rewritten. This
+means that some APIs are no longer backwards-compatible.
 We tried to keep the changes to a minimum and provide compatibility aliases where possible, but
 some changes were unavoidable.
 
@@ -51,7 +53,11 @@ In addition, here are some additional, noteworthy changes:
 \list
     \li The \l{Bubblewrap Container} plugin is now a lot more flexible when it comes to kernel
         namespace (un)sharing.
+    \li Setting up quick-launching for multiple runtimes and containers is
+        \l{runtimes-per-container}{much more flexible now}.
     \li The ApplicationInstaller singleton that was deprecated in 5.14 has now finally been removed.
+    \li Along the same lines, dummy-data support was removed. This had been done for the \c qml and
+        \c qmlscene tools already in Qt 6.3.
     \li A new tool named \l{Package-Server}{appman-package-server} has been added that takes over
         the role of the deprecated companion project
         \l{https://doc.qt.io/QtAutoDeploymentServer/index.html}{Qt Automotive Suite Deployment Server}.

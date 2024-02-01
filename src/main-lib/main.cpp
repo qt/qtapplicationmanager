@@ -484,9 +484,13 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
             systemContainerPluginPaths += filePath;
         }
 
+        QSet<QString> containersWithConfiguration (containerConfigurations.keyBegin(), containerConfigurations.keyEnd());
+
         auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", systemContainerPluginPaths + containerPluginPaths);
         pluginContainerManagers.reserve(containerPlugins.size());
         for (auto iface : std::as_const(containerPlugins)) {
+            if (!containersWithConfiguration.contains(iface->identifier()))
+                continue;
             auto pcm = new PluginContainerManager(iface);
             pluginContainerManagers << pcm;
             ContainerFactory::instance()->registerContainer(pcm);

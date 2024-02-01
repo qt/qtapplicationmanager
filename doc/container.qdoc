@@ -44,8 +44,13 @@ plugins:
 \endcode
 
 Plugins installed into Qt's plugin directory into the \c appman_container folder are picked
-up automatically, but you still need to enable the usage of the container using the
-\l{container-selection}{container selection} configuration.
+up automatically, but you still need to enable the usage of the container by having an entry
+for the container's id in the main \c containers: configuration field:
+
+\badcode
+containers:
+  bubblewrap: ...
+\endcode
 
 \target container-selection
 \section1 Container Selection Configuration

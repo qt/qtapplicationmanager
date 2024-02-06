@@ -40,9 +40,13 @@ ApplicationWindow {
         }
 
         Component.onCompleted: {
-            console.info("\n\n", "You can start an appman-package-server instance like this:",
-                         "\n\n", "  ", ApplicationManager.systemProperties.serverBinary, "--dd",
-                         ApplicationManager.systemProperties.serverBaseDir, "\n\n")
+            if (ApplicationManager.systemProperties.serverBinary
+                    && ApplicationManager.systemProperties.serverBaseDir) {
+                console.info("\n\n", "You can start an appman-package-server instance like this:",
+                             "\n\n", "  ", ApplicationManager.systemProperties.serverBinary, "--dd",
+                             ApplicationManager.systemProperties.serverBaseDir,
+                             "\n\n")
+            }
         }
     }
 

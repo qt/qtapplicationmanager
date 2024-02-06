@@ -1051,8 +1051,13 @@ QString PackageManager::startPackageInstallation(const QUrl &sourceUrl)
 QString PackageManager::startPackageInstallation(const QString &sourceUrl)
 {
     QUrl url(sourceUrl);
-    if (url.scheme().isEmpty())
+    if (url.scheme().isEmpty()
+#if defined(Q_OS_WINDOWS)
+        || (url.scheme().size() == 1) // "c:" is not a protocol
+#endif
+    ) {
         url = QUrl::fromLocalFile(sourceUrl);
+    }
     return startPackageInstallation(url);
 }
 

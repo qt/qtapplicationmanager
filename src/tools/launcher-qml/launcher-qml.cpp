@@ -81,36 +81,38 @@ int main(int argc, char *argv[])
     Logging::setApplicationId("qml-launcher");
     Logging::initialize();
 
+    std::unique_ptr<ApplicationMain> am;
+
     try {
         const QString socket = QDir(qEnvironmentVariable("XDG_RUNTIME_DIR"))
                           .filePath(qEnvironmentVariable("WAYLAND_DISPLAY"));
         if (!QFileInfo::exists(socket))
             throw Exception("Cannot start application: no wayland display - expected socket at: %1").arg(socket);
 
-        ApplicationMain am(argc, argv);
+        am = std::make_unique<ApplicationMain>(argc, argv);
 
         QCommandLineParser clp;
         clp.addHelpOption();
         clp.addOption({ u"qml-debug"_s,   u"Enables QML debugging and profiling."_s });
         clp.addOption({ u"quicklaunch"_s, u"Starts the launcher in the quicklaunching mode."_s });
         clp.addOption({ u"directload"_s , u"The info.yaml to start (you can add '@<appid>' to start a specific app within the package, instead of the first one)."_s, u"info.yaml"_s });
-        clp.process(am);
+        clp.process(*am);
 
         bool quicklaunched = clp.isSet(u"quicklaunch"_s);
         QString directLoadManifest = clp.value(u"directload"_s);
 
         if (directLoadManifest.isEmpty())
-            am.loadConfiguration();
+            am->loadConfiguration();
 
-        CrashHandler::setCrashActionConfiguration(am.runtimeConfiguration().value(u"crashAction"_s).toMap());
+        CrashHandler::setCrashActionConfiguration(am->runtimeConfiguration().value(u"crashAction"_s).toMap());
         // the verbose flag has already been factored into the rules:
-        am.setupLogging(false, am.loggingRules(), QString(), am.useAMConsoleLogger());
-        am.setupQmlDebugging(clp.isSet(u"qml-debug"_s));
-        am.setupOpenGL(am.openGLConfiguration());
-        am.setupIconTheme(am.iconThemeSearchPaths(), am.iconThemeName());
-        am.registerWaylandExtensions();
+        am->setupLogging(false, am->loggingRules(), QString(), am->useAMConsoleLogger());
+        am->setupQmlDebugging(clp.isSet(u"qml-debug"_s));
+        am->setupOpenGL(am->openGLConfiguration());
+        am->setupIconTheme(am->iconThemeSearchPaths(), am->iconThemeName());
+        am->registerWaylandExtensions();
 
-        Logging::setDltLongMessageBehavior(am.dltLongMessageBehavior());
+        Logging::setDltLongMessageBehavior(am->dltLongMessageBehavior());
 
         StartupTimer::instance()->checkpoint("after basic initialization");
 
@@ -128,14 +130,14 @@ int main(int argc, char *argv[])
             if (!fi.exists() || fi.fileName() != u"info.yaml"_s)
                 throw Exception("--directload needs a valid info.yaml file as parameter");
             directLoadManifest = fi.absoluteFilePath();
-            controller.reset(new Controller(&am, quicklaunched, qMakePair(directLoadManifest, directLoadAppId)));
+            controller.reset(new Controller(am.get(), quicklaunched, qMakePair(directLoadManifest, directLoadAppId)));
         } else {
-            am.setupDBusConnections();
+            am->setupDBusConnections();
             StartupTimer::instance()->checkpoint("after dbus initialization");
-            controller.reset(new Controller(&am, quicklaunched));
+            controller.reset(new Controller(am.get(), quicklaunched));
         }
 
-        return am.exec();
+        return am->exec();
 
     } catch (const std::exception &e) {
         qCCritical(LogQmlRuntime) << "ERROR:" << e.what();

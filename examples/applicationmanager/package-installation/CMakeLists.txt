@@ -24,8 +24,8 @@ qt6_am_add_systemui_wrapper(package-installation
     CONFIG_YAML am-config.yaml
     EXTRA_FILES apps system-ui
     EXTRA_ARGS --verbose
-               -o 'systemProperties: { public: { serverBinary: "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}/appman-package-server" }}'
-               -o 'systemProperties: { public: { serverBaseDir: "${CMAKE_CURRENT_BINARY_DIR}/ps-data" }}'
+               -o "systemProperties: { public: { serverBinary: '${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}/appman-package-server' }}"
+               -o "systemProperties: { public: { serverBaseDir: '${CMAKE_CURRENT_BINARY_DIR}/ps-data' }}"
 )
 
 foreach (PKG_NAME red green)

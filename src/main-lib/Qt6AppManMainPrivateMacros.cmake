@@ -66,7 +66,7 @@ function(qt6_am_add_systemui_wrapper target)
 
     if (ARG_CONFIG_YAML)
         foreach(F ${ARG_CONFIG_YAML})
-            list(APPEND CMD_ARGS "-c ${F}")
+            list(APPEND CMD_ARGS -c ${F})
             list(APPEND ALL_EXTRA_FILES ${F})
             qt_am_internal_create_copy_command(${F})
         endforeach()
@@ -96,8 +96,12 @@ function(qt6_am_add_systemui_wrapper target)
         endforeach()
     endif()
 
-    string(JOIN " " CMD_ARGS_STR ${CMD_ARGS})
-    string(JOIN " " CMD_EXTRA_ARGS_STR ${ARG_EXTRA_ARGS})
+    list(APPEND CMD_ARGS ${ARG_EXTRA_ARGS})
+    # quote all arguments with spaces
+    list(TRANSFORM CMD_ARGS PREPEND "\"" REGEX " ")
+    list(TRANSFORM CMD_ARGS APPEND  "\"" REGEX " ")
+    # join all arguments into a single string
+    list(JOIN CMD_ARGS " " CMD_ARGS_STR)
 
     configure_file(${_AM_MACROS_LOCATION}/wrapper.cpp.in wrapper.cpp)
 
@@ -117,7 +121,7 @@ function(qt6_am_add_systemui_wrapper target)
 SetLocal EnableDelayedExpansion
 (set \"PATH=${test_env_path};%PATH%\")
 (set \"QT_PLUGIN_PATH=${test_env_plugin_path}\")
-${ARG_EXECUTABLE}.exe ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} %*
+${ARG_EXECUTABLE}.exe ${CMD_ARGS_STR} ${ARG_MAIN_QML_FILE} %*
 EndLocal
 "
         )
@@ -128,7 +132,7 @@ EndLocal
 "#!/bin/sh
 export PATH=\"${test_env_path}:$PATH\"
 export QT_PLUGIN_PATH=\"${test_env_plugin_path}\"
-exec ${ARG_EXECUTABLE} ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} \"$@\";
+exec ${ARG_EXECUTABLE} ${CMD_ARGS_STR} ${ARG_MAIN_QML_FILE} \"$@\";
 "
         )
     endif()
@@ -238,7 +242,7 @@ function (qt_am_internal_add_qml_test target)
                 --qmltestrunner-source-file "${CMAKE_CURRENT_SOURCE_DIR}/${ARG_TEST_FILE}")
 
             if (ARG_TESTDATA_DIR)
-                list(APPEND WRAPPER_ARGS EXTRA_ARGS -o "\"systemProperties: { public: { AM_TESTDATA_DIR: ${ARG_TESTDATA_DIR} } }\"")
+                list(APPEND WRAPPER_ARGS EXTRA_ARGS -o "systemProperties: { public: { AM_TESTDATA_DIR: '${ARG_TESTDATA_DIR}' } }")
             endif()
 
             list(APPEND WRAPPER_ARGS EXTRA_ARGS --no-cache --no-dlt-logging)

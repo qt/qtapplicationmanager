@@ -12,6 +12,7 @@
 #if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
 #  include <QDBusConnection>
 #  include <QDBusAbstractAdaptor>
+#  include <QDBusServer>
 #  include "dbusdaemon.h"
 #  include "dbuspolicy.h"
 #  include "dbuscontextadaptor.h"
@@ -106,70 +107,6 @@ AM_QML_REGISTER_TYPES(QtApplicationManager)
 AM_QML_REGISTER_TYPES(QtApplicationManager_Application)
 
 QT_BEGIN_NAMESPACE_AM
-
-
-#if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
-
-static QString registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName,
-                                  const char *serviceName, const char *path) noexcept(false)
-{
-    QString dbusAddress;
-    QDBusConnection conn((QString()));
-
-    if (dbusName.isEmpty()) {
-        return { };
-    } else if (dbusName == u"system") {
-        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SYSTEM_BUS_ADDRESS"));
-#  if defined(Q_OS_LINUX)
-        if (dbusAddress.isEmpty())
-            dbusAddress = u"unix:path=/var/run/dbus/system_bus_socket"_s;
-#  endif
-        conn = QDBusConnection::systemBus();
-    } else if (dbusName == u"session") {
-        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
-        conn = QDBusConnection::sessionBus();
-    } else if (dbusName == u"auto") {
-        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
-        // we cannot be using QDBusConnection::sessionBus() here, because some plugin
-        // might have called that function before we could spawn our own session bus. In
-        // this case, Qt has cached the bus name and we would get the old one back.
-        conn = QDBusConnection::connectToBus(dbusAddress, u"qtam_session"_s);
-        if (!conn.isConnected())
-            return { };
-        dbusName = u"session"_s;
-    } else {
-        dbusAddress = dbusName;
-        conn = QDBusConnection::connectToBus(dbusAddress, u"custom"_s);
-    }
-
-    if (!conn.isConnected()) {
-        throw Exception("could not connect to D-Bus (%1): %2")
-            .arg(dbusAddress.isEmpty() ? dbusName : dbusAddress).arg(conn.lastError().message());
-    }
-
-    if (adaptor->parent() && adaptor->parent()->parent()) {
-        // we need this information later on to tell apps where services are listening
-        adaptor->parent()->parent()->setProperty("_am_dbus_name", dbusName);
-        adaptor->parent()->parent()->setProperty("_am_dbus_address", dbusAddress);
-    }
-
-    if (!conn.registerObject(QString::fromLatin1(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
-        throw Exception("could not register object %1 on D-Bus (%2): %3")
-            .arg(QString::fromLatin1(path)).arg(dbusName).arg(conn.lastError().message());
-    }
-
-    if (!conn.registerService(QString::fromLatin1(serviceName))) {
-        throw Exception("could not register service %1 on D-Bus (%2): %3")
-            .arg(QString::fromLatin1(serviceName)).arg(dbusName).arg(conn.lastError().message());
-    }
-
-    qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
-
-    return dbusAddress.isEmpty() ? dbusName : dbusAddress;
-}
-
-#endif // defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
-
 
 // We need to do some things BEFORE the Q*Application constructor runs, so we're using this
 // old trick to do this hooking transparently for the user of the class.
@@ -1000,10 +937,20 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
             DBusDaemonProcess::start();
             StartupTimer::instance()->checkpoint("after starting session D-Bus");
         } catch (const Exception &e) {
+#  if defined(Q_OS_LINUX)
             qCWarning(LogSystem) << "Disabling external D-Bus interfaces:" << e.what();
             for (auto &&iface : ifaces)
                 std::get<1>(iface).clear();
             noneOnly = true;
+#  else
+            qCWarning(LogSystem) << "Could not start a private dbus-daemon:" << e.what();
+            qCWarning(LogSystem) << "Enabling DBus P2P access for appman-controller";
+            for (auto &&iface : ifaces) {
+                QString &dbusName = std::get<1>(iface);
+                if (dbusName == u"auto")
+                    dbusName = u"p2p"_s;
+            }
+#  endif
         }
     }
 
@@ -1034,6 +981,101 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
 #else
     Q_UNUSED(busForInterface)
     Q_UNUSED(policyForInterface)
+    Q_UNUSED(m_p2pServer)
+    Q_UNUSED(m_p2pAdaptors)
+    Q_UNUSED(m_p2pFailed)
+#endif // defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
+}
+
+QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName,
+                                 const char *serviceName, const char *path) noexcept(false)
+{
+#if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
+    QString dbusAddress;
+    QDBusConnection conn((QString()));
+    bool isP2P = false;
+
+    if (dbusName.isEmpty()) {
+        return { };
+    } else if (dbusName == u"system") {
+        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SYSTEM_BUS_ADDRESS"));
+#  if defined(Q_OS_LINUX)
+        if (dbusAddress.isEmpty())
+            dbusAddress = u"unix:path=/var/run/dbus/system_bus_socket"_s;
+#  endif
+        conn = QDBusConnection::systemBus();
+    } else if (dbusName == u"session") {
+        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
+        conn = QDBusConnection::sessionBus();
+    } else if (dbusName == u"auto") {
+        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
+        // we cannot be using QDBusConnection::sessionBus() here, because some plugin
+        // might have called that function before we could spawn our own session bus. In
+        // this case, Qt has cached the bus name and we would get the old one back.
+        conn = QDBusConnection::connectToBus(dbusAddress, u"qtam_session"_s);
+        if (!conn.isConnected())
+            return { };
+        dbusName = u"session"_s;
+    } else if (dbusName == u"p2p") {
+        if (!m_p2pServer && !m_p2pFailed) {
+            m_p2pServer = new QDBusServer(this);
+            m_p2pServer->setAnonymousAuthenticationAllowed(true);
+
+            if (!m_p2pServer->isConnected()) {
+                m_p2pFailed = true;
+                delete m_p2pServer;
+                m_p2pServer = nullptr;
+                qCCritical(LogSystem) << "Failed to create a P2P DBus server for appman-controller";
+            } else {
+                QObject::connect(m_p2pServer, &QDBusServer::newConnection,
+                                 this, [this](const QDBusConnection &conn) {
+                    for (const auto &[path, object] : std::as_const(m_p2pAdaptors).asKeyValueRange())
+                        object->registerOnDBus(conn, path);
+                });
+            }
+        }
+        if (m_p2pFailed)
+            return { };
+        m_p2pAdaptors.insert(QString::fromLatin1(path), qobject_cast<DBusContextAdaptor *>(adaptor->parent()));
+        dbusAddress = u"p2p:"_s + m_p2pServer->address();
+        isP2P = true;
+    } else {
+        dbusAddress = dbusName;
+        conn = QDBusConnection::connectToBus(dbusAddress, u"custom"_s);
+    }
+
+    if (!isP2P) {
+        if (!conn.isConnected()) {
+            throw Exception("could not connect to D-Bus (%1): %2")
+                .arg(dbusAddress.isEmpty() ? dbusName : dbusAddress).arg(conn.lastError().message());
+        }
+
+        if (!conn.registerObject(QString::fromLatin1(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
+            throw Exception("could not register object %1 on D-Bus (%2): %3")
+                .arg(QString::fromLatin1(path)).arg(dbusName).arg(conn.lastError().message());
+        }
+
+        if (!conn.registerService(QString::fromLatin1(serviceName))) {
+            throw Exception("could not register service %1 on D-Bus (%2): %3")
+                .arg(QString::fromLatin1(serviceName)).arg(dbusName).arg(conn.lastError().message());
+        }
+    }
+
+    if (adaptor->parent() && adaptor->parent()->parent()) {
+        // we need this information later on to tell apps where services are listening
+        adaptor->parent()->parent()->setProperty("_am_dbus_name", dbusName);
+        adaptor->parent()->parent()->setProperty("_am_dbus_address", dbusAddress);
+    }
+
+    qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
+
+    return dbusAddress.isEmpty() ? dbusName : dbusAddress;
+#else
+    Q_UNUSED(adaptor)
+    Q_UNUSED(dbusName)
+    Q_UNUSED(serviceName)
+    Q_UNUSED(path)
+    return { };
 #endif // defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
 }
 

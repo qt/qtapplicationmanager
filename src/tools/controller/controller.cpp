@@ -25,6 +25,7 @@
 #include <QtAppManCommon/error.h>
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/unixsignalhandler.h>
+#include <QtAppManCommon/utilities.h>
 #include <QtAppManCommon/qtyaml.h>
 #include <QtAppManCommon/dbus-utilities.h>
 
@@ -43,6 +44,8 @@ class DBus : public QObject
 
 public:
     DBus()
+        : m_dbusService(u"io.qt.ApplicationManager"_s)
+
     {
         registerDBusTypes();
     }
@@ -58,7 +61,13 @@ public:
             return;
 
         auto conn = connectTo(u"io.qt.ApplicationManager"_s);
-        m_manager = new IoQtApplicationManagerInterface(u"io.qt.ApplicationManager"_s, u"/ApplicationManager"_s, conn, this);
+        m_manager = tryConnectToDBusInterface<IoQtApplicationManagerInterface>(m_dbusService,
+                                                                               u"/ApplicationManager"_s,
+                                                                               conn.name(), this);
+        if (!m_manager) {
+            throw Exception("Could not connect to the io.qt.ApplicationManager D-Bus interface on %1")
+                .arg(m_dbusName);
+        }
     }
 
     void connectToPackager() noexcept(false)
@@ -67,13 +76,52 @@ public:
             return;
 
         auto conn = connectTo(u"io.qt.PackageManager"_s);
-        m_packager = new IoQtPackageManagerInterface(u"io.qt.ApplicationManager"_s, u"/PackageManager"_s, conn, this);
+        m_packager = tryConnectToDBusInterface<IoQtPackageManagerInterface>(m_dbusService,
+                                                                            u"/PackageManager"_s,
+                                                                            conn.name(), this);
+        if (!m_packager) {
+            throw Exception("Could not connect to the io.qt.PackageManager D-Bus interface on %1")
+                .arg(m_dbusName);
+        }
     }
 
 signals:
     void disconnected(QString reason);
 
 private:
+    template<typename T>
+    static T *tryConnectToDBusInterface(const QString &service, const QString &path,
+                                        const QString &connectionName, QObject *parent)
+    {
+        // we are working with very small delays in the milli-second range here, so a linear factor
+        // to support valgrind would have to be very large and probably conflict with usage elsewhere
+        // in the codebase, where the ranges are normally in the seconds.
+        static const int timeout = timeoutFactor() * timeoutFactor();
+
+        QDBusConnection conn(connectionName);
+
+        if (!conn.isConnected())
+            return nullptr;
+        if (!service.isEmpty() && conn.interface()) {
+            // the 'T' constructor can block up to 25sec (!), if the service is not registered!
+            if (!conn.interface()->isServiceRegistered(service))
+                return nullptr;
+        }
+
+        QElapsedTimer timer;
+        timer.start();
+
+        do {
+            T *iface = new T(service, path, conn, parent);
+            if (!iface->lastError().isValid())
+                return iface;
+            delete iface;
+            QThread::msleep(static_cast<unsigned long>(timeout));
+        } while (timer.elapsed() < (100 * timeout)); // 100msec base line
+
+        return nullptr;
+    }
+
     QDBusConnection connectTo(const QString &iface) noexcept(false)
     {
         QDBusConnection conn(iface);
@@ -81,17 +129,23 @@ private:
         QString dbus = m_dbusAddresses.value(iface).toString();
         if (dbus == u"system") {
             conn = QDBusConnection::systemBus();
-            dbus = u"[system-bus]"_s;
+            m_dbusName = u"[system-bus]"_s;
         } else if (dbus.isEmpty()) {
             conn = QDBusConnection::sessionBus();
-            dbus = u"[session-bus]"_s;
+            m_dbusName = u"[session-bus]"_s;
+        } else if (dbus.startsWith(u"p2p:")) {
+            const auto address = dbus.mid(4);
+            conn = QDBusConnection::connectToPeer(address, u"p2p"_s);
+            m_dbusName = u"[p2p] "_s + address;
+            m_dbusService.clear(); // no service names allowed on p2p busses
         } else {
             conn = QDBusConnection::connectToBus(dbus, u"custom"_s);
+            m_dbusName = dbus;
         }
 
         if (!conn.isConnected()) {
             throw Exception(Error::IO, "Could not connect to the application manager D-Bus interface %1 at %2: %3")
-                .arg(iface, dbus, conn.lastError().message());
+                .arg(iface, m_dbusName, conn.lastError().message());
         }
 
         installDisconnectWatcher(conn, u"io.qt.ApplicationManager"_s);
@@ -155,6 +209,8 @@ private:
     IoQtPackageManagerInterface *m_packager = nullptr;
     IoQtApplicationManagerInterface *m_manager = nullptr;
     QVariantMap m_dbusAddresses;
+    QString m_dbusName;
+    QString m_dbusService;
     QStringList m_connections;
     QTimer *m_disconnectTimer = nullptr;
     bool m_disconnectedEmitted = false;

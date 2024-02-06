@@ -30,6 +30,7 @@ using MainBase = QGuiApplication;
 QT_FORWARD_DECLARE_CLASS(QQmlApplicationEngine)
 QT_FORWARD_DECLARE_CLASS(QQuickView)
 QT_FORWARD_DECLARE_CLASS(QDBusAbstractAdaptor)
+QT_FORWARD_DECLARE_CLASS(QDBusServer)
 
 class StartupInterface;
 
@@ -47,6 +48,8 @@ class WindowManager;
 class QuickLauncher;
 class SystemMonitor;
 class Configuration;
+class DBusContextAdaptor;
+
 
 class Main : public MainBase, protected SharedMain
 {
@@ -115,6 +118,9 @@ protected:
 private:
     static int &preConstructor(int &argc, char **argv, InitFlags initFlags);
 
+    QString registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName,
+                               const char *serviceName, const char *path) noexcept(false);
+
 private:
     bool m_isSingleProcessMode = false;
     bool m_isRunningOnEmbedded = false;
@@ -141,6 +147,10 @@ private:
     QString m_documentDir;
     QString m_installationDirMountPoint;
     QVariantMap m_infoFileContents;
+
+    QDBusServer *m_p2pServer = nullptr;
+    QHash<QString, DBusContextAdaptor *> m_p2pAdaptors;
+    bool m_p2pFailed = false;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Main::InitFlags)

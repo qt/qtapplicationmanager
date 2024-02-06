@@ -40,18 +40,32 @@ QtObject {
 
     property Component acknowledgeDialog: Component {
         QD.MessageDialog {
+            id: dialog
             required property string taskId
             required property string packageName
             required property list<string> capabilities
+            property bool acknowledged: false
 
             text: "Install <b>" + packageName + "</b>?"
             informativeText: capabilities.length ? "This package requests the following capabilities: " + capabilities.join(", ")
                                                  : "This package does not request any capabilities."
             buttons: QD.MessageDialog.Yes | QD.MessageDialog.No
 
-            onAccepted: PackageManager.acknowledgePackageInstallation(taskId)
-            onRejected: PackageManager.cancelTask(taskId)
+            onAccepted: if (!acknowledged) PackageManager.acknowledgePackageInstallation(taskId)
+            onRejected: if (!acknowledged) PackageManager.cancelTask(taskId)
             onVisibleChanged: if (!visible) { destroy() }
+
+            Connections {
+                target: PackageManager
+                function onTaskStateChanged(taskId, state) {
+                    // if somebody else (e.g. appman-controller) acknowledged already, just close
+                    if (visible && (taskId === dialog.taskId)
+                            && (state !== PackageManager.AwaitingAcknowledge)) {
+                        acknowledged = true
+                        close()
+                    }
+                }
+            }
         }
     }
 }

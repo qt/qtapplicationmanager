@@ -3,7 +3,6 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include <memory>
 #include <qglobal.h>
 
 #include <QFile>
@@ -31,12 +30,11 @@
 #include "sharedmain.h"
 
 #include "utilities.h"
+#include "dbus-utilities.h"
 #include "exception.h"
 #include "crashhandler.h"
 #include "startuptimer.h"
 #include "unixsignalhandler.h"
-
-#include "../plugin-interfaces/startupinterface.h"
 
 using namespace Qt::StringLiterals;
 
@@ -101,6 +99,8 @@ void SharedMain::initialize()
     if (!qEnvironmentVariableIsSet("XDG_RUNTIME_DIR"))
         setenv("XDG_RUNTIME_DIR", QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toLocal8Bit(), 1);
 #endif
+
+    ensureLibDBusIsAvailable();
 }
 
 // We need to do some things BEFORE the Q*Application constructor runs, so we're using this

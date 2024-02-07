@@ -85,6 +85,14 @@ qt_feature("am-dltlogging" PRIVATE
     DISABLE INPUT_dltlogging STREQUAL 'no'
 )
 
+qt_feature("am-libdbus" PRIVATE
+    LABEL "Compile libdbus for appman-controller"
+    CONDITION WIN32 OR MACOS
+    EMIT_IF WIN32 OR MACOS
+    ENABLE INPUT_libdbus STREQUAL 'yes'
+    DISABLE INPUT_libdbus STREQUAL 'no'
+)
+
 qt_feature("am-libbacktrace" PRIVATE
     LABEL "Enable support for libbacktrace"
     CONDITION (LINUX OR MACOS) AND (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -134,6 +142,7 @@ qt_configure_add_summary_entry(ARGS "am-widgets-support")
 qt_configure_add_summary_entry(ARGS "am-tools-only")
 qt_configure_add_summary_entry(ARGS "am-package-server")
 qt_configure_add_summary_entry(ARGS "am-dltlogging")
+qt_configure_add_summary_entry(ARGS "am-libdbus")
 qt_configure_add_summary_entry(ARGS "am-libbacktrace")
 qt_configure_add_summary_entry(ARGS "am-stackwalker")
 qt_configure_end_summary_section() # end of "Qt ApplicationManger" section

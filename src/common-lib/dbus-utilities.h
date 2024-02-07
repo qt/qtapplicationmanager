@@ -27,6 +27,8 @@ QVariant convertFromDBusVariant(const QVariant &variant);
 
 void registerDBusTypes();
 
+void ensureLibDBusIsAvailable();
+
 QT_END_NAMESPACE_AM
 
 #endif // DBUS_UTILITIES_H

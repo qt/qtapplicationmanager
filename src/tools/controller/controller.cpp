@@ -345,6 +345,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
     QCoreApplication::setApplicationVersion(QString::fromLatin1(QT_AM_VERSION_STR));
 
+    ensureLibDBusIsAvailable(); // this needs to happen before the QCoreApplication constructor
+
     ThrowingApplication a(argc, argv);
 
     QByteArray desc = "\n\nAvailable commands are:\n";

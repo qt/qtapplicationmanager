@@ -631,8 +631,16 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
     }
 
     bool isDebug = !debugWrapper.isEmpty();
+    bool hasRedirections = !stdRedirections.isEmpty();
+#if defined(Q_OS_WINDOWS)
+    if (hasRedirections) {
+        fprintf(stderr, "WARNING: Ignoring std-in/out/err redirections, as these are not supported on Windows.");
+        hasRedirections = false;
+    }
+#endif
     QDBusPendingReply<bool> reply;
-    if (stdRedirections.isEmpty()) {
+
+    if (!hasRedirections) {
         reply = isDebug ? dbus()->manager()->debugApplication(appId, debugWrapper, documentUrl)
                         : dbus()->manager()->startApplication(appId, documentUrl);
     } else {

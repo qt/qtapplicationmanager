@@ -41,8 +41,6 @@ To build the application manager with all its features, the following components
 
 \list
     \li \b Qt 6.5.0 or higher.
-    \li \b openssl \e{- Linux only and only if you need the installer functionality}.
-        Qt needs to be built with openssl support. The required minimum version is defined by Qt.
     \li \b libyaml 2.2 or higher.
     \li \b libarchive 3.5 or higher \e{- if you need the installer functionality}.
 \endlist
@@ -57,6 +55,20 @@ that lack one of the prerequisites, the bundled versions of these libraries from
 folder are automatically used instead. Make sure you are aware of the licensing implications,
 since these bundled 3rdparty libs will be linked in as static libraries.
 This option is not meant for production, but for development and testing environments only.
+
+\section1 Runtime Requirements
+
+Some libraries used by the application manager are not directly linked in, but instead loaded
+dynamically at runtime:
+
+\list
+    \li \b openssl \e{- Linux only and only if you need the installer functionality}.
+        Qt needs to be built with openssl support. The required minimum version is defined by Qt.
+    \li \b libdbus 1.12 or higher \e{- if you need multi-process mode or appman-controller support}.
+        As libdbus is not readily available for Windows and macOS, the application manager provides
+        its own copy to support the \c appman-controller tool (which is also used by the Qt-Creator
+        integration).
+\endlist
 
 \section1 Multi-process vs. Single-process
 
@@ -169,6 +181,13 @@ modules:
       This gives you readable backtraces for crashes on Windows, but also increases the binary size
       slightly. For debug builds, this option is enabled by default.
       Settings this to \c no disables building and linking against \c stackwalker.
+\row
+  \li \c{libdbus}
+  \li Windows and macOS only: If set to \c no, enables building \c libdbus-1 from the 3rdparty
+      folder.
+      This will allow you to use the \c appman-controller tool (which is also used by the Qt-Creator
+      integration) on Windows and macOS. This option is enabled by default.
+      Settings this to \c no disables building \c libdbus-1.
 \endtable
 
 \section2 The Hardware ID

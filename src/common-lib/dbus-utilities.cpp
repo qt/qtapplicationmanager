@@ -12,9 +12,21 @@
 #  include <QDBusArgument>
 #  include <QDBusMetaType>
 #  include <QDBusUnixFileDescriptor>
+#  include <QLibrary>
+#  include <QLibraryInfo>
+#  include <QDir>
 #endif
-
+#if defined(Q_OS_WIN)
+#  include <windows.h>
+#  ifdef interface
+#    undef interface
+#  endif
+#endif
+#include "logging.h"
 #include "dbus-utilities.h"
+
+using namespace Qt::StringLiterals;
+
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -128,6 +140,52 @@ void registerDBusTypes()
         qDBusRegisterMetaType<QMap<QString, QDBusUnixFileDescriptor>>();
         qDBusRegisterMetaType<QtAM::UnixFdMap>();
         once = true;
+    }
+#endif
+}
+
+void ensureLibDBusIsAvailable()
+{
+#if (defined(Q_OS_WINDOWS) || defined(Q_OS_MACOS)) && defined(QT_DBUS_LIB)
+    // On Windows and macOS, libdbus-1 is not readily available, but we need it to communicate
+    // between appman and appman-controller.
+    // We first check if the user has a custom libdbus-1 installed already. If not, we load the
+    // one that comes with the application manager.
+#  if defined(Q_OS_WINDOWS)
+    static const QString dbusLibName = u"dbus-1"_s;
+    auto dbusLoadPrepare = []() {
+        const QString dllPath = QLibraryInfo::path(QLibraryInfo::BinariesPath)
+                                + u"/qtapplicationmanager";
+        ::SetDllDirectoryW((LPCWSTR) dllPath.utf16());
+    };
+    auto dbusLoadCleanup = []() {
+        ::SetDllDirectoryW(nullptr);
+    };
+
+#  elif defined(Q_OS_MACOS)
+    static const QString dbusLibName = u"libdbus-1"_s;
+    QString currentPath;
+    auto dbusLoadPrepare = [&currentPath]() {
+        const QString dylibPath = QLibraryInfo::path(QLibraryInfo::LibrariesPath)
+                                  + u"/qtapplicationmanager";
+        // adding to DYLD_LIBRARY_PATH has no effect on the running process
+        currentPath = QDir::currentPath();
+        QDir::setCurrent(dylibPath);
+    };
+    auto dbusLoadCleanup = [&currentPath]() {
+        QDir::setCurrent(currentPath);
+    };
+#  endif
+
+    static QLibrary dbusLib(dbusLibName);
+    if (!dbusLib.isLoaded() && !dbusLib.load()) {
+        dbusLoadPrepare();
+
+        if (!dbusLib.load() || !dbusLib.resolve("dbus_connection_open_private"))
+            qCCritical(LogDBus) << "WARNING: could not load the application manager's libdbus-1 for appman-controller support.";
+        else
+            qCInfo(LogDBus) << "Loaded the application manager's libdbus-1 for appman-controller support.";
+        dbusLoadCleanup();
     }
 #endif
 }

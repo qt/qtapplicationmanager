@@ -938,13 +938,13 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
             StartupTimer::instance()->checkpoint("after starting session D-Bus");
         } catch (const Exception &e) {
 #  if defined(Q_OS_LINUX)
-            qCWarning(LogSystem) << "Disabling external D-Bus interfaces:" << e.what();
+            qCWarning(LogDBus) << "Disabling external D-Bus interfaces:" << e.what();
             for (auto &&iface : ifaces)
                 std::get<1>(iface).clear();
             noneOnly = true;
 #  else
-            qCWarning(LogSystem) << "Could not start a private dbus-daemon:" << e.what();
-            qCWarning(LogSystem) << "Enabling DBus P2P access for appman-controller";
+            qCWarning(LogDBus) << "Could not start a private dbus-daemon:" << e.what();
+            qCInfo(LogDBus) << "Enabling DBus P2P access for appman-controller";
             for (auto &&iface : ifaces) {
                 QString &dbusName = std::get<1>(iface);
                 if (dbusName == u"auto")
@@ -955,7 +955,7 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
     }
 
     if (!noneOnly) {
-        qCDebug(LogSystem) << "Registering D-Bus services:";
+        qCDebug(LogDBus) << "Registering D-Bus services:";
 
         for (auto &&iface : ifaces) {
             auto *generatedAdaptor = std::get<0>(iface)->generatedAdaptor<QDBusAbstractAdaptor>();
@@ -1025,7 +1025,7 @@ QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName
                 m_p2pFailed = true;
                 delete m_p2pServer;
                 m_p2pServer = nullptr;
-                qCCritical(LogSystem) << "Failed to create a P2P DBus server for appman-controller";
+                qCCritical(LogDBus) << "Failed to create a P2P DBus server for appman-controller";
             } else {
                 QObject::connect(m_p2pServer, &QDBusServer::newConnection,
                                  this, [this](const QDBusConnection &conn) {
@@ -1067,7 +1067,7 @@ QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName
         adaptor->parent()->parent()->setProperty("_am_dbus_address", dbusAddress);
     }
 
-    qCDebug(LogSystem).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
+    qCDebug(LogDBus).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
 
     return dbusAddress.isEmpty() ? dbusName : dbusAddress;
 #else

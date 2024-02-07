@@ -101,8 +101,8 @@ void DBusDaemonProcess::start() noexcept(false)
     QByteArray busAddress = dbusDaemon->readAllStandardOutput().trimmed();
 
     qputenv("DBUS_SESSION_BUS_ADDRESS", busAddress);
-    qCInfo(LogSystem, "NOTICE: running on private D-Bus session bus to avoid conflicts:");
-    qCInfo(LogSystem, "        DBUS_SESSION_BUS_ADDRESS=%s", busAddress.constData());
+    qCInfo(LogDBus, "NOTICE: running on private D-Bus session bus to avoid conflicts:");
+    qCInfo(LogDBus, "        DBUS_SESSION_BUS_ADDRESS=%s", busAddress.constData());
 }
 
 QT_END_NAMESPACE_AM

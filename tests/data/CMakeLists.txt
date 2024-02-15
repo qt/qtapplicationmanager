@@ -1,4 +1,6 @@
 
+qt_feature_evaluate_features("${CMAKE_CURRENT_SOURCE_DIR}/../../src/common-lib/configure.cmake")
+
 if (NOT QT_FEATURE_am_installer)
     message(WARNING "QT_FEATURE_am_installer is disabled, cannot generate test packages")
     return()

@@ -7,6 +7,9 @@
 #set -x
 set -e
 
+# OpenSSL as used by the packager might leak, but we aren't interested
+export ASAN_OPTIONS="exitcode=0:detect_leaks=0"
+
 # check basic requirement
 [ ! -d certificates ] && { echo "Please cd to the tests/data directory before running this script"; exit 1; }
 

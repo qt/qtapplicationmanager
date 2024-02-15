@@ -82,7 +82,7 @@ permissions are needed, in order to mount the correct application directory into
 In the am-config.yaml the quick launch is enabled like this:
 \quotefromfile applicationmanager/bubblewrap-example/am-config.yaml
 \skipto quicklaunch:
-\printuntil runtimesPerContainer:
+\printuntil '*':
 
 To see quick-launch in action, you need to start the example with "sudo".
 
@@ -94,8 +94,7 @@ following snippet in the am-config.yaml:
 
 \quotefromfile applicationmanager/bubblewrap-example/am-config.yaml
 \skipto containers:
-\printuntil sharedNamespaces:
-\printuntil networkSetupScript:
+\printuntil # networkSetupScript:
 
 If the applications shouldn't have any network access at all, you can change the
 \c sharedNamespaces option to \c{[ '-all' ]}. If you then start the networkinfo application, you

@@ -177,8 +177,8 @@ void tst_ControllerTool::initTestCase()
     m_main = new Main(m_argc, m_argv);  // QCoreApplication saves a reference to argc!
 
     QStringList possibleLocations;
-    possibleLocations.append(QLibraryInfo::path(QLibraryInfo::BinariesPath));
     possibleLocations.append(QCoreApplication::applicationDirPath() + u"/../../../bin"_s);
+    possibleLocations.append(QLibraryInfo::path(QLibraryInfo::BinariesPath));
 
     QString controllerPath;
     const QString controllerName = u"/appman-controller"_s;
@@ -246,7 +246,7 @@ void tst_ControllerTool::instances()
 {
     ControllerTool ctrl({ u"list-instances"_s });
     QVERIFY2(ctrl.call(), ctrl.failure);
-    QCOMPARE(ctrl.stdOutList, QStringList({ u"\"controller-test-id\""_s }));
+    QCOMPARE(ctrl.stdOutList, QStringList({ u"controller-test-id-0"_s }));
 }
 
 void tst_ControllerTool::applications()

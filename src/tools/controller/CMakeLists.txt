@@ -12,6 +12,8 @@ qt_internal_add_app(appman-controller
         AM_COMPILING_APPMAN
 )
 
+set_target_properties(appman-controller PROPERTIES WIN32_EXECUTABLE FALSE)
+
 qt_internal_extend_target(appman-controller
     DBUS_INTERFACE_SOURCES
         ../../dbus-lib/io.qt.packagemanager.xml

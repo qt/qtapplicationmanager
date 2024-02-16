@@ -16,3 +16,5 @@ qt_internal_add_app(appman-package-server
     DEFINES
         AM_COMPILING_APPMAN
 )
+
+set_target_properties(appman-package-server PROPERTIES WIN32_EXECUTABLE FALSE)

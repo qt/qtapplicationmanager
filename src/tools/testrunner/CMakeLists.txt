@@ -13,7 +13,9 @@ qt_internal_add_app(appman-qmltestrunner
         Qt::QuickTestPrivate
         Qt::TestPrivate
         Qt::AppManMainPrivate
-    )
+)
+
+set_target_properties(appman-qmltestrunner PROPERTIES WIN32_EXECUTABLE FALSE)
 
 include(QtAppManBuildConfig)
 

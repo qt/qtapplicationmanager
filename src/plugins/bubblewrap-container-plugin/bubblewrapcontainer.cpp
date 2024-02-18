@@ -179,7 +179,8 @@ void BubblewrapContainerManager::setConfiguration(const QVariantMap &configurati
         if (it.value().metaType() == QMetaType(QMetaType::QVariantMap)) {
             QVariantMap valueMap = it.value().toMap();
             for (auto vit = valueMap.constBegin(); vit != valueMap.constEnd(); ++vit ) {
-                for (const QString &value : variantToStringList(vit.value())) {
+                const auto valueList = variantToStringList(vit.value());
+                for (const QString &value : valueList) {
                     m_bwrapArguments += u"--"_s + it.key();
                     m_bwrapArguments += vit.key();
                     m_bwrapArguments += value;
@@ -191,7 +192,8 @@ void BubblewrapContainerManager::setConfiguration(const QVariantMap &configurati
         if (it.value().metaType() == QMetaType(QMetaType::QVariantList)) {
             QVariantList valueList = it.value().toList();
             for (auto vit = valueList.constBegin(); vit != valueList.constEnd(); ++vit ) {
-                for (const QString &value : variantToStringList(*vit)) {
+                const auto valueList = variantToStringList(*vit);
+                for (const QString &value : valueList) {
                     m_bwrapArguments += u"--"_s + it.key();
                     m_bwrapArguments += value;
                 }
@@ -536,7 +538,8 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
     bwrapCommand += { u"--setenv"_s, u"WAYLAND_DISPLAY"_s, QString::fromLocal8Bit(waylandDisplayName) };
     bwrapCommand += { u"--setenv"_s, u"DBUS_SESSION_BUS_ADDRESS"_s, QString::fromLocal8Bit(dbusSessionBusAddress) };
 
-    for (const auto &key : QProcessEnvironment::systemEnvironment().keys()) {
+    const auto allEnvKeys = QProcessEnvironment::systemEnvironment().keys();
+    for (const auto &key : allEnvKeys) {
         if (key.startsWith(u"LC_"_s) || key == u"LANG")
             bwrapCommand += { u"--setenv"_s, key, QProcessEnvironment::systemEnvironment().value(key)};
     }

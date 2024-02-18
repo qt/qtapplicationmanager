@@ -298,7 +298,7 @@ void WindowManager::setSlowAnimations(bool slowAnimations)
     if (slowAnimations != d->slowAnimations) {
         d->slowAnimations = slowAnimations;
 
-        for (auto view : d->views)
+        for (auto *view : std::as_const(d->views))
             updateViewSlowMode(view);
 
         // Update timer of the main, GUI, thread
@@ -308,7 +308,8 @@ void WindowManager::setSlowAnimations(bool slowAnimations)
         RuntimeFactory::instance()->setSlowAnimations(d->slowAnimations);
 
         // Update already running applications
-        for (Application *application : ApplicationManager::instance()->applications()) {
+        const auto allApplications = ApplicationManager::instance()->applications();
+        for (Application *application : allApplications) {
             auto runtime = application->currentRuntime();
             if (runtime)
                 runtime->setSlowAnimations(d->slowAnimations);
@@ -521,7 +522,7 @@ Window *WindowManager::window(int index) const
 QList<Window *> WindowManager::windowsOfApplication(const QString &id) const
 {
     QList<Window *> result;
-    for (Window *window : d->windowsInModel) {
+    for (Window *window : std::as_const(d->windowsInModel)) {
         if (window->application() && window->application()->id() == id)
             result << window;
     }
@@ -673,7 +674,7 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
             emit internalSignals.compositorAboutToBeCreated();
 
             d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName);
-            for (const auto &extraSocket : d->extraWaylandSockets)
+            for (const auto &extraSocket : std::as_const(d->extraWaylandSockets))
                 d->waylandCompositor->addSocketDescriptor(extraSocket);
 
             connect(d->waylandCompositor, &QWaylandCompositor::surfaceCreated,

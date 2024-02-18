@@ -45,7 +45,7 @@ public:
 
     QList<QQuickWindow *> views;
     QString waylandSocketName;
-    QQmlEngine *qmlEngine;
+    QQmlEngine *qmlEngine = nullptr;
 };
 
 QT_END_NAMESPACE_AM

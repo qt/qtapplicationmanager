@@ -26,7 +26,7 @@ public:
     void replyFromApplication(const QPointer<IntentClientRequest> &icr) override;
 
 private:
-    IoQtApplicationManagerIntentInterfaceInterface *m_dbusInterface;
+    IoQtApplicationManagerIntentInterfaceInterface *m_dbusInterface = nullptr;
     QString m_dbusName;
 };
 

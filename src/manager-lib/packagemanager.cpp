@@ -488,7 +488,7 @@ PackageManager::~PackageManager()
 
 Package *PackageManager::fromId(const QString &id) const
 {
-    for (auto package : d->packages) {
+    for (auto package : std::as_const(d->packages)) {
         if (package->id() == id)
             return package;
     }
@@ -855,7 +855,9 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
     if (!d->installationPath.isEmpty())
         validPaths.insert(d->installationPath, QString());
 
-    for (Package *pkg : d->packages) { // we want to detach here!
+    auto packages = d->packages;
+    packages.detach();  // we need to detach here, as the loop below might modify the list
+    for (Package *pkg : std::as_const(packages)) {
         const InstallationReport *ir = pkg->info()->installationReport();
         if (ir) {
             bool valid = true;
@@ -876,7 +878,7 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
                     break;
                 }
             }
-            for (const QString &checkDir : checkDirs) {
+            for (const QString &checkDir : std::as_const(checkDirs)) {
                 QFileInfo fi(checkDir);
                 if (!fi.exists() || !fi.isDir() || !fi.isReadable()) {
                     valid = false;
@@ -1603,7 +1605,7 @@ bool PackageManager::validateDnsName(const QString &name, int minimalPartCount)
             }
         };
 
-        for (const QString &part : parts)
+        for (const QString &part : std::as_const(parts))
             partCheck(part);
 
         return true;

@@ -18,7 +18,7 @@ class ApplicationManagerPrivate
 {
 public:
     bool securityChecksEnabled = true;
-    bool singleProcess;
+    bool singleProcess = true;
     bool shuttingDown = false;
     bool windowManagerCompositorReady = false;
     QVariantMap systemProperties;

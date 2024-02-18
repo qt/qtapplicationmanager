@@ -158,7 +158,7 @@ void PackageDatabase::parse(PackageLocations packageLocations)
 
         if ((packageLocations & Builtin) && !(m_parsedPackageLocations & Builtin)) {
             QStringList manifestFiles;
-            for (const QString &dir : m_builtInPackagesDirs)
+            for (const QString &dir : std::as_const(m_builtInPackagesDirs))
                 manifestFiles << findManifestsInDir(dir, true);
 
             ConfigCache<PackageInfo> cache(manifestFiles, u"appdb-builtin"_s, { 'P','K','G','B' },

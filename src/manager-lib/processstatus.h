@@ -61,7 +61,7 @@ signals:
     void memoryReportingEnabledChanged(bool enabled);
 
 private slots:
-    void onRunStateChanged(Am::RunState state);
+    void onRunStateChanged(QtAM::Am::RunState state);
 
 private:
     void fetchReadings();

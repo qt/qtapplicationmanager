@@ -84,7 +84,7 @@ private:
     int m_socket;
     QString m_errorString;
     QMutex m_mutex;
-    SudoServer *m_shortCircuit;
+    SudoServer *m_shortCircuit = nullptr;
 
     static SudoClient *s_instance;
 };

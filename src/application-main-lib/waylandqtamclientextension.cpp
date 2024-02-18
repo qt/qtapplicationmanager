@@ -45,6 +45,11 @@ bool WaylandQtAMClientExtension::eventFilter(QObject *o, QEvent *e)
                     for (auto it = wp.cbegin(); it != wp.cend(); ++it)
                         sendPropertyToServer(surface, it.key(), it.value());
                 }
+                // pointers can be reused, so we have to remove the old mappings
+                connect(window, &QObject::destroyed, this, [this, window]() {
+                    m_windowToSurface.remove(window);
+                    m_windowProperties.remove(window);
+                });
             }
         }
     } else if (e->type() == QEvent::Hide) {

@@ -17,6 +17,8 @@
 QT_BEGIN_NAMESPACE_AM
 
 // clazy:excludeall=non-pod-global-static
+// AXIVION DISABLE Qt-NonPodGlobalStatic
+
 static QT_AM_LIBCRYPTO_FUNCTION(SSLeay, unsigned long(*)(), 0);
 static QT_AM_LIBCRYPTO_FUNCTION(OPENSSL_add_all_algorithms_noconf, void(*)());
 static QT_AM_LIBCRYPTO_FUNCTION(ERR_load_crypto_strings, void(*)());

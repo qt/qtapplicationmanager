@@ -351,9 +351,9 @@ static void initBacktraceUnix()
             throw;
         } catch (const std::exception &exc) {
             snprintf(buffer, sizeof(buffer), "uncaught exception of type %s (%s)", typeName, exc.what());
-        } catch (const std::exception *exc) {
+        } catch (const std::exception *exc) { // AXIVION Line Qt-Generic-ThrowByValueCatchByReference: cope with anything
             snprintf(buffer, sizeof(buffer), "uncaught exception of type %s (%s)", typeName, exc->what());
-        } catch (const char *exc) {
+        } catch (const char *exc) {           // AXIVION Line Qt-Generic-ThrowByValueCatchByReference: cope with anything
             snprintf(buffer, sizeof(buffer), "uncaught exception of type 'const char *' (%s)", exc);
         } catch (...) {
             snprintf(buffer, sizeof(buffer), "uncaught exception of type %s", typeName);

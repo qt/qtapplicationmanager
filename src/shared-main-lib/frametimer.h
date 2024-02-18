@@ -79,10 +79,10 @@ private:
 
     QTimer m_updateTimer;
 
-    qreal m_averageFps;
-    qreal m_minimumFps;
-    qreal m_maximumFps;
-    qreal m_jitterFps;
+    qreal m_averageFps = 0.0;
+    qreal m_minimumFps = 0.0;
+    qreal m_maximumFps = 0.0;
+    qreal m_jitterFps = 0.0;
 
     QMetaObject::Connection m_frameSwapConnection;
 

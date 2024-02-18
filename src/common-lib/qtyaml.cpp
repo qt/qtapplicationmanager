@@ -153,8 +153,8 @@ public:
     QString sourceDir;
     QByteArray data;
     bool parsedHeader = false;
-    yaml_parser_t parser;
-    yaml_event_t event;
+    yaml_parser_t parser;  // AXIVION Line Qt-Generic-InitializeAllFieldsInConstructor: not possible
+    yaml_event_t event;    // AXIVION Line Qt-Generic-InitializeAllFieldsInConstructor: not possible
 
 };
 
@@ -332,7 +332,7 @@ QVariant YamlParser::parseScalar() const
     struct StaticMapping
     {
         QString text;
-        ValueIndex index;
+        ValueIndex index = ValueNull;
     };
 
     static const QVariant staticValues[] = {

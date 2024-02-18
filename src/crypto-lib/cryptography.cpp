@@ -34,6 +34,8 @@ static bool openSslInitialized = false;
 static bool loadOpenSsl3LegacyProvider = false;
 
 // clazy:excludeall=non-pod-global-static
+// AXIVION DISABLE Qt-NonPodGlobalStatic
+
 static QT_AM_LIBCRYPTO_FUNCTION(ERR_error_string_n, void(*)(unsigned long, char *, size_t));
 
 QT_END_NAMESPACE_AM

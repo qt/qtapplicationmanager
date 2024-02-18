@@ -118,7 +118,7 @@ protected:
 private:
     static int &preConstructor(int &argc, char **argv, InitFlags initFlags);
 
-    QString registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName,
+    QString registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName,
                                const char *serviceName, const char *path) noexcept(false);
 
 private:

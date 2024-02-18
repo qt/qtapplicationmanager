@@ -14,6 +14,7 @@
 #include <algorithm>
 
 #include "utilities.h"
+#include "exception.h"
 #include "dbuspolicy.h"
 #include "dbuscontextadaptor.h"
 
@@ -125,14 +126,14 @@ bool DBusPolicy::check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray
 
             const QStringList apps = m_applicationIdsForPid(pid);
             if (apps.size() > 1)
-                throw "multiple apps per pid are not supported";
+                throw Exception("multiple apps per pid are not supported");
             const QString appId = !apps.isEmpty() ? apps.constFirst() : QString();
             const QStringList appCaps = m_capabilitiesForApplicationId(appId);
             bool match = false;
             for (const QString &cap : ip->m_capabilities)
                 match = match && std::binary_search(appCaps.cbegin(), appCaps.cend(), cap);
             if (!match)
-                throw "insufficient capabilities";
+                throw Exception("insufficient capabilities");
         }
         if (!ip->m_executables.isEmpty()) {
 #  if defined(Q_OS_LINUX)
@@ -140,23 +141,23 @@ bool DBusPolicy::check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray
                 pid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
             QString executable = QFileInfo(u"/proc/"_s + QString::number(pid) + u"/exe"_s).symLinkTarget();
             if (executable.isEmpty())
-                throw "cannot get executable";
+                throw Exception("cannot get executable");
             if (std::binary_search(ip->m_executables.cbegin(), ip->m_executables.cend(), executable))
-                throw "executable blocked";
+                throw Exception("executable blocked");
 #  else
-            throw false;
+            throw Exception("the executables policy is not supported on this platform");
 #  endif // defined(Q_OS_LINUX)
         }
         if (!ip->m_uids.isEmpty()) {
             uint uid = dbusContext->connection().interface()->serviceUid(dbusContext->message().service());
             if (std::binary_search(ip->m_uids.cbegin(), ip->m_uids.cend(), uid))
-                throw "uid blocked";
+                throw Exception("uid blocked");
         }
 
         return true;
 
-    } catch (const char *msg) {
-        dbusContext->sendErrorReply(QDBusError::AccessDenied, u"Protected function call (%1)"_s.arg(QString::fromLatin1(msg)));
+    } catch (const Exception &e) {
+        dbusContext->sendErrorReply(QDBusError::AccessDenied, u"Protected function call (%1)"_s.arg(e.errorString()));
         return false;
     }
 #endif // !defined(Q_OS_UNIX)

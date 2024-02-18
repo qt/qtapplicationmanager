@@ -640,7 +640,7 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
                   if (containerSelection.metaType() == QMetaType::fromType<QString>()) {
                       config.append(qMakePair(u"*"_s, containerSelection.toString()));
                   } else if (containerSelection.metaType() == QMetaType::fromType<QVariantList>()) {
-                      QVariantList list = containerSelection.toList();
+                      const QVariantList list = containerSelection.toList();
                       for (const QVariant &v : list) {
                           if (v.metaType() == QMetaType::fromType<QVariantMap>()) {
                               QVariantMap map = v.toMap();

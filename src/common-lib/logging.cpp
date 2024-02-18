@@ -108,6 +108,7 @@ static constexpr const char *s_defaultSystemUiDltDescription = "Qt Application M
 \endtable
 //! [am-logging-categories]
 */
+// AXIVION DISABLE Qt-NonPodGlobalStatic
 QDLT_REGISTER_CONTEXT_ON_FIRST_USE(true)
 QDLT_REGISTER_APPLICATION(s_defaultSystemUiDltId, s_defaultSystemUiDltDescription)
 QDLT_LOGGING_CATEGORY(LogSystem, "am.system", "SYS", "General system messages")
@@ -125,13 +126,16 @@ QDLT_LOGGING_CATEGORY(LogCache, "am.cache", "CACH", "Cache sub-system messages")
 QDLT_LOGGING_CATEGORY(LogDBus, "am.dbus", "DBUS", "D-Bus related messages")
 QDLT_LOGGING_CATEGORY(LogGeneral, "general", "GEN", "Messages without dedicated context ID (fallback)")
 QDLT_FALLBACK_CATEGORY(LogGeneral)
-
+// AXIVION ENABLE Qt-NonPodGlobalStatic
 
 struct DeferredMessage
 {
     DeferredMessage(QtMsgType _msgType, const QMessageLogContext &_context, const QString &_message);
+    DeferredMessage(const DeferredMessage &copy) = delete;
     DeferredMessage(DeferredMessage &&other) noexcept;
     ~DeferredMessage();
+    DeferredMessage &operator=(const DeferredMessage &copy) = delete;
+    DeferredMessage &operator=(DeferredMessage &&move) = delete;
 
     QtMsgType msgType;
     int line;
@@ -575,8 +579,5 @@ void Logging::logToDlt(QtMsgType msgType, const QMessageLogContext &context, con
     Q_UNUSED(message)
 #endif
 }
-
-void am_trace(QDebug)
-{ }
 
 QT_END_NAMESPACE_AM

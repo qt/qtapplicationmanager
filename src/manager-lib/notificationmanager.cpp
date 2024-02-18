@@ -172,22 +172,22 @@ enum NMRoles
 
 struct NotificationData
 {
-    uint id;
-    Application *application;
-    uint priority;
+    uint id = 0;
+    Application *application = nullptr;
+    uint priority = 0;
     QString summary;
     QString body;
     QString category;
     QString iconUrl;
     QString imageUrl;
-    bool showActionIcons;
+    bool showActionIcons = false;
     QVariantList actions; // list of single element maps: <id (as string) --> text (as string)>
-    bool dismissOnAction;
-    bool isSticky;
-    bool isSystemNotification;
-    bool isShowingProgress;
-    qreal progress;
-    int timeout;
+    bool dismissOnAction = false;
+    bool isSticky = false;
+    bool isSystemNotification = false;
+    bool isShowingProgress = false;
+    qreal progress = 0.0;
+    int timeout = 0;
     QVariantMap extended;
 
     QTimer *timer = nullptr;
@@ -221,7 +221,7 @@ public:
 
     void closeNotification(uint id, CloseReason reason);
 
-    NotificationManager *q;
+    NotificationManager *q = nullptr;
     QHash<int, QByteArray> roleNames;
     QList<NotificationData *> notifications;
 };

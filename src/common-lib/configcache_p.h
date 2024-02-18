@@ -36,8 +36,8 @@ class ConfigCachePrivate
 {
 public:
     AbstractConfigCache::Options options;
-    quint32 typeId;
-    quint32 typeVersion;
+    quint32 typeId = 0;
+    quint32 typeVersion = 0;
     QStringList rawFiles;
     QString cacheBaseName;
     QVector<ConfigCacheEntry> cache;

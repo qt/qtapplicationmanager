@@ -75,8 +75,8 @@ signals:
 
 private slots:
     void onProcessStarted();
-    void onProcessFinished(int exitCode, Am::ExitStatus status);
-    void onProcessError(Am::ProcessError error);
+    void onProcessFinished(int exitCode, QtAM::Am::ExitStatus status);
+    void onProcessError(QtAM::Am::ProcessError error);
     void onDBusPeerConnection(const QDBusConnection &connection);
 
 protected:

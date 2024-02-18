@@ -50,8 +50,8 @@ private:
     void sendPropertyToServer(::wl_surface *surface, const QString &name, const QVariant &value);
     void qtam_extension_window_property_changed(wl_surface *surface, const QString &name, wl_array *value) override;
 
-    QMap<QWindow *, QVariantMap> m_windowProperties;
-    QMap<QWindow *, ::wl_surface *> m_windowToSurface;
+    QMap<QWindow *, QVariantMap> m_windowProperties;    // AXIVION Line Qt-QMapWithPointerKey: cleared on destroyed signal
+    QMap<QWindow *, ::wl_surface *> m_windowToSurface;  // AXIVION Line Qt-QMapWithPointerKey: cleared on destroyed signal
 };
 
 QT_END_NAMESPACE_AM

@@ -70,7 +70,7 @@ private:
     QString m_appRelativeCodePath;
     QString m_hostPath;
     QString m_containerPath;
-    int m_statusPipeFd[2];
+    int m_statusPipeFd[2] = { -1, -1 };
     QVector<int> m_stdioRedirections;
     QMap<QString, QString> m_debugWrapperEnvironment;
     QStringList m_debugWrapperCommand;
@@ -79,7 +79,7 @@ private:
     bool m_hasExitCode = false;
     int m_exitCode = 0;
 
-    QProcess *m_process;
+    QProcess *m_process = nullptr;
 };
 
 class BubblewrapContainerManager : public QObject, public ContainerManagerInterface

@@ -9,6 +9,7 @@
 #include "intentmodel.h"
 
 #include <QtAppManCommon/logging.h>
+#include <QtAppManCommon/exception.h>
 
 #include <algorithm>
 
@@ -218,20 +219,20 @@ Intent *IntentServer::addIntent(const QString &id, const QString &packageId,
 {
     try {
         if (id.isEmpty())
-            throw "no id specified";
+            throw Exception("no id specified");
         if (packageId.isEmpty())
-            throw "no packageId specified";
+            throw Exception("no packageId specified");
         if (handlingApplicationId.isEmpty())
-            throw "no handlingApplicationId specified";
+            throw Exception("no handlingApplicationId specified");
         if (!m_knownApplications.contains(packageId))
-            throw "packageId is not known";
+            throw Exception("packageId is not known");
         if (!m_knownApplications.value(packageId).contains(handlingApplicationId))
-            throw "applicationId is not known or not part of the specified package";
+            throw Exception("applicationId is not known or not part of the specified package");
         if (applicationIntent(id, handlingApplicationId))
-            throw "intent with given id/handlingApplicationId already exists";
-    } catch (const char *e) {
+            throw Exception("intent with given id/handlingApplicationId already exists");
+    } catch (const Exception &e) {
         qCWarning(LogIntents) << "Cannot add intent" << id << "in package" << packageId
-                              << "handled by" << handlingApplicationId << ":" << e;
+                              << "handled by" << handlingApplicationId << ":" << e.errorString();
         return nullptr;
     }
 

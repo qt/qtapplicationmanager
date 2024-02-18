@@ -65,9 +65,8 @@ private:
     static void deferredMessageHandler(QtMsgType msgType, const QMessageLogContext &context, const QString &message);
 };
 
-void am_trace(QDebug);
-template <typename T, typename... TRest> void am_trace(QDebug dbg, T t, TRest... trest)
-{ dbg << t; am_trace(dbg, trest...); }
+template <typename... Ts> void am_trace(QDebug dbg, Ts &&... ts)
+{ (dbg << ... << ts); }
 
 #define AM_TRACE(category, ...) \
     for (bool qt_category_enabled = category().isDebugEnabled(); qt_category_enabled; qt_category_enabled = false) { \

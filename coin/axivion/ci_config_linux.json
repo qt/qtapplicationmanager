@@ -1,4 +1,41 @@
 {
+    "Analysis": {
+        "EnableDisable": {
+            "_active": true
+        },
+        "EnableDisableSingleRule": {
+            "_active": true
+        },
+        "InitialExternalAnnotations": {
+            "_active": true,
+            "initial_comments": {
+                "$(delta:+)": {
+                    "src/3rdparty/libarchive/*.h": [
+                        "AXIVION Disable"
+                    ],
+                    "src/3rdparty/libyaml/*/*.h": [
+                        "AXIVION Disable"
+                    ],
+                    "build/src/*/*": [
+                        "AXIVION Disable"
+                    ],
+                    "build/include/*/*": [
+                        "AXIVION Disable"
+                    ]
+                },
+                "$(delta:-)": []
+            }
+        },
+        "NextLine": {
+            "_active": true
+        },
+        "PreviousLine": {
+            "_active": true
+        },
+        "SameLine": {
+            "_active": true
+        }
+    },
     "Project": {
         "BuildSystemIntegration": {
             "child_order": [

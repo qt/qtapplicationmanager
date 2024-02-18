@@ -23,7 +23,7 @@ class ProcessReader : public QObject {
 
 public:
     QMutex mutex;
-    qreal cpuLoad;
+    qreal cpuLoad = 0.0;
     struct Memory {
         quint32 totalVm = 0;
         quint32 totalRss = 0;

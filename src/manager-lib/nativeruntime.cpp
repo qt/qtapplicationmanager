@@ -175,7 +175,7 @@ bool NativeRuntime::initialize()
         }
 
         const QString launcherName = u"/appman-launcher-"_s + manager()->identifier();
-        for (const QString &possibleLocation : possibleLocations) {
+        for (const QString &possibleLocation : std::as_const(possibleLocations)) {
             QFileInfo fi(possibleLocation + launcherName);
 
             if (fi.exists() && fi.isExecutable()) {

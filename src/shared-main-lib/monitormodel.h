@@ -71,7 +71,7 @@ private:
     };
 
     struct DataSource {
-        QObject *obj;
+        QObject *obj = nullptr;
         QVector<QByteArray> roleNames;
     };
 

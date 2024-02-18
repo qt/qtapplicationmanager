@@ -641,7 +641,7 @@ IntentServerHandler::~IntentServerHandler()
 {
     IntentServer *is = IntentServer::instance();
 
-    for (const auto &intent : m_registeredIntents)
+    for (const auto &intent : std::as_const(m_registeredIntents))
         is->removeIntent(intent);
 
     delete m_intent;

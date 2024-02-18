@@ -80,6 +80,7 @@ public:
     ConfigCache(const QStringList &configFiles, const QString &cacheBaseName, std::array<char, 4> typeId,
                 quint32 typeVersion = 0, Options options = None)
         : AbstractConfigCache(configFiles, cacheBaseName, typeId, typeVersion, options)
+        , m_adaptor()
     { }
 
     ~ConfigCache() override

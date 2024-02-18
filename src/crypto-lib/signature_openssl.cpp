@@ -13,6 +13,7 @@
 QT_BEGIN_NAMESPACE_AM
 
 // clazy:excludeall=non-pod-global-static
+// AXIVION DISABLE Qt-NonPodGlobalStatic
 
 // dummy structures
 struct BIO;

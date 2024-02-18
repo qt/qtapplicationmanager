@@ -29,7 +29,9 @@ public:
     explicit Exception(const QFileDevice &file, const char *errorString) noexcept;
 
     Exception(const Exception &copy) noexcept;
+    Exception &operator=(const Exception &copy) noexcept;
     Exception(Exception &&move) noexcept;
+    Exception &operator=(Exception &&move) noexcept;
 
     ~Exception() noexcept override;
 
@@ -74,7 +76,7 @@ public:
     // this will generate compiler errors if there's no suitable QString::arg(const Ts &) overload
     template <typename... Ts> Exception &arg(const Ts & ...ts) noexcept
     {
-        m_errorString = m_errorString.arg(ts...);
+        m_errorString = m_errorString.arg(ts...); // AXIVION Line Qt-QStringArg: Axivion thinks ts is an int
         return *this;
     }
 

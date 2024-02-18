@@ -493,7 +493,7 @@ QVector<Application *> ApplicationManager::applications() const
 
 Application *ApplicationManager::fromId(const QString &id) const
 {
-    for (Application *app : d->apps) {
+    for (Application *app : std::as_const(d->apps)) {
         if (app->id() == id)
             return app;
     }
@@ -509,7 +509,7 @@ QVector<Application *> ApplicationManager::fromProcessId(qint64 pid) const
 
     int level = 0;
     while ((pid > 1) && (pid != appmanPid) && (level < 5)) {
-        for (Application *app : d->apps) {
+        for (Application *app : std::as_const(d->apps)) {
             if (apps.contains(app))
                 continue;
             if (app->currentRuntime() && (app->currentRuntime()->applicationProcessId() == pid))
@@ -526,7 +526,7 @@ Application *ApplicationManager::fromSecurityToken(const QByteArray &securityTok
     if (securityToken.size() != AbstractRuntime::SecurityTokenSize)
         return nullptr;
 
-    for (Application *app : d->apps) {
+    for (Application *app : std::as_const(d->apps)) {
         if (app->currentRuntime() && app->currentRuntime()->securityToken() == securityToken)
             return app;
     }
@@ -537,7 +537,7 @@ QVector<Application *> ApplicationManager::schemeHandlers(const QString &scheme)
 {
     QVector<Application *> handlers;
 
-    for (Application *app : d->apps) {
+    for (Application *app : std::as_const(d->apps)) {
         const auto mimeTypes = app->supportedMimeTypes();
         for (const QString &mime : mimeTypes) {
             auto pos = mime.indexOf(u'/');
@@ -556,7 +556,7 @@ QVector<Application *> ApplicationManager::mimeTypeHandlers(const QString &mimeT
 {
     QVector<Application *> handlers;
 
-    for (Application *app : d->apps) {
+    for (Application *app : std::as_const(d->apps)) {
         if (app->supportedMimeTypes().contains(mimeType))
             handlers << app;
     }
@@ -833,17 +833,18 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
         return successfullyStarted;
     };
 
-    auto tryStartInContainer = [container, inProcess, doStartInContainer]() -> bool {
+    auto tryStartInContainer = [this, container, inProcess, doStartInContainer]() -> bool {
         if (inProcess || container->isReady()) {
             // Since the container is already ready, start the app immediately
             return doStartInContainer();
         } else {
             // We postpone the starting of the application to a later point in time,
             // since the container is not ready yet
-#  if defined(Q_CC_MSVC)
-            qApp->connect(container, &AbstractContainer::ready, doStartInContainer); // MSVC cannot distinguish between static and non-static overloads in lambdas
-# else
-            connect(container, &AbstractContainer::ready, doStartInContainer);
+            // since the container is not ready yet
+#if defined(Q_CC_MSVC)
+            qApp->connect(container, &AbstractContainer::ready, this, doStartInContainer); // MSVC cannot distinguish between static and non-static overloads in lambdas
+#else
+            connect(container, &AbstractContainer::ready, this, doStartInContainer);
 #endif
             return true;
         }

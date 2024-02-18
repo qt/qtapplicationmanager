@@ -325,7 +325,8 @@ void Main::loadStartupPlugins(const QStringList &startupPluginPaths) noexcept(fa
 {
     QStringList systemStartupPluginPaths;
     const QDir systemStartupPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + u"appman_startup"_s);
-    for (const auto &pluginName : systemStartupPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot)) {
+    const auto allPluginNames = systemStartupPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot);
+    for (const auto &pluginName : allPluginNames) {
         const QString filePath = systemStartupPluginDir.absoluteFilePath(pluginName);
         if (!QLibrary::isLibrary(filePath))
             continue;
@@ -414,7 +415,8 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
 #endif
         QStringList systemContainerPluginPaths;
         const QDir systemContainerPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + u"appman_container"_s);
-        for (const auto &pluginName : systemContainerPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot)) {
+        const auto allPluginNames = systemContainerPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot);
+        for (const auto &pluginName : allPluginNames) {
             const QString filePath = systemContainerPluginDir.absoluteFilePath(pluginName);
             if (!QLibrary::isLibrary(filePath))
                 continue;
@@ -473,7 +475,7 @@ void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePacka
 
     for (auto package : allPackages) {
         // check that the runtimes are supported in this instance of the AM
-        auto apps = package->applications();
+        const auto apps = package->applications();
 
         for (const auto app : apps) {
             if (!RuntimeFactory::instance()->manager(app->runtimeName()))
@@ -987,11 +989,12 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
 #endif // defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
 }
 
-QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName,
+QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName,
                                  const char *serviceName, const char *path) noexcept(false)
 {
 #if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
     QString dbusAddress;
+    QString dbusRealName = dbusName;
     QDBusConnection conn((QString()));
     bool isP2P = false;
 
@@ -1015,7 +1018,7 @@ QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName
         conn = QDBusConnection::connectToBus(dbusAddress, u"qtam_session"_s);
         if (!conn.isConnected())
             return { };
-        dbusName = u"session"_s;
+        dbusRealName = u"session"_s;
     } else if (dbusName == u"p2p") {
         if (!m_p2pServer && !m_p2pFailed) {
             m_p2pServer = new QDBusServer(this);
@@ -1047,29 +1050,29 @@ QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, QString dbusName
     if (!isP2P) {
         if (!conn.isConnected()) {
             throw Exception("could not connect to D-Bus (%1): %2")
-                .arg(dbusAddress.isEmpty() ? dbusName : dbusAddress).arg(conn.lastError().message());
+                .arg(dbusAddress.isEmpty() ? dbusRealName : dbusAddress).arg(conn.lastError().message());
         }
 
         if (!conn.registerObject(QString::fromLatin1(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
             throw Exception("could not register object %1 on D-Bus (%2): %3")
-                .arg(QString::fromLatin1(path)).arg(dbusName).arg(conn.lastError().message());
+                .arg(QString::fromLatin1(path)).arg(dbusRealName).arg(conn.lastError().message());
         }
 
         if (!conn.registerService(QString::fromLatin1(serviceName))) {
             throw Exception("could not register service %1 on D-Bus (%2): %3")
-                .arg(QString::fromLatin1(serviceName)).arg(dbusName).arg(conn.lastError().message());
+                .arg(QString::fromLatin1(serviceName)).arg(dbusRealName).arg(conn.lastError().message());
         }
     }
 
     if (adaptor->parent() && adaptor->parent()->parent()) {
         // we need this information later on to tell apps where services are listening
-        adaptor->parent()->parent()->setProperty("_am_dbus_name", dbusName);
+        adaptor->parent()->parent()->setProperty("_am_dbus_name", dbusRealName);
         adaptor->parent()->parent()->setProperty("_am_dbus_address", dbusAddress);
     }
 
-    qCDebug(LogDBus).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
+    qCDebug(LogDBus).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusRealName << "]";
 
-    return dbusAddress.isEmpty() ? dbusName : dbusAddress;
+    return dbusAddress.isEmpty() ? dbusRealName : dbusAddress;
 #else
     Q_UNUSED(adaptor)
     Q_UNUSED(dbusName)
@@ -1093,7 +1096,8 @@ QString Main::hardwareId() const
         }
 #else
         QVector<QNetworkInterface> candidateIfaces;
-        for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
+        const auto allIfaces = QNetworkInterface::allInterfaces();
+        for (const QNetworkInterface &iface : allIfaces) {
             if (iface.isValid()
                     && !(iface.flags() & (QNetworkInterface::IsPointToPoint | QNetworkInterface::IsLoopBack))
                     && iface.type() > QNetworkInterface::Virtual

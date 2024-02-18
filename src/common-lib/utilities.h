@@ -106,7 +106,7 @@ template <typename T>
 QVector<T *> loadPlugins(const char *type, const QStringList &files) noexcept(false)
 {
     QVector<T *> result;
-    auto plugins = loadPlugins_helper(type, files, qobject_interface_iid<T *>());
+    const auto plugins = loadPlugins_helper(type, files, qobject_interface_iid<T *>());
     for (auto p : plugins)
         result << qobject_cast<T *>(p);
     return result;

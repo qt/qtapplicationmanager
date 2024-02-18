@@ -41,15 +41,33 @@ Exception::Exception(const QFileDevice &file, const char *errorString) noexcept
 { }
 
 Exception::Exception(const Exception &copy) noexcept
-    : m_errorCode(copy.m_errorCode)
+    : QException(copy)
+    , m_errorCode(copy.m_errorCode)
     , m_errorString(copy.m_errorString)
 { }
 
-Exception::Exception(Exception &&move) noexcept
-    : m_errorCode(move.m_errorCode)
-    , m_errorString(move.m_errorString)
+Exception &Exception::operator=(const Exception &copy) noexcept
 {
-    std::swap(m_whatBuffer, move.m_whatBuffer);
+    if (this != &copy) {
+        QException::operator=(copy);
+        m_errorCode = copy.m_errorCode;
+        m_errorString = copy.m_errorString;
+    }
+    return *this;
+}
+
+Exception::Exception(Exception &&move) noexcept
+    : QException(move)
+    , m_errorCode(move.m_errorCode)
+    , m_errorString(move.m_errorString)
+{ }
+
+Exception &Exception::operator=(Exception &&move) noexcept
+{
+    QException::operator=(move);
+    m_errorCode = move.m_errorCode;
+    m_errorString = move.m_errorString;
+    return *this;
 }
 
 Exception::~Exception() noexcept

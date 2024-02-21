@@ -14,8 +14,8 @@ TestCase {
     when: windowShown
     name: "ApplicationManager"
 
-    property var simpleApplication
-    property var capsApplication
+    property ApplicationObject simpleApplication
+    property ApplicationObject capsApplication
     // Either appman is build in single-process mode or it was started with --force-single-process
     property bool singleProcess : Qt.application.arguments.indexOf("--force-single-process") !== -1
                                   || !AmTest.buildConfig[0].QT_FEATURES.QT_FEATURE_am_multi_process
@@ -408,7 +408,7 @@ TestCase {
         checkApplicationState(simpleApplication.id, Am.Running);
         ignoreWarning("Application tld.test.simple1 is already running - cannot start with debug-wrapper: %program% %arguments%");
         verify(!ApplicationManager.debugApplication(simpleApplication.id, "%program% %arguments%"))
-        ApplicationManager.stopApplication(simpleApplication.id, true);
+        ApplicationManager.stopApplication(simpleApplication.id);
         checkApplicationState(simpleApplication.id, Am.ShuttingDown);
         checkApplicationState(simpleApplication.id, Am.NotRunning);
     }
@@ -424,14 +424,14 @@ TestCase {
         verify(ApplicationManager.openUrl(data.url));
         checkApplicationState(data.expectedApp, Am.StartingUp);
         checkApplicationState(data.expectedApp, Am.Running);
-        ApplicationManager.stopApplication(data.expectedApp, true);
+        ApplicationManager.stopApplication(data.expectedApp);
         checkApplicationState(data.expectedApp, Am.ShuttingDown);
         checkApplicationState(data.expectedApp, Am.NotRunning);
 
         Qt.openUrlExternally(data.url);
         checkApplicationState(data.expectedApp, Am.StartingUp);
         checkApplicationState(data.expectedApp, Am.Running);
-        ApplicationManager.stopApplication(data.expectedApp, true);
+        ApplicationManager.stopApplication(data.expectedApp);
         checkApplicationState(data.expectedApp, Am.ShuttingDown);
         checkApplicationState(data.expectedApp, Am.NotRunning);
     }
@@ -456,11 +456,48 @@ TestCase {
         ApplicationManager.startApplication(simpleApplication.id);
         checkApplicationState(simpleApplication.id, Am.StartingUp);
         checkApplicationState(simpleApplication.id, Am.Running);
-        ApplicationManager.stopApplication(simpleApplication.id, true);
+        ApplicationManager.stopApplication(simpleApplication.id);
         checkApplicationState(simpleApplication.id, Am.ShuttingDown);
         checkApplicationState(simpleApplication.id, Am.NotRunning);
         verify(containerSelectionCalled);
         compare(containerSelectionAppId, simpleApplication.id);
         compare(containerSelectionConId, "process");
+    }
+
+    function test_applicationInterface() {
+        let req = IntentClient.sendIntentRequest("applicationInterfaceProperties", simpleApplication.id, { })
+        verify(req)
+        tryVerify(() => { return req.succeeded })
+        const ai = {
+            "applicationId": simpleApplication.id,
+            "applicationProperties": {
+                "pri1": "pri1",
+                "pro1": "pro1",
+                "proandpri": "pri2"
+            },
+            "icon": simpleApplication.icon.toString().split('/').pop(),
+            "systemProperties": {
+                "inall": "protected",
+                "nested": {
+                    "level2": {
+                        "level31": "overwritten",
+                        "level32": "hidden"
+                    }
+                },
+                "pro1": "pro1",
+                "proandpri": "pro4",
+                "pub1": "pub1",
+                "pubandpri": "pub3",
+                "pubandpro": "pro2"
+            },
+            "version": simpleApplication.version
+        }
+
+        compare(req.result, ai)
+
+        // cleanup
+        compare(simpleApplication.runState, Am.Running)
+        ApplicationManager.stopApplication(simpleApplication.id)
+        tryVerify(() => { return simpleApplication.runState === Am.NotRunning })
     }
 }

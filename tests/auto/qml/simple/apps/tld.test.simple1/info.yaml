@@ -21,3 +21,5 @@ mimeTypes: [
              "x-scheme-handler/x-test",
              "text/plain"
            ]
+intents:
+  - id: applicationInterfaceProperties

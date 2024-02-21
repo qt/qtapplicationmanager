@@ -17,6 +17,7 @@ file(GLOB_RECURSE TEST_DATA_FILES
     info.yaml
     testfile
     utilities.sh
+    binaries/*.zz
 )
 
 add_custom_target(Test-Data-Files SOURCES

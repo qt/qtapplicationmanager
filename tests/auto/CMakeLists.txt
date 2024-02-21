@@ -22,7 +22,7 @@ if (NOT ANDROID)
 endif()
 add_subdirectory(runtime)
 add_subdirectory(signature)
-add_subdirectory(utilities)
+add_subdirectory(architecture)
 add_subdirectory(yaml)
 
 if (LINUX)

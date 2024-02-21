@@ -6,6 +6,7 @@
 *.crt   binary
 
 *.bin   binary
+*.zz    binary
 
 .tag                    export-subst
 .gitignore              export-ignore

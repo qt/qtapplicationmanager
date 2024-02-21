@@ -22,4 +22,16 @@ ApplicationManagerWindow {
                 target.acknowledgeQuit();
         }
     }
+    IntentHandler {
+        intentIds: [ "applicationInterfaceProperties" ]
+        onRequestReceived: function(req) {
+            req.sendReply({
+                              "applicationId": ApplicationInterface.applicationId,
+                              "applicationProperties": ApplicationInterface.applicationProperties,
+                              "icon": ApplicationInterface.icon,
+                              "systemProperties": ApplicationInterface.systemProperties,
+                              "version": ApplicationInterface.version
+                          })
+        }
+    }
 }

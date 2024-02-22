@@ -85,7 +85,15 @@ using namespace Qt::StringLiterals;
     \row
         \li \c actions
         \li object
-        \li See the client side documentation of Notification::actions
+        \li See the client side documentation of Notification::actions. This is a list where each
+            item is a single property (the key is the actionId and the value the actionText).
+            Easier access is provided with the actionList role below.
+    \row
+        \li \c actionList
+        \li object
+        \li See the client side documentation of Notification::actions. In contrast to the
+            \c actions object above actions are provided as a list with \c actionId and
+            \c actionText properties
     \row
         \li \c showActionsAsIcons
         \li bool
@@ -124,6 +132,14 @@ using namespace Qt::StringLiterals;
         \li \c extended
         \li object
         \li See the client side documentation of Notification::extended
+    \row
+        \li \c created
+        \li date
+        \li The timestamp denoting when the notification was created
+    \row
+        \li \c updated
+        \li date
+        \li The timestamp denoting when the notification was last modififed
 
     \endtable
 
@@ -154,6 +170,7 @@ enum NMRoles
 
     ShowActionsAsIcons,
     Actions,
+    ActionList,
     DismissOnAction,
 
     IsAcknowledgeable,
@@ -166,7 +183,10 @@ enum NMRoles
     IsSticky, // if timeout == 0
     Timeout, // in msec
 
-    Extended // QVariantMap
+    Extended, // QVariantMap
+
+    Created,
+    Updated
 };
 }
 
@@ -189,6 +209,8 @@ struct NotificationData
     qreal progress = 0.0;
     int timeout = 0;
     QVariantMap extended;
+    QDateTime created;
+    QDateTime updated;
 
     QTimer *timer = nullptr;
 };
@@ -268,6 +290,7 @@ NotificationManager::NotificationManager(QObject *parent)
     d->roleNames.insert(NMRoles::Image, "image");
     d->roleNames.insert(NMRoles::ShowActionsAsIcons, "showActionsAsIcons");
     d->roleNames.insert(NMRoles::Actions, "actions");
+    d->roleNames.insert(NMRoles::ActionList, "actionList");
     d->roleNames.insert(NMRoles::DismissOnAction, "dismissOnAction");
     d->roleNames.insert(NMRoles::IsAcknowledgeable, "isAcknowledgeable");
     d->roleNames.insert(NMRoles::IsClickable, "isClickable");
@@ -277,6 +300,8 @@ NotificationManager::NotificationManager(QObject *parent)
     d->roleNames.insert(NMRoles::IsSticky, "isSticky");
     d->roleNames.insert(NMRoles::Timeout, "timeout");
     d->roleNames.insert(NMRoles::Extended, "extended");
+    d->roleNames.insert(NMRoles::Created, "created");
+    d->roleNames.insert(NMRoles::Updated, "updated");
 }
 
 NotificationManager::~NotificationManager()
@@ -326,6 +351,16 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
         actions.removeAll(QVariantMap { { u"default"_s, QString() } });
         return actions;
     }
+    case NMRoles::ActionList: {
+        QVariantList actionList;
+        for (const auto &e : std::as_const(n->actions)) {
+            const QString key = e.toMap().keys()[0];
+            const QString value = e.toMap().value(key).toString();
+            if (key != u"default"_s || !value.isEmpty())
+                actionList.append(QVariantMap { { u"actionId"_s, key }, { u"actionText"_s, value } });
+        }
+        return actionList;
+    }
     case NMRoles::DismissOnAction:
         return n->dismissOnAction;
     case NMRoles::IsClickable: // legacy
@@ -343,6 +378,10 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
         return n->timeout;
     case NMRoles::Extended:
         return n->extended;
+    case NMRoles::Created:
+        return n->created;
+    case NMRoles::Updated:
+        return n->updated;
     }
     return { };
 }
@@ -513,51 +552,39 @@ uint NotificationManager::Notify(const QString &app_name, uint replaces_id, cons
 {
     static uint idCounter = 0;
 
-    qCDebug(LogNotifications) << "Notify" << app_name << replaces_id << app_icon << summary << body << actions << hints << timeout;
+    auto now = QDateTime::currentDateTime();
 
-    if (replaces_id == 0) { // new notification
-        uint id = ++idCounter;
-        // we need to delay the model update until the client has a valid id
-        QMetaObject::invokeMethod(this, [this, app_name, id, app_icon, summary, body, actions, hints, timeout]() {
-            notifyHelper(app_name, id, false, app_icon, summary, body, actions, hints, timeout);
-        }, Qt::QueuedConnection);
-        return id;
-    } else {
-        return notifyHelper(app_name, replaces_id, true, app_icon, summary, body, actions, hints, timeout);
-    }
-}
-
-uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool replaces, const QString &app_icon,
-                                       const QString &summary, const QString &body, const QStringList &actions,
-                                       const QVariantMap &hints, int timeout)
-{
-    Q_ASSERT(id);
-    NotificationData *n = nullptr;
-
-    if (replaces) {
-       int i = d->findNotificationById(id);
-
-       if (i < 0) {
-           qCDebug(LogNotifications) << "  -> failed to update existing notification";
-           return 0;
-       }
-       n = d->notifications.at(i);
-       qCDebug(LogNotifications) << "  -> updating existing notification";
-    } else {
-        n = new NotificationData;
-        n->id = id;
-
-        beginInsertRows(QModelIndex(), rowCount(), rowCount());
-        qCDebug(LogNotifications) << "  -> adding new notification with id" << id;
-    }
+    qCDebug(LogNotifications) << "Notify" << app_name << replaces_id << app_icon << summary << body << actions << hints
+                              << now << timeout;
 
     Application *app = ApplicationManager::instance()->fromId(app_name);
+    NotificationData *n;
+    if (replaces_id) {
+        int i = d->findNotificationById(replaces_id);
 
-    if (replaces && app != n->application) {
-        // no hijacking allowed
-        qCDebug(LogNotifications) << "  -> failed to update notification, due to hijacking attempt";
-        return 0;
+        if (i < 0) {
+            qCDebug(LogNotifications) << "  -> failed to update existing notification";
+            return 0;
+        }
+        n = d->notifications.at(i);
+
+        if (app != n->application) {
+            qCDebug(LogNotifications) << "  -> failed to update notification, due to hijacking attempt";
+            return 0;
+        }
+
+        n->updated = now;
+
+        qCDebug(LogNotifications) << "  -> updating existing notification";
+    } else {
+        n = new NotificationData;
+        n->id = ++idCounter;
+        n->created = now;
+        n->updated = now;
+
+        qCDebug(LogNotifications) << "  -> adding new notification with id" << n->id;
     }
+
     n->application = app;
     n->priority = hints.value(u"urgency"_s, QVariant(0)).toUInt();
     n->summary = summary;
@@ -583,6 +610,22 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
     n->timeout = qMax(0, timeout);
     n->extended = convertFromDBusVariant(hints.value(u"x-pelagicore-extended"_s)).toMap();
 
+    if (replaces_id == 0) { // new notification
+        // we need to delay the model update until the client has a valid id
+        QMetaObject::invokeMethod(this, [this, n, timeout]() {
+                    notifyHelper(n, false, timeout);
+                }, Qt::QueuedConnection);
+        return n->id;
+    } else {
+        return notifyHelper(n, true, timeout);
+    }
+}
+
+uint NotificationManager::notifyHelper(NotificationData *n, bool replaces, int timeout)
+{
+    uint id = n->id;
+    Q_ASSERT(id);
+
     if (replaces) {
         QModelIndex idx = index(int(d->notifications.indexOf(n)), 0);
         emit dataChanged(idx, idx);
@@ -592,6 +635,7 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
             emit notificationChanged(n->id, QStringList());
         }
     } else {
+        beginInsertRows(QModelIndex(), rowCount(), rowCount());
         d->notifications << n;
         endInsertRows();
         emit notificationAdded(n->id);
@@ -600,10 +644,10 @@ uint NotificationManager::notifyHelper(const QString &app_name, uint id, bool re
     if (timeout > 0) {
         delete n->timer;
         QTimer *t = new QTimer(this);
-        connect(t, &QTimer::timeout,
-                this, [this, id, t]() {
-            d->closeNotification(id, TimeoutExpired); t->deleteLater();
-        });
+        connect(t, &QTimer::timeout, this, [this, id, t]() {
+                    d->closeNotification(id, TimeoutExpired);
+                    t->deleteLater();
+                });
         t->start(timeout);
         n->timer = t;
     }
@@ -622,7 +666,7 @@ void NotificationManager::CloseNotification(uint id)
 
 void NotificationManagerPrivate::closeNotification(uint id, CloseReason reason)
 {
-    qCDebug(LogNotifications) << "Close" << id;
+    qCDebug(LogNotifications) << "Close id:" << id << "reason:" << reason;
 
     int i = findNotificationById(id);
 

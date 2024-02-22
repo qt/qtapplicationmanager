@@ -15,6 +15,7 @@ QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
+struct NotificationData;
 class NotificationManagerPrivate;
 
 class NotificationManager : public QAbstractListModel
@@ -45,7 +46,8 @@ public:
     // vv libnotify DBus interface
     Q_SCRIPTABLE QString GetServerInformation(QString &vendor, QString &version, QString &spec_version);
     Q_SCRIPTABLE QStringList GetCapabilities();
-    Q_SCRIPTABLE uint Notify(const QString &app_name, uint replaces_id, const QString &app_icon, const QString &summary, const QString &body, const QStringList &actions, const QVariantMap &hints, int timeout);
+    Q_SCRIPTABLE uint Notify(const QString &app_name, uint replaces_id, const QString &app_icon, const QString &summary,
+                             const QString &body, const QStringList &actions, const QVariantMap &hints, int timeout);
     Q_SCRIPTABLE void CloseNotification(uint id);
 
 Q_SIGNALS:
@@ -60,7 +62,7 @@ Q_SIGNALS:
     void notificationChanged(uint id, const QStringList &rolesChanged);
 
 private:
-    uint notifyHelper(const QString &app_name, uint id, bool replaces, const QString &app_icon, const QString &summary, const QString &body, const QStringList &actions, const QVariantMap &hints, int timeout);
+    uint notifyHelper(NotificationData *n, bool replaces, int timeout);
 
 private:
     NotificationManager(QObject *parent = nullptr);

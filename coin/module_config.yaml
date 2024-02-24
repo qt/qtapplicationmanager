@@ -27,6 +27,21 @@ instructions:
       condition: property
       property: features
       contains_value: Axivion_qtapplicationmanager
+  # Enable a lcov code-coverage build
+  - type: AppendToEnvironmentVariable
+    variableName: NON_QTBASE_CMAKE_ARGS
+    variableValue: " -DAM_COVERAGE=ON"
+    enable_if:
+      condition: property
+      property: features
+      contains_value: lcov
+  - type: AppendToEnvironmentVariable
+    variableName: COMMON_TEST_CMAKE_ARGS
+    variableValue: " -DAM_COVERAGE=ON"
+    enable_if:
+      condition: property
+      property: features
+      contains_value: lcov
   - type: Rename
     sourcePath: "{{.SourceDir}}/coin/axivion/ci_config_common.json"
     targetPath: "{{.Env.HOME}}/axivion/ci_config_common.json"
@@ -38,7 +53,13 @@ instructions:
   - type: Group
     instructions:
       - !include "{{qt/qtbase}}/coin_module_build_template_v2.yaml"
-
+  - type: Group
+    instructions:
+      - !include "{{qt/qtapplicationmanager}}/cmake_module_lcov_code_coverage.yaml"
+    enable_if:
+      condition: property
+      property: features
+      contains_value: lcov
   Test:
     - type: EnvironmentVariable
       variableName: AM_TIMEOUT_FACTOR
@@ -54,6 +75,11 @@ instructions:
         - !include "{{qt/qtbase}}/coin_module_test_template_v3.yaml"
         - !include "{{qt/qtbase}}/coin_module_test_docs.yaml"
       disable_if:
-        condition: property
-        property: target.os
-        in_values: ["IOS", "Android", "WebAssembly", "QNX"]
+        condition: or
+        conditions:
+          - condition: property
+            property: target.os
+            in_values: ["IOS", "Android", "WebAssembly", "QNX"]
+          - condition: property
+            property: features
+            contains_value: lcov

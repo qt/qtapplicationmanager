@@ -10,16 +10,13 @@
             "_active": true,
             "initial_comments": {
                 "$(delta:+)": {
-                    "src/3rdparty/libarchive/*.h": [
+                    "src/3rdparty/*": [
                         "AXIVION Disable"
                     ],
-                    "src/3rdparty/libyaml/*/*.h": [
+                    "build/*": [
                         "AXIVION Disable"
                     ],
-                    "build/src/*/*": [
-                        "AXIVION Disable"
-                    ],
-                    "build/include/*/*": [
+                    "/home/qt/work/install/include/QtWaylandClient/*": [
                         "AXIVION Disable"
                     ]
                 },

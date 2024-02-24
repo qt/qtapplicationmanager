@@ -85,26 +85,30 @@ if(AM_COVERAGE)
         '${CMAKE_CURRENT_BINARY_DIR}/*'
     )
 
-    if(QT_SOURCE_TREE)
-        string(REGEX REPLACE "/qtbase$" "" qtSrcDir ${QT_SOURCE_TREE})
-        list(APPEND GCOV_EXCLUDE '${qtSrcDir}/*')
+    if(QT_BUILD_STANDALONE_TESTS)
+        # this is currently hard-coded for Coin's standalone tests
+        set(GCOV_EXTRA_FOLDER "../qtapplicationmanager_build")
+        set(LCOV_EXTRA_ARGS -d ${GCOV_EXTRA_FOLDER})
+    endif()
+    set(COVERAGE_DEPENDS all)
+    if(QT_WILL_INSTALL)
+        list(APPEND COVERAGE_DEPENDS tests/auto/install)
     endif()
 
     add_custom_target(check_coverage
         COMMAND sh -c 'which lcov >/dev/null || { echo "The lcov tool is not available." && exit 2 \; }'
         COMMAND sh -c 'which genhtml >/dev/null || { echo "The genhtml tool is not available." && exit 2 \; }'
         COMMAND find . \\\( -name \"*.gcov-info\" -o -name \"*.gcda\" \\\) -print0 | xargs -0 rm -f
-        COMMAND lcov -keep-going -c -i -d . --rc branch_coverage=1 --rc geninfo_auto_base=1 -o "${CMAKE_CURRENT_BINARY_DIR}/base.gcov-info"
+        COMMAND lcov -keep-going -c -i -d . ${LCOV_EXTRA_ARGS} --rc branch_coverage=1 --rc geninfo_auto_base=1 -o "${CMAKE_CURRENT_BINARY_DIR}/base.gcov-info"
         COMMAND ctest --test-dir tests/auto --verbose
-        COMMAND lcov -keep-going -c -d . --rc branch_coverage=1 --rc geninfo_auto_base=1 -o "${CMAKE_CURRENT_BINARY_DIR}/test.gcov-info"
-        COMMAND lcov -keep-going --rc branch_coverage=1 -o "${CMAKE_CURRENT_BINARY_DIR}/temp.gcov-info" `find . -name \"*.gcov-info\" | xargs -n1 echo -a`
+        COMMAND lcov -keep-going -c -d . ${LCOV_EXTRA_ARGS} --rc branch_coverage=1 --rc geninfo_auto_base=1 -o "${CMAKE_CURRENT_BINARY_DIR}/test.gcov-info"
+        COMMAND lcov -keep-going --rc branch_coverage=1 -o "${CMAKE_CURRENT_BINARY_DIR}/temp.gcov-info" `find . ${GCOV_EXTRA_FOLDER} -name \"*.gcov-info\" | xargs -n1 echo -a`
         COMMAND lcov -keep-going --rc branch_coverage=1 -o "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.gcov-info" -r temp.gcov-info ${GCOV_EXCLUDE}
         COMMAND rm -f base.gcov-info test.gcov-info temp.gcov-info
         COMMAND genhtml -o coverage-report -s -f -t "${PROJECT_NAME}" --legend --branch-coverage --rc branch_coverage=1 --rc geninfo_unexecuted_blocks=1 --demangle-cpp "c++filt" ${PROJECT_NAME}.gcov-info
         COMMAND echo \"\\n\\nCoverage info is available at file://`pwd`/coverage-report/index.html\\n\"
 
-        DEPENDS
-            qtapplicationmanager create-test-packages tests/auto/install
+        DEPENDS ${COVERAGE_DEPENDS}
         USES_TERMINAL
     )
 endif()

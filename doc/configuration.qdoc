@@ -94,7 +94,7 @@ ui:
         \li Prints the build configuration of the application manager in YAML format and exits.
     \row
         \li \b --config-file or \b -c
-        \li array<string>
+        \li list<string>
         \li Loads configuration settings from a set of files. You can use more than one config
             file, for example, to split the configuration cleanly, into a device specific and a
             UI specific part. All the config files' content are merged in the order in which they
@@ -233,11 +233,11 @@ ui:
     \row
         \li \b -I
             \br [\c ui/importPaths]
-        \li array<string>
+        \li list<string>
         \li Adds additional QML import paths to the System UI.
     \row
         \li [\c ui/pluginPaths]
-        \li array<string>
+        \li list<string>
         \li Adds additional Qt plugin paths to the System UI.
     \row
         \li [\c ui/style]
@@ -245,13 +245,13 @@ ui:
         \li If set, the given style is used by QtQuickControls 2.
     \row
         \li [\c ui/resources]
-        \li array<string>
+        \li list<string>
         \li Takes a list of \l{The Qt Resource System}{Qt resource} files (.rcc) or libraries that
             have resources \l{Resource Collection Files}{compiled-in} and registers them within the
             System UI process. Resources can be accessed with the ":" or "qrc://" file path prefix.
     \row
         \li [\c plugins]
-        \li map<array<string>>
+        \li map<list<string>>
         \li A string-to-string-list map that defines plugins that the application manager should
             load. The value must be a single plugin or a list of plugin library file path names.
             Currently the only valid keys are \c startup and \c container:
@@ -356,7 +356,7 @@ ui:
     \row
         \li \b --logging-rule
             \br [\c logging/rules]
-        \li array<string>
+        \li list<string>
         \li Adds standard Qt logging rules - see the QLoggingCategory documentation for the
             required format. Application manager specific logging categories are described in
             \l {Logging and Debugging}.
@@ -403,7 +403,7 @@ ui:
         \li Enables QML Debugging/Profiling. For more information, see \l {Logging and Debugging}.
     \row
         \li [\c installationLocations]
-        \li array<object>
+        \li list<object>
         \li The definition of installation locations available on the system. This is deprecated,
             since only a single installation location is supported now, defined by \c
             --installationDir or \c{applications/installationDir}.
@@ -622,17 +622,17 @@ an additional column specifying which runtime a configuration option applies to:
     \row
         \li \c importPaths
         \li qml
-        \li array<string>
+        \li list<string>
         \li Adds additional QML import paths for apps started via this runtime.
     \row
         \li \c pluginPaths
         \li qml
-        \li array<string>
+        \li list<string>
         \li Adds additional Qt plugin paths for apps started via this runtime.
     \row
         \li \c plugins
         \li qml
-        \li map<array<string>>
+        \li map<list<string>>
         \li A string-to-string-list map that defines plugins that the QML runtime should load. The
             value must be a single plugin or a list of plugin library file path names. Currently
             the only valid key is \c startup:
@@ -643,7 +643,7 @@ an additional column specifying which runtime a configuration option applies to:
     \row
         \li \c resources
         \li qml
-        \li array<string>
+        \li list<string>
         \li Takes a list of \l{The Qt Resource System}{Qt resource} files (.rcc) or libraries that
             have resources \l{Resource Collection Files}{compiled-in} and registers them within each
             QML runtime. Consequently, all running QML applications will include these resources.

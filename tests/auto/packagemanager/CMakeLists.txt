@@ -1,8 +1,8 @@
 
-qt_internal_add_test(tst_applicationinstaller
+qt_internal_add_test(tst_packagemanager
     SOURCES
         ../error-checking.h
-        tst_applicationinstaller.cpp
+        tst_packagemanager.cpp
     DEFINES
         AM_TESTDATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../../data/"
     LIBRARIES
@@ -13,7 +13,7 @@ qt_internal_add_test(tst_applicationinstaller
         Qt::AppManPackagePrivate
 )
 
-qt_internal_extend_target(tst_applicationinstaller CONDITION TARGET Qt::DBus
+qt_internal_extend_target(tst_packagemanager CONDITION TARGET Qt::DBus
     LIBRARIES
         Qt::DBus
 )

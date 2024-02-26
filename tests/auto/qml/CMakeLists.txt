@@ -7,7 +7,7 @@ if(TARGET Qt6::Core)
 endif()
 
 
-add_subdirectory(simple)
+add_subdirectory(applicationmanager)
 add_subdirectory(windowmanager)
 add_subdirectory(windowmapping)
 add_subdirectory(windowitem)

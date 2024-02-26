@@ -808,4 +808,4 @@ int main(int argc, char **argv)
     return QTest::qExec(tstPackageManager, argc, argv);
 }
 
-#include "tst_applicationinstaller.moc"
+#include "tst_packagemanager.moc"

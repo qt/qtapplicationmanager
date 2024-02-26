@@ -161,6 +161,10 @@ void tst_PackageExtractor::extractAndVerify()
     QDirIterator it(m_extractDir->path(), QDir::NoDotAndDotDot | QDir::AllEntries, QDirIterator::Subdirectories);
     while (it.hasNext()) {
         QString entry = it.next();
+#if defined(Q_OS_MACOS)
+        // starting with Qt7 file names will be reported as-is in macOS decomposed form
+        entry = entry.normalized(QString::NormalizationForm_C);
+#endif
         entry = entry.mid(m_extractDir->path().size() + 1);
 
         QVERIFY2(checkEntries.contains(entry), qPrintable(entry));

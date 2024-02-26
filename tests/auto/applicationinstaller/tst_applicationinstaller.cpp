@@ -473,6 +473,9 @@ void tst_PackageManager::packageInstallation()
 #if defined(Q_OS_WIN)
             // files starting with . are not considered hidden on Windows
             files = files.filter(QRegularExpression(u"^[^.].*"_s));
+#elif defined(Q_OS_MACOS)
+            // starting with Qt7 file names will be reported as-is in macOS decomposed form
+            std::for_each(files.begin(), files.end(), [](QString &s) { s = s.normalized(QString::NormalizationForm_C); });
 #endif
             files.sort();
 

@@ -260,7 +260,7 @@ The fields used for each item within the \c applications list are as follows:
         field.
 \row
     \li \c categories
-    \li object
+    \li list<string>
     \li The list of categories for this application. It will default to the \c categories field in
         the global package section, but it can be overwritten for each application by specifying
         this field.
@@ -332,7 +332,7 @@ The fields used for each item within the \c intents list are as follows:
         package section, but it can be overwritten for each intent by specifying this field.
 \row
     \li \c categories
-    \li object
+    \li list<string>
     \li The list of categories for this intent. It will default to the \c categories field in the
         global package section, but it can be overwritten for each intent by specifying this field.
 \endtable

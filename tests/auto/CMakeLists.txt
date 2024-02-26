@@ -6,7 +6,7 @@ endif()
 
 add_subdirectory(application)
 add_subdirectory(applicationinfo)
-add_subdirectory(applicationinstaller)
+add_subdirectory(packagemanager)
 add_subdirectory(configuration)
 add_subdirectory(cryptography)
 add_subdirectory(debugwrapper)

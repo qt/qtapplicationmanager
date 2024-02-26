@@ -229,7 +229,7 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
       \li Logging should be done via DLT, if this is set to \c true.
     \row
       \li \c logging/rules
-      \li array<string>
+      \li list<string>
       \li The Qt logging rules as set in the application manager's main config.
     \row
       \li \c systemProperties

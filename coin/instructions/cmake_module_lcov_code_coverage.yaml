@@ -17,6 +17,9 @@ instructions:
       condition: runtime
       env_var: CMAKE_BUILD_OUTPUT_TIMEOUT
       equals_value: null
+  - type: EnvironmentVariable
+    variableName: AM_TIMEOUT_FACTOR
+    variableValue: 4
   - type: ExecuteCommand
     command: "{{.Env.CONFIGURE_ENV_PREFIX}} ninja check_coverage"
     executeCommandArgumentSplitingBehavior: SplitAfterVariableSubstitution
@@ -26,7 +29,17 @@ instructions:
     userMessageOnFailure: >
       Failed to run tests.
 
+  - type: MakeDirectory
+    directory: "upload"
+  - type: ExecuteCommand
+    command: "zip -r upload/coverage-report.zip coverage-report"
+    ignoreExitCode: false
+    maxTimeInSeconds: 10800
+    maxTimeBetweenOutput: 900
+    userMessageOnFailure: >
+      Failed to zip the coverage-report.
+
   - type: ScheduleUploadTestResults
   - type: EnvironmentVariable
     variableName: COIN_CTEST_RESULTSDIR
-    variableValue: "{{.SourceDir}}_standalone_tests/coverage-report"
+    variableValue: "{{.SourceDir}}_standalone_tests/upload"

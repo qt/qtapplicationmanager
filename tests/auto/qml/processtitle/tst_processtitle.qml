@@ -57,7 +57,8 @@ TestCase {
             if (cmdLine.includes("/qemu-"))
                 skip("This doesn't work inside qemu")
 
-            verify(cmdLine.endsWith(executable + quickArg));
+            verify(cmdLine.endsWith(executable + quickArg),
+                   "cmdLine: '" + cmdLine + "' does not end with: '" + executable + quickArg + "'");
         } else {
             sigIdx = 1;
             quickArg = ""
@@ -79,10 +80,10 @@ TestCase {
         if (cmdLine.includes("/qemu-"))
             skip("This doesn't work inside qemu")
 
-        verify(AmTest.runProgram([ "ps", "--no-headers", pid ]).stdout.trim()
-               .endsWith(executable + ": " + data.resId + quickArg));
-
-        verify(cmdLine.endsWith(executable + ": " + data.resId + quickArg));
+        let psOutput = AmTest.runProgram([ "ps", "--no-headers", pid ]).stdout.trim()
+        let checkStr = executable + ": " + data.resId + quickArg
+        verify(psOutput.endsWith(checkStr), "ps output: '" + psOutput + "' does not end with: '" + checkStr + "'");
+        verify(cmdLine.endsWith(checkStr), "cmd.line: '" + cmdLine + "' does not end with: '" + checkStr + "'");
 
         let environment = AmTest.runProgram([ "cat", `/proc/${pid}/environ` ]).stdout
         verify(environment.includes("AM_CONFIG=%YAML"));

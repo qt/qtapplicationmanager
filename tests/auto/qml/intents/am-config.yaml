@@ -13,7 +13,7 @@ flags:
 
 runtimes:
   qml:
-    quitTime: 1000
+    quitTime: 3000
 
 intents:
   timeouts:

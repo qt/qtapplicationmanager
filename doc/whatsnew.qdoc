@@ -30,6 +30,8 @@ for all cases:
     \li The new API closely mirrors Qt's existing \l{Window} API, including the attached properties.
     \li Tracking the window's \l{ApplicationManagerWindow::}{active} state and its
         \l{ApplicationManagerWindow::}{activeFocusItem} is now supported also in single-process mode.
+    \li Embedding an ApplicationManagerWindow into another one similar to the preliminary
+        Window::parent mechanism is not supported yet.
     \li There still is full access to the \l{ApplicationManagerWindow::}{backingObject} (\l Window
         or \l Item) if needed.
 \endlist

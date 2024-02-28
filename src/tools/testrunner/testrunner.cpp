@@ -64,7 +64,7 @@ void TestRunner::setup(Configuration *cfg)
             QTest::setMainSourcePath(sourceFile.toLocal8Bit());
     }
     QuickTestResult::setCurrentAppname(argv.at(0));
-    QuickTestResult::setProgramName("appman-qmltestrunner");
+    QuickTestResult::setProgramName("qml");
 
     // Allocate a QuickTestResult to create QBenchmarkGlobalData, otherwise the benchmark options don't work
     volatile QuickTestResult result;

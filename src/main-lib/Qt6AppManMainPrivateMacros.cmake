@@ -114,6 +114,7 @@ function(qt6_am_add_systemui_wrapper target)
 
         file(GENERATE OUTPUT ${WRAPPER_SCRIPT} CONTENT
 "@echo off
+cd \"%~dp0\"
 SetLocal EnableDelayedExpansion
 (set \"PATH=${test_env_path};%PATH%\")
 (set \"QT_PLUGIN_PATH=${test_env_plugin_path}\")
@@ -126,6 +127,7 @@ EndLocal
         set(WRAPPER_SCRIPT "_${target}$<CONFIG>${WRAPPER_SUFFIX}")
         file(GENERATE OUTPUT ${WRAPPER_SCRIPT} CONTENT
 "#!/bin/sh
+cd \"\${0%/*}\"
 export PATH=\"${test_env_path}:$PATH\"
 export QT_PLUGIN_PATH=\"${test_env_plugin_path}\"
 exec ${ARG_EXECUTABLE} ${CMD_ARGS_STR} ${CMD_EXTRA_ARGS_STR} ${ARG_MAIN_QML_FILE} \"$@\";

@@ -97,6 +97,7 @@ if(AM_COVERAGE)
     add_custom_target(check_coverage
         COMMAND sh -c 'which lcov >/dev/null || { echo "The lcov tool is not available." && exit 2 \; }'
         COMMAND sh -c 'which genhtml >/dev/null || { echo "The genhtml tool is not available." && exit 2 \; }'
+        COMMAND sh -c 'lcov --version | grep -q "^lcov: LCOV version 2\." || { echo "The lcov tool must be version 2." && exit 2 \; }'
         COMMAND find . \\\( -name \"*.gcov-info\" -o -name \"*.gcda\" \\\) -print0 | xargs -0 rm -f
         COMMAND lcov -keep-going -c -i -d . ${LCOV_EXTRA_ARGS} --rc branch_coverage=1 --rc geninfo_auto_base=1 -o "${CMAKE_CURRENT_BINARY_DIR}/base.gcov-info"
         COMMAND ctest --test-dir tests/auto --verbose

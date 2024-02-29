@@ -17,6 +17,9 @@ set_property(CACHE INPUT_libarchive PROPERTY STRINGS undefined qt system)
 
 #### Libraries
 
+if(TARGET WrapLibYaml::WrapLibYaml)
+    qt_internal_disable_find_package_global_promotion(WrapLibYaml::WrapLibYaml)
+endif()
 qt_find_package(WrapLibYaml PROVIDED_TARGETS WrapLibYaml::WrapLibYaml MODULE_NAME appman_common QMAKE_LIB yaml)
 qt_find_package(WrapLibArchive PROVIDED_TARGETS WrapLibArchive::WrapLibArchive MODULE_NAME appman_package QMAKE_LIB archive)
 

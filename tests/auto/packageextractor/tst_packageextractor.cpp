@@ -277,13 +277,6 @@ void tst_PackageExtractor::extractFromFifo()
     QTRY_VERIFY_WITH_TIMEOUT(fifo.isFinished(), 5000 * timeoutFactor());
 }
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication app(argc, argv);
-    app.setAttribute(Qt::AA_Use96Dpi, true);
-    tst_PackageExtractor tc;
-    QTEST_SET_MAIN_SOURCE_PATH
-    return QTest::qExec(&tc, argc, argv);
-}
+QTEST_GUILESS_MAIN(tst_PackageExtractor)
 
 #include "tst_packageextractor.moc"

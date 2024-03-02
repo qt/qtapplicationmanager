@@ -429,6 +429,6 @@ void tst_Yaml::parallel()
     QCOMPARE(success.loadAcquire(), threadCount);
 }
 
-QTEST_MAIN(tst_Yaml)
+QTEST_GUILESS_MAIN(tst_Yaml)
 
 #include "tst_yaml.moc"

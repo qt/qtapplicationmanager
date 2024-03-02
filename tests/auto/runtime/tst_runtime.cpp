@@ -149,6 +149,6 @@ void tst_Runtime::factory()
     QVERIFY(!r->securityToken().isEmpty());
 }
 
-QTEST_MAIN(tst_Runtime)
+QTEST_GUILESS_MAIN(tst_Runtime)
 
 #include "tst_runtime.moc"

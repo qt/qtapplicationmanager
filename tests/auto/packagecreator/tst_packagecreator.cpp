@@ -150,13 +150,6 @@ QString tst_PackageCreator::escapeFilename(const QString &name)
     }
 }
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication app(argc, argv);
-    app.setAttribute(Qt::AA_Use96Dpi, true);
-    tst_PackageCreator tc;
-    QTEST_SET_MAIN_SOURCE_PATH
-    return QTest::qExec(&tc, argc, argv);
-}
+QTEST_GUILESS_MAIN(tst_PackageCreator)
 
 #include "tst_packagecreator.moc"

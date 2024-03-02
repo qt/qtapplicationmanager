@@ -69,10 +69,9 @@ if(AM_COVERAGE)
 
     set(QT_BUILD_TESTS ON)
     set(QT_BUILD_TESTS_BY_DEFAULT ON)
-    add_compile_options(-fprofile-arcs -ftest-coverage -fprofile-update=atomic)
-    add_link_options(-fprofile-arcs -fprofile-generate --coverage)
+    add_compile_options(--coverage -fprofile-update=atomic)
+    add_link_options(--coverage)
     add_compile_definitions(QT_AM_COVERAGE)
-    link_libraries(gcov)
 
     set(GCOV_EXCLUDE
         '/usr/*'

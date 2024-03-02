@@ -51,7 +51,7 @@ TestCase {
                 pid = match ? match[1] : 0
                 return pid
             }, spyTimeout);
-            wait(250 * AmTest.timeoutFactor);
+            wait(500 * AmTest.timeoutFactor);
 
             let cmdLine = AmTest.runProgram([ "cat", `/proc/${pid}/cmdline` ]).stdout.split('\0')[0]
             if (cmdLine.includes("/qemu-"))
@@ -72,6 +72,7 @@ TestCase {
 
         compare(runStateChangedSpy.signalArguments[sigIdx][0], data.appId);
         compare(runStateChangedSpy.signalArguments[sigIdx][1], ApplicationObject.Running);
+        wait(500 * AmTest.timeoutFactor);
 
         processStatus.applicationId = data.appId;
         pid = processStatus.processId;

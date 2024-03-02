@@ -38,7 +38,6 @@ int main(int argc, char **argv)
     try {
         auto cfg = std::make_unique<PSConfiguration>();
         cfg->parse(a.arguments());
-
         colorOut() << ColorPrint::bgreen << QCoreApplication::applicationName() << ColorPrint::reset;
         colorOut() << "> Data directory: " << ColorPrint::bmagenta << cfg->dataDirectory.absolutePath() << ColorPrint::reset;
         colorOut() << "> Project: " << ColorPrint::bcyan << cfg->projectId << ColorPrint::reset;

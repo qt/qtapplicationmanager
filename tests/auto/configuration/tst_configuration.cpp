@@ -517,6 +517,6 @@ void tst_Configuration::commandLineConfig()
 }
 
 
-QTEST_MAIN(tst_Configuration)
+QTEST_GUILESS_MAIN(tst_Configuration)
 
 #include "tst_configuration.moc"

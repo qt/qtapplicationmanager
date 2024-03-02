@@ -55,7 +55,6 @@ private:
     Main *m_main = nullptr;
     Configuration *m_config = nullptr;
     bool m_mainSetupDone = false;
-    QDir m_tmpDir;
 };
 
 
@@ -153,7 +152,6 @@ QString ControllerTool::s_command;
 
 tst_ControllerTool::tst_ControllerTool()
     : m_spyTimeout(5000 * timeoutFactor())
-    , m_tmpDir(u"/tmp/am-test-controller-tool"_s)
 { }
 
 void tst_ControllerTool::initTestCase()
@@ -207,10 +205,6 @@ void tst_ControllerTool::initTestCase()
         QVERIFY2(false, e.what());
     }
     PackageManager::instance()->setAllowInstallationOfUnsignedPackages(true);
-
-    if (m_tmpDir.exists())
-        m_tmpDir.removeRecursively();
-    QVERIFY(m_tmpDir.mkpath(u"."_s));
 }
 
 void tst_ControllerTool::cleanupTestCase()
@@ -230,9 +224,6 @@ void tst_ControllerTool::cleanupTestCase()
             delete [] m_argv[i];
         delete [] m_argv;
     }
-
-    if (m_tmpDir.exists())
-        m_tmpDir.removeRecursively();
 }
 
 void tst_ControllerTool::usage()

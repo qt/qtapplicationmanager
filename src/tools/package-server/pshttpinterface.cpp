@@ -216,7 +216,7 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
                        << " [" << (architecture.isEmpty() ? u"<any>"_s : architecture) << "] (no match)";
         }
         return QJsonObject { { u"status"_s, removeCount ? u"ok"_s : u"fail"_s },
-                           { u"removed"_s, QString::number(removeCount) } };
+                             { u"removed"_s,  removeCount } };
     });
 
     d->server->route(u"/category/list"_s, GetOrPost, [packages](const QHttpServerRequest &) {

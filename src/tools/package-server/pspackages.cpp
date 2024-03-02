@@ -25,6 +25,11 @@
 #if defined(Q_OS_UNIX)
 #  include <csignal>
 #  define AM_PS_SIGNALS  { SIGTERM, SIGINT, SIGFPE, SIGSEGV, SIGPIPE, SIGABRT, SIGQUIT }
+#  if defined(QT_AM_COVERAGE)
+extern "C" {
+#    include <gcov.h>
+}
+#  endif
 #else
 #  include <windows.h>
 #  define AM_PS_SIGNALS  { SIGTERM, SIGINT }
@@ -74,7 +79,6 @@ void PSPackages::initialize()
     // make sure to always clean up the lock file, even if we crash
     d->lockFilePath = d->lockFile->fileName().toLocal8Bit();
 
-
     UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler, AM_PS_SIGNALS,
                                            [this](int sig) {
         UnixSignalHandler::instance()->resetToDefault(sig);
@@ -85,7 +89,11 @@ void PSPackages::initialize()
 #else
         if (!d->lockFilePath.isEmpty())
             ::unlink(d->lockFilePath.constData());
-        ::kill(0, sig);
+
+#  if defined(QT_AM_COVERAGE)
+        __gcov_dump();
+#  endif
+        ::kill(::getpid(), sig);
 #endif
     });
 

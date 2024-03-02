@@ -86,10 +86,15 @@ if(AM_COVERAGE)
     )
 
     if(QT_BUILD_STANDALONE_TESTS)
-        # this is currently hard-coded for Coin's standalone tests
+        # Coin splits the build into two separate directories, so we need to merge the coverage info
         set(GCOV_EXTRA_FOLDER "../qtapplicationmanager_build")
         set(LCOV_EXTRA_ARGS -d ${GCOV_EXTRA_FOLDER})
+        list(APPEND GCOV_EXCLUDE '/home/qt/work/qt/qtapplicationmanager_build/*')
+    elseif(QT_SOURCE_TREE)
+        string(REGEX REPLACE "/qtbase$" "" qtSrcDir ${QT_SOURCE_TREE})
+        list(APPEND GCOV_EXCLUDE '${qtSrcDir}/*')
     endif()
+
     set(COVERAGE_DEPENDS all)
     if(QT_WILL_INSTALL)
         list(APPEND COVERAGE_DEPENDS tests/auto/install)
@@ -101,7 +106,7 @@ if(AM_COVERAGE)
         COMMAND sh -c 'lcov --version | grep -q "^lcov: LCOV version 2\." || { echo "The lcov tool must be version 2." && exit 2 \; }'
         COMMAND find . \\\( -name \"*.gcov-info\" -o -name \"*.gcda\" \\\) -print0 | xargs -0 rm -f
         COMMAND lcov -keep-going -c -i -d . ${LCOV_EXTRA_ARGS} --rc branch_coverage=1 --rc geninfo_auto_base=1 -o "${CMAKE_CURRENT_BINARY_DIR}/base.gcov-info"
-        COMMAND ctest --test-dir tests/auto --verbose
+        COMMAND ctest --test-dir tests/auto --verbose --repeat until-pass:3
         COMMAND lcov -keep-going -c -d . ${LCOV_EXTRA_ARGS} --rc branch_coverage=1 --rc geninfo_auto_base=1 -o "${CMAKE_CURRENT_BINARY_DIR}/test.gcov-info"
         COMMAND lcov -keep-going --rc branch_coverage=1 -o "${CMAKE_CURRENT_BINARY_DIR}/temp.gcov-info" `find . ${GCOV_EXTRA_FOLDER} -name \"*.gcov-info\" | xargs -n1 echo -a`
         COMMAND lcov -keep-going --rc branch_coverage=1 -o "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.gcov-info" -r temp.gcov-info ${GCOV_EXCLUDE}

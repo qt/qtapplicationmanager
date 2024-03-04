@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef PROCESSTITLE_H
+#define PROCESSTITLE_H
 
 #include <QtAppManCommon/global.h>
 
@@ -21,3 +22,5 @@ const char *title();
 }
 
 QT_END_NAMESPACE_AM
+
+#endif // PROCESSTITLE_H

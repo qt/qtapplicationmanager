@@ -1,7 +1,8 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
-#pragma once
+#ifndef PSCONFIGURATION_H
+#define PSCONFIGURATION_H
 
 #include <QStringList>
 #include <QUrl>
@@ -36,3 +37,5 @@ private:
     QString storeSignCertificateFile;
     QStringList developerVerificationCaCertificateFiles;
 };
+
+#endif // PSCONFIGURATION_H

@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef QML_UTILITIES_H
+#define QML_UTILITIES_H
 
 #include <QtAppManCommon/global.h>
 #include <QtQml/QQmlEngine>
@@ -23,3 +24,5 @@ QT_BEGIN_NAMESPACE_AM
 void loadQmlDummyDataFiles(QQmlEngine *engine, const QString &directory);
 
 QT_END_NAMESPACE_AM
+
+#endif // QML_UTILITIES_H

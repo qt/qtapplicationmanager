@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef FRAMETIMER_H
+#define FRAMETIMER_H
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QObject>
@@ -91,3 +92,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // FRAMETIMER_H

@@ -1,7 +1,8 @@
 // Copyright (C) 2021 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef FILESYSTEMMOUNTWATCHER_H
+#define FILESYSTEMMOUNTWATCHER_H
 
 #include <QtCore/QObject>
 #include <QtCore/QMultiMap>
@@ -35,3 +36,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // FILESYSTEMMOUNTWATCHER_H

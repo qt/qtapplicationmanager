@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef APPLICATIONINTERFACE_H
+#define APPLICATIONINTERFACE_H
 
 #include <QtCore/QObject>
 #include <QtCore/QUrl>
@@ -67,3 +68,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // APPLICATIONINTERFACE_H

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 // Needed for qmake only
-#pragma once
+#ifndef SEQUELPLUGIN_H
+#define SEQUELPLUGIN_H
 
 #include <QQmlEngineExtensionPlugin>
 
@@ -20,3 +21,5 @@ public:
         Q_UNUSED(registration);
     }
 };
+
+#endif // SEQUELPLUGIN_H

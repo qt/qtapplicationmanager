@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
-#pragma once
+#ifndef QMLCRASH_H
+#define QMLCRASH_H
 
 #include <QQmlExtensionPlugin>
 #include <QThread>
@@ -48,3 +49,5 @@ private:
     void run() override;
     QmlCrash *m_qmlCrash;
 };
+
+#endif // QMLCRASH_H

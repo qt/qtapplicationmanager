@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef INPROCESSSURFACEITEM_H
+#define INPROCESSSURFACEITEM_H
 
 #if 0
 #pragma qt_sync_skip_header_check
@@ -83,3 +84,5 @@ QT_END_NAMESPACE_AM
 
 Q_DECLARE_METATYPE(QtAM::InProcessSurfaceItem*)
 Q_DECLARE_METATYPE(QSharedPointer<QtAM::InProcessSurfaceItem>)
+
+#endif // INPROCESSSURFACEITEM_H

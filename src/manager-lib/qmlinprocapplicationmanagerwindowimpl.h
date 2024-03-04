@@ -1,7 +1,8 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef QMLINPROCAPPLICATIONMANAGERWINDOWIMPL_H
+#define QMLINPROCAPPLICATIONMANAGERWINDOWIMPL_H
 
 #include <QtCore/QMetaObject>
 #include <QtCore/QSharedPointer>
@@ -125,3 +126,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // QMLINPROCAPPLICATIONMANAGERWINDOWIMPL_H

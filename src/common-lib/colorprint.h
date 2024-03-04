@@ -1,7 +1,8 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef COLORPRINT_H
+#define COLORPRINT_H
 
 #include <cstdio>
 #include <QtCore/QByteArray>
@@ -94,3 +95,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // COLORPRINT_H

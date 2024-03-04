@@ -1,7 +1,8 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef APPLICATIONINTERFACEIMPL_H
+#define APPLICATIONINTERFACEIMPL_H
 
 #include <QtCore/QUrl>
 #include <QtCore/QVariantMap>
@@ -36,3 +37,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // APPLICATIONINTERFACEIMPL_H

@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef EXCEPTION_H
+#define EXCEPTION_H
 
 #include <QtCore/QString>
 #include <QtCore/QDir>
@@ -92,3 +93,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // EXCEPTION_H

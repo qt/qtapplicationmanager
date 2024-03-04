@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-#pragma once
+#ifndef TERMINATOR1_H
+#define TERMINATOR1_H
 
 #include <QQmlEngine>
 
@@ -21,3 +22,5 @@ public:
     [[noreturn]] Q_INVOKABLE void throwUnhandledException() const;
     [[noreturn]] Q_INVOKABLE void exitGracefully() const;
 };
+
+#endif // TERMINATOR1_H

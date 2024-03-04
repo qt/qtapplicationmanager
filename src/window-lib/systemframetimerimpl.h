@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef SYSTEMFRAMETIMERIMPL_H
+#define SYSTEMFRAMETIMERIMPL_H
 
 #include <QtCore/QPointer>
 #include <QtAppManSharedMain/frametimerimpl.h>
@@ -30,3 +31,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // SYSTEMFRAMETIMERIMPL_H

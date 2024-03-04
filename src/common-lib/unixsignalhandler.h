@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef UNIXSIGNALHANDLER_H
+#define UNIXSIGNALHANDLER_H
 
 #include <QtAppManCommon/global.h>
 #include <QtCore/QObject>
@@ -77,3 +78,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // UNIXSIGNALHANDLER_H

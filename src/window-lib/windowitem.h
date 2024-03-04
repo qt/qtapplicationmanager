@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef WINDOWITEM_H
+#define WINDOWITEM_H
 
 #if 0
 #pragma qt_sync_skip_header_check
@@ -151,3 +152,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // WINDOWITEM_H

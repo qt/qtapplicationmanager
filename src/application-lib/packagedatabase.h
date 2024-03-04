@@ -2,7 +2,8 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef PACKAGEDATABASE_H
+#define PACKAGEDATABASE_H
 
 #include <QtAppManCommon/global.h>
 #include <QtCore/QVector>
@@ -74,3 +75,5 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(PackageDatabase::PackageLocations)
 
 QT_END_NAMESPACE_AM
 
+
+#endif // PACKAGEDATABASE_H

@@ -1,7 +1,8 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-#pragma once
+#ifndef BUBBLEWRAPCONTAINER_H
+#define BUBBLEWRAPCONTAINER_H
 
 #include <QVariantMap>
 #include <QFileInfo>
@@ -116,3 +117,5 @@ private:
     QString m_bwrapPath;
     QString m_networkSetupScript;
 };
+
+#endif // BUBBLEWRAPCONTAINER_H

@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef PLUGINCONTAINER_H
+#define PLUGINCONTAINER_H
 
 #include <memory>
 #include <QtAppManManager/abstractcontainer.h>
@@ -97,3 +98,5 @@ protected:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // PLUGINCONTAINER_H

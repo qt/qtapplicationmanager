@@ -4,7 +4,8 @@
 // Copyright (C) 2016 Klarälvdalens Datakonsult AB, a KDAB Group company
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef WAYLANDCOMPOSITOR_H
+#define WAYLANDCOMPOSITOR_H
 
 #include <QtAppManCommon/global.h>
 
@@ -123,3 +124,5 @@ protected:
 QT_END_NAMESPACE_AM
 
 #endif // QT_CONFIG(am_multi_process)
+
+#endif // WAYLANDCOMPOSITOR_H

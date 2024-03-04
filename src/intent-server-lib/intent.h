@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef INTENT_H
+#define INTENT_H
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -94,3 +95,5 @@ private:
 QT_END_NAMESPACE_AM
 
 Q_DECLARE_METATYPE(QtAM::Intent *)
+
+#endif // INTENT_H

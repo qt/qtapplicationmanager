@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef INSTALLATIONTASK_H
+#define INSTALLATIONTASK_H
 
 #include <QtCore/QUrl>
 #include <QtCore/QStringList>
@@ -76,3 +77,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // INSTALLATIONTASK_H

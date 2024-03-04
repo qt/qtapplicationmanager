@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef DBUSAPPLICATIONINTERFACEIMPL_H
+#define DBUSAPPLICATIONINTERFACEIMPL_H
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManSharedMain/applicationinterfaceimpl.h>
@@ -38,3 +39,5 @@ public:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // DBUSAPPLICATIONINTERFACEIMPL_H

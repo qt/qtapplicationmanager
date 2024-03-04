@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef PACKAGEUTILITIES_P_H
+#define PACKAGEUTILITIES_P_H
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/exception.h>
@@ -39,3 +40,5 @@ public:
 
 QT_END_NAMESPACE_AM
 // We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.
+
+#endif // PACKAGEUTILITIES_P_H

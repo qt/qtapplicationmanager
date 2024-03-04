@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef MAIN_H
+#define MAIN_H
 
 #include <functional>
 
@@ -157,3 +158,5 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Main::InitFlags)
 
 QT_END_NAMESPACE_AM
 
+
+#endif // MAIN_H

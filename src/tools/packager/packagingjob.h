@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
-#pragma once
+#ifndef PACKAGINGJOB_H
+#define PACKAGINGJOB_H
 
 #include <QtAppManCommon/global.h>
 #include <QByteArray>
@@ -60,3 +61,5 @@ private:
     QVariantMap m_extraMetaData;
     QVariantMap m_extraSignedMetaData;
 };
+
+#endif // PACKAGINGJOB_H

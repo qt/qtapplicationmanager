@@ -2,7 +2,8 @@
 // Copyright (C) 2020 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef AMTEST_H
+#define AMTEST_H
 
 #include <QObject>
 #include <QVariantMap>
@@ -46,3 +47,5 @@ Q_SIGNALS:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // AMTEST_H

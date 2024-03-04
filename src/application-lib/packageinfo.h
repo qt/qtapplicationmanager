@@ -2,7 +2,8 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef PACKAGEINFO_H
+#define PACKAGEINFO_H
 
 #include <QtCore/QDir>
 #include <QtCore/QMap>
@@ -86,3 +87,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // PACKAGEINFO_H

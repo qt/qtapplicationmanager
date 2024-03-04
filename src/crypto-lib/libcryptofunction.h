@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef LIBCRYPTOFUNCTION_H
+#define LIBCRYPTOFUNCTION_H
 
 #include <QtCore/qglobal.h>
 #include <utility>
@@ -101,3 +102,5 @@ public:
 }
 
 QT_END_NAMESPACE_AM
+
+#endif // LIBCRYPTOFUNCTION_H

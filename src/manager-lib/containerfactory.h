@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef CONTAINERFACTORY_H
+#define CONTAINERFACTORY_H
 
 #include <QtCore/QMap>
 #include <QtCore/QObject>
@@ -48,3 +49,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // CONTAINERFACTORY_H

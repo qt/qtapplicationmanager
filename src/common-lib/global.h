@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef GLOBAL_H
+#define GLOBAL_H
 #include <QtCore/qglobal.h>
 #include <QtAppManCommon/qtappman_common-config.h>
 
@@ -23,3 +24,5 @@ QT_END_NAMESPACE_AM
 #    error "You are including headers from AppMan modules outside of a (custom) appman binary or launcher build. If you are aware of the implications of AppMan's modules being static libraries, you can #define AM_FORCE_COMPILING_AGAINST_MODULES"
 #  endif
 #endif
+
+#endif // GLOBAL_H

@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef WINDOWMANAGER_H
+#define WINDOWMANAGER_H
 
 #include <functional>
 #include <QtCore/QAbstractListModel>
@@ -138,3 +139,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // WINDOWMANAGER_H

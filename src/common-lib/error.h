@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef ERROR_H
+#define ERROR_H
 
 #include <QtCore/QDebug>
 #include <QtAppManCommon/global.h>
@@ -45,3 +46,5 @@ inline QDebug &operator<<(QDebug &debug, Error error)
 QT_END_NAMESPACE_AM
 
 Q_DECLARE_METATYPE(QtAM::Error)
+
+#endif // ERROR_H

@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef QMLINPROCNOTIFICATIONIMPL_H
+#define QMLINPROCNOTIFICATIONIMPL_H
 
 #include <QtCore/QVector>
 #include <QtCore/QPointer>
@@ -35,3 +36,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // QMLINPROCNOTIFICATIONIMPL_H

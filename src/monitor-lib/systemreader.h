@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef SYSTEMREADER_H
+#define SYSTEMREADER_H
 
 #include <QtCore/QByteArray>
 #include <QtCore/QPair>
@@ -178,3 +179,5 @@ extern QString g_systemRootDir;
 
 QT_END_NAMESPACE_AM
 // We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.
+
+#endif // SYSTEMREADER_H

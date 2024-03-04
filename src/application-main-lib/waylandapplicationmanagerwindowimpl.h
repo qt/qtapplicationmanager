@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef WAYLANDAPPLICATIONMANAGERWINDOWIMPL_H
+#define WAYLANDAPPLICATIONMANAGERWINDOWIMPL_H
 
 #include <memory>
 
@@ -89,3 +90,5 @@ public:
 
 QT_END_NAMESPACE_AM
 // We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.
+
+#endif // WAYLANDAPPLICATIONMANAGERWINDOWIMPL_H

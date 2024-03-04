@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef APPLICATIONINFO_H
+#define APPLICATIONINFO_H
 
 #include <QtCore/QDir>
 #include <QtCore/QMap>
@@ -91,3 +92,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // APPLICATIONINFO_H

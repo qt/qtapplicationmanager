@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef PROCESSREADER_H
+#define PROCESSREADER_H
 
 #include <QtCore/QMutex>
 #include <QtCore/QElapsedTimer>
@@ -67,3 +68,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // PROCESSREADER_H

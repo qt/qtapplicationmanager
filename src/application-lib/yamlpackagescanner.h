@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef YAMLPACKAGESCANNER_H
+#define YAMLPACKAGESCANNER_H
 
 #include <QtCore/QIODevice>
 #include <QtAppManApplication/packagescanner.h>
@@ -21,3 +22,5 @@ public:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // YAMLPACKAGESCANNER_H

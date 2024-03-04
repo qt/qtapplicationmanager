@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef CONFIGURATION_H
+#define CONFIGURATION_H
 
 #include <QtAppManCommon/global.h>
 #include <QtCore/QStringList>
@@ -130,3 +131,5 @@ private:
 
 QT_END_NAMESPACE_AM
 
+
+#endif // CONFIGURATION_H

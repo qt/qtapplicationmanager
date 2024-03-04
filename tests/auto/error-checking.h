@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
-#pragma once
+#ifndef ERROR_CHECKING_H
+#define ERROR_CHECKING_H
 
 #include <QTest>
 
@@ -18,3 +19,5 @@
         QCOMPARE(_actual_errstr, _expected_errstr); \
     } \
 } while (false)
+
+#endif // ERROR_CHECKING_H

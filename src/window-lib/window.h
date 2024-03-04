@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef WINDOW_H
+#define WINDOW_H
 
 #include <QtCore/QObject>
 #include <QtCore/QVariantMap>
@@ -90,3 +91,5 @@ protected:
 QT_END_NAMESPACE_AM
 
 Q_DECLARE_METATYPE(QtAM::Window*)
+
+#endif // WINDOW_H

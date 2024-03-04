@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef INTENTCLIENTREQUEST_H
+#define INTENTCLIENTREQUEST_H
 
 #include <QtCore/QObject>
 #include <QtCore/QDir>
@@ -94,3 +95,5 @@ private:
 QT_END_NAMESPACE_AM
 
 Q_DECLARE_METATYPE(QtAM::IntentClientRequest *)
+
+#endif // INTENTCLIENTREQUEST_H

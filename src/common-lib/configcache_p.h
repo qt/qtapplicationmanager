@@ -2,7 +2,8 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef CONFIGCACHE_P_H
+#define CONFIGCACHE_P_H
 
 #include "configcache.h"
 
@@ -49,3 +50,5 @@ public:
 
 QT_END_NAMESPACE_AM
 // We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.
+
+#endif // CONFIGCACHE_P_H

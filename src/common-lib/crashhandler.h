@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef CRASHHANDLER_H
+#define CRASHHANDLER_H
 
 #include <QtAppManCommon/global.h>
 #include <QtCore/QVariantMap>
@@ -20,3 +21,5 @@ void setQmlEngine(QQmlEngine *engine);
 }
 
 QT_END_NAMESPACE_AM
+
+#endif // CRASHHANDLER_H

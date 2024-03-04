@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef INTENTSERVERREQUEST_H
+#define INTENTSERVERREQUEST_H
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -72,3 +73,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // INTENTSERVERREQUEST_H

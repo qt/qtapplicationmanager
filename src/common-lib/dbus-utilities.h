@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef DBUS_UTILITIES_H
+#define DBUS_UTILITIES_H
 
 #include <QtAppManCommon/global.h>
 #include <QtCore/QVariant>
@@ -27,3 +28,5 @@ QVariant convertFromDBusVariant(const QVariant &variant);
 void registerDBusTypes();
 
 QT_END_NAMESPACE_AM
+
+#endif // DBUS_UTILITIES_H

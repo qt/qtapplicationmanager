@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef NATIVERUNTIME_H
+#define NATIVERUNTIME_H
 
 #include <QtCore/qglobal.h>
 
@@ -108,3 +109,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // NATIVERUNTIME_H

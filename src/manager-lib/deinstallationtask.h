@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef DEINSTALLATIONTASK_H
+#define DEINSTALLATIONTASK_H
 
 #include <QtAppManManager/asynchronoustask.h>
 
@@ -34,3 +35,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // DEINSTALLATIONTASK_H

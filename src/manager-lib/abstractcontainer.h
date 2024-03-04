@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef ABSTRACTCONTAINER_H
+#define ABSTRACTCONTAINER_H
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -110,3 +111,5 @@ protected:
 QT_END_NAMESPACE_AM
 
 Q_DECLARE_METATYPE(QtAM::AbstractContainer *)
+
+#endif // ABSTRACTCONTAINER_H

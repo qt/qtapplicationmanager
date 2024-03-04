@@ -1,7 +1,8 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
-#pragma once
+#ifndef PSPACKAGES_H
+#define PSPACKAGES_H
 
 #include <memory>
 #include <QObject>
@@ -55,3 +56,5 @@ public:
 private:
     std::unique_ptr<PSPackagesPrivate> d;
 };
+
+#endif // PSPACKAGES_H

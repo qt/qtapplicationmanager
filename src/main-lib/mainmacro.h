@@ -1,7 +1,8 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-#pragma once
+#ifndef MAINMACRO_H
+#define MAINMACRO_H
 
 #include <QtAppManMain/main.h>
 #include <QtAppManMain/configuration.h>
@@ -29,3 +30,5 @@ Q_DECL_EXPORT int main(int argc, char *argv[]) \
         return 2; \
     } \
 }
+
+#endif // MAINMACRO_H

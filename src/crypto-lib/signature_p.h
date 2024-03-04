@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef SIGNATURE_P_H
+#define SIGNATURE_P_H
 
 #include <QtAppManCrypto/signature.h>
 
@@ -23,3 +24,5 @@ public:
 
 QT_END_NAMESPACE_AM
 // We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.
+
+#endif // SIGNATURE_P_H

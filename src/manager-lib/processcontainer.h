@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef PROCESSCONTAINER_H
+#define PROCESSCONTAINER_H
 
 #include <QtAppManManager/abstractcontainer.h>
 #include <QtAppManManager/amnamespace.h>
@@ -89,3 +90,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // PROCESSCONTAINER_H

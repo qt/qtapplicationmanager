@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef STARTUPTIMER_H
+#define STARTUPTIMER_H
 
 #include <cstdio>
 #include <QtCore/QObject>
@@ -64,3 +65,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // STARTUPTIMER_H

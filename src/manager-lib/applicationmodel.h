@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef APPLICATIONMODEL_H
+#define APPLICATIONMODEL_H
 
 #include <QtCore/QSortFilterProxyModel>
 #include <QtQml/QJSValue>
@@ -58,3 +59,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // APPLICATIONMODEL_H

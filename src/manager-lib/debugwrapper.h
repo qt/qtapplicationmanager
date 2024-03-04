@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef DEBUGWRAPPER_H
+#define DEBUGWRAPPER_H
 
 #include <QtAppManCommon/global.h>
 
@@ -23,3 +24,5 @@ QStringList substituteCommand(const QStringList &debugWrapperCommand, const QStr
 }
 
 QT_END_NAMESPACE_AM
+
+#endif // DEBUGWRAPPER_H

@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef ASYNCHRONOUSTASK_H
+#define ASYNCHRONOUSTASK_H
 
 #include <QtCore/QThread>
 #include <QtCore/QMutex>
@@ -71,3 +72,5 @@ protected:
 
 
 QT_END_NAMESPACE_AM
+
+#endif // ASYNCHRONOUSTASK_H

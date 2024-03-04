@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef AMNAMESPACE_H
+#define AMNAMESPACE_H
 
 #include <QtCore/QObject>
 #include <QtAppManCommon/global.h>
@@ -47,3 +48,5 @@ public:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // AMNAMESPACE_H

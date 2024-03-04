@@ -1,7 +1,8 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef CONSOLE_H
+#define CONSOLE_H
 
 #include <QtAppManCommon/global.h>
 
@@ -21,3 +22,5 @@ public:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // CONSOLE_H

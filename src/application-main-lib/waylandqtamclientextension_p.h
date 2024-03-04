@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef WAYLANDQTAMCLIENTEXTENSION_P_H
+#define WAYLANDQTAMCLIENTEXTENSION_P_H
 
 #include <QVariantMap>
 #include <QtWaylandClient/QWaylandClientExtensionTemplate>
@@ -55,3 +56,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // WAYLANDQTAMCLIENTEXTENSION_P_H

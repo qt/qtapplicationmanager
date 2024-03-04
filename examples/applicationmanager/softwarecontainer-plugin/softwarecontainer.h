@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-#pragma once
+#ifndef SOFTWARECONTAINER_H
+#define SOFTWARECONTAINER_H
 
 #include <QVariantMap>
 #include <QFileInfo>
@@ -104,3 +105,5 @@ private:
     QDBusInterface *m_interface = nullptr;
     QMap<int, SoftwareContainer *> m_containers;
 };
+
+#endif // SOFTWARECONTAINER_H

@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef LOGGING_H
+#define LOGGING_H
 
 #include <QtAppManCommon/global.h>
 #include <QtCore/QLoggingCategory>
@@ -74,3 +75,5 @@ template <typename... Ts> void am_trace(QDebug dbg, Ts &&... ts)
     }
 
 QT_END_NAMESPACE_AM
+
+#endif // LOGGING_H

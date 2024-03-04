@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef CRYPTOGRAPHY_H
+#define CRYPTOGRAPHY_H
 
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
@@ -24,3 +25,5 @@ QString errorString(qint64 osCryptoError, const char *errorDescription = nullptr
 }
 
 QT_END_NAMESPACE_AM
+
+#endif // CRYPTOGRAPHY_H

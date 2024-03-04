@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef DBUSPOLICY_H
+#define DBUSPOLICY_H
 
 #include <functional>
 
@@ -45,3 +46,5 @@ private:
 
 QT_END_NAMESPACE_AM
 
+
+#endif // DBUSPOLICY_H

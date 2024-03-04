@@ -2,7 +2,8 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef CONFIGCACHE_H
+#define CONFIGCACHE_H
 
 #include <functional>
 #include <array>
@@ -138,3 +139,5 @@ private:
 Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractConfigCache::Options)
 
 QT_END_NAMESPACE_AM
+
+#endif // CONFIGCACHE_H

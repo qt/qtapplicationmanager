@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef APPLICATIONMANAGERWINDOW_H
+#define APPLICATIONMANAGERWINDOW_H
 
 #include <memory>
 
@@ -197,3 +198,5 @@ private:
 
 
 QT_END_NAMESPACE_AM
+
+#endif // APPLICATIONMANAGERWINDOW_H

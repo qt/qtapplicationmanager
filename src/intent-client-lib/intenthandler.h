@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef INTENTHANDLER_H
+#define INTENTHANDLER_H
 
 #include <QtCore/QObject>
 #include <QtQml/QQmlParserStatus>
@@ -64,3 +65,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // INTENTHANDLER_H

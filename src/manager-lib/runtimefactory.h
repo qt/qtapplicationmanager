@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef RUNTIMEFACTORY_H
+#define RUNTIMEFACTORY_H
 
 #include <QtCore/QHash>
 #include <QtCore/QObject>
@@ -53,3 +54,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // RUNTIMEFACTORY_H

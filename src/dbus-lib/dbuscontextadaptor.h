@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef DBUSCONTEXTADAPTOR_H
+#define DBUSCONTEXTADAPTOR_H
 
 #include <QtAppManCommon/global.h>
 #include <QtCore/QObject>
@@ -54,3 +55,5 @@ do { \
 
 
 QT_END_NAMESPACE_AM
+
+#endif // DBUSCONTEXTADAPTOR_H

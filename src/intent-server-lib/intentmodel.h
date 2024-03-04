@@ -2,7 +2,8 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef INTENTMODEL_H
+#define INTENTMODEL_H
 
 #include <QtCore/QSortFilterProxyModel>
 #include <QtQml/QJSValue>
@@ -57,3 +58,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // INTENTMODEL_H

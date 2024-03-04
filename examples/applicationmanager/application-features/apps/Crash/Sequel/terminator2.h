@@ -1,7 +1,8 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-#pragma once
+#ifndef TERMINATOR2_H
+#define TERMINATOR2_H
 
 #include <QQmlEngine>
 #include <QThread>
@@ -41,3 +42,5 @@ private:
     void run() override;
     Terminator2 *m_terminator2;
 };
+
+#endif // TERMINATOR2_H

@@ -1,7 +1,8 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef FRAMETIMERIMPL_H
+#define FRAMETIMERIMPL_H
 
 #include <functional>
 #include <QtAppManCommon/global.h>
@@ -37,3 +38,5 @@ protected:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // FRAMETIMERIMPL_H

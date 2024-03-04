@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef TESTRUNNER_H
+#define TESTRUNNER_H
 
 #include <QStringList>
 #include <QtAppManCommon/global.h>
@@ -22,3 +23,5 @@ public:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // TESTRUNNER_H

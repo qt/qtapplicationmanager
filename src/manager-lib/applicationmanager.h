@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef APPLICATIONMANAGER_H
+#define APPLICATIONMANAGER_H
 
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QStringList>
@@ -159,3 +160,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // APPLICATIONMANAGER_H

@@ -1,7 +1,8 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
-#pragma once
+#ifndef PSPACKAGES_P_H
+#define PSPACKAGES_P_H
 
 #include <memory>
 #include <QMap>
@@ -26,3 +27,5 @@ public:
     std::unique_ptr<QLockFile> lockFile;
     QByteArray lockFilePath; // for the signal handler
 };
+
+#endif // PSPACKAGES_P_H

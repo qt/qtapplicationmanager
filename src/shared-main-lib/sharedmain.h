@@ -3,7 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#pragma once
+#ifndef SHAREDMAIN_H
+#define SHAREDMAIN_H
 
 #include <QtAppManCommon/global.h>
 #include <QtCore/QVariantMap>
@@ -37,3 +38,5 @@ private:
 };
 
 QT_END_NAMESPACE_AM
+
+#endif // SHAREDMAIN_H

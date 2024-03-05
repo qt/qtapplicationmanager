@@ -747,7 +747,7 @@ void Main::createInstanceInfoFile(const QString &instanceId) noexcept(false)
     QString filePattern = (instanceId.isEmpty() ? defaultInstanceId : instanceId) + u"-%1";
 
     static std::unique_ptr<QLockFile> lockf;
-    static std::unique_ptr<QFile, void (*)(QFile *)> infof(nullptr, [](QFile *f) { f->remove(); });
+    static std::unique_ptr<QFile, void (*)(QFile *)> infof(nullptr, [](QFile *f) { f->remove(); delete f; });
 
     for (int i = 0; i < 32; ++i) { // Wayland sockets are limited to 32 instances as well
         QString tryPattern = filePattern.arg(i);

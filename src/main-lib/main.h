@@ -72,7 +72,7 @@ public:
     bool isRunningOnEmbedded() const;
 
     void setup(const Configuration *cfg) noexcept(false);
-    void loadQml(bool loadDummyData) noexcept(false);
+    void loadQml(bool loadDummyData = false) noexcept(false);
     void showWindow(bool showFullscreen);
 
     Q_INVOKABLE void shutDown(int exitCode = 0);

@@ -20,19 +20,20 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     Logging::initialize(argc, argv);
     Sudo::forkServer(Sudo::DropPrivilegesPermanently);
 
+    std::unique_ptr<Main> a;
+    std::unique_ptr<Configuration> cfg;
+
     try {
-        Main a(argc, argv);
+        a = std::make_unique<Main>(argc, argv);
+        cfg = std::make_unique<Configuration>();
+        cfg->parseWithArguments(QCoreApplication::arguments());
 
-        Configuration cfg;
-        cfg.parseWithArguments(QCoreApplication::arguments());
-
-        a.setup(&cfg);
-        a.loadQml(cfg.loadDummyData());
-        a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
-
-        return MainBase::exec();
+        a->setup(cfg.get());
+        a->loadQml(cfg->loadDummyData());
+        a->showWindow(cfg->fullscreen() && !cfg->noFullscreen());
     } catch (const std::exception &e) {
         qCCritical(LogSystem) << "ERROR:" << e.what();
         return 2;
     }
+    return MainBase::exec();
 }

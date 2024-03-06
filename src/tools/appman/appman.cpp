@@ -46,26 +46,31 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
     QCoreApplication::setApplicationVersion(QString::fromLatin1(QT_AM_VERSION_STR));
 
+    std::unique_ptr<Main> a;
+    std::unique_ptr<Configuration> cfg;
+
     try {
-        Main a(argc, argv, Main::InitFlag::ForkSudoServer | Main::InitFlag::InitializeLogging);
-
-        Configuration cfg(additionalDescription, onlyOnePositionalArgument);
-        cfg.parseWithArguments(QCoreApplication::arguments());
-
-#if defined(AM_TESTRUNNER)
-        TestRunner::setup(&cfg);
-#endif
-        a.setup(&cfg);
-        a.loadQml(cfg.loadDummyData());
-        a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
+        a = std::make_unique<Main>(argc, argv, Main::InitFlag::ForkSudoServer
+                                                   | Main::InitFlag::InitializeLogging);
+        cfg = std::make_unique<Configuration>(additionalDescription, onlyOnePositionalArgument);
+        cfg->parseWithArguments(QCoreApplication::arguments());
 
 #if defined(AM_TESTRUNNER)
-        return TestRunner::exec(a.qmlEngine());
-#else
-        return Main::exec();
+        TestRunner::setup(cfg.get());
 #endif
+        a->setup(cfg.get());
+        a->loadQml(cfg->loadDummyData());
+        a->showWindow(cfg->fullscreen() && !cfg->noFullscreen());
     } catch (const Exception &e) {
         qCCritical(LogSystem).noquote() << "ERROR:" << e.errorString();
         return 2;
     }
+
+    // we want the exec() outside of the try/catch block, so stray user exceptions trigger the
+    // CrashHandler's set_terminate callback.
+#if defined(AM_TESTRUNNER)
+    return TestRunner::exec(a->qmlEngine());
+#else
+    return Main::exec();
+#endif
 }

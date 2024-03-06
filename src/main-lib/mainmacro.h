@@ -14,21 +14,24 @@ QT_END_NAMESPACE_AM
 #define QT_AM_MAIN() \
 Q_DECL_EXPORT int main(int argc, char *argv[]) \
 { \
+    std::unique_ptr<QtAM::Main> a; \
+    std::unique_ptr<QtAM::Configuration> cfg; \
+\
     try { \
-        QtAM::Main a(argc, argv, QtAM::Main::InitFlag::ForkSudoServer | QtAM::Main::InitFlag::InitializeLogging); \
- \
-        QtAM::Configuration cfg; \
-        cfg.parseWithArguments(QCoreApplication::arguments()); \
- \
-        a.setup(&cfg); \
-        a.loadQml(cfg.loadDummyData()); \
-        a.showWindow(cfg.fullscreen() && !cfg.noFullscreen()); \
- \
-        return QtAM::MainBase::exec(); \
+        a = std::make_unique<QtAM::Main>(argc, argv, QtAM::Main::InitFlag::ForkSudoServer \
+                                                         | QtAM::Main::InitFlag::InitializeLogging); \
+        cfg = std::make_unique<QtAM::Configuration>(); \
+        cfg->parseWithArguments(QCoreApplication::arguments()); \
+\
+        a->setup(cfg.get()); \
+        a->loadQml(); \
+        a->showWindow(cfg->fullscreen() && !cfg->noFullscreen()); \
     } catch (const std::exception &e) { \
         qCritical() << "ERROR:" << e.what(); \
         return 2; \
     } \
+\
+    return QtAM::Main::exec(); \
 }
 
 #endif // MAINMACRO_H

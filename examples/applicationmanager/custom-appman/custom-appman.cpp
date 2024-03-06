@@ -23,21 +23,24 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(u"Custom Application Manager"_s);
     QCoreApplication::setApplicationVersion(u"0.1"_s);
 
+    std::unique_ptr<Main> a;
+    std::unique_ptr<Configuration> cfg;
+
     try {
-        Main a(argc, argv, Main::InitFlag::ForkSudoServer | Main::InitFlag::InitializeLogging);
+        a = std::make_unique<Main>(argc, argv, Main::InitFlag::ForkSudoServer
+                                                   | Main::InitFlag::InitializeLogging);
+        cfg = std::make_unique<Configuration>();
+        cfg->parseWithArguments(QCoreApplication::arguments());
 
-        Configuration cfg;
-        cfg.parseWithArguments(QCoreApplication::arguments());
+        a->setup(cfg.get());
+        a->loadQml();
+        a->showWindow(cfg->fullscreen() && !cfg->noFullscreen());
 
-        a.setup(&cfg);
-        a.loadQml(cfg.loadDummyData());
-        a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
-
-        return Main::exec();
     } catch (const std::exception &e) {
         qCritical() << "ERROR:" << e.what();
         return 2;
     }
+    return Main::exec();
 }
 
 #endif

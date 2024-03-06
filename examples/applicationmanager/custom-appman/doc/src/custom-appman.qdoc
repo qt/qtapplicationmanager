@@ -36,7 +36,7 @@ them is both intended and required, so we need to set the define \c AM_COMPILING
 The following is a breakdown of the minimal code necessary:
 
 \quotefromfile applicationmanager/custom-appman/custom-appman.cpp
-\skipto #include
+\skipto #include <QtAppManMain/main.h>
 \printuntil QT_USE_NAMESPACE_AM
 
 The application manager is split into functional building blocks. These include statements
@@ -49,7 +49,7 @@ the application manager's symbols are namespaced - \c QT_USE_NAMESPACE_AM expand
 
 Generally, it's a good idea to set an application name and version.
 
-\printuntil Main a
+\printuntil a = std::make_unique<Main>
 
 This \c try block is the heart of the custom application manager. You need to create a \c Main
 object, which is a class derived from QGuiApplication (or QApplication, if widgets support is

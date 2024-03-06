@@ -42,13 +42,16 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     Logging::initialize(argc, argv);
     StartupTimer::instance()->checkpoint("after basic initialization");
 
+    std::unique_ptr<Main> a;
+    std::unique_ptr<Configuration> cfg;
+
     try {
 #if !defined(AM_DISABLE_INSTALLER)
         Sudo::forkServer(Sudo::DropPrivilegesPermanently);
         StartupTimer::instance()->checkpoint("after sudo server fork");
 #endif
 
-        Main a(argc, argv);
+        a = std::make_unique<Main>(argc, argv);
 
         const char *additionalDescription = nullptr;
         bool onlyOnePositionalArgument = true;
@@ -59,37 +62,42 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         onlyOnePositionalArgument = false;
 #endif
 
-        Configuration cfg(additionalDescription, onlyOnePositionalArgument);
-        cfg.parseWithArguments(QCoreApplication::arguments());
+        cfg = std::make_unique<Configuration>(additionalDescription, onlyOnePositionalArgument);
+        cfg->parseWithArguments(QCoreApplication::arguments());
 
         StartupTimer::instance()->checkpoint("after command line parse");
 #if defined(AM_TESTRUNNER)
-        TestRunner::initialize(cfg.mainQmlFile(), cfg.testRunnerArguments(), cfg.testRunnerSourceFile());
-        cfg.setForceVerbose(qEnvironmentVariableIsSet("AM_VERBOSE_TEST"));
-        cfg.setForceNoUiWatchdog(true); // this messes up test results on slow CI systems otherwise
+        TestRunner::initialize(cfg->mainQmlFile(), cfg->testRunnerArguments(), cfg->testRunnerSourceFile());
+        cfg->setForceVerbose(qEnvironmentVariableIsSet("AM_VERBOSE_TEST"));
+        cfg->setForceNoUiWatchdog(true); // this messes up test results on slow CI systems otherwise
 #endif
-        a.setup(&cfg);
+        a->setup(cfg.get());
 #if defined(AM_TESTRUNNER)
-        a.qmlEngine()->rootContext()->setContextProperty(qSL("buildConfig"), cfg.buildConfig());
+        a->qmlEngine()->rootContext()->setContextProperty(qSL("buildConfig"), cfg->buildConfig());
 #endif
-        a.loadQml(cfg.loadDummyData());
-        a.showWindow(cfg.fullscreen() && !cfg.noFullscreen());
+        a->loadQml(cfg->loadDummyData());
+        a->showWindow(cfg->fullscreen() && !cfg->noFullscreen());
 
 #if defined(AM_TESTRUNNER)
-        if (qEnvironmentVariableIsSet("AM_BACKGROUND_TEST") && !a.topLevelWindows().isEmpty()) {
-            QWindow *w = a.topLevelWindows().first();
+        if (qEnvironmentVariableIsSet("AM_BACKGROUND_TEST") && !a->topLevelWindows().isEmpty()) {
+            QWindow *w = a->topLevelWindows().first();
             w->setFlag(Qt::WindowStaysOnBottomHint);
             w->setFlag(Qt::WindowDoesNotAcceptFocus);
         }
-        qInfo().nospace().noquote() << "Verbose mode is " << (cfg.verbose() ? "on" : "off")
-                                    << " (change by (un)setting $AM_VERBOSE_TEST)\n TEST: " << cfg.mainQmlFile()
-                                    << " in " << (cfg.forceMultiProcess() ? "multi" : "single") << "-process mode";
-        return TestRunner::exec(a.qmlEngine());
-#else
-        return MainBase::exec();
+        qInfo().nospace().noquote() << "Verbose mode is " << (cfg->verbose() ? "on" : "off")
+                                    << " (change by (un)setting $AM_VERBOSE_TEST)\n TEST: " << cfg->mainQmlFile()
+                                    << " in " << (cfg->forceMultiProcess() ? "multi" : "single") << "-process mode";
 #endif
     } catch (const Exception &e) {
         qCCritical(LogSystem).noquote() << "ERROR:" << e.errorString();
         return 2;
     }
+
+    // we want the exec() outside of the try/catch block, so stray user exceptions trigger the
+    // CrashHandler's set_terminate callback.
+#if defined(AM_TESTRUNNER)
+    return TestRunner::exec(a->qmlEngine());
+#else
+    return Main::exec();
+#endif
 }

@@ -60,7 +60,7 @@ Again, for the installer part only, an additional setup step is necessary before
 QApplication constructor: if the executable is setuid-root, this call will \c fork off a child
 process which keeps the root privileges while the main process permanently drops them.
 
-\printuntil return 2
+\printuntil return MainBase::exec();
 \printline }
 
 This \c try block is the heart of the custom application manager. You need to create a \c Main

@@ -2,7 +2,7 @@ type: Group
 instructions:
   - !include "{{qt/qtbase}}/coin_module_test_template_common.yaml"
   - type: ChangeDirectory
-    directory: "{{.SourceDir}}_standalone_tests"
+    directory: "{{.SourceDir}}_build"
   - type: EnvironmentVariable
     variableName: CMAKE_BUILD_TIMEOUT
     variableValue: "6000"
@@ -42,4 +42,4 @@ instructions:
   - type: ScheduleUploadTestResults
   - type: EnvironmentVariable
     variableName: COIN_CTEST_RESULTSDIR
-    variableValue: "{{.SourceDir}}_standalone_tests/upload"
+    variableValue: "{{.SourceDir}}_build/upload"

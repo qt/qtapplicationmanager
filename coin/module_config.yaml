@@ -35,13 +35,6 @@ instructions:
       condition: property
       property: features
       contains_value: lcov
-  - type: AppendToEnvironmentVariable
-    variableName: COMMON_TEST_CMAKE_ARGS
-    variableValue: " -DAM_COVERAGE=ON"
-    enable_if:
-      condition: property
-      property: features
-      contains_value: lcov
   - type: Rename
     sourcePath: "{{.SourceDir}}/coin/axivion/ci_config_common.json"
     targetPath: "{{.Env.HOME}}/axivion/ci_config_common.json"
@@ -80,6 +73,3 @@ instructions:
           - condition: property
             property: target.os
             in_values: ["IOS", "Android", "WebAssembly", "QNX"]
-          - condition: property
-            property: features
-            contains_value: lcov

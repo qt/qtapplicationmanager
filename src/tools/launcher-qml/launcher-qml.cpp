@@ -82,6 +82,7 @@ int main(int argc, char *argv[])
     Logging::initialize();
 
     std::unique_ptr<ApplicationMain> am;
+    std::unique_ptr<Controller> controller; // this needs to die BEFORE qApp does
 
     try {
         const QString socket = QDir(qEnvironmentVariable("XDG_RUNTIME_DIR"))
@@ -116,8 +117,6 @@ int main(int argc, char *argv[])
 
         StartupTimer::instance()->checkpoint("after basic initialization");
 
-        std::unique_ptr<Controller> controller; // this needs to die BEFORE qApp does
-
         if (!directLoadManifest.isEmpty()) {
             QString directLoadAppId;
             qsizetype appPos = directLoadManifest.indexOf(u"@"_s);
@@ -136,13 +135,14 @@ int main(int argc, char *argv[])
             StartupTimer::instance()->checkpoint("after dbus initialization");
             controller.reset(new Controller(am.get(), quicklaunched));
         }
-
-        return am->exec();
-
     } catch (const std::exception &e) {
         qCCritical(LogQmlRuntime) << "ERROR:" << e.what();
         return 2;
     }
+
+    // we want the exec() outside of the try/catch block, so stray user exceptions trigger the
+    // CrashHandler's set_terminate callback.
+    return ApplicationMainBase::exec();
 }
 
 Controller::Controller(ApplicationMain *am, bool quickLaunched)

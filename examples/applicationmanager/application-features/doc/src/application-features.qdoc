@@ -10,6 +10,8 @@
 \brief Showcases client applications with various features, including a native application.
 \ingroup applicationmanager-examples
 
+\note Please \l{wayland-dev-packages}{read this} if you want to build the example on a Linux machine.
+
 \section1 Introduction
 
 This example demonstrates how to implement some particular features you may require in an

@@ -11,6 +11,8 @@
 \title System UI Example: "Hello World!"
 \image hello-world-example.png The Hello World example with two applications running.
 
+\note Please \l{wayland-dev-packages}{read this} if you want to build the example on a Linux machine.
+
 \section1 Introduction
 
 This example shows a very simple System UI implementation that showcases Qt Application Manager's

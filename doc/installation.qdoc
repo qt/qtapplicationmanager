@@ -47,7 +47,7 @@ To build the application manager with all its features, the following components
 
 On Debian-based systems, this command installs the three required packages:
 \badcode
-apt-get install libyaml-dev libarchive-dev libssl-dev
+apt-get install libyaml-dev libarchive-dev
 \endcode
 
 \note On platforms without \c pkg-config (for example, Windows or macOS) as well as on platforms
@@ -77,12 +77,19 @@ to single-process mode, if certain multi-process mode dependencies are not avail
 
 \list
 \li You are building for \b Linux.
-\li The \c QtWayland module is available.
+\li The \c QtWaylandCompositor module is available.
 \li The \c QtDBus module is available.
 \endlist
 
 You can force the build mode via the respective \c --force-multi-process and
 \c --force-single-process command line options, as described below.
+
+\target wayland-dev-packages
+\note The Qt Installer \b cannot install the necessary Wayland development packages from your Linux
+      distro when installing the QtWaylandCompositor module. This will result in hard to read
+      cmake errors when trying to build the application manager examples. \br
+      \c{sudo apt install libwayland-dev zlib1g-dev} (or the equivalent installation on a non
+      Debian-based distro) will fix this.
 
 \target build
 \section1 Build

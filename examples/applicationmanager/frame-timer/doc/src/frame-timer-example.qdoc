@@ -11,6 +11,8 @@
 \brief How to use the FrameTimer to display information about the frame rate.
 \ingroup applicationmanager-examples
 
+\note Please \l{wayland-dev-packages}{read this} if you want to build the example on a Linux machine.
+
 \section1 Introduction
 
 This example shows you how to use the \l FrameTimer component to display frame rate information for

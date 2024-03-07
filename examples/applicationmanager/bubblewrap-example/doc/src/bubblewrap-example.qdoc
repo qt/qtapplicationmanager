@@ -9,6 +9,8 @@
 \title Bubblewrap Container Example
 \image bubblewrap-example.png Bubblewrap Container Example
 
+\note Please \l{wayland-dev-packages}{read this} if you want to build the example on a Linux machine.
+
 \section1 Introduction
 
 This example shows you how to launch applications within a \l{Bubblewrap Container}{bubblewrap

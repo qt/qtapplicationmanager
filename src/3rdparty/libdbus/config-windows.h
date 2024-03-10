@@ -84,7 +84,7 @@
 /* #undef GLIB_VERSION_MAX_ALLOWED */
 
 // headers
-#define HAVE_AFUNIX_H 1
+/* #undef HAVE_AFUNIX_H */
 /* #undef HAVE_ALLOCA_H */
 /* #undef HAVE_BYTESWAP_H */
 /* #undef HAVE_CRT_EXTERNS_H */

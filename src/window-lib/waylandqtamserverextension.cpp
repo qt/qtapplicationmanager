@@ -6,6 +6,7 @@
 #include "waylandqtamserverextension_p.h"
 
 #include <QDataStream>
+#include <QCborValue>
 #include <QtWaylandCompositor/QWaylandCompositor>
 #include <QtWaylandCompositor/QWaylandResource>
 #include <QtWaylandCompositor/QWaylandSurface>
@@ -16,7 +17,7 @@ QT_BEGIN_NAMESPACE_AM
 
 WaylandQtAMServerExtension::WaylandQtAMServerExtension(QWaylandCompositor *compositor)
     : QWaylandCompositorExtensionTemplate(compositor)
-    , QtWaylandServer::qtam_extension(compositor->display(), 1)
+    , QtWaylandServer::qtam_extension(compositor->display(), 2)
 { }
 
 QVariantMap WaylandQtAMServerExtension::windowProperties(const QWaylandSurface *surface) const
@@ -27,14 +28,25 @@ QVariantMap WaylandQtAMServerExtension::windowProperties(const QWaylandSurface *
 void WaylandQtAMServerExtension::setWindowProperty(QWaylandSurface *surface, const QString &name, const QVariant &value)
 {
     if (setWindowPropertyHelper(surface, name, value)) {
-        QByteArray byteValue;
-        QDataStream ds(&byteValue, QDataStream::WriteOnly);
-        ds << value;
+        if (Resource *target = resourceMap().value(surface->waylandClient())) {
+            QByteArray data;
 
-        Resource *target = resourceMap().value(surface->waylandClient());
-        if (target) {
-            qDebug(LogWaylandDebug) << "window property: server send" << surface << name << value;
-            send_window_property_changed(target->handle, surface->resource(), name, byteValue);
+            switch (target->version()) {
+            case 1: {
+                QDataStream ds(&data, QDataStream::WriteOnly);
+                ds << value;
+                break;
+            }
+            case 2:
+                data = QCborValue::fromVariant(value).toCbor();
+                break;
+            default:
+                qCWarning(LogWaylandDebug) << "Unsupported qtam_extension version:" << target->version();
+                return;
+            }
+
+            qCDebug(LogWaylandDebug) << "window property: server send" << surface << name << value;
+            send_window_property_changed(target->handle, surface->resource(), name, data);
         }
     }
 }
@@ -59,13 +71,23 @@ bool WaylandQtAMServerExtension::setWindowPropertyHelper(QWaylandSurface *surfac
 
 void WaylandQtAMServerExtension::qtam_extension_set_window_property(QtWaylandServer::qtam_extension::Resource *resource, wl_resource *surface_resource, const QString &name, wl_array *value)
 {
-    Q_UNUSED(resource)
     QWaylandSurface *surface = QWaylandSurface::fromResource(surface_resource);
-    const QByteArray byteValue(static_cast<const char *>(value->data), static_cast<int>(value->size));
-    QDataStream ds(byteValue);
+    const auto data = QByteArray::fromRawData(static_cast<const char *>(value->data), qsizetype(value->size));
     QVariant variantValue;
-    ds >> variantValue;
 
+    switch (resource->version()) {
+    case 1: {
+        QDataStream ds(data);
+        ds >> variantValue;
+        break;
+    }
+    case 2:
+        variantValue = QCborValue::fromCbor(data).toVariant();
+        break;
+    default:
+        qCWarning(LogWaylandDebug) << "Unsupported qtam_extension version:" << resource->version();
+        return;
+    }
     qCDebug(LogWaylandDebug) << "window property: server receive" << surface << name << variantValue;
     setWindowPropertyHelper(surface, name, variantValue);
 }

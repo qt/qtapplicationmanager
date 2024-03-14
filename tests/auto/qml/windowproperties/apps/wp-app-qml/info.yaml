@@ -1,0 +1,6 @@
+formatVersion: 1
+formatType: am-application
+---
+id:      'wp-app-qml'
+code:    'wp-app.qml'
+runtime: 'qml'

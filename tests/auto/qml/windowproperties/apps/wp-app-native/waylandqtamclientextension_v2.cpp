@@ -1,36 +1,37 @@
-// Copyright (C) 2021 The Qt Company Ltd.
-// Copyright (C) 2019 Luxoft Sweden AB
-// Copyright (C) 2018 Pelagicore AG
+// Copyright (C) 2024 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include "waylandqtamclientextension_p.h"
+#include "waylandqtamclientextension_v2_p.h"
 
 #include <QWindow>
 #include <QGuiApplication>
 #include <QEvent>
 #include <QExposeEvent>
 #include <qpa/qplatformnativeinterface.h>
+#include <QJSValue>
+#include <QCborValue>
 
-#include <QtAppManCommon/logging.h>
 
-QT_BEGIN_NAMESPACE_AM
+// This is a copy of the built-in class WaylandQtAMClientExtension (version 1). Not all
+// functionality is actually used for the test, but it makes it easier to keep the code in sync
+// this way, as they share ~90% of the implementation.
 
-WaylandQtAMClientExtension::WaylandQtAMClientExtension()
-    : QWaylandClientExtensionTemplate(1)
+WaylandQtAMClientExtensionV2::WaylandQtAMClientExtensionV2()
+    : QWaylandClientExtensionTemplate(2)
 {
     qApp->installEventFilter(this);
 }
 
-WaylandQtAMClientExtension::~WaylandQtAMClientExtension()
+WaylandQtAMClientExtensionV2::~WaylandQtAMClientExtensionV2()
 {
     qApp->removeEventFilter(this);
 }
 
-bool WaylandQtAMClientExtension::eventFilter(QObject *o, QEvent *e)
+bool WaylandQtAMClientExtensionV2::eventFilter(QObject *o, QEvent *e)
 {
     if (e->type() == QEvent::Expose) {
         if (!isActive()) {
-            qCWarning(LogGraphics) << "WaylandQtAMClientExtension is not active";
+            qWarning() << "WaylandQtAMClientExtensionV2 is not active";
         } else {
             QWindow *window = qobject_cast<QWindow *>(o);
             Q_ASSERT(window);
@@ -56,30 +57,26 @@ bool WaylandQtAMClientExtension::eventFilter(QObject *o, QEvent *e)
         m_windowToSurface.remove(qobject_cast<QWindow *>(o));
     }
 
-    return QWaylandClientExtensionTemplate<WaylandQtAMClientExtension>::eventFilter(o, e);
+    return QWaylandClientExtensionTemplate<WaylandQtAMClientExtensionV2>::eventFilter(o, e);
 }
 
-QVariantMap WaylandQtAMClientExtension::windowProperties(QWindow *window) const
+QVariantMap WaylandQtAMClientExtensionV2::windowProperties(QWindow *window) const
 {
     return m_windowProperties.value(window);
 }
 
-void WaylandQtAMClientExtension::sendPropertyToServer(struct ::wl_surface *surface, const QString &name,
-                                                      const QVariant &value)
+void WaylandQtAMClientExtensionV2::sendPropertyToServer(struct ::wl_surface *surface, const QString &name,
+                                                        const QVariant &value)
 {
     if (int(qtam_extension::version()) != QWaylandClientExtension::version()) {
-        qCWarning(LogWaylandDebug) << "Unsupported qtam_extension version:" << qtam_extension::version();
+        qWarning() << "Unsupported qtam_extension version:" << qtam_extension::version();
         return;
     }
-    QByteArray data;
-    QDataStream ds(&data, QDataStream::WriteOnly);
-    ds << value;
-
-    qCDebug(LogWaylandDebug) << "window property: client send:" << surface << name << value;
+    const QByteArray data = QCborValue::fromVariant(value).toCbor();
     set_window_property(surface, name, data);
 }
 
-bool WaylandQtAMClientExtension::setWindowProperty(QWindow *window, const QString &name, const QVariant &value)
+bool WaylandQtAMClientExtensionV2::setWindowProperty(QWindow *window, const QString &name, const QVariant &value)
 {
     if (setWindowPropertyHelper(window, name, value) && m_windowToSurface.contains(window)) {
         auto surface = static_cast<struct ::wl_surface *>
@@ -92,7 +89,7 @@ bool WaylandQtAMClientExtension::setWindowProperty(QWindow *window, const QStrin
     return false;
 }
 
-bool WaylandQtAMClientExtension::setWindowPropertyHelper(QWindow *window, const QString &name, const QVariant &value)
+bool WaylandQtAMClientExtensionV2::setWindowPropertyHelper(QWindow *window, const QString &name, const QVariant &value)
 {
     auto it = m_windowProperties.find(window);
     if ((it == m_windowProperties.end()) || (it.value().value(name) != value)) {
@@ -107,30 +104,24 @@ bool WaylandQtAMClientExtension::setWindowPropertyHelper(QWindow *window, const 
     return false;
 }
 
-void WaylandQtAMClientExtension::clearWindowPropertyCache(QWindow *window)
+void WaylandQtAMClientExtensionV2::clearWindowPropertyCache(QWindow *window)
 {
     m_windowProperties.remove(window);
 }
 
-void WaylandQtAMClientExtension::qtam_extension_window_property_changed(wl_surface *surface, const QString &name,
-                                                                        wl_array *value)
+void WaylandQtAMClientExtensionV2::qtam_extension_window_property_changed(wl_surface *surface, const QString &name,
+                                                                          wl_array *value)
 {
     if (int(qtam_extension::version()) != QWaylandClientExtension::version()) {
-        qCWarning(LogWaylandDebug) << "Unsupported qtam_extension version:" << qtam_extension::version();
+        qWarning() << "Unsupported qtam_extension version:" << qtam_extension::version();
         return;
     }
 
     if (QWindow *window = m_windowToSurface.key(surface)) {
         const auto data = QByteArray::fromRawData(static_cast<const char *>(value->data), qsizetype(value->size));
-        QDataStream ds(data);
-        QVariant variantValue;
-        ds >> variantValue;
-
-        qCDebug(LogWaylandDebug) << "window property: client receive" << window << name << variantValue;
+        const QVariant variantValue = QCborValue::fromCbor(data).toVariant();
         setWindowPropertyHelper(window, name, variantValue);
     }
 }
 
-QT_END_NAMESPACE_AM
-
-#include "moc_waylandqtamclientextension_p.cpp"
+#include "moc_waylandqtamclientextension_v2_p.cpp"

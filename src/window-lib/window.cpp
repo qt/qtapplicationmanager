@@ -31,6 +31,10 @@
     surface Wayland extension. Changes from the client side are notified by the
     windowPropertyChanged() signal.
 
+    Starting with version 6.8, non-Qt Wayland clients can use version 2 of the extension, which
+    uses CBOR as a wire format, but only \l{QCborValue::fromVariant()}{types supported by CBOR}
+    can be used as values for these clients.
+
     See ApplicationManagerWindow for the client side API.
 
     \sa windowProperty(), windowProperties(), windowPropertyChanged()

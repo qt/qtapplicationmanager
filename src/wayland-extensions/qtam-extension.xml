@@ -1,19 +1,38 @@
 <protocol name="qtam_extension">
     <copyright>
- Copyright (C) 2021 The Qt Company Ltd.
+ Copyright (C) 2024 The Qt Company Ltd.
  Copyright (C) 2019 Luxoft Sweden AB
  Copyright (C) 2018 Pelagicore AG
  SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
     </copyright>
 
-    <interface name="qtam_extension" version="1">
+    <interface name="qtam_extension" version="2">
+        <description summary="notify client of window property change">
+            This interface is a way to keep window properties in sync between the server and a
+            client. Those properties are represented as QVariants on the Qt side. The wire
+            protocol (the 'value' parameter below) is a byte array containing the serialized
+            variant.
+            Version 1 of this protocol uses serialization via QDataStream into a QByteArray.
+            Version 2 of this protocol uses CBOR serialization via QCborValue::toCbor().
+
+            Please note that this extension uses the built-in Wayland versioning mechanism.
+            There is only one XML description for both versions of the extension.
+        </description>
         <event name="window_property_changed">
+            <description summary="notify client of window property change">
+                The server sends this event, when it has set the window property identified by
+                'name' to the given 'value' on the window 'surface'.
+            </description>
             <arg name="surface" type="object" interface="wl_surface"/>
             <arg name="name" type="string"/>
             <arg name="value" type="array"/>
         </event>
 
         <request name="set_window_property">
+            <description summary="notify server of window property change">
+                A client sends this request, when it has set the window property identified by
+                'name' to the given 'value' on the window 'surface'.
+            </description>
             <arg name="surface" type="object" interface="wl_surface"/>
             <arg name="name" type="string"/>
             <arg name="value" type="array"/>

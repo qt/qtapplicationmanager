@@ -148,7 +148,9 @@ bool QmlInProcessRuntime::start()
 void QmlInProcessRuntime::stop(bool forceKill)
 {
     setState(Am::ShuttingDown);
-    emit aboutToStop();
+
+    if (!forceKill)
+        emit aboutToStop();
 
     for (int i = m_surfaces.size(); i; --i)
         m_surfaces.at(i-1)->setVisibleClientSide(false);
@@ -178,16 +180,39 @@ void QmlInProcessRuntime::stop(bool forceKill)
 #else
         int exitCode = 0;
 #endif
-        finish(exitCode, Am::ForcedExit);
+        if (state() != Am::NotRunning)
+            finish(exitCode, Am::ForcedExit);
     });
 }
 
 void QmlInProcessRuntime::finish(int exitCode, Am::ExitStatus status)
 {
     QMetaObject::invokeMethod(this, [this, exitCode, status]() {
-        qCDebug(LogSystem) << "QmlInProcessRuntime (id:" << (m_app ? m_app->id() : qSL("(none)"))
-                           << ") exited with code:" << exitCode << "status:" << status;
-        emit finished(exitCode, status);
+        QByteArray cause = "exited";
+        bool printWarning = false;
+        switch (status) {
+        case Am::ForcedExit:
+            cause = "was force exited (" + QByteArray(exitCode == 15 /* POSIX SIGTERM */ ? "terminated" : "killed") + ")";
+            printWarning = true;
+            break;
+        default:
+            if (exitCode != 0) {
+                cause = "exited with code: " + QByteArray::number(exitCode);
+                printWarning = true;
+            }
+            break;
+        }
+
+        if (printWarning) {
+            qCWarning(LogSystem, "In-process runtime for application '%s' %s",
+                      (m_app ? qPrintable(m_app->id()) : "<null>"), cause.constData());
+        } else {
+            qCDebug(LogSystem, "In-process runtime for application '%s' %s",
+                    (m_app ? qPrintable(m_app->id()) : "<null>"), cause.constData());
+        }
+
+        if (state() != Am::NotRunning)
+            emit finished(exitCode, status);
         if (m_app)
             m_app->setCurrentRuntime(nullptr);
         setState(Am::NotRunning);

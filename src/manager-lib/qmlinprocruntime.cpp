@@ -148,7 +148,9 @@ bool QmlInProcRuntime::start()
 void QmlInProcRuntime::stop(bool forceKill)
 {
     setState(Am::ShuttingDown);
-    emit aboutToStop();
+
+    if (!forceKill)
+        emit aboutToStop();
 
     for (auto i = m_surfaces.size(); i; --i)
         m_surfaces.at(i-1)->setVisibleClientSide(false);
@@ -168,16 +170,39 @@ void QmlInProcRuntime::stop(bool forceKill)
     if (!ok || qt < 0)
         qt = 250;
     QTimer::singleShot(qt, this, [this]() {
-        finish(15 /* POSIX SIGTERM */, Am::ForcedExit);
+        if (state() != Am::NotRunning)
+            finish(15 /* POSIX SIGTERM */, Am::ForcedExit);
     });
 }
 
 void QmlInProcRuntime::finish(int exitCode, Am::ExitStatus status)
 {
     QMetaObject::invokeMethod(this, [this, exitCode, status]() {
-        qCDebug(LogSystem) << "QmlInProcRuntime (id:" << (m_app ? m_app->id() : u"(none)"_s)
-                           << ") exited with code:" << exitCode << "status:" << status;
-        emit finished(exitCode, status);
+        QByteArray cause = "exited";
+        bool printWarning = false;
+        switch (status) {
+        case Am::ForcedExit:
+            cause = "was force exited (" + QByteArray(exitCode == 15 /* POSIX SIGTERM */ ? "terminated" : "killed") + ")";
+            printWarning = true;
+            break;
+        default:
+            if (exitCode != 0) {
+                cause = "exited with code: " + QByteArray::number(exitCode);
+                printWarning = true;
+            }
+            break;
+        }
+
+        if (printWarning) {
+            qCWarning(LogSystem, "In-process runtime for application '%s' %s",
+                      (m_app ? qPrintable(m_app->id()) : "<null>"), cause.constData());
+        } else {
+            qCDebug(LogSystem, "In-process runtime for application '%s' %s",
+                    (m_app ? qPrintable(m_app->id()) : "<null>"), cause.constData());
+        }
+
+        if (state() != Am::NotRunning)
+            emit finished(exitCode, status);
         if (m_app)
             m_app->setCurrentRuntime(nullptr);
         setState(Am::NotRunning);

@@ -3,6 +3,7 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include "qml-utilities.h"
 #include "inprocesswindow.h"
 #include "inprocesssurfaceitem.h"
 
@@ -31,7 +32,8 @@ InProcessWindow::~InProcessWindow()
 
 bool InProcessWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
-    return m_surfaceItem->setWindowProperty(name, value);
+    const QVariant v = convertFromJSVariant(value);
+    return m_surfaceItem->setWindowProperty(name, v);
 }
 
 QVariant InProcessWindow::windowProperty(const QString &name) const

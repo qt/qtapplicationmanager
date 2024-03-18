@@ -134,8 +134,10 @@ QVariantMap LauncherMain::windowProperties(QWindow *window) const
 void LauncherMain::setWindowProperty(QWindow *window, const QString &name, const QVariant &value)
 {
 #if defined(QT_WAYLANDCLIENT_LIB)
-    if (m_waylandExtension && window)
-        m_waylandExtension->setWindowProperty(window, name, value);
+    if (m_waylandExtension && window) {
+        const QVariant v = convertFromJSVariant(value);
+        m_waylandExtension->setWindowProperty(window, name, v);
+    }
 #else
     Q_UNUSED(window)
     Q_UNUSED(name)

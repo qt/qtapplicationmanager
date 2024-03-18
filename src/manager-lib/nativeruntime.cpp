@@ -305,7 +305,7 @@ bool NativeRuntime::start()
     if (!m_startedViaLauncher && !m_isQuickLauncher)
         config.insert(u"systemProperties"_s, systemProperties());
     if (m_app)
-        config.insert(u"application"_s, convertFromJSVariant(m_app->info()->toVariantMap()).toMap());
+        config.insert(u"application"_s, m_app->info()->toVariantMap());
     if (!uiConfig.isEmpty())
         config.insert(u"ui"_s, uiConfig);
 
@@ -489,8 +489,8 @@ bool NativeRuntime::startApplicationViaLauncher()
 
     emit m_dbusRuntimeInterface->generatedAdaptor<RuntimeInterfaceAdaptor>()
         ->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
-                           convertFromJSVariant(m_app->info()->toVariantMap()).toMap(),
-                           convertFromJSVariant(systemProperties()).toMap());
+                           convertToDBusVariant(m_app->info()->toVariantMap()).toMap(),
+                           convertToDBusVariant(systemProperties()).toMap());
     return true;
 }
 

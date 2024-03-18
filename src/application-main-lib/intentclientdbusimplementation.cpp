@@ -69,7 +69,7 @@ void IntentClientDBusImplementation::requestToSystem(const QPointer<IntentClient
 {
     QDBusPendingReply<QString> reply =
             m_dbusInterface->requestToSystem(icr->intentId(), icr->applicationId(),
-                                             convertFromJSVariant(icr->parameters()).toMap());
+                                             convertToDBusVariant(icr->parameters()).toMap());
 
     QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(reply, icr);
     connect(watcher, &QDBusPendingCallWatcher::finished, icr, [this, watcher, icr]() {
@@ -85,7 +85,7 @@ void IntentClientDBusImplementation::replyFromApplication(const QPointer<IntentC
 {
     if (icr) {
         m_dbusInterface->replyFromApplication(icr->requestId().toString(), !icr->succeeded(),
-                                              convertFromJSVariant(icr->result()).toMap());
+                                              convertToDBusVariant(icr->result()).toMap());
         // Checking for errors here is futile. Even if we would detect an error or timeout, we
         // couldn't do anything about it, as that would mean that the AM process is dead or frozen.
     }

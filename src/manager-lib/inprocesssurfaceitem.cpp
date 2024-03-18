@@ -5,6 +5,7 @@
 
 #include "inprocesssurfaceitem.h"
 #include "applicationmanagerwindow.h"
+#include "qml-utilities.h"
 #include <QQmlEngine>
 #include <QSGSimpleRectNode>
 
@@ -42,12 +43,13 @@ InProcessSurfaceItem::~InProcessSurfaceItem()
 
 bool InProcessSurfaceItem::setWindowProperty(const QString &name, const QVariant &value)
 {
-    QByteArray key = nameToKey(name);
+    const QByteArray key = nameToKey(name);
+    const QVariant v = convertFromJSVariant(value);
     QVariant oldValue = m_windowProperties.property(key);
-    bool changed = !oldValue.isValid() || (oldValue != value);
+    bool changed = !oldValue.isValid() || (oldValue != v);
 
     if (changed)
-        m_windowProperties.setProperty(key, value);
+        m_windowProperties.setProperty(key, v);
 
     return true;
 }

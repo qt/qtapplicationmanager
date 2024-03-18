@@ -21,6 +21,9 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+// recursively resolve QJSValues
+QVariant convertFromJSVariant(const QVariant &variant);
+
 void loadQmlDummyDataFiles(QQmlEngine *engine, const QString &directory);
 
 QT_END_NAMESPACE_AM

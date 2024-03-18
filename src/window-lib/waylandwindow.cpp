@@ -7,6 +7,7 @@
 #include "global.h"
 #if defined(AM_MULTI_PROCESS)
 #include "logging.h"
+#include "qml-utilities.h"
 #include "applicationmanager.h"
 #include "application.h"
 #include "windowmanager.h"
@@ -99,8 +100,10 @@ void WaylandWindow::pingTimeout()
 
 bool WaylandWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
-    if (m_surface)
-        m_surface->compositor()->amExtension()->setWindowProperty(m_surface, name, value);
+    if (m_surface) {
+        const QVariant v = convertFromJSVariant(value);
+        m_surface->compositor()->amExtension()->setWindowProperty(m_surface, name, v);
+    }
     return (m_surface);
 }
 

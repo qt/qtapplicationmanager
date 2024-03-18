@@ -30,7 +30,7 @@ using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-QVariant convertFromJSVariant(const QVariant &variant)
+QVariant convertToDBusVariant(const QVariant &variant)
 {
 #if !defined(QT_QML_LIB)
     return variant;
@@ -38,12 +38,12 @@ QVariant convertFromJSVariant(const QVariant &variant)
     int type = variant.userType();
 
     if (type == qMetaTypeId<QJSValue>()) {
-        return convertFromJSVariant(variant.value<QJSValue>().toVariant());
+        return convertToDBusVariant(variant.value<QJSValue>().toVariant());
     } else if (type == QMetaType::QUrl) {
         return QVariant(variant.toUrl().toString());
     } else if (type == QMetaType::QVariant) {
         // got a matryoshka variant
-        return convertFromJSVariant(variant.value<QVariant>());
+        return convertToDBusVariant(variant.value<QVariant>());
     } else if ((type == QMetaType::UnknownType) || (type == QMetaType::Nullptr)) {
         // we cannot send QVariant::Invalid and null values via DBus, so we abuse BYTE(0) for this purpose
         return QVariant::fromValue<uchar>(0);
@@ -51,13 +51,13 @@ QVariant convertFromJSVariant(const QVariant &variant)
         QVariantList outList;
         QVariantList inList = variant.toList();
         for (auto it = inList.cbegin(); it != inList.cend(); ++it)
-            outList.append(convertFromJSVariant(*it));
+            outList.append(convertToDBusVariant(*it));
         return outList;
     } else if (type == QMetaType::QVariantMap) {
         QVariantMap outMap;
         QVariantMap inMap = variant.toMap();
         for (auto it = inMap.cbegin(); it != inMap.cend(); ++it)
-            outMap.insert(it.key(), convertFromJSVariant(it.value()));
+            outMap.insert(it.key(), convertToDBusVariant(it.value()));
         return outMap;
     } else {
         return variant;

@@ -470,7 +470,7 @@ void IntentServerDBusIpcConnection::requestToApplication(IntentServerRequest *is
 
     emit m_adaptor->requestToApplication(requestIdStr, isr->intentId(),
                                          isr->selectedIntent()->applicationId(),
-                                         convertFromJSVariant(isr->parameters()).toMap());
+                                         convertToDBusVariant(isr->parameters()).toMap());
 }
 
 void IntentServerDBusIpcConnection::replyFromSystem(IntentServerRequest *isr)
@@ -478,7 +478,7 @@ void IntentServerDBusIpcConnection::replyFromSystem(IntentServerRequest *isr)
     Q_ASSERT(isr);
 
     emit m_adaptor->replyFromSystem(isr->requestId().toString(), !isr->succeeded(),
-                                    convertFromJSVariant(isr->result()).toMap());
+                                    convertToDBusVariant(isr->result()).toMap());
 }
 
 QString IntentServerDBusIpcConnection::requestToSystem(const QString &intentId,

@@ -83,7 +83,7 @@ bool ApplicationManagerAdaptor::singleProcess() const
 
 QVariantMap ApplicationManagerAdaptor::systemProperties() const
 {
-    return convertFromJSVariant(ApplicationManager::instance()->systemProperties()).toMap();
+    return convertToDBusVariant(ApplicationManager::instance()->systemProperties()).toMap();
 }
 
 bool ApplicationManagerAdaptor::windowManagerCompositorReady() const
@@ -158,7 +158,7 @@ QVariantMap ApplicationManagerAdaptor::get(const QString &id)
     auto map = ApplicationManager::instance()->get(id);
     map.remove(qSL("application"));       // cannot marshall QObject *
     map.remove(qSL("applicationObject")); // cannot marshall QObject *
-    return convertFromJSVariant(map).toMap();
+    return convertToDBusVariant(map).toMap();
 }
 
 QString ApplicationManagerAdaptor::identifyApplication(qlonglong pid)

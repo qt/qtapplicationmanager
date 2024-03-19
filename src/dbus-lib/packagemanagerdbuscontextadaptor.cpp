@@ -74,7 +74,7 @@ PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
             appList.append(app);
         }
         map.insert(qSL("applications"), appList);
-        map = convertFromJSVariant(map).toMap();
+        map = convertToDBusVariant(map).toMap();
 
         emit taskRequestingInstallationAcknowledge(taskId, map, packageExtraMetaData,
                                                    packageExtraSignedMetaData);
@@ -160,7 +160,7 @@ QVariantMap PackageManagerAdaptor::get(const QString &id)
     auto map = PackageManager::instance()->get(id);
     map.remove(qSL("package"));       // cannot marshall QObject *
     map.remove(qSL("packageObject")); // cannot marshall QObject *
-    return convertFromJSVariant(map).toMap();
+    return convertToDBusVariant(map).toMap();
 }
 
 qlonglong PackageManagerAdaptor::installedPackageSize(const QString &packageId)
@@ -173,14 +173,14 @@ QVariantMap PackageManagerAdaptor::installedPackageExtraMetaData(const QString &
 {
     AM_AUTHENTICATE_DBUS(QVariantMap)
     const auto map = PackageManager::instance()->installedPackageExtraMetaData(packageId);
-    return convertFromJSVariant(map).toMap();
+    return convertToDBusVariant(map).toMap();
 }
 
 QVariantMap PackageManagerAdaptor::installedPackageExtraSignedMetaData(const QString &packageId)
 {
     AM_AUTHENTICATE_DBUS(QVariantMap)
     const auto map = PackageManager::instance()->installedPackageExtraSignedMetaData(packageId);
-    return convertFromJSVariant(map).toMap();
+    return convertToDBusVariant(map).toMap();
 }
 
 QString PackageManagerAdaptor::removePackage(const QString &packageId, bool keepDocuments)

@@ -482,8 +482,8 @@ bool NativeRuntime::startApplicationViaLauncher()
     QString pathInContainer = m_container->mapHostPathToContainer(m_app->info()->absoluteCodeFilePath());
 
     emit m_runtimeInterface->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
-                                              convertFromJSVariant(m_app->info()->toVariantMap()).toMap(),
-                                              convertFromJSVariant(systemProperties()).toMap());
+                                              convertToDBusVariant(m_app->info()->toVariantMap()).toMap(),
+                                              convertToDBusVariant(systemProperties()).toMap());
     return true;
 }
 
@@ -550,14 +550,14 @@ QString NativeRuntimeApplicationInterface::version() const
 QVariantMap NativeRuntimeApplicationInterface::systemProperties() const
 {
     if (m_runtime)
-        return convertFromJSVariant(m_runtime->systemProperties()).toMap();
+        return convertToDBusVariant(m_runtime->systemProperties()).toMap();
     return QVariantMap();
 }
 
 QVariantMap NativeRuntimeApplicationInterface::applicationProperties() const
 {
     if (m_runtime && m_runtime->application())
-        return convertFromJSVariant(m_runtime->application()->info()->allAppProperties()).toMap();
+        return convertToDBusVariant(m_runtime->application()->info()->allAppProperties()).toMap();
     return QVariantMap();
 }
 

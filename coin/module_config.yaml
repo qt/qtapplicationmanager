@@ -63,6 +63,13 @@ instructions:
     - type: EnvironmentVariable
       variableName: AM_NO_CRASH_HANDLER
       variableValue: 1
+    - type: EnvironmentVariable
+      variableName: WAYLAND_DISPLAY
+      variableValue: ""
+      enable_if:
+        condition: property
+        property: osVersion
+        contains_value: Debian_11_6
     - type: Group
       instructions:
         - !include "{{qt/qtbase}}/coin_module_test_template_v3.yaml"

@@ -33,7 +33,7 @@ public:
     virtual void requestToSystem(const QPointer<IntentClientRequest> &icr) = 0;
     virtual void replyFromApplication(const QPointer<IntentClientRequest> &icr) = 0;
 
-signals:
+Q_SIGNALS:
     void requestToSystemFinished(const QPointer<QtAM::IntentClientRequest> &icr,
                                  const QUuid &newRequestId, bool error, const QString &errorMessage);
     void replyFromSystem(const QUuid &requestId, bool error, const QVariantMap &result);

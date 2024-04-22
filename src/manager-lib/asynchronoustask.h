@@ -51,7 +51,7 @@ public:
     virtual bool preExecute();
     virtual bool postExecute();
 
-signals:
+Q_SIGNALS:
     void stateChanged(QtAM::AsynchronousTask::TaskState newState);
     void progress(qreal p);
 

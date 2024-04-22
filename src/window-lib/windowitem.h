@@ -69,13 +69,13 @@ public:
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 
-signals:
+Q_SIGNALS:
     void windowChanged(); // clazy:exclude=overloaded-signal
     void primaryChanged();
     void objectFollowsItemSizeChanged();
     void contentItemDataChanged();
 
-private slots:
+private Q_SLOTS:
     void updateImplicitSize();
 private:
     void createImpl(bool inProcess);

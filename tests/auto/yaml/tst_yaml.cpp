@@ -23,7 +23,7 @@ class tst_Yaml : public QObject
 public:
     tst_Yaml();
 
-private slots:
+private Q_SLOTS:
     void parser();
     void documentParser();
     void cache();

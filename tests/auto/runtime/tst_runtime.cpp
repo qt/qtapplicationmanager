@@ -25,7 +25,7 @@ class tst_Runtime : public QObject
 public:
     tst_Runtime();
 
-private slots:
+private Q_SLOTS:
     void factory();
 };
 
@@ -47,7 +47,7 @@ public:
         return m_state == Am::Running ? 1 : 0;
     }
 
-public slots:
+public Q_SLOTS:
     bool start() override
     {
         m_state = Am::Running;

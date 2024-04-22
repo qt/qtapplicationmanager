@@ -19,7 +19,7 @@ class tst_SystemReader : public QObject
 public:
     tst_SystemReader();
 
-private slots:
+private Q_SLOTS:
     void cgroupProcessInfo();
     void memoryReaderReadUsedValue();
     void memoryReaderGroupLimit();

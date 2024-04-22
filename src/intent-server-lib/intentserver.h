@@ -81,7 +81,7 @@ public:
                                                       QtAM::Intent *selectedIntent);
     Q_INVOKABLE void rejectDisambiguationRequest(const QUuid &requestId);
 
-signals:
+Q_SIGNALS:
     void intentAdded(QtAM::Intent *intent);
     void intentAboutToBeRemoved(QtAM::Intent *intent);
 

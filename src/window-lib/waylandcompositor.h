@@ -68,7 +68,7 @@ public:
     void ping();
     void close();
 
-signals:
+Q_SIGNALS:
     void pong();
     void popupGeometryChanged();
     void xdgSurfaceChanged();
@@ -101,7 +101,7 @@ public:
 
     void xdgPing(WindowSurface*);
 
-signals:
+Q_SIGNALS:
     void surfaceMapped(QtAM::WindowSurface *surface);
 
 protected:

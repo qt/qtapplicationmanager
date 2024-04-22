@@ -74,7 +74,7 @@ public:
     virtual QSize size() const = 0;
     Q_INVOKABLE virtual void resize(const QSize &size) = 0;
 
-signals:
+Q_SIGNALS:
     void sizeChanged();
     void windowPropertyChanged(const QString &name, const QVariant &value);
     void isBeingDisplayedChanged();

@@ -54,7 +54,7 @@ public:
     ApplicationManagerWindow *applicationManagerWindow();
     void setApplicationManagerWindow(ApplicationManagerWindow *win);
 
-signals:
+Q_SIGNALS:
     void visibleClientSideChanged();
     void windowPropertyChanged(const QString &name, const QVariant &value);
     void closeRequested();

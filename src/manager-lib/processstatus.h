@@ -53,7 +53,7 @@ public:
     bool isMemoryReportingEnabled() const;
     void setMemoryReportingEnabled(bool enabled);
 
-signals:
+Q_SIGNALS:
     void applicationIdChanged(const QString &applicationId);
     void processIdChanged(qint64 processId);
     void cpuLoadChanged();
@@ -61,7 +61,7 @@ signals:
                                                                   const QVariantMap &memoryPss);
     void memoryReportingEnabledChanged(bool enabled);
 
-private slots:
+private Q_SLOTS:
     void onRunStateChanged(QtAM::Am::RunState state);
 
 private:

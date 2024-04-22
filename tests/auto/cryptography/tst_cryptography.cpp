@@ -17,7 +17,7 @@ class tst_Cryptography : public QObject
 public:
     tst_Cryptography();
 
-private slots:
+private Q_SLOTS:
     void random();
 };
 

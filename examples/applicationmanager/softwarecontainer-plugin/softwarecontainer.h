@@ -97,7 +97,7 @@ public:
     QDBusInterface *interface() const;
     QVariantMap configuration() const;
 
-private slots:
+private Q_SLOTS:
     void processStateChanged(int containerId, uint processId, bool isRunning, uint exitCode);
 
 private:

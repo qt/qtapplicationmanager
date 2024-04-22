@@ -28,7 +28,7 @@ class AbstractRuntime;
 class ApplicationManagerInternalSignals : public QObject
 {
     Q_OBJECT
-signals:
+Q_SIGNALS:
     // Emitted every time a new Runtime object is created
     void newRuntimeCreated(QtAM::AbstractRuntime *runtime);
     void shutDownFinished();
@@ -121,10 +121,10 @@ public:
 
     ApplicationManagerInternalSignals internalSignals;
 
-public slots:
+public Q_SLOTS:
     void shutDown();
 
-signals:
+Q_SIGNALS:
     Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QtAM::Am::RunState runState);
     Q_SCRIPTABLE void applicationWasActivated(const QString &id, const QString &aliasId);
     Q_SCRIPTABLE void countChanged();
@@ -143,7 +143,7 @@ signals:
     void containerSelectionFunctionChanged();
     void shuttingDownChanged();
 
-private slots:
+private Q_SLOTS:
     void openUrlRelay(const QUrl &url);
 
 private:

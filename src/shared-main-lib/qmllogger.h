@@ -19,7 +19,7 @@ class QmlLogger : public QObject
 public:
     explicit QmlLogger(QQmlEngine *engine = nullptr);
 
-private slots:
+private Q_SLOTS:
     void warnings(const QList<QQmlError> &list);
 };
 

@@ -50,11 +50,11 @@ public:
     virtual qint64 processId() const = 0;
     virtual Am::RunState state() const = 0;
 
-public slots:
+public Q_SLOTS:
     virtual void kill() = 0;
     virtual void terminate() = 0;
 
-signals:
+Q_SIGNALS:
     void started();
     void errorOccured(QtAM::Am::ProcessError error);
     void finished(int exitCode, QtAM::Am::ExitStatus status);
@@ -89,7 +89,7 @@ public:
     void setApplication(Application *app);
     Application *application() const;
 
-signals:
+Q_SIGNALS:
     void ready();
     void memoryLowWarning();
     void memoryCriticalWarning();

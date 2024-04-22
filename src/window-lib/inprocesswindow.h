@@ -44,7 +44,7 @@ public:
     // So we let it be set at will (likely by WindowManager)
     void setContentState(ContentState);
 
-private slots:
+private Q_SLOTS:
     void onVisibleClientSideChanged();
 
 private:

@@ -59,7 +59,7 @@ public:
     qint64 processId() const override;
     Am::RunState state() const override;
 
-public slots:
+public Q_SLOTS:
     void kill() override;
     void terminate() override;
 

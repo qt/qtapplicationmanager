@@ -18,7 +18,7 @@ class tst_Architecture : public QObject
 public:
     tst_Architecture() = default;
 
-private slots:
+private Q_SLOTS:
     void initTestCase();
     void architecture_data();
     void architecture();

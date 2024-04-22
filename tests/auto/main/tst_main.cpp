@@ -32,7 +32,7 @@ public:
     tst_Main();
     ~tst_Main() override;
 
-private slots:
+private Q_SLOTS:
     void initTestCase();
     void init();
     void cleanup();

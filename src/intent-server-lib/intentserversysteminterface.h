@@ -42,7 +42,7 @@ public:
 
     virtual void requestToApplication(IpcConnection *clientIPC, IntentServerRequest *isr) = 0;
 
-signals:
+Q_SIGNALS:
     void applicationWasStarted(const QString &appId);
     void replyFromApplication(const QString &replyingApplicationId, const QUuid &requestId,
                               bool error, const QVariantMap &result);

@@ -81,7 +81,7 @@ public:
     static bool startedSudoServer;
     static QString sudoServerError;
 
-private slots:
+private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
 

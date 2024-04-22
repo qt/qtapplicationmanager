@@ -49,7 +49,7 @@ public:
 
     void setIntentIds(const QStringList &intentId);
 
-signals:
+Q_SIGNALS:
     void intentIdsChanged();
     void requestReceived(QtAM::IntentClientRequest *request);
 

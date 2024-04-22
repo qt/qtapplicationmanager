@@ -43,10 +43,10 @@ public:
     Error errorCode() const;
     QString errorString() const;
 
-public slots:
+public Q_SLOTS:
     void cancel();
 
-signals:
+Q_SIGNALS:
     void progress(qreal progress);
 
 private:

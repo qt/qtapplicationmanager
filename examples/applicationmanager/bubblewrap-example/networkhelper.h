@@ -19,7 +19,7 @@ public:
 
     QStringList ipAddresses() const;
 
-signals:
+Q_SIGNALS:
 
 private:
     QStringList m_ipAddresses;

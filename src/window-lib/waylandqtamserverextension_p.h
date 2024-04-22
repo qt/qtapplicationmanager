@@ -39,7 +39,7 @@ public:
     QVariantMap windowProperties(const QWaylandSurface *surface) const;
     void setWindowProperty(QWaylandSurface *surface, const QString &name, const QVariant &value);
 
-signals:
+Q_SIGNALS:
     void windowPropertyChanged(QWaylandSurface *surface, const QString &name, const QVariant &value);
 
 private:

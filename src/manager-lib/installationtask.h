@@ -37,7 +37,7 @@ public:
     void acknowledge();
     bool cancel() override;
 
-signals:
+Q_SIGNALS:
     void finishedPackageExtraction();
 
 protected:

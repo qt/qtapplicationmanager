@@ -60,11 +60,11 @@ public:
 
     void applicationFinishedInitialization(); // called by the D-Bus adaptor
 
-public slots:
+public Q_SLOTS:
     bool start() override;
     void stop(bool forceKill = false) override;
 
-signals:
+Q_SIGNALS:
     void aboutToStop(); // used for the ApplicationInterface
 
     void applicationConnectedToPeerDBus(const QDBusConnection &connection,
@@ -74,7 +74,7 @@ signals:
     void applicationDisconnectedFromPeerDBus(const QDBusConnection &connection,
                                              QtAM::Application *application);
 
-private slots:
+private Q_SLOTS:
     void onProcessStarted();
     void onProcessFinished(int exitCode, QtAM::Am::ExitStatus status);
     void onProcessError(QtAM::Am::ProcessError error);

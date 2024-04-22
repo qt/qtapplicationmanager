@@ -20,7 +20,7 @@ public:
     tst_DebugWrapper(QObject *parent = nullptr);
     ~tst_DebugWrapper() override;
 
-private slots:
+private Q_SLOTS:
     void specification_data();
     void specification();
 

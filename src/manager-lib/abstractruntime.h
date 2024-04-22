@@ -68,7 +68,7 @@ private:
 class RuntimeSignaler : public QObject
 {
     Q_OBJECT
-signals:
+Q_SIGNALS:
     void aboutToStart(QtAM::AbstractRuntime *runtime);
     // this signal is for in-process mode runtimes only
     void inProcessSurfaceItemReady(QtAM::AbstractRuntime *runtime,
@@ -112,7 +112,7 @@ public:
 
     static RuntimeSignaler* signaler();
 
-signals:
+Q_SIGNALS:
     void stateChanged(QtAM::Am::RunState newState);
     void finished(int exitCode, QtAM::Am::ExitStatus status);
 

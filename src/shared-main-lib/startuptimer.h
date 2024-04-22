@@ -41,7 +41,7 @@ public:
 
     void setAutomaticReporting(bool enableAutomaticReporting);
 
-signals:
+Q_SIGNALS:
     void timeToFirstFrameChanged(quint64 timeToFirstFrame);
     void systemUpTimeChanged(quint64 systemUpTime);
     void automaticReportingChanged(bool setAutomaticReporting);

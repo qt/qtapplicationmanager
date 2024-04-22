@@ -50,11 +50,11 @@ public:
 
     static bool m_watchdogEnabled;
 
-signals:
+Q_SIGNALS:
     void waylandSurfaceChanged();
     void waylandXdgSurfaceChanged();
 
-private slots:
+private Q_SLOTS:
     void pongReceived();
     void pongTimeout();
     void pingTimeout();

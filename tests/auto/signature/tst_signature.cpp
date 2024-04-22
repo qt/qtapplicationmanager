@@ -21,7 +21,7 @@ class tst_Signature : public QObject
 public:
     tst_Signature();
 
-private slots:
+private Q_SLOTS:
     void initTestCase();
     void check();
     void crossPlatform();

@@ -23,7 +23,7 @@ public:
     Q_INVOKABLE void divideByZero() const;
     Q_INVOKABLE void raise() const;
 
-signals:
+Q_SIGNALS:
     void signumChanged();
 
 private:

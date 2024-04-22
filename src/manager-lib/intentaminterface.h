@@ -100,7 +100,7 @@ public:
     virtual void replyFromSystem(IntentServerRequest *isr) = 0;
     virtual void requestToApplication(IntentServerRequest *isr) = 0;
 
-signals:
+Q_SIGNALS:
     void applicationIsReady(const QString &applicationId);
 
 protected:
@@ -202,7 +202,7 @@ public:
     void setRequiredCapabilities(const QStringList &requiredCapabilities);
     void setParameterMatch(const QVariantMap &parameterMatch);
 
-signals:
+Q_SIGNALS:
     void intentIdsChanged();
     void requestReceived(QtAM::IntentClientRequest *request);
 

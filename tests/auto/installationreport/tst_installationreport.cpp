@@ -21,7 +21,7 @@ class tst_InstallationReport : public QObject
 public:
     tst_InstallationReport();
 
-private slots:
+private Q_SLOTS:
     void test();
 };
 

@@ -50,7 +50,7 @@ public:
     Q_INVOKABLE QtAM::Notification *createNotification();
     Q_INVOKABLE void acknowledgeQuit();
 
-signals:
+Q_SIGNALS:
     Q_SCRIPTABLE void quit();
     Q_SCRIPTABLE void memoryLowWarning();
     Q_SCRIPTABLE void memoryCriticalWarning();

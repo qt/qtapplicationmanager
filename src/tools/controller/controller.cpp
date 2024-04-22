@@ -85,8 +85,7 @@ public:
         }
     }
 
-signals:
-    void disconnected(QString reason);
+    Q_SIGNAL void disconnected(QString reason);
 
 private:
     template<typename T>

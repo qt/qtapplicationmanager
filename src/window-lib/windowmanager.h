@@ -39,7 +39,7 @@ class WaylandCompositor;
 class WindowManagerInternalSignals : public QObject
 {
     Q_OBJECT
-signals:
+Q_SIGNALS:
     // Emitted right before the WaylandCompositor instance is created
     void compositorAboutToBeCreated();
     void shutDownFinished();
@@ -88,7 +88,7 @@ public:
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
-signals:
+Q_SIGNALS:
     Q_SCRIPTABLE void countChanged();
     Q_SCRIPTABLE void slowAnimationsChanged(bool);
 
@@ -100,7 +100,7 @@ signals:
 
     void windowPropertyChanged(QtAM::Window *window, const QString &name, const QVariant &value);
 
-private slots:
+private Q_SLOTS:
     void inProcessSurfaceItemCreated(QtAM::AbstractRuntime *runtime,
                                      QSharedPointer<QtAM::InProcessSurfaceItem> surfaceItem);
     void setupWindow(QtAM::Window *window);
@@ -114,7 +114,7 @@ public:
     void setupInProcessRuntime(QtAM::AbstractRuntime *runtime);
 
 #if QT_CONFIG(am_multi_process)
-private slots:
+private Q_SLOTS:
     void waylandSurfaceCreated(QWaylandSurface *surface);
     void waylandSurfaceMapped(QtAM::WindowSurface *surface);
 

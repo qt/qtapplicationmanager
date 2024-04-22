@@ -40,7 +40,7 @@ public:
     bool setWindowProperty(QWindow *window, const QString &name, const QVariant &value);
     void clearWindowPropertyCache(QWindow *window);
 
-signals:
+Q_SIGNALS:
     void windowPropertyChanged(QWindow *window, const QString &name, const QVariant &value);
 
 protected:

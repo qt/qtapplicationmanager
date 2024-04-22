@@ -30,7 +30,7 @@ public:
     Controller(ApplicationMain *am, bool quickLaunched);
     Controller(ApplicationMain *am, bool quickLaunched, const QPair<QString, QString> &directLoad);
 
-public slots:
+public Q_SLOTS:
     void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
                           const QString &mimeType, const QVariantMap &application,
                           const QVariantMap &systemProperties);
@@ -49,7 +49,7 @@ private:
 protected:
     bool eventFilter(QObject *o, QEvent *e) override;
 
-private slots:
+private Q_SLOTS:
     void updateSlowAnimations(bool isSlow);
 };
 

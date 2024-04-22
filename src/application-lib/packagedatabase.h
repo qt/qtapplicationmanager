@@ -46,7 +46,7 @@ public:
     void addPackageInfo(PackageInfo *package);
     void removePackageInfo(PackageInfo *package);
 
-signals:
+Q_SIGNALS:
     void installedPackagesParsed();
 
 private:

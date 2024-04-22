@@ -26,7 +26,7 @@ class tst_PackageCreator : public QObject
 public:
     tst_PackageCreator();
 
-private slots:
+private Q_SLOTS:
     void initTestCase();
 
     void createAndVerify_data();

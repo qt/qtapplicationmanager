@@ -29,7 +29,7 @@ class DeinstallationTask;
 class PackageManagerInternalSignals : public QObject
 {
     Q_OBJECT
-signals:
+Q_SIGNALS:
     // the slots connected to these signals are allowed to throw Exception objects, if the
     // connection is direct!
     void registerApplication(QtAM::ApplicationInfo *applicationInfo,
@@ -135,7 +135,7 @@ public:
 
     PackageManagerInternalSignals internalSignals;
 
-signals:
+Q_SIGNALS:
     Q_SCRIPTABLE void readyChanged(bool b);
     Q_SCRIPTABLE void countChanged();
 

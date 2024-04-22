@@ -19,7 +19,7 @@ class tst_Configuration : public QObject
 public:
     tst_Configuration();
 
-private slots:
+private Q_SLOTS:
     void defaultConfig();
     void simpleConfig();
     void mergedConfig();

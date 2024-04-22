@@ -56,14 +56,14 @@ public:
     Q_INVOKABLE void clear();
     Q_INVOKABLE QVariantMap get(int row) const;
 
-signals:
+Q_SIGNALS:
     void countChanged();
     void intervalChanged();
     void runningChanged();
     void maximumCountChanged();
     void dataSourcesChanged();
 
-private slots:
+private Q_SLOTS:
     void readDataSourcesAndAddRow();
 
 private:

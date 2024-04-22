@@ -42,12 +42,12 @@ public:
     bool testReadSmaps(const QByteArray &smapsFile);
 #endif
 
-public slots:
+public Q_SLOTS:
     void update();
     void setProcessId(qint64 pid);
     void enableMemoryReporting(bool enabled);
 
-signals:
+Q_SIGNALS:
     void updated();
 
 private:

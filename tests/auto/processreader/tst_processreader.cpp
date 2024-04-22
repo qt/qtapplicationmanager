@@ -16,7 +16,7 @@ class tst_ProcessReader : public QObject
 public:
     tst_ProcessReader();
 
-private slots:
+private Q_SLOTS:
     void memInvalid_data();
     void memInvalid();
     void memTestProcess();

@@ -43,7 +43,7 @@ class tst_PackageServerTool : public QObject
 public:
     tst_PackageServerTool();
 
-private slots:
+private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
 

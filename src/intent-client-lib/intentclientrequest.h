@@ -54,7 +54,7 @@ public:
 
     void startTimeout(int timeout);
 
-signals:
+Q_SIGNALS:
     void requestIdChanged();
     void replyReceived();
 

@@ -70,7 +70,7 @@ public:
     Q_INVOKABLE void update();
     Q_INVOKABLE void hide();
 
-public slots:
+public Q_SLOTS:
     void setSummary(const QString &summary);
     void setBody(const QString &boy);
     void setIcon(const QUrl &icon);
@@ -88,7 +88,7 @@ public slots:
     void setExtended(const QVariantMap &extended);
     void setVisible(bool visible);
 
-signals:
+Q_SIGNALS:
     void notificationIdChanged(uint notificationId);
     void summaryChanged(const QString &summary);
     void bodyChanged(const QString &body);

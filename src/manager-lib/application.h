@@ -122,7 +122,7 @@ public:
     void setRunState(Am::RunState runState);
     void setCurrentRuntime(AbstractRuntime *runtime);
 
-signals:
+Q_SIGNALS:
     void bulkChange();
     void runtimeChanged();
     void lastExitCodeChanged();

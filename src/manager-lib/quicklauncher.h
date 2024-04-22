@@ -32,10 +32,10 @@ public:
     QPair<AbstractContainer *, AbstractRuntime *> take(const QString &containerId, const QString &runtimeId);
     void shutDown();
 
-public slots:
+public Q_SLOTS:
     void rebuild();
 
-signals:
+Q_SIGNALS:
     void shutDownFinished();
 
 protected:

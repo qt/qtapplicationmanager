@@ -47,7 +47,7 @@ public:
     void setWorkingDirectory(const QString &dir);
     void setProcessEnvironment(const QProcessEnvironment &environment);
 
-public slots:
+public Q_SLOTS:
     void kill() override;
     void terminate() override;
 

@@ -48,12 +48,12 @@ public:
     Q_SCRIPTABLE uint Notify(const QString &app_name, uint replaces_id, const QString &app_icon, const QString &summary, const QString &body, const QStringList &actions, const QVariantMap &hints, int timeout);
     Q_SCRIPTABLE void CloseNotification(uint id);
 
-signals:
+Q_SIGNALS:
     Q_SCRIPTABLE void NotificationClosed(uint id, uint reason);
     Q_SCRIPTABLE void ActionInvoked(uint id, const QString &action_key);
     // ^^ libnotify DBus interface
 
-signals:
+Q_SIGNALS:
     void countChanged();
     void notificationAdded(uint id);
     void notificationAboutToBeRemoved(uint id);

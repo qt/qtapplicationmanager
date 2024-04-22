@@ -34,7 +34,7 @@ public:
 
     Q_INVOKABLE void update();
 
-signals:
+Q_SIGNALS:
     void cpuLoadChanged();
 
 private:

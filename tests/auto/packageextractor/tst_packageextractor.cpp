@@ -35,7 +35,7 @@ class tst_PackageExtractor : public QObject
 public:
     tst_PackageExtractor();
 
-private slots:
+private Q_SLOTS:
     void initTestCase();
     void init();
     void cleanup();

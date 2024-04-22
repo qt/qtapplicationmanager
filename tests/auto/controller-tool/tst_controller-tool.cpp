@@ -35,7 +35,7 @@ class tst_ControllerTool : public QObject
 public:
     tst_ControllerTool();
 
-private slots:
+private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
     void usage();

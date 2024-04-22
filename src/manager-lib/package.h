@@ -100,7 +100,7 @@ public:
     void addApplication(Application *application);
     void removeApplication(Application *application);
 
-signals:
+Q_SIGNALS:
     void bulkChange();
     void stateChanged(QtAM::Package::State state);
     void blockedChanged(bool blocked);

@@ -42,15 +42,15 @@ public:
 
     static QmlInProcRuntime *determineRuntime(QObject *object);
 
-public slots:
+public Q_SLOTS:
     bool start() override;
     void stop(bool forceKill = false) override;
     void stopIfNoVisibleSurfaces();
 
-signals:
+Q_SIGNALS:
     void aboutToStop(); // used for the ApplicationInterface
 
-private slots:
+private Q_SLOTS:
     void finish(int exitCode, QtAM::Am::ExitStatus status);
     void onSurfaceItemReleased(QtAM::InProcessSurfaceItem *surface);
 

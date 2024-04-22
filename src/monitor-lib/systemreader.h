@@ -123,7 +123,7 @@ public:
     bool setEnabled(bool enabled, const QString &groupPath, MemoryReader *reader);
 #endif
 
-signals:
+Q_SIGNALS:
     void thresholdTriggered();
 
 private:
@@ -132,7 +132,7 @@ private:
     QList<qreal> m_thresholds;
 
 #if defined(Q_OS_LINUX)
-private slots:
+private Q_SLOTS:
     void readEventFd();
 
 private:
@@ -153,7 +153,7 @@ public:
     bool startWatching(const QString &groupPath = QString());
     void checkMemoryConsumption();
 
-signals:
+Q_SIGNALS:
     void memoryLow();
     void memoryCritical();
 

@@ -1,19 +1,19 @@
 dependencies:
   ../qtbase:
-    ref: f88091c190a1e47544bb40230ec1e0a64851a1f5
+    ref: 82b2436d4c9ff41bcf8cd88697fb4d29fd6db525
     required: true
   ../qtdeclarative:
-    ref: 2f1362f0f81ded47cb0a37f0f843690b7123226a
+    ref: 64f8bfdce453cbf6f8fa075699f61155e289281c
     required: true
   ../qtdltlogging:
-    ref: 02e89bd70915859c0aec936d8c2d546313c68ed3
+    ref: a35293f3b77be2d7594b0ced24855d6ab28ceab7
     required: false
   ../qthttpserver:
-    ref: cb2a50d9f4199749527bf3d6236e37b424362c94
+    ref: 3ef3a268347bdef8e0f8a75a0b6ece58196c1b36
     required: false
   ../qttools:
-    ref: 8d02a6c6eac0873eb7569fc3ead9a3a6a12290c5
+    ref: 49e82ad18bad490e7a8dc5cfdb47d7817d9062bc
     required: false
   ../qtwayland:
-    ref: 9f7501873bce26af67148b4b6241f059ac280c20
+    ref: 668225ba11d689611f6e1e20ee6605e3ed7635bc
     required: false

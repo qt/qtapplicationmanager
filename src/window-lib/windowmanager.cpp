@@ -235,7 +235,7 @@ WindowManager *WindowManager::createInstance(QQmlEngine *qmlEngine, const QStrin
                                                         QQuickItem *attacheeItem) {
         return new QmlInProcApplicationManagerWindowAttachedImpl(windowAttached, attacheeItem);
     });
-    SystemFrameTimerImpl::setFactory([](FrameTimer *frameTimer) {
+    FrameTimerImpl::setFactory([](FrameTimer *frameTimer) {
         return new SystemFrameTimerImpl(frameTimer);
     });
 

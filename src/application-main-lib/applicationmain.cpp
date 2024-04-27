@@ -29,6 +29,7 @@
 #include "intentclient.h"
 #include "dbusnotificationimpl.h"
 #include "waylandapplicationmanagerwindowimpl.h"
+#include "dbusapplicationinterfaceimpl.h"
 #include "applicationmain.h"
 
 #ifdef interface // in case windows.h got included somehow
@@ -48,6 +49,7 @@ ApplicationMain *ApplicationMain::s_instance = nullptr;
 ApplicationMain::ApplicationMain(int &argc, char **argv) noexcept
     : ApplicationMainBase(SharedMain::preConstructor(argc), argv)
     , SharedMain()
+    , m_applicationInterfaceImpl(new DBusApplicationInterfaceImpl(this))
 {
     if (ApplicationMain::s_instance)
         qCritical("ERROR: only one instance of ApplicationMain is allowed");
@@ -56,12 +58,17 @@ ApplicationMain::ApplicationMain(int &argc, char **argv) noexcept
     NotificationImpl::setFactory([this](Notification *notification, const QString &) {
         return new DBusNotificationImpl(notification, this);
     });
-    WaylandApplicationManagerWindowImpl::setFactory([this](ApplicationManagerWindow *window) {
+    ApplicationManagerWindowImpl::setFactory([this](ApplicationManagerWindow *window) {
         return new WaylandApplicationManagerWindowImpl(window, this);
     });
-    WaylandApplicationManagerWindowAttachedImpl::setFactory([](ApplicationManagerWindowAttached *windowAttached,
-                                                               QQuickItem *attacheeItem) {
+    ApplicationManagerWindowAttachedImpl::setFactory([](ApplicationManagerWindowAttached *windowAttached,
+                                                        QQuickItem *attacheeItem) {
         return new WaylandApplicationManagerWindowAttachedImpl(windowAttached, attacheeItem);
+    });
+    ApplicationInterfaceImpl::setFactory([this](ApplicationInterface *) {
+        // In contrast to its single-process counter part, this specific impl for multi-process
+        // mode is a singleton (which really does not fit the factory pattern well)
+        return m_applicationInterfaceImpl.get();
     });
 }
 

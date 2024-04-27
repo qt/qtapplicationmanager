@@ -23,7 +23,6 @@
 #include "applicationmanager.h"
 #include "nativeruntime.h"
 #include "qtyaml.h"
-#include "applicationinterface.h"
 #include "utilities.h"
 #include "notificationmanager.h"
 #include "dbus-utilities.h"

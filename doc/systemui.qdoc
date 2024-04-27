@@ -90,7 +90,7 @@ One example of a simple System UI is the one written for the "Hello World!" Syst
 
 In cases where you'd like to display notifications or pop-ups, applications or clients can
 create these with \l{ApplicationInterface::createNotification()}. They are then made available
-on the System UI via the \l{NotificationManager}.
+on the System UI side via the \l{NotificationManager}.
 
 The code snippet below is part of the \l{Desktop System UI Example} that illustrates how to
 display pop-ups.

@@ -28,27 +28,24 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-DBusApplicationInterfaceImpl *DBusApplicationInterfaceImpl::s_instance = nullptr;
-
-DBusApplicationInterfaceImpl::DBusApplicationInterfaceImpl(ApplicationInterface *ai,
-                                                           ApplicationMain *applicationMain)
-    : ApplicationInterfaceImpl(ai)
+DBusApplicationInterfaceImpl::DBusApplicationInterfaceImpl(ApplicationMain *applicationMain)
+    : ApplicationInterfaceImpl()
     , m_applicationMain(applicationMain)
 {
-    if (DBusApplicationInterfaceImpl::s_instance)
-        qCritical("ERROR: only one instance of DBusApplicationInterface is allowed");
-    s_instance = this;
-
-    QObject::connect(applicationMain, &ApplicationMain::memoryLowWarning,
-                     ai, &ApplicationInterface::memoryLowWarning);
-    QObject::connect(applicationMain, &ApplicationMain::memoryCriticalWarning,
-                     ai, &ApplicationInterface::memoryCriticalWarning);
-    QObject::connect(applicationMain, &ApplicationMain::openDocument,
-                     ai, &ApplicationInterface::openDocument);
-    QObject::connect(applicationMain, &ApplicationMain::slowAnimationsChanged,
-                     ai, &ApplicationInterface::slowAnimationsChanged);
     QObject::connect(applicationMain, &ApplicationMain::quit,
-                     ai, [this]() { handleQuit(); });
+                     applicationMain, [this]() { handleQuit(); });
+}
+
+void DBusApplicationInterfaceImpl::attach(ApplicationInterface *iface)
+{
+    ApplicationInterfaceImpl::attach(iface);
+
+    QObject::connect(m_applicationMain, &ApplicationMain::memoryLowWarning,
+                     iface, &ApplicationInterface::memoryLowWarning);
+    QObject::connect(m_applicationMain, &ApplicationMain::memoryCriticalWarning,
+                     iface, &ApplicationInterface::memoryCriticalWarning);
+    QObject::connect(m_applicationMain, &ApplicationMain::openDocument,
+                     iface, &ApplicationInterface::openDocument);
 }
 
 QString DBusApplicationInterfaceImpl::applicationId() const

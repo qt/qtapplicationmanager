@@ -512,6 +512,7 @@ void Notification::setExtended(const QVariantMap &extended)
 void Notification::classBegin()
 {
     m_usedByQml = true;
+    m_impl->classBegin();
 }
 
 void Notification::componentComplete()

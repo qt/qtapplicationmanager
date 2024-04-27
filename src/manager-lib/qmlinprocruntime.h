@@ -10,9 +10,11 @@
 
 #include <QtCore/QSharedPointer>
 
+QT_FORWARD_DECLARE_CLASS(QQmlContext)
+
 QT_BEGIN_NAMESPACE_AM
 
-class ApplicationInterface;
+class ApplicationInterfaceImpl;
 class InProcessSurfaceItem;
 
 class QmlInProcRuntimeManager : public AbstractRuntimeManager
@@ -58,7 +60,7 @@ private:
     static const char *s_runtimeKey;
 
     QString m_document;
-    ApplicationInterface *m_applicationIf = nullptr;
+    std::unique_ptr<ApplicationInterfaceImpl> m_applicationInterfaceImpl;
 
     bool m_stopIfNoVisibleSurfaces = false;
 

@@ -32,8 +32,6 @@
 #include <QQuickWindow>
 
 #include "applicationmain.h"
-#include "applicationinterface.h"
-#include "dbusapplicationinterfaceimpl.h"
 #include "qtyaml.h"
 #include "global.h"
 #include "logging.h"
@@ -204,8 +202,6 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched, const QPair<QStr
     if (directLoad.first.isEmpty()) {
         am->connectDBusInterfaces(true);
 
-        m_applicationInterface = ApplicationInterface::create<DBusApplicationInterfaceImpl>(this, am);
-
         connect(am, &ApplicationMain::startApplication,
                 this, &Controller::startApplication);
     } else {
@@ -342,19 +338,8 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     }
 
-    if (m_applicationInterface) {
-        m_engine.rootContext()->setContextProperty(u"ApplicationInterface"_s, m_applicationInterface);
-
-        connect(m_applicationInterface, &ApplicationInterface::slowAnimationsChanged,
-                ApplicationMain::instance(), &ApplicationMain::setSlowAnimations);
-    }
-
-    // Going through the ApplicationMain instance here is a bit weird, and should be refactored
-    // sometime. Having the flag there makes sense though, because this class can also be used for
-    // custom launchers.
     connect(ApplicationMain::instance(), &ApplicationMain::slowAnimationsChanged,
             this, &Controller::updateSlowAnimations);
-
     updateSlowAnimations(ApplicationMain::instance()->slowAnimations());
 
     // we need to catch all show events to apply the slow-animations
@@ -379,7 +364,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     }
     for (StartupInterface *iface : std::as_const(startupPlugins))
-        iface->initialize(m_applicationInterface ? m_applicationInterface->systemProperties() : QVariantMap());
+        iface->initialize(am->systemProperties());
 
     bool loadDummyData = runtimeParameters.value(u"loadDummyData"_s).toBool()
             || m_configuration.value(u"loadDummydata"_s).toBool();
@@ -499,8 +484,8 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         StartupTimer::instance()->createAutomaticReport(applicationId);
     }
 
-    if (!document.isEmpty() && m_applicationInterface)
-        emit m_applicationInterface->openDocument(document, mimeType);
+    if (!document.isEmpty())
+        emit am->openDocument(document, mimeType);
 }
 
 bool Controller::eventFilter(QObject *o, QEvent *e)

@@ -20,8 +20,9 @@ class Notification;
 class QmlInProcApplicationInterfaceImpl : public ApplicationInterfaceImpl
 {
 public:
-    explicit QmlInProcApplicationInterfaceImpl(ApplicationInterface *ai,
-                                                  QmlInProcRuntime *runtime);
+    QmlInProcApplicationInterfaceImpl(QmlInProcRuntime *runtime);
+
+    void attach(ApplicationInterface *iface) override;
 
     QString applicationId() const override;
     QVariantMap name() const override;

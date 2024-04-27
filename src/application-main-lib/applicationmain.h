@@ -31,6 +31,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class WaylandQtAMClientExtension;
 class Notification;
+class ApplicationInterfaceImpl;
 
 
 class ApplicationMain : public ApplicationMainBase, public SharedMain
@@ -129,6 +130,8 @@ private:
 #endif
     QVariantMap m_application;
     QVariantMap m_systemProperties;
+
+    std::unique_ptr<ApplicationInterfaceImpl> m_applicationInterfaceImpl;
 
     QString m_dbusAddressP2P;
     QString m_dbusAddressNotifications;

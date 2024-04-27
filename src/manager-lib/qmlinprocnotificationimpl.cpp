@@ -8,6 +8,8 @@
 #include <QQmlInfo>
 
 #include "logging.h"
+#include "application.h"
+#include "qmlinprocruntime.h"
 #include "qmlinprocnotificationimpl.h"
 #include "notification.h"
 #include "notificationmanager.h"
@@ -28,15 +30,19 @@ QmlInProcNotificationImpl::QmlInProcNotificationImpl(Notification *notification,
     initialize();
 }
 
-void QmlInProcNotificationImpl::componentComplete()
+void QmlInProcNotificationImpl::classBegin()
 {
-    QQmlContext *ctxt = QQmlEngine::contextForObject(notification());
-    if (ctxt) {
-        QQmlExpression expr(ctxt, nullptr, u"ApplicationInterface.applicationId"_s, nullptr);
-        QVariant v = expr.evaluate();
-        if (!v.isNull())
-            m_applicationId = v.toString();
+    if (m_applicationId.isEmpty()) {
+        if (auto rt = QmlInProcRuntime::determineRuntime(notification())) {
+            if (rt->application())
+                m_applicationId = rt->application()->id();
+        } else {
+            m_applicationId = u":sysui"_s;
+        }
     }
+    if (m_applicationId.isEmpty())
+        qCCritical(LogQmlRuntime) << "Notification could not determine the application's runtime to get the applicationId.";
+    Q_ASSERT(!m_applicationId.isEmpty());
 }
 
 void QmlInProcNotificationImpl::initialize()

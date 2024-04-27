@@ -188,7 +188,8 @@ The fields used for each item within the \c applications list are as follows:
     \li \c supportsApplicationInterface
     \li bool
     \target manifest supportsApplicationInterface
-    \li If set to \c true the application must implement the \l ApplicationInterface API.
+    \li If set to \c true the application must implement the \l{ApplicationInterface}
+        {ApplicationInterface D-Bus API}.
         In this case the application manager will wait until the application is connected to the
         ApplicationInterface on the P2P D-Bus until it marks it as 'running'. For runtimes that
         support quick launching (like the \c qml runtime) this is not required as it defaults to

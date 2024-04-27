@@ -22,7 +22,7 @@ public:
 
     static void initialize();
 
-    void componentComplete() override;
+    void classBegin() override;
     uint show() override;
     void close() override;
 

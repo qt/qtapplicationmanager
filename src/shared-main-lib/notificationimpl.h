@@ -26,7 +26,8 @@ public:
 
     Notification *notification();
 
-    virtual void componentComplete() = 0;
+    virtual void classBegin();
+    virtual void componentComplete();
     virtual uint show() = 0;
     virtual void close() = 0;
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2021 The Qt Company Ltd.
+// Copyright (C) 2024 The Qt Company Ltd.
 // Copyright (C) 2019 Luxoft Sweden AB
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
@@ -6,9 +6,9 @@
 #ifndef DBUSAPPLICATIONINTERFACEIMPL_H
 #define DBUSAPPLICATIONINTERFACEIMPL_H
 
+#include <QtCore/QPointer>
 #include <QtAppManCommon/global.h>
 #include <QtAppManSharedMain/applicationinterfaceimpl.h>
-#include <QtAppManSharedMain/notification.h>
 
 
 QT_BEGIN_NAMESPACE_AM
@@ -19,8 +19,9 @@ class ApplicationMain;
 class DBusApplicationInterfaceImpl : public ApplicationInterfaceImpl
 {
 public:
-    explicit DBusApplicationInterfaceImpl(ApplicationInterface *ai,
-                                          ApplicationMain *applicationMain);
+    explicit DBusApplicationInterfaceImpl(ApplicationMain *applicationMain);
+
+    void attach(ApplicationInterface *iface) override;
 
     QString applicationId() const override;
     QVariantMap name() const override;
@@ -30,12 +31,12 @@ public:
     QVariantMap applicationProperties() const override;
     void acknowledgeQuit() override;
 
-    ApplicationMain *m_applicationMain;
+private:
+    QPointer<ApplicationMain> m_applicationMain;
 
-    static DBusApplicationInterfaceImpl *s_instance;
-
+    friend class ApplicationMain;
     friend class DBusNotification;
-    friend class Controller;
+    friend class Controller; // for instantiating the singleton
 };
 
 QT_END_NAMESPACE_AM

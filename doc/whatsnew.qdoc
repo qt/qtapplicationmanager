@@ -9,6 +9,14 @@
 \title What's New
 \brief Important changes in Qt Application Manager
 
+\section1 Qt ApplicationManager 6.8
+
+The \c ApplicationInterface root context property was the last bit in the application manager that
+was still not using declarative registration.
+Starting with 6.8, the ApplicationInterface is implemented as an attached type that can attach to
+anything. This new mechanism is fully source compatible with the previous one, but now also supports
+modern QML tooling.
+
 \section1 Qt ApplicationManager 6.7
 
 The application manager now has full support for QML tooling (like compilation) for System UIs

@@ -1,11 +1,10 @@
-// Copyright (C) 2023 The Qt Company Ltd.
+// Copyright (C) 2024 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #ifndef APPLICATIONINTERFACEIMPL_H
 #define APPLICATIONINTERFACEIMPL_H
 
-#include <QtCore/QUrl>
-#include <QtCore/QVariantMap>
+#include <QtCore/QObject>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -13,13 +12,21 @@ QT_BEGIN_NAMESPACE_AM
 class Notification;
 class ApplicationInterface;
 
-class ApplicationInterfaceImpl
+
+class ApplicationInterfaceImpl : public QObject
 {
+    Q_OBJECT
+
 public:
-    ApplicationInterfaceImpl(ApplicationInterface *ai);
+    static void setFactory(const std::function<ApplicationInterfaceImpl *(ApplicationInterface *)> &factory);
+    static ApplicationInterfaceImpl *create(ApplicationInterface *iface);
+
+    virtual void attach(ApplicationInterface *iface);
+    virtual void detach(ApplicationInterface *iface);
+
     virtual ~ApplicationInterfaceImpl() = default;
 
-    ApplicationInterface *applicationInterface();
+    QList<ApplicationInterface *> amInterfaces();
 
     virtual QString applicationId() const = 0;
     virtual QVariantMap name() const = 0;
@@ -31,8 +38,13 @@ public:
 
     void handleQuit();
 
+protected:
+    ApplicationInterfaceImpl();
+
 private:
-    ApplicationInterface *m_interface = nullptr;
+    QList<ApplicationInterface *> m_aminterfaces;
+
+    static std::function<ApplicationInterfaceImpl *(ApplicationInterface *)> s_factory;
     Q_DISABLE_COPY_MOVE(ApplicationInterfaceImpl)
 };
 

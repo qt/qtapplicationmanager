@@ -15,22 +15,26 @@
 #include "applicationinterface.h"
 #include "applicationmanager.h"
 #include "notification.h"
-#include "notificationmanager.h"
 #include "intentclientrequest.h"
 
 QT_BEGIN_NAMESPACE_AM
 
-QmlInProcApplicationInterfaceImpl::QmlInProcApplicationInterfaceImpl(ApplicationInterface *ai,
-                                                                     QmlInProcRuntime *runtime)
-    : ApplicationInterfaceImpl(ai)
+QmlInProcApplicationInterfaceImpl::QmlInProcApplicationInterfaceImpl(QmlInProcRuntime *runtime)
+    : ApplicationInterfaceImpl()
     , m_runtime(runtime)
 {
-    QObject::connect(ApplicationManager::instance(), &ApplicationManager::memoryLowWarning,
-                     ai, &ApplicationInterface::memoryLowWarning);
-    QObject::connect(ApplicationManager::instance(), &ApplicationManager::memoryCriticalWarning,
-                     ai, &ApplicationInterface::memoryCriticalWarning);
     QObject::connect(runtime, &QmlInProcRuntime::aboutToStop,
-                     ai, [this]() { handleQuit(); });
+                     runtime, [this]() { handleQuit(); });
+}
+
+void QmlInProcApplicationInterfaceImpl::attach(ApplicationInterface *iface)
+{
+    ApplicationInterfaceImpl::attach(iface);
+
+    QObject::connect(ApplicationManager::instance(), &ApplicationManager::memoryLowWarning,
+                     iface, &ApplicationInterface::memoryLowWarning);
+    QObject::connect(ApplicationManager::instance(), &ApplicationManager::memoryCriticalWarning,
+                     iface, &ApplicationInterface::memoryCriticalWarning);
 
     QmlInProcNotificationImpl::initialize();
 }

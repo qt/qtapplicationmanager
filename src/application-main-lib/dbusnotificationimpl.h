@@ -19,13 +19,11 @@ public:
     DBusNotificationImpl(Notification *notification, ApplicationMain *applicationMain);
 
 protected:
-    void componentComplete() override;
     uint show() override;
     void close() override;
 
 private:
     ApplicationMain *m_applicationMain;
-    friend class DBusApplicationInterfaceImpl;
 };
 
 QT_END_NAMESPACE_AM

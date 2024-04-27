@@ -20,7 +20,6 @@ QT_FORWARD_DECLARE_CLASS(QQuickWindow)
 QT_BEGIN_NAMESPACE_AM
 
 class ApplicationMain;
-class ApplicationInterface;
 
 class Controller : public QObject
 {
@@ -37,7 +36,6 @@ public Q_SLOTS:
 
 private:
     QQmlApplicationEngine m_engine;
-    ApplicationInterface *m_applicationInterface = nullptr;
     QVariantMap m_configuration;
     bool m_launched = false;
     bool m_quickLaunched;

@@ -19,7 +19,6 @@
 #include "logging.h"
 #include "exception.h"
 #include "applicationinterface.h"
-#include "applicationinterfaceimpl.h"
 #include "application.h"
 #include "qmlinprocruntime.h"
 #include "qmlinprocapplicationinterfaceimpl.h"
@@ -39,7 +38,25 @@ const char *QmlInProcRuntime::s_runtimeKey = "_am_runtime";
 
 QmlInProcRuntime::QmlInProcRuntime(Application *app, QmlInProcRuntimeManager *manager)
     : AbstractRuntime(nullptr, app, manager)
-{ }
+    , m_applicationInterfaceImpl(new QmlInProcApplicationInterfaceImpl(this))
+{
+    static bool once = false;
+    if (!once) {
+        once = true;
+
+        ApplicationInterfaceImpl::setFactory([](ApplicationInterface *iface) {
+            ApplicationInterfaceImpl *impl = nullptr;
+            QmlInProcRuntime *rt = QmlInProcRuntime::determineRuntime(iface->parent());
+
+            if (rt)
+                impl = rt->m_applicationInterfaceImpl.get();
+            else
+                qCCritical(LogRuntime) << "Cannot determine Runtime to setup a ApplicationInterface object";
+            Q_ASSERT(rt);
+            return impl;
+        });
+    }
+}
 
 QmlInProcRuntime::~QmlInProcRuntime()
 {
@@ -104,12 +121,9 @@ bool QmlInProcRuntime::start()
     setState(Am::StartingUp);
 
     // We are running each application in its own, separate Qml context.
-    // This way, we can export a unique ApplicationInterface object for each app
-    QQmlContext *appContext = new QQmlContext(m_inProcessQmlEngine->rootContext(), this);
-
-    m_applicationIf = ApplicationInterface::create<QmlInProcApplicationInterfaceImpl>(this, this);
-    appContext->setContextProperty(u"ApplicationInterface"_s, m_applicationIf);
-
+    // This way, we can export a unique runtime-key to this context to then later
+    // determine at runtime which application is currently active.
+    auto appContext = new QQmlContext(m_inProcessQmlEngine->rootContext(), this);
     if (appContext->setProperty(s_runtimeKey, QVariant::fromValue(this)))
         qCritical() << "Could not set" << s_runtimeKey << "property in QML context";
 
@@ -300,8 +314,9 @@ void QmlInProcRuntime::addSurfaceItem(const QSharedPointer<InProcessSurfaceItem>
 void QmlInProcRuntime::openDocument(const QString &document, const QString &mimeType)
 {
     m_document = document;
-    if (m_applicationIf)
-        emit m_applicationIf->openDocument(document, mimeType);
+    const auto ifaces = m_applicationInterfaceImpl->amInterfaces();
+    for (auto *iface : ifaces)
+        emit iface->openDocument(document, mimeType);
 }
 
 qint64 QmlInProcRuntime::applicationProcessId() const

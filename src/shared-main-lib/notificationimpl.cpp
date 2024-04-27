@@ -29,4 +29,10 @@ Notification *NotificationImpl::notification()
     return m_notification;
 }
 
+void NotificationImpl::classBegin()
+{ }
+
+void NotificationImpl::componentComplete()
+{ }
+
 QT_END_NAMESPACE_AM

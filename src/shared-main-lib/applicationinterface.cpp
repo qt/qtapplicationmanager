@@ -1,4 +1,4 @@
-// Copyright (C) 2021 The Qt Company Ltd.
+// Copyright (C) 2024 The Qt Company Ltd.
 // Copyright (C) 2019 Luxoft Sweden AB
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
@@ -7,18 +7,29 @@
 #include "applicationinterfaceimpl.h"
 #include "notification.h"
 
+
 QT_BEGIN_NAMESPACE_AM
 
 /*!
     \qmltype ApplicationInterface
     \inqmlmodule QtApplicationManager.Application
-    \ingroup app-singletons
+    \ingroup app-attached
     \brief The main interface between apps and the application manager.
 
-    This item is available for QML applications using the root context property
-    \c ApplicationInterface. For other native applications, the same interface
-    - minus the notification functionality - is available on a private peer-to-peer
-    D-Bus interface.
+    This attached type provides access to the application's metadata for QML applications.
+    It also exposes a few global notification signals that are emitted by the application manager.
+
+    This type acts like a singleton, but in order to support the single-process use case, where
+    multiple ApplicationInterface instances need to co-exist within the same QQmlEngine, it is
+    implemented as an attached type that can attach to anything.
+
+    \note Before version 6.8 the ApplicationInterface was implemented as an anonymous type via the
+          \c ApplicationInterface QML root context property. This mechanism is deprecated as it
+          does not support modern QML tooling. The new attached type replacement does support
+          tooling and is fully source compatible.
+
+    For other native applications, the same interface - minus the notification functionality - is
+    available on a private peer-to-peer D-Bus interface:
 
     For every application that is started in multi-process mode, the application manager creates
     a private P2P D-Bus connection and communicates the connection address to the application's
@@ -167,32 +178,32 @@ QT_BEGIN_NAMESPACE_AM
 
 QString ApplicationInterface::applicationId() const
 {
-    return m_impl->applicationId();
+    return m_impl ? m_impl->applicationId() : QString { };
 }
 
 QVariantMap ApplicationInterface::name() const
 {
-    return m_impl->name();
+    return m_impl ? m_impl->name() : QVariantMap { };
 }
 
 QUrl ApplicationInterface::icon() const
 {
-    return m_impl->icon();
+    return m_impl ? m_impl->icon() : QUrl { };
 }
 
 QString ApplicationInterface::version() const
 {
-    return m_impl->version();
+    return m_impl ? m_impl->version() : QString { };
 }
 
 QVariantMap ApplicationInterface::systemProperties() const
 {
-    return m_impl->systemProperties();
+    return m_impl ? m_impl->systemProperties() : QVariantMap { };
 }
 
 QVariantMap ApplicationInterface::applicationProperties() const
 {
-    return m_impl->applicationProperties();
+    return m_impl ? m_impl->applicationProperties() : QVariantMap { };
 }
 
 Notification *ApplicationInterface::createNotification()
@@ -202,12 +213,25 @@ Notification *ApplicationInterface::createNotification()
 
 void ApplicationInterface::acknowledgeQuit()
 {
-    m_impl->acknowledgeQuit();
+    if (m_impl)
+        m_impl->acknowledgeQuit();
 }
 
 ApplicationInterface::ApplicationInterface(QObject *parent)
     : QObject(parent)
+    , m_impl(ApplicationInterfaceImpl::create(this))
 { }
+
+ApplicationInterface::~ApplicationInterface()
+{
+    if (m_impl)
+        m_impl->detach(this);
+}
+
+ApplicationInterface *ApplicationInterface::qmlAttachedProperties(QObject *object)
+{
+    return new ApplicationInterface(object);
+}
 
 ApplicationInterfaceImpl *ApplicationInterface::implementation()
 {

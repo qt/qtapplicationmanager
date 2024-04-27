@@ -15,9 +15,6 @@ DBusNotificationImpl::DBusNotificationImpl(Notification *notification,
     , m_applicationMain(applicationMain)
 { }
 
-void DBusNotificationImpl::componentComplete()
-{ }
-
 void DBusNotificationImpl::close()
 {
     m_applicationMain->closeNotification(notification());

@@ -1,4 +1,4 @@
-// Copyright (C) 2023 The Qt Company Ltd.
+// Copyright (C) 2024 The Qt Company Ltd.
 // Copyright (C) 2019 Luxoft Sweden AB
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
@@ -8,7 +8,9 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QUrl>
+#include <QtCore/QPointer>
 #include <QtCore/QVariantMap>
+#include <QtQml/qqmlregistration.h>
 #include <QtAppManCommon/global.h>
 
 
@@ -27,16 +29,12 @@ class ApplicationInterface : public QObject
     Q_PROPERTY(QString version READ version CONSTANT FINAL)
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT SCRIPTABLE true FINAL)
     Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true FINAL)
+    QML_ATTACHED(ApplicationInterface)
 
 public:
-    ~ApplicationInterface() override = default;
+    ~ApplicationInterface() override;
 
-    template <typename IMPL, typename ...Args> static ApplicationInterface *create(QObject *parent, Args... args)
-    {
-        auto iface = new ApplicationInterface(parent);
-        iface->m_impl = std::make_unique<IMPL>(iface, args...);
-        return iface;
-    }
+    static ApplicationInterface *qmlAttachedProperties(QObject *object);
 
     ApplicationInterfaceImpl *implementation();
 
@@ -57,14 +55,14 @@ Q_SIGNALS:
 
     Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
 
-    Q_SCRIPTABLE void slowAnimationsChanged(bool isSlow);
+protected:
+    QPointer<ApplicationInterfaceImpl> m_impl;
 
 private:
-    ApplicationInterface(QObject *parent);
+    explicit ApplicationInterface(QObject *parent);
     Q_DISABLE_COPY_MOVE(ApplicationInterface)
 
-    std::unique_ptr<ApplicationInterfaceImpl> m_impl;
-    friend class ApplicationInterfaceImpl;
+    friend class ApplicationInterfaceImpl; // for isSignalConnected
 };
 
 QT_END_NAMESPACE_AM

@@ -19,9 +19,10 @@ Singleton QML types need not be declared, they are referenced by their type name
 Instantiable QML types are declared with their name followed by curly braces. These
 declarations may be nested, creating parent-child relationships between the items.
 
-\section1 QML Singletons
-\annotatedlist app-singletons
-
 \section1 Instantiable QML Types
 \annotatedlist app-instantiatable
+
+\section1 Attached QML Types
+\annotatedlist app-attached
+
 */

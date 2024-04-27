@@ -38,7 +38,3 @@ qt_internal_add_module(AppManSharedMainPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )
-
-target_sources(AppManSharedMainPrivate PRIVATE
-    frametimerimpl.h frametimerimpl.cpp
-)

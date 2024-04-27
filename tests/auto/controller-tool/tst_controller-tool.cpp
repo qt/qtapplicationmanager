@@ -237,6 +237,7 @@ void tst_ControllerTool::instances()
 {
     ControllerTool ctrl({ u"list-instances"_s });
     QVERIFY2(ctrl.call(), ctrl.failure);
+    QVERIFY(ctrl.stdErrList.isEmpty());
     QCOMPARE(ctrl.stdOutList, QStringList({ u"controller-test-id-0"_s }));
 }
 

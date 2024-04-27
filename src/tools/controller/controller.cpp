@@ -18,6 +18,7 @@
 #include <QStringBuilder>
 #include <QRegularExpression>
 #include <QJsonDocument>
+#include <QLockFile>
 
 #include <functional>
 
@@ -1079,8 +1080,15 @@ static std::pair<QString, QMultiHash<QString, int>> runningInstanceIds()
         if (auto dashPos = name.lastIndexOf(u'-'); dashPos > 0) {
             bool counterOk = false;
             int counter = QStringView { name }.sliced(dashPos + 1).toInt(&counterOk);
-            if (counterOk)
-                result.insert(name.left(dashPos), counter);
+            if (counterOk) {
+                QLockFile testLock(path);
+                if (testLock.tryLock(0))
+                    testLock.unlock(); // stale lock
+                else if (testLock.error() != QLockFile::LockFailedError)
+                    fprintf(stderr, "WARNING: unrecoverable, stale lock file: %s\n", qPrintable(path));
+                else
+                    result.insert(name.left(dashPos), counter);
+            }
         }
     }
     return { rtDir.path(), result };

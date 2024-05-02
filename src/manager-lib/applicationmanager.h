@@ -72,6 +72,7 @@ public:
     Application *fromSecurityToken(const QByteArray &securityToken) const;
     QVector<Application *> schemeHandlers(const QString &scheme) const;
     QVector<Application *> mimeTypeHandlers(const QString &mimeType) const;
+    QVariantMap get(Application *app) const;
 
     bool startApplicationInternal(const QString &appId, const QString &documentUrl = QString(),
                                   const QString &documentMimeType = QString(),
@@ -95,6 +96,7 @@ public:
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role) const override;
+    QVariant dataForRole(Application *app, int role) const;
     QHash<int, QByteArray> roleNames() const override;
 
     int count() const;

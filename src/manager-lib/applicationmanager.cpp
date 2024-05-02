@@ -580,6 +580,17 @@ QVector<Application *> ApplicationManager::mimeTypeHandlers(const QString &mimeT
     return handlers;
 }
 
+QVariantMap ApplicationManager::get(Application *app) const
+{
+    QVariantMap map;
+    if (app) {
+        const QHash<int, QByteArray> roles = roleNames();
+        for (auto it = roles.begin(); it != roles.end(); ++it)
+            map.insert(QString::fromLatin1(it.value()), dataForRole(app, it.key()));
+    }
+    return map;
+}
+
 void ApplicationManager::registerMimeTypes()
 {
 #if defined(QT_GUI_LIB)
@@ -1246,7 +1257,11 @@ QVariant ApplicationManager::data(const QModelIndex &index, int role) const
         return QVariant();
 
     Application *app = d->apps.at(index.row());
+    return dataForRole(app, role);
+}
 
+QVariant ApplicationManager::dataForRole(Application *app, int role) const
+{
     switch (role) {
     case Id:
         return app->id();
@@ -1317,12 +1332,7 @@ QVariantMap ApplicationManager::get(int index) const
         qCWarning(LogSystem) << "ApplicationManager::get(index): invalid index:" << index;
         return QVariantMap();
     }
-
-    QVariantMap map;
-    QHash<int, QByteArray> roles = roleNames();
-    for (auto it = roles.begin(); it != roles.end(); ++it)
-        map.insert(qL1S(it.value()), data(this->index(index), it.key()));
-    return map;
+    return get(d->apps.at(index));
 }
 
 /*!
@@ -1413,8 +1423,7 @@ QStringList ApplicationManager::applicationIds() const
 */
 QVariantMap ApplicationManager::get(const QString &id) const
 {
-    int index = indexOfApplication(id);
-    return (index < 0) ? QVariantMap{} : get(index);
+    return get(application(id));
 }
 
 Am::RunState ApplicationManager::applicationRunState(const QString &id) const

@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include "dbuscontextadaptor.h"
+#include "application.h"
 #include "package.h"
 #include "packagemanager.h"
 #include "packagemanager_adaptor.h"
@@ -60,11 +61,11 @@ PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
         const auto apps = package->applications(); // these are QObject * (legacy API)
         QVariantList appList;
         appList.reserve(apps.size());
-        for (const auto *obj : apps) {
-            QVariantMap app = ApplicationManager::instance()->get(obj->property("id").toString());
-            app.remove(u"application"_s);        // cannot marshall QObject *
-            app.remove(u"applicationObject"_s);  // cannot marshall QObject *
-            appList.append(app);
+        for (auto *app : apps) {
+            QVariantMap appMap = ApplicationManager::instance()->get(app);
+            appMap.remove(u"application"_s);        // cannot marshall QObject *
+            appMap.remove(u"applicationObject"_s);  // cannot marshall QObject *
+            appList.append(appMap);
         }
         map.insert(u"applications"_s, appList);
         map = convertToDBusVariant(map).toMap();

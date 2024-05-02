@@ -93,10 +93,10 @@ PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
         const auto apps = package->applications(); // these are QObject * (legacy API)
         QVariantList appList;
         appList.reserve(apps.size());
-        for (const auto *obj : apps) {
-            QVariantMap app = ApplicationManager::instance()->get(obj->property("id").toString());
-            app.remove(qSL("application"));  // cannot marshall QObject *
-            appList.append(app);
+        for (auto *app : apps) {
+            QVariantMap appMap = ApplicationManager::instance()->get(qobject_cast<Application *>(app));
+            appMap.remove(qSL("application"));  // cannot marshall QObject *
+            appList.append(appMap);
         }
         map.insert(qSL("applications"), appList);
 

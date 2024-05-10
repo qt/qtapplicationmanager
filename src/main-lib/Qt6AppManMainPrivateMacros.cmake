@@ -156,7 +156,7 @@ exec ${ARG_EXECUTABLE} ${CMD_ARGS_STR} ${ARG_MAIN_QML_FILE} \"$@\";
     add_dependencies(${target} ${target}_deploy)
 
     set(EXTRA_COMMAND "")
-    if ("${WRAPPER_SUFFIX}" STREQUAL ".sh")
+    if (NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Windows")
         set(EXTRA_COMMAND COMMAND chmod +x ${WRAPPER_SCRIPT})
     endif()
 

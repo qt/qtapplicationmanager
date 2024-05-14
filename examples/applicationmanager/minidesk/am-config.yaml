@@ -3,8 +3,8 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installationDir: "/tmp/minidesk/apps"
-  documentDir: "/tmp/minidesk/docs"
+  installationDir: "${stdpath:TempLocation}/qtam-example/minidesk/apps"
+  documentDir: "${stdpath:TempLocation}/qtam-example/minidesk/docs"
 
 logging:
   rules:

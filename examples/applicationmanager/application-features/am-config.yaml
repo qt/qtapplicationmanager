@@ -3,7 +3,7 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installationDir: "/tmp/application-features/apps"
+  installationDir: "${stdpath:TempLocation}/qtam-example/application-features/apps"
 
 logging:
   rules:

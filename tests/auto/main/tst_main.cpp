@@ -57,11 +57,16 @@ private:
     Configuration *config = nullptr;
     bool m_verbose = false;
     int m_spyTimeout;
+    QString m_tempDirPath;
 };
 
 tst_Main::tst_Main()
     : m_spyTimeout(5000 * timeoutFactor())
-{ }
+{
+    // this needs to be the same path as in am-config.yaml
+    m_tempDirPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation)
+                    + u"/qtam-test/main"_s;
+}
 
 tst_Main::~tst_Main()
 { }
@@ -93,13 +98,10 @@ void tst_Main::copyRecursively(const QString &sourcePath, const QString &destPat
 
 void tst_Main::cleanUpInstallationDir()
 {
-    {
-        QDir testTmpDir(u"/tmp/am-test-main"_s);
-        if (testTmpDir.exists())
-            testTmpDir.removeRecursively();
-    }
-    QDir tmpDir(u"/tmp"_s);
-    tmpDir.mkdir(u"am-test-main"_s);
+    QDir tempDir(m_tempDirPath);
+    if (tempDir.exists())
+        tempDir.removeRecursively();
+    tempDir.mkpath(u"."_s);
 }
 
 void tst_Main::init()
@@ -265,7 +267,7 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
  */
 void tst_Main::updateForBuiltInAlreadyInstalled()
 {
-    copyRecursively(QFINDTESTDATA("dir-with-update-already-installed"), u"/tmp/am-test-main"_s);
+    copyRecursively(QFINDTESTDATA("dir-with-update-already-installed"), m_tempDirPath);
 
     initMain();
 

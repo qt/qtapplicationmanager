@@ -3,5 +3,5 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installationDir: "/tmp/am/apps"
-  documentDir: "/tmp/am/docs"
+  installationDir: "${stdpath:TempLocation}/qtam-test/active/apps"
+  documentDir: "${stdpath:TempLocation}/qtam-test/active/docs"

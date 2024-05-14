@@ -13,6 +13,7 @@
 #endif
 #include <QCoreApplication>
 #include <QIODevice>
+#include <QStandardPaths>
 
 #include "dbusdaemon.h"
 #include "utilities.h"
@@ -59,14 +60,20 @@ DBusDaemonProcess::DBusDaemonProcess(QObject *parent)
 #elif defined(Q_OS_WIN)
     arguments << u"--address=tcp:host=localhost"_s;
 #elif defined(Q_OS_LINUX)
+    QString rtPath = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+    if (rtPath.isEmpty())
+        rtPath = QDir::tempPath();
+    rtPath += u"/qtapplicationmanager-session"_s;
+    QDir(rtPath).mkpath(u"."_s);
+
     // some dbus implementations create an abstract socket by default, while others create
     // a file based one. we need a file based one however, because that socket might get
     // mapped into a container.
     if (dbusVersion() >= QVersionNumber(1, 11, 14)) {
-        arguments << u"--address=unix:dir=/tmp"_s;
+        arguments << u"--address=unix:dir="_s + rtPath;
     } else {
-        arguments << QString(u"--address=unix:path="_s + QDir::tempPath() + u"/am-"_s
-                             + QString::number(QCoreApplication::applicationPid()) + u"-session.bus"_s);
+        arguments << QString(u"--address=unix:path="_s + rtPath + u"/dbus-pid-"_s
+                             + QString::number(QCoreApplication::applicationPid()));
     }
 #endif
     setProgram(program);

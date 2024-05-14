@@ -77,9 +77,16 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
     , m_dbusApplicationInterface(DBusContextAdaptor::create<ApplicationInterfaceAdaptor>(this))
     , m_dbusRuntimeInterface(DBusContextAdaptor::create<RuntimeInterfaceAdaptor>(this))
 {
-    QDir().mkdir(u"/tmp/dbus-qtam"_s);
-    QString dbusAddress = QUuid::createUuid().toString().mid(1,36);
-    m_applicationInterfaceServer = new QDBusServer(u"unix:path=/tmp/dbus-qtam/dbus-qtam-"_s + dbusAddress, this);
+    QString socketPath = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+    if (socketPath.isEmpty())
+        socketPath = QDir::tempPath();
+    socketPath.append(u"/qtapplicationmanager-runtime"_s);
+    QDir(socketPath).mkpath(u"."_s);
+
+    QString dbusAddress = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    socketPath = socketPath + u"/dbus-" + dbusAddress;
+
+    m_applicationInterfaceServer = new QDBusServer(u"unix:path="_s + socketPath, this);
     m_applicationInterfaceServer->setAnonymousAuthenticationAllowed(true);
 
     connect(m_applicationInterfaceServer, &QDBusServer::newConnection,

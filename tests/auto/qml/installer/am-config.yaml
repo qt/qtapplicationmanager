@@ -3,8 +3,8 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installationDir: "/tmp/am-installer-test/apps"
-  documentDir: "/tmp/am-installer-test/docs"
+  installationDir: "${stdpath:TempLocation}/qtam-test/installer/apps"
+  documentDir: "${stdpath:TempLocation}/qtam-test/installer/docs"
 
 flags:
   noSecurity: yes

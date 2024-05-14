@@ -3,7 +3,7 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installationDir: "/tmp/package-server-example/apps"
+  installationDir: "${stdpath:TempLocation}/qtam-example/package-installation/apps"
 
 ui:
   fullscreen: no

@@ -3,8 +3,8 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/builtin-apps"
-  installationDir: "/tmp/am-test-main/apps"
-  documentDir: "/tmp/am-test-main/docs"
+  installationDir: "${stdpath:TempLocation}/qtam-test/main/apps"
+  documentDir: "${stdpath:TempLocation}/qtam-test/main/docs"
 
 ui:
   mainQml: "${CONFIG_PWD}/dummy.qml"

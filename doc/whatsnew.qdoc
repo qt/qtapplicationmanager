@@ -17,6 +17,12 @@ Starting with 6.8, the ApplicationInterface is implemented as an attached type t
 anything. This new mechanism is fully source compatible with the previous one, but now also supports
 modern QML tooling.
 
+All D-Bus socket names and paths for both the application manager's "auto" session bus, as well as
+the peer-to-peer busses for each application have changed. They now live in \c $XDG_RUNTIME_DIR
+instead of \c /tmp (if available) and they are created in the sub-directories \c
+qtapplicationmanager-session and \c qtapplicationmanager-runtime respectively. This should only
+affect you, if you are using hard coded paths in a container setup.
+
 \section1 Qt ApplicationManager 6.7
 
 The application manager now has full support for QML tooling (like compilation) for System UIs

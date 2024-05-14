@@ -3,8 +3,8 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installationDir: "/tmp/am/apps"
-  documentDir: "/tmp/am/docs"
+  installationDir: "${stdpath:TempLocation}/qtam-test/windowitem/apps"
+  documentDir: "${stdpath:TempLocation}/qtam-test/windowitem/docs"
 
 # Workaround for a crash in the mesa software renderer (llvmpipe)
 runtimes:

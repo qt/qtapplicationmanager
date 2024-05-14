@@ -3,7 +3,7 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_PWD}/apps"
-  installationDir: "/tmp/am-resource-test/apps"
+  installationDir: "${stdpath:TempLocation}/qtam-test/resources/apps"
 
 quicklaunch:
   runtimesPerContainer: 1

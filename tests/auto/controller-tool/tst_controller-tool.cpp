@@ -322,7 +322,9 @@ void tst_ControllerTool::installationLocations()
         QCOMPARE(docs.size(), 1);
         const auto vm = docs[0].toMap();
 
-        QCOMPARE(vm.value(u"path"_s), u"/tmp/am-test-controller-tool/apps"_s);
+        QDir appsDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+        QCOMPARE(vm.value(u"path"_s), appsDir.absoluteFilePath(u"qtam-test/controller-tool/apps"_s));
+
         QVERIFY(vm.value(u"deviceSize"_s).toULongLong() > 0);
         QVERIFY(vm.value(u"deviceFree"_s).toULongLong() > 0);
     }

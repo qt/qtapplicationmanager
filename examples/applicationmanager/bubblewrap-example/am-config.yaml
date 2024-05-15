@@ -34,7 +34,6 @@ containers:
       ro-bind:
         /usr/bin: '/usr/bin'
         /usr/lib: '/usr/lib'
-        /usr/lib64: '/usr/lib64'
         /etc: '/etc'
         /usr/share/fonts: '/usr/share/fonts'
         /usr/share/fontconfig: '/usr/share/fontconfig'
@@ -42,6 +41,7 @@ containers:
         /sys/dev/char: '/sys/dev/char'
         ${CONFIG_PWD}/imports: '${CONFIG_PWD}/imports'
       ro-bind-try:
+        /usr/lib64: '/usr/lib64'
         '/sys/devices/pci0000:00': '/sys/devices/pci0000:00'
         /usr/share/glvnd/egl_vendor.d: '/usr/share/glvnd/egl_vendor.d'
         /usr/share/X11/xkb: '/usr/share/X11/xkb'

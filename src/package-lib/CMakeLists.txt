@@ -1,9 +1,6 @@
 
 qt_find_package(WrapLibArchive PROVIDED_TARGETS WrapLibArchive::WrapLibArchive)
 
-# temporary hack to get around the "#pragma once not allowed in cpp" error
-set(QT_FEATURE_headersclean FALSE)
-
 qt_internal_add_module(AppManPackagePrivate
     CONFIG_MODULE_NAME appman_package
     STATIC

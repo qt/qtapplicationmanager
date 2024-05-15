@@ -1,9 +1,6 @@
 
 include(QtAppManHelpers)
 
-# temporary hack to get around the "#pragma once not allowed in cpp" error
-set(QT_FEATURE_headersclean FALSE)
-
 qt_internal_add_module(AppManManagerPrivate
     CONFIG_MODULE_NAME appman_manager
     STATIC

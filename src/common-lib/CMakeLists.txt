@@ -5,9 +5,6 @@ if(TARGET WrapBacktrace::WrapBacktrace)
 endif()
 qt_find_package(WrapBacktrace PROVIDED_TARGETS WrapBacktrace::WrapBacktrace)
 
-# temporary hack to get around the "#pragma once not allowed in cpp" error
-set(QT_FEATURE_headersclean FALSE)
-
 qt_internal_add_module(AppManCommonPrivate
     CONFIG_MODULE_NAME appman_common
     STATIC

@@ -1,7 +1,4 @@
 
-# temporary hack to get around the "#pragma once not allowed in cpp" error
-set(QT_FEATURE_headersclean FALSE)
-
 qt_internal_add_module(AppManWindowPrivate
     CONFIG_MODULE_NAME appman_window
     STATIC

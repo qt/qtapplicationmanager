@@ -42,7 +42,7 @@ qt_internal_add_module(AppManCommonPrivate
         AM_COMPILING_APPMAN
 )
 
-qt_internal_extend_target(AppManCommonPrivate CONDITION TARGET Qt::DltLogging
+qt_internal_extend_target(AppManCommonPrivate CONDITION QT_FEATURE_am_dltlogging
     PUBLIC_LIBRARIES
         Qt::DltLogging
 )

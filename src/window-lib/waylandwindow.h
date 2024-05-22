@@ -48,24 +48,16 @@ public:
     QWaylandQuickSurface *waylandSurface() const;
     QWaylandXdgSurface *waylandXdgSurface() const;
 
-    static bool m_watchdogEnabled;
-
 Q_SIGNALS:
     void waylandSurfaceChanged();
     void waylandXdgSurfaceChanged();
 
 private Q_SLOTS:
-    void pongReceived();
-    void pongTimeout();
-    void pingTimeout();
     void onContentStateChanged();
 
 private:
     QString applicationId() const;
 
-    void enableOrDisablePing();
-    QTimer *m_pingTimer;
-    QTimer *m_pongTimer;
     WindowSurface *m_surface;
     QVariantMap m_windowProperties;
 };

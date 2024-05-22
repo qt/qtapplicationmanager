@@ -1,4 +1,6 @@
 
+qt_find_package(WrapLibSystemd PROVIDED_TARGETS WrapLibSystemd::WrapLibSystemd)
+
 qt_internal_add_module(AppManSharedMainPrivate
     CONFIG_MODULE_NAME appman_shared_main
     STATIC
@@ -21,6 +23,7 @@ qt_internal_add_module(AppManSharedMainPrivate
         qmllogger.cpp qmllogger.h
         sharedmain.cpp sharedmain.h
         startuptimer.cpp startuptimer.h
+        watchdog.cpp watchdog.h watchdog_p.h
     LIBRARIES
         Qt::GuiPrivate
         Qt::QuickPrivate
@@ -34,4 +37,9 @@ qt_internal_add_module(AppManSharedMainPrivate
         Qt::AppManMonitorPrivate
     DEFINES
         AM_COMPILING_APPMAN
+)
+
+qt_internal_extend_target(AppManSharedMainPrivate CONDITION QT_FEATURE_am_systemd_watchdog
+    LIBRARIES
+        WrapLibSystemd::WrapLibSystemd
 )

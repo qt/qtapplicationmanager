@@ -130,4 +130,23 @@ void validateIdForFilesystemUsage(const QString &id) noexcept(false);
 
 QT_END_NAMESPACE_AM
 
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 6, 0)
+
+QT_BEGIN_NAMESPACE
+
+void putTimeUnit(QDebug &dbg, qint64 num, qint64 den);
+
+template <typename Rep, typename Period>
+QDebug &operator<<(QDebug &dbg, std::chrono::duration<Rep, Period> duration)
+{
+    dbg << duration.count();
+    putTimeUnit(dbg, Period::num, Period::den);
+    return dbg.maybeSpace();
+}
+
+QT_END_NAMESPACE
+
+#endif // QT_VERSION < QT_VERSION_CHECK(6, 6, 0)
+
 #endif // UTILITIES_H

@@ -26,4 +26,3 @@ systemProperties:
 # development setup:
 flags:
   noSecurity: yes
-  noUiWatchdog: yes

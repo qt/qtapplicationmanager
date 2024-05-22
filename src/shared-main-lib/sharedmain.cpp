@@ -35,6 +35,7 @@
 #include "crashhandler.h"
 #include "startuptimer.h"
 #include "unixsignalhandler.h"
+#include "watchdog.h"
 
 using namespace Qt::StringLiterals;
 
@@ -135,6 +136,27 @@ void SharedMain::setupQmlDebugging(bool qmlDebugging)
                                 "because Qt was built without support for QML Debugging!";
 #endif
     }
+}
+
+void SharedMain::setupWatchdog(std::chrono::milliseconds eventloopCheckInterval,
+                               std::chrono::milliseconds eventloopWarn,
+                               std::chrono::milliseconds eventloopKill,
+                               std::chrono::milliseconds quickWindowCheckInterval,
+                               std::chrono::milliseconds quickWindowSyncWarn,
+                               std::chrono::milliseconds quickWindowSyncKill,
+                               std::chrono::milliseconds quickWindowRenderWarn,
+                               std::chrono::milliseconds quickWindowRenderKill,
+                               std::chrono::milliseconds quickWindowSwapWarn,
+                               std::chrono::milliseconds quickWindowSwapKill)
+{
+    if (!m_watchdog)
+        m_watchdog = new Watchdog(qApp);
+
+    m_watchdog->setThreadTimeouts(eventloopCheckInterval, eventloopWarn, eventloopKill);
+    m_watchdog->setQuickWindowTimeouts(quickWindowCheckInterval, quickWindowSyncWarn,
+                                       quickWindowSyncKill, quickWindowRenderWarn,
+                                       quickWindowRenderKill, quickWindowSwapWarn,
+                                       quickWindowSwapKill);
 }
 
 void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,

@@ -288,7 +288,8 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     d->clp.addOption({ u"load-dummydata"_s,       u"Deprecated. Loads QML dummy-data."_s });
     d->clp.addOption({ u"no-security"_s,          u"Disables all security related checks (dev only!)"_s });
     d->clp.addOption({ u"development-mode"_s,     u"Enable development mode, allowing installation of dev-signed packages."_s });
-    d->clp.addOption({ u"no-ui-watchdog"_s,       u"Disables detecting hung UI applications (e.g. via Wayland's ping/pong)."_s });
+    d->clp.addOption({ u"no-ui-watchdog"_s,       u"Deprecated (mapped to --disable-watchdog)."_s });
+    d->clp.addOption({ u"disable-watchdog"_s,     u"Disables all watchdogs, useful for debugging."_s });
     d->clp.addOption({ u"no-dlt-logging"_s,       u"Disables logging using automotive DLT."_s });
     d->clp.addOption({ u"force-single-process"_s, u"Forces single-process mode even on a wayland enabled build."_s });
     d->clp.addOption({ u"force-multi-process"_s,  u"Forces multi-process mode. Will exit immediately if this is not possible."_s });
@@ -430,7 +431,8 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         configIfSet(u"load-dummydata"_s,       clcd.ui.loadDummyData);
         configIfSet(u"no-security"_s,          clcd.flags.noSecurity);
         configIfSet(u"development-mode"_s,     clcd.flags.developmentMode);
-        configIfSet(u"no-ui-watchdog"_s,       clcd.flags.noUiWatchdog);
+        configIfSet(u"no-ui-watchdog"_s,       clcd.watchdog.disable); // legacy
+        configIfSet(u"disable-watchdog"_s,     clcd.watchdog.disable);
         configIfSet(u"force-single-process"_s, clcd.flags.forceSingleProcess);
         configIfSet(u"force-multi-process"_s,  clcd.flags.forceMultiProcess);
         configIfSet(u"logging-rule"_s,         clcd.logging.rules);
@@ -478,7 +480,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 14;
+    return 15;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -540,7 +542,6 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.crashAction.stackFramesToIgnore.onException
         & cd.systemProperties
         & cd.flags.noSecurity
-        & cd.flags.noUiWatchdog
         & cd.flags.developmentMode
         & cd.flags.forceMultiProcess
         & cd.flags.forceSingleProcess
@@ -554,7 +555,21 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
                   &ConfigurationData::Wayland::ExtraSocket::userId,
                   &ConfigurationData::Wayland::ExtraSocket::groupId
               }
-        & cd.instanceId;
+        & cd.instanceId
+        & cd.watchdog.disable
+        & cd.watchdog.eventloop.checkInterval
+        & cd.watchdog.eventloop.warnTimeout
+        & cd.watchdog.eventloop.killTimeout
+        & cd.watchdog.quickwindow.checkInterval
+        & cd.watchdog.quickwindow.syncWarnTimeout
+        & cd.watchdog.quickwindow.syncKillTimeout
+        & cd.watchdog.quickwindow.renderWarnTimeout
+        & cd.watchdog.quickwindow.renderKillTimeout
+        & cd.watchdog.quickwindow.swapWarnTimeout
+        & cd.watchdog.quickwindow.swapKillTimeout
+        & cd.watchdog.wayland.checkInterval
+        & cd.watchdog.wayland.warnTimeout
+        & cd.watchdog.wayland.killTimeout;
 }
 
 // using templates only would be better, but we cannot get nice pointers-to-member-data for
@@ -619,7 +634,6 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(crashAction.stackFramesToIgnore.onException);
     MERGE_FIELD(systemProperties);
     MERGE_FIELD(flags.noSecurity);
-    MERGE_FIELD(flags.noUiWatchdog);
     MERGE_FIELD(flags.developmentMode);
     MERGE_FIELD(flags.forceMultiProcess);
     MERGE_FIELD(flags.forceSingleProcess);
@@ -628,6 +642,20 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(wayland.socketName);
     MERGE_FIELD(wayland.extraSockets);
     MERGE_FIELD(instanceId);
+    MERGE_FIELD(watchdog.disable);
+    MERGE_FIELD(watchdog.eventloop.checkInterval);
+    MERGE_FIELD(watchdog.eventloop.warnTimeout);
+    MERGE_FIELD(watchdog.eventloop.killTimeout);
+    MERGE_FIELD(watchdog.quickwindow.checkInterval);
+    MERGE_FIELD(watchdog.quickwindow.syncWarnTimeout);
+    MERGE_FIELD(watchdog.quickwindow.syncKillTimeout);
+    MERGE_FIELD(watchdog.quickwindow.renderWarnTimeout);
+    MERGE_FIELD(watchdog.quickwindow.renderKillTimeout);
+    MERGE_FIELD(watchdog.quickwindow.swapWarnTimeout);
+    MERGE_FIELD(watchdog.quickwindow.swapKillTimeout);
+    MERGE_FIELD(watchdog.wayland.checkInterval);
+    MERGE_FIELD(watchdog.wayland.warnTimeout);
+    MERGE_FIELD(watchdog.wayland.killTimeout);
 }
 
 QByteArray ConfigurationPrivate::substituteVars(const QByteArray &sourceContent, const QString &fileName)
@@ -876,7 +904,9 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                      { "developmentMode", false, YamlParser::Scalar, [&]() {
                           cd.flags.developmentMode = yp.parseBool(); } },
                      { "noUiWatchdog", false, YamlParser::Scalar, [&]() {
-                          cd.flags.noUiWatchdog = yp.parseBool(); } },
+                          qCDebug(LogDeployment) << "'flags.noUiWatchdog' is deprecated, please use 'watchdog.disable'";
+                          if (yp.parseBool())
+                              cd.watchdog.disable = true; } },
                      { "allowUnsignedPackages", false, YamlParser::Scalar, [&]() {
                           cd.flags.allowUnsignedPackages = yp.parseBool(); } },
                      { "allowUnknownUiClients", false, YamlParser::Scalar, [&]() {
@@ -952,6 +982,47 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                      if (pit != ifaceData.cend())
                          cd.dbus.policies.insert(ifaceName, pit->toMap());
                  } } },
+            { "watchdog", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "disable", false, YamlParser::Scalar, [&]() {
+                          cd.watchdog.disable = yp.parseBool(); } },
+                     { "eventloop", false, YamlParser::Map, [&]() {
+                          yp.parseFields({
+                              { "checkInterval", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.eventloop.checkInterval = yp.parseDurationAsMSec(); } },
+                              { "warnTimeout", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.eventloop.warnTimeout = yp.parseDurationAsMSec(); } },
+                              { "killTimeout", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.eventloop.killTimeout = yp.parseDurationAsMSec(); } },
+                          }); } },
+                     { "quickwindow", false, YamlParser::Map, [&]() {
+                          yp.parseFields({
+                              { "checkInterval", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.quickwindow.checkInterval = yp.parseDurationAsMSec(); } },
+                              { "syncWarnTimeout", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.quickwindow.syncWarnTimeout = yp.parseDurationAsMSec(); } },
+                              { "syncKillTimeout", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.quickwindow.syncKillTimeout = yp.parseDurationAsMSec(); } },
+                              { "renderWarnTimeout", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.quickwindow.renderWarnTimeout = yp.parseDurationAsMSec(); } },
+                              { "renderKillTimeout", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.quickwindow.renderKillTimeout = yp.parseDurationAsMSec(); } },
+                              { "swapWarnTimeout", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.quickwindow.swapWarnTimeout = yp.parseDurationAsMSec(); } },
+                              { "swapKillTimeout", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.quickwindow.swapKillTimeout = yp.parseDurationAsMSec(); } },
+                          }); } },
+                     { "wayland", false, YamlParser::Map, [&]() {
+                          yp.parseFields({
+                              { "checkInterval", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.wayland.checkInterval = yp.parseDurationAsMSec(); } },
+                              { "warnTimeout", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.wayland.warnTimeout = yp.parseDurationAsMSec(); } },
+                              { "killTimeout", false, YamlParser::Scalar, [&]() {
+                                   cd.watchdog.wayland.killTimeout = yp.parseDurationAsMSec(); } },
+                          }); } }
+                 }); } }
+
         });
     } catch (const Exception &e) {
         throw Exception(e.errorCode(), "Failed to parse config file %1: %2")
@@ -979,10 +1050,9 @@ void Configuration::setForceVerbose(bool forceVerbose)
     d->forceVerbose = forceVerbose;
 }
 
-void Configuration::setForceNoUiWatchdog(bool noUiWatchdog)
+void Configuration::setForceWatchdog(bool forceWatchdog)
 {
-    if (noUiWatchdog)
-        d->data.flags.noUiWatchdog = true;
+    d->data.watchdog.disable = !forceWatchdog;
 }
 
 bool Configuration::slowAnimations() const

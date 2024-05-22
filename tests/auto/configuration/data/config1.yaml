@@ -101,3 +101,22 @@ wayland:
       permissions: 0222
       userId: 3
       groupId: 4
+
+watchdog:
+  disable: true
+  eventloop:
+    checkInterval: 2min
+    warnTimeout: 3min
+    killTimeout: 4min
+  quickwindow:
+    checkInterval: 2s
+    syncWarnTimeout: 3s
+    syncKillTimeout: 4s
+    renderWarnTimeout: 5s
+    renderKillTimeout: 6s
+    swapWarnTimeout: 7s
+    swapKillTimeout: 8s
+  wayland:
+    checkInterval: 2ms
+    warnTimeout: 3ms
+    killTimeout: 4ms

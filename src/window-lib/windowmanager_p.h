@@ -26,6 +26,11 @@ public:
 
     WaylandCompositor *waylandCompositor = nullptr;
     QVector<int> extraWaylandSockets;
+    struct {
+        std::chrono::milliseconds checkInterval;
+        std::chrono::milliseconds warnTimeout;
+        std::chrono::milliseconds killTimeout;
+    } waylandWatchdog;
 
     static QString applicationId(Application *app, WindowSurface *windowSurface);
 #endif

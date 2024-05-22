@@ -14,6 +14,7 @@
 #include "application.h"
 #include "applicationmanager.h"
 #include "waylandcompositor.h"
+#include "waylandxdgwatchdog.h"
 
 #include <QWaylandWlShell>
 #include <QWaylandXdgShell>
@@ -93,16 +94,6 @@ QWindow *WindowSurface::outputWindow() const
     return nullptr;
 }
 
-void WindowSurface::ping()
-{
-    if (m_xdgSurface) {
-        // FIXME: ping should be done per-application, not per-window
-        m_compositor->xdgPing(this);
-    } else {
-        m_wlSurface->ping();
-    }
-}
-
 void WindowSurface::close()
 {
     if (m_topLevel) {
@@ -121,6 +112,7 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     , m_amExtension(new WaylandQtAMServerExtension(this))
     , m_qtTextInputMethodManager(new QWaylandQtTextInputMethodManager(this))
     , m_textInputManager(new QWaylandTextInputManager(this))
+    , m_xdgWatchdog(new WaylandXdgWatchdog(m_xdgShell))
 {
     // We are instantiating both the semi-official TextInputManager protocol (which has some
     // traction upstream, but also has known defects) and our own QtTextInputMethodManager
@@ -146,7 +138,6 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     connect(m_xdgShell, &QWaylandXdgShell::xdgSurfaceCreated, this, &WaylandCompositor::onXdgSurfaceCreated);
     connect(m_xdgShell, &QWaylandXdgShell::toplevelCreated, this, &WaylandCompositor::onTopLevelCreated);
     connect(m_xdgShell, &QWaylandXdgShell::popupCreated, this, &WaylandCompositor::onPopupCreated);
-    connect(m_xdgShell, &QWaylandXdgShell::pong, this, &WaylandCompositor::onXdgPongReceived);
 
     auto wmext = new QWaylandQtWindowManager(this);
     wmext->setParent(this);
@@ -166,20 +157,6 @@ WaylandCompositor::~WaylandCompositor()
     // QWayland leaks like sieve everywhere, but we need this explicit delete to be able
     // to suppress the rest via LSAN leak suppression files
     delete defaultSeat();
-}
-
-void WaylandCompositor::xdgPing(WindowSurface* surface)
-{
-    uint serial = m_xdgShell->ping(surface->client());
-    m_xdgPingMap[serial] = surface;
-}
-
-void WaylandCompositor::onXdgPongReceived(uint serial)
-{
-    auto surface = m_xdgPingMap.take(serial);
-    if (surface) {
-        emit surface->pong();
-    }
 }
 
 void WaylandCompositor::registerOutputWindow(QQuickWindow* window)
@@ -206,6 +183,13 @@ void WaylandCompositor::registerOutputWindow(QQuickWindow* window)
                 target->setKeyboardFocus(nullptr);
         }
     });
+}
+
+void WaylandCompositor::setWatchdogTimeouts(std::chrono::milliseconds checkInterval,
+                                            std::chrono::milliseconds warnTimeout,
+                                            std::chrono::milliseconds killTimeout)
+{
+    m_xdgWatchdog->setTimeouts(checkInterval, warnTimeout, killTimeout);
 }
 
 WaylandQtAMServerExtension *WaylandCompositor::amExtension()

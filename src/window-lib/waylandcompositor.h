@@ -35,6 +35,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class WaylandCompositor;
 class WaylandQtAMServerExtension;
+class WaylandXdgWatchdog;
 class WindowSurfaceQuickItem;
 
 // A WindowSurface object exists for every Wayland surface created in the Wayland server.
@@ -65,7 +66,6 @@ public:
     qint64 processId() const;
     QWindow *outputWindow() const;
 
-    void ping();
     void close();
 
 Q_SIGNALS:
@@ -96,10 +96,11 @@ public:
     ~WaylandCompositor() override;
 
     void registerOutputWindow(QQuickWindow *window);
+    void setWatchdogTimeouts(std::chrono::milliseconds checkInterval,
+                             std::chrono::milliseconds warnTimeout,
+                             std::chrono::milliseconds killTimeout);
 
     WaylandQtAMServerExtension *amExtension();
-
-    void xdgPing(WindowSurface*);
 
 Q_SIGNALS:
     void surfaceMapped(QtAM::WindowSurface *surface);
@@ -110,7 +111,6 @@ protected:
     void onXdgSurfaceCreated(QWaylandXdgSurface *xdgSurface);
     void onTopLevelCreated(QWaylandXdgToplevel *toplevel, QWaylandXdgSurface *xdgSurface);
     void onPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurface *xdgSurface);
-    void onXdgPongReceived(uint serial);
 
     QWaylandWlShell *m_wlShell;
     QWaylandXdgShell *m_xdgShell;
@@ -118,7 +118,7 @@ protected:
     WaylandQtAMServerExtension *m_amExtension;
     QWaylandQtTextInputMethodManager *m_qtTextInputMethodManager;
     QWaylandTextInputManager *m_textInputManager;
-    QMap<uint, QPointer<WindowSurface>> m_xdgPingMap;
+    WaylandXdgWatchdog *m_xdgWatchdog;
 };
 
 QT_END_NAMESPACE_AM

@@ -120,7 +120,6 @@ struct ConfigurationData
         bool developmentMode = false;
         bool allowUnsignedPackages = false;
         bool allowUnknownUiClients = false;
-        bool noUiWatchdog = false;
     } flags;
 
     struct Wayland {
@@ -133,6 +132,29 @@ struct ConfigurationData
         };
         QList<ExtraSocket> extraSockets;
     } wayland;
+
+    struct {
+        bool disable = false;
+        struct {
+            std::chrono::milliseconds checkInterval { 1000 };
+            std::chrono::milliseconds warnTimeout { 1000 };
+            std::chrono::milliseconds killTimeout { 10000 };
+        } eventloop;
+        struct {
+            std::chrono::milliseconds checkInterval { 1000 };
+            std::chrono::milliseconds syncWarnTimeout { 35 };
+            std::chrono::milliseconds syncKillTimeout { 10000 };
+            std::chrono::milliseconds renderWarnTimeout { 35 };
+            std::chrono::milliseconds renderKillTimeout { 10000 };
+            std::chrono::milliseconds swapWarnTimeout { 35 };
+            std::chrono::milliseconds swapKillTimeout { 10000 };
+        } quickwindow;
+        struct {
+            std::chrono::milliseconds checkInterval { 5000 };
+            std::chrono::milliseconds warnTimeout { 1000 };
+            std::chrono::milliseconds killTimeout { 10000 };
+        } wayland;
+    } watchdog;
 };
 
 class ConfigurationPrivate;
@@ -153,7 +175,7 @@ public:
     bool clearCache() const;
     bool verbose() const;
     void setForceVerbose(bool forceVerbose);
-    void setForceNoUiWatchdog(bool noUiWatchdog);
+    void setForceWatchdog(bool forceWatchdog);
     bool slowAnimations() const;
     bool noDltLogging() const;
     bool qmlDebugging() const;

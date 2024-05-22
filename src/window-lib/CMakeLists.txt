@@ -39,6 +39,7 @@ if(QT_FEATURE_am_multi_process)
             waylandcompositor.cpp waylandcompositor.h
             waylandqtamserverextension.cpp waylandqtamserverextension_p.h
             waylandwindow.cpp waylandwindow.h
+            waylandxdgwatchdog.h waylandxdgwatchdog.cpp
         LIBRARIES
             Qt::WaylandCompositorPrivate
         PUBLIC_LIBRARIES

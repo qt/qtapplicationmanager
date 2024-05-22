@@ -67,7 +67,9 @@ public:
     void setSlowAnimations(bool slowAnimations);
     bool allowUnknownUiClients() const;
     void setAllowUnknownUiClients(bool enable);
-    void enableWatchdog(bool enable);
+    void setWatchdogTimeouts(std::chrono::milliseconds checkInterval,
+                             std::chrono::milliseconds warnTimeout,
+                             std::chrono::milliseconds killTimeout);
 
     bool addWaylandSocket(QLocalServer *waylandSocket);
 

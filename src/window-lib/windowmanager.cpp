@@ -384,12 +384,18 @@ WindowManager::~WindowManager()
     s_instance = nullptr;
 }
 
-void WindowManager::enableWatchdog(bool enable)
+void WindowManager::setWatchdogTimeouts(std::chrono::milliseconds checkInterval,
+                                        std::chrono::milliseconds warnTimeout,
+                                        std::chrono::milliseconds killTimeout)
 {
 #if QT_CONFIG(am_multi_process)
-    WaylandWindow::m_watchdogEnabled = enable;
+    d->waylandWatchdog = { checkInterval, warnTimeout, killTimeout };
+    if (d->waylandCompositor)
+        d->waylandCompositor->setWatchdogTimeouts(checkInterval, warnTimeout, killTimeout);
 #else
-    Q_UNUSED(enable);
+    Q_UNUSED(checkInterval);
+    Q_UNUSED(warnTimeout);
+    Q_UNUSED(killTimeout);
 #endif
 }
 
@@ -676,6 +682,9 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
             d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName);
             for (const auto &extraSocket : std::as_const(d->extraWaylandSockets))
                 d->waylandCompositor->addSocketDescriptor(extraSocket);
+            d->waylandCompositor->setWatchdogTimeouts(d->waylandWatchdog.checkInterval,
+                                                      d->waylandWatchdog.warnTimeout,
+                                                      d->waylandWatchdog.killTimeout);
 
             connect(d->waylandCompositor, &QWaylandCompositor::surfaceCreated,
                     this, &WindowManager::waylandSurfaceCreated);

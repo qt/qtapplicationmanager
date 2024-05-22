@@ -22,7 +22,10 @@ if(TARGET WrapLibYaml::WrapLibYaml)
 endif()
 qt_find_package(WrapLibYaml PROVIDED_TARGETS WrapLibYaml::WrapLibYaml MODULE_NAME appman_common QMAKE_LIB yaml)
 qt_find_package(WrapLibArchive PROVIDED_TARGETS WrapLibArchive::WrapLibArchive MODULE_NAME appman_package QMAKE_LIB archive)
-
+if(TARGET WrapLibSystemd::WrapLibSystemd)
+    qt_internal_disable_find_package_global_promotion(WrapLibSystemd::WrapLibSystemd)
+endif()
+qt_find_package(WrapLibSystemd PROVIDED_TARGETS WrapLibSystemd::WrapLibSystemd MODULE_NAME appman_common QMAKE_LIB systemd)
 
 #### Tests
 
@@ -93,6 +96,13 @@ qt_feature("am-libdbus" PRIVATE
     DISABLE INPUT_libdbus STREQUAL 'no'
 )
 
+qt_feature("am-systemd-watchdog" PRIVATE
+    LABEL "Use systemd watchdog"
+    CONDITION WrapLibSystemd_FOUND
+    ENABLE INPUT_systemd_watchdog STREQUAL 'yes'
+    DISABLE INPUT_systemd_watchdog STREQUAL 'no'
+)
+
 qt_feature("am-libbacktrace" PRIVATE
     LABEL "Enable support for libbacktrace"
     CONDITION (LINUX OR MACOS) AND (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -143,6 +153,7 @@ qt_configure_add_summary_entry(ARGS "am-tools-only")
 qt_configure_add_summary_entry(ARGS "am-package-server")
 qt_configure_add_summary_entry(ARGS "am-dltlogging")
 qt_configure_add_summary_entry(ARGS "am-libdbus")
+qt_configure_add_summary_entry(ARGS "am-systemd-watchdog")
 qt_configure_add_summary_entry(ARGS "am-libbacktrace")
 qt_configure_add_summary_entry(ARGS "am-stackwalker")
 qt_configure_end_summary_section() # end of "Qt ApplicationManger" section

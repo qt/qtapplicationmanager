@@ -103,6 +103,7 @@
 #include "../plugin-interfaces/startupinterface.h"
 
 using namespace Qt::StringLiterals;
+using namespace std::chrono_literals;
 
 
 AM_QML_REGISTER_TYPES(QtApplicationManager_SystemUI)
@@ -194,6 +195,21 @@ void Main::setup(const Configuration *cfg) noexcept(false)
     Logging::registerUnregisteredDltContexts();
     setupLogging(cfg->verbose(), cfg->yaml.logging.rules, cfg->yaml.logging.messagePattern,
                  cfg->yaml.logging.useAMConsoleLogger);
+
+    if (cfg->yaml.watchdog.disable) {
+        setupWatchdog(0ms, 0ms, 0ms, 0ms, 0ms, 0ms, 0ms, 0ms, 0ms, 0ms);
+    } else {
+        setupWatchdog(cfg->yaml.watchdog.eventloop.checkInterval,
+                      cfg->yaml.watchdog.eventloop.warnTimeout,
+                      cfg->yaml.watchdog.eventloop.killTimeout,
+                      cfg->yaml.watchdog.quickwindow.checkInterval,
+                      cfg->yaml.watchdog.quickwindow.syncWarnTimeout,
+                      cfg->yaml.watchdog.quickwindow.syncKillTimeout,
+                      cfg->yaml.watchdog.quickwindow.renderWarnTimeout,
+                      cfg->yaml.watchdog.quickwindow.renderKillTimeout,
+                      cfg->yaml.watchdog.quickwindow.swapWarnTimeout,
+                      cfg->yaml.watchdog.quickwindow.swapKillTimeout);
+    }
 
     registerResources(cfg->yaml.ui.resources);
 
@@ -664,7 +680,13 @@ void Main::setupWindowManager(const Configuration *cfg)
     m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName());
     m_windowManager->setAllowUnknownUiClients(cfg->yaml.flags.noSecurity || cfg->yaml.flags.allowUnknownUiClients);
     m_windowManager->setSlowAnimations(cfg->slowAnimations());
-    m_windowManager->enableWatchdog(!cfg->yaml.flags.noUiWatchdog);
+    if (cfg->yaml.watchdog.disable) {
+        m_windowManager->setWatchdogTimeouts(0ms, 0ms, 0ms);
+    } else {
+        m_windowManager->setWatchdogTimeouts(cfg->yaml.watchdog.wayland.checkInterval,
+                                             cfg->yaml.watchdog.wayland.warnTimeout,
+                                             cfg->yaml.watchdog.wayland.killTimeout);
+    }
 
 #if defined(QT_WAYLANDCOMPOSITOR_LIB)
     connect(&m_windowManager->internalSignals, &WindowManagerInternalSignals::compositorAboutToBeCreated,

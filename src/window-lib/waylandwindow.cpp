@@ -8,7 +8,6 @@
 #if QT_CONFIG(am_multi_process)
 #include "logging.h"
 #include "qml-utilities.h"
-#include "applicationmanager.h"
 #include "application.h"
 #include "waylandwindow.h"
 #include "waylandcompositor.h"
@@ -21,26 +20,13 @@ using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-bool WaylandWindow::m_watchdogEnabled = true;
-
 WaylandWindow::WaylandWindow(Application *app, WindowSurface *surf)
     : Window(app)
-    , m_pingTimer(new QTimer(this))
-    , m_pongTimer(new QTimer(this))
     , m_surface(surf)
 {
     if (surf) {
-        connect(surf, &WindowSurface::pong,
-                this, &WaylandWindow::pongReceived);
         connect(m_surface, &QWaylandSurface::hasContentChanged, this, &WaylandWindow::onContentStateChanged);
         connect(m_surface, &QWaylandSurface::bufferSizeChanged, this, &Window::sizeChanged);
-
-        m_pingTimer->setInterval(1000);
-        m_pingTimer->setSingleShot(true);
-        connect(m_pingTimer, &QTimer::timeout, this, &WaylandWindow::pingTimeout);
-        m_pongTimer->setInterval(2000);
-        m_pongTimer->setSingleShot(true);
-        connect(m_pongTimer, &QTimer::timeout, this, &WaylandWindow::pongTimeout);
 
         connect(surf->compositor()->amExtension(), &WaylandQtAMServerExtension::windowPropertyChanged,
                 this, [this](QWaylandSurface *surface, const QString &name, const QVariant &value) {
@@ -68,32 +54,7 @@ WaylandWindow::WaylandWindow(Application *app, WindowSurface *surf)
 
         connect(m_surface, &WindowSurface::xdgSurfaceChanged,
                 this, &WaylandWindow::waylandXdgSurfaceChanged);
-
-        enableOrDisablePing();
     }
-}
-
-void WaylandWindow::pongReceived()
-{
-    m_pongTimer->stop();
-    m_pingTimer->start();
-}
-
-void WaylandWindow::pongTimeout()
-{
-    if (!application())
-        return;
-
-    qCCritical(LogGraphics) << "Stopping application" << application()->id() << "because we did not receive a Wayland-Pong for" << m_pongTimer->interval() << "msec";
-    ApplicationManager::instance()->stopApplicationInternal(application(), true);
-}
-
-void WaylandWindow::pingTimeout()
-{
-    m_pingTimer->stop();
-    m_pongTimer->start();
-    if (m_surface)
-        m_surface->ping();
 }
 
 bool WaylandWindow::setWindowProperty(const QString &name, const QVariant &value)
@@ -133,22 +94,9 @@ Window::ContentState WaylandWindow::contentState() const
         return NoSurface;
 }
 
-void WaylandWindow::enableOrDisablePing()
-{
-    if (m_watchdogEnabled) {
-        m_pingTimer->stop();
-        m_pongTimer->stop();
-
-        if (m_surface && m_surface->hasContent())
-            pingTimeout();
-    }
-}
-
 void WaylandWindow::onContentStateChanged()
 {
     qCDebug(LogGraphics) << this << "of" << applicationId() << "contentState changed to" << contentState();
-
-    enableOrDisablePing();
     emit contentStateChanged();
 }
 

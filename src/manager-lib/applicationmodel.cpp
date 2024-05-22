@@ -137,7 +137,7 @@ bool ApplicationModel::filterAcceptsRow(int source_row, const QModelIndex &sourc
     Q_UNUSED(source_parent)
 
     if (!d->m_engine) {
-        d->m_engine = getJSEngine(this);
+        d->m_engine = qjsEngine(this);
         if (!d->m_engine)
             qCWarning(LogSystem) << "ApplicationModel can't filter without a JavaScript engine";
     }
@@ -154,7 +154,7 @@ bool ApplicationModel::filterAcceptsRow(int source_row, const QModelIndex &sourc
 bool ApplicationModel::lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const
 {
     if (!d->m_engine) {
-        d->m_engine = getJSEngine(this);
+        d->m_engine = qjsEngine(this);
         if (!d->m_engine)
             qCWarning(LogSystem) << "ApplicationModel can't sort without a JavaScript engine";
     }

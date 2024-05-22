@@ -128,8 +128,6 @@ void closeAndClearFileDescriptors(QVector<int> &fdList);
 // make sure that the given id can be used as a filename
 void validateIdForFilesystemUsage(const QString &id) noexcept(false);
 
-QJSEngine *getJSEngine(const QObject *obj);
-
 QT_END_NAMESPACE_AM
 
 #endif // UTILITIES_H

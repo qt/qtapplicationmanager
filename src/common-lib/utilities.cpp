@@ -350,10 +350,4 @@ void validateIdForFilesystemUsage(const QString &id)  noexcept(false)
         throw Exception(Error::Parse, "must not consist of only white-space characters");
 }
 
-QJSEngine *getJSEngine(const QObject *obj)
-{
-    QQmlContext *context = QQmlEngine::contextForObject(obj);
-    return context ? reinterpret_cast<QJSEngine*>(context->engine()) : nullptr;
-}
-
 QT_END_NAMESPACE_AM

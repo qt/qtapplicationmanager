@@ -134,7 +134,7 @@ bool NotificationModel::filterAcceptsRow(int source_row, const QModelIndex &sour
     Q_UNUSED(source_parent)
 
     if (!d->m_engine) {
-        d->m_engine = getJSEngine(this);
+        d->m_engine = qjsEngine(this);
         if (!d->m_engine)
             qCWarning(LogNotifications) << "NotificationModel can't filter without a JavaScript engine";
     }
@@ -151,7 +151,7 @@ bool NotificationModel::filterAcceptsRow(int source_row, const QModelIndex &sour
 bool NotificationModel::lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const
 {
     if (!d->m_engine) {
-        d->m_engine = getJSEngine(this);
+        d->m_engine = qjsEngine(this);
         if (!d->m_engine)
             qCWarning(LogNotifications) << "NotificationModel can't sort without a JavaScript engine";
     }

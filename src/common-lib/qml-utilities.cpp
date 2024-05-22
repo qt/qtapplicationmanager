@@ -6,8 +6,11 @@
 #include <QDir>
 #include <QQmlComponent>
 #include <QQmlContext>
+#include <QQmlInfo>
 #include <private/qqmlmetatype_p.h>
-
+#include <private/qv4engine_p.h>
+#include <private/qqmlcontext_p.h>
+#include <private/qqmlcontextdata_p.h>
 #include "logging.h"
 #include "utilities.h"
 #include "qml-utilities.h"
@@ -64,6 +67,67 @@ QVariant convertFromJSVariant(const QVariant &variant)
     } else {
         return variant;
     }
+}
+
+
+static const char *qmlContextTag = "_q_am_context_tag";
+
+
+QVariant findTaggedQmlContext(QObject *object)
+{
+    auto findTag = [](QQmlContext *context) -> QVariant {
+        while (context) {
+            auto v = context->property(qmlContextTag);
+            if (v.isValid())
+                return v;
+            context = context->parentContext();
+        }
+        return { };
+    };
+
+    // check the context the object lives in
+    QVariant v  = findTag(QQmlEngine::contextForObject(object));
+    if (!v.isValid()) {
+        // if this didn't work out, check out the calling context
+        if (QQmlEngine *engine = qmlEngine(object)) {
+            if (QV4::ExecutionEngine *v4 = engine->handle()) {
+                if (QQmlContextData *callingContext = v4->callingQmlContext().data())
+                    v = findTag(callingContext->asQQmlContext());
+            }
+        }
+    }
+    return v;
+}
+
+bool tagQmlContext(QQmlContext *context, const QVariant &value)
+{
+    if (!context || !value.isValid())
+        return false;
+    return !context->setProperty(qmlContextTag, value);
+}
+
+bool ensureCurrentContextIsSystemUI(QObject *object)
+{
+    static const char *error = "This object can not be used in an Application context";
+
+    if (findTaggedQmlContext(object).isValid()) {
+        qmlWarning(object) << error;
+        Q_ASSERT_X(false, object ? object->metaObject()->className() : "", error);
+        return false;
+    }
+    return true;
+}
+
+bool ensureCurrentContextIsInProcessApplication(QObject *object)
+{
+    static const char *error = "This object can not be used in the SystemUI context";
+
+    if (!findTaggedQmlContext(object).isValid()) {
+        qmlWarning(object) << error;
+        Q_ASSERT_X(false, object ? object->metaObject()->className() : "", error);
+        return false;
+    }
+    return true;
 }
 
 QT_END_NAMESPACE_AM

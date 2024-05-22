@@ -77,7 +77,6 @@ public:
 
 private:
     void notifyRuntimeAboutSurface();
-    void determineRuntime();
     void findParentWindow(QObject *object);
     void setRelations(ApplicationManagerWindow *newParentWindow);
     void connectActiveFocusItem();

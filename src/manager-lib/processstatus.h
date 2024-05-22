@@ -11,6 +11,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QThread>
 #include <QtCore/QVariant>
+#include <QtQml/QQmlParserStatus>
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManManager/amnamespace.h>
@@ -20,9 +21,10 @@
 QT_BEGIN_NAMESPACE_AM
 
 // It's assumed that all ProcessStatus instances are created from the same thread (most likely the main one).
-class ProcessStatus : public QObject
+class ProcessStatus : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
+    Q_INTERFACES(QQmlParserStatus)
     Q_PROPERTY(QString applicationId READ applicationId WRITE setApplicationId NOTIFY applicationIdChanged FINAL)
     Q_PROPERTY(qint64 processId READ processId NOTIFY processIdChanged FINAL)
     Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadChanged FINAL)
@@ -52,6 +54,9 @@ public:
 
     bool isMemoryReportingEnabled() const;
     void setMemoryReportingEnabled(bool enabled);
+
+    void classBegin() override;
+    void componentComplete() override;
 
 Q_SIGNALS:
     void applicationIdChanged(const QString &applicationId);

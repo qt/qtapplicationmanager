@@ -3,18 +3,15 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include "processstatus.h"
-
 #include <QCoreApplication>
 #include <QMutexLocker>
 #include <QtQml/qqmlinfo.h>
 
-
 #include "abstractruntime.h"
 #include "applicationmanager.h"
 #include "logging.h"
-
-#include <limits>
+#include "qml-utilities.h"
+#include "processstatus.h"
 
 using namespace Qt::StringLiterals;
 
@@ -356,6 +353,14 @@ void ProcessStatus::setMemoryReportingEnabled(bool enabled)
 QStringList ProcessStatus::roleNames() const
 {
     return { u"cpuLoad"_s, u"memoryVirtual"_s, u"memoryRss"_s, u"memoryPss"_s };
+}
+
+void ProcessStatus::classBegin()
+{ }
+
+void ProcessStatus::componentComplete()
+{
+    ensureCurrentContextIsSystemUI(this);
 }
 
 #include "moc_processstatus.cpp"

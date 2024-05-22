@@ -57,6 +57,8 @@ public:
     Q_REVISION(2, 1) Q_INVOKABLE bool broadcastIntentRequest(const QString &intentId,
                                                              const QVariantMap &parameters);
 
+    bool isSystemUI() const; // for IntentHandler
+
 private:
     void requestToSystemFinished(IntentClientRequest *icr, const QUuid &newRequestId,
                                  bool error, const QString &errorMessage);

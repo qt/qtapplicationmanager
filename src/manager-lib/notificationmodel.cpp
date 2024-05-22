@@ -11,6 +11,7 @@
 #include "notificationmanager.h"
 #include "notificationmodel.h"
 #include "notification.h"
+#include "qml-utilities.h"
 #include "utilities.h"
 
 
@@ -257,6 +258,14 @@ int NotificationModel::mapFromSource(int sourceIndex) const
 void NotificationModel::invalidate()
 {
     QSortFilterProxyModel::invalidate();
+}
+
+void NotificationModel::classBegin()
+{ }
+
+void NotificationModel::componentComplete()
+{
+    ensureCurrentContextIsSystemUI(this);
 }
 
 QT_END_NAMESPACE_AM

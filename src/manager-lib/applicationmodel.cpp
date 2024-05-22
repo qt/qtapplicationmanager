@@ -13,6 +13,7 @@
 #include "applicationmanager.h"
 #include "applicationmodel.h"
 #include "application.h"
+#include "qml-utilities.h"
 #include "utilities.h"
 
 
@@ -261,6 +262,14 @@ int ApplicationModel::mapFromSource(int sourceIndex) const
 void ApplicationModel::invalidate()
 {
     QSortFilterProxyModel::invalidate();
+}
+
+void ApplicationModel::classBegin()
+{ }
+
+void ApplicationModel::componentComplete()
+{
+    ensureCurrentContextIsSystemUI(this);
 }
 
 QT_END_NAMESPACE_AM

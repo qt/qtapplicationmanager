@@ -66,6 +66,8 @@ public:
     void setFocusOnClick(bool newFocusOnClick);
     Q_SIGNAL void focusOnClickChanged();
 
+    void componentComplete() override;
+
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 

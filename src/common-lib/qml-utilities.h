@@ -26,6 +26,12 @@ QVariant convertFromJSVariant(const QVariant &variant);
 
 void loadQmlDummyDataFiles(QQmlEngine *engine, const QString &directory);
 
+bool tagQmlContext(QQmlContext *context, const QVariant &value);
+QVariant findTaggedQmlContext(QObject *object);
+
+bool ensureCurrentContextIsSystemUI(QObject *object);
+bool ensureCurrentContextIsInProcessApplication(QObject *object);
+
 QT_END_NAMESPACE_AM
 
 #endif // QML_UTILITIES_H

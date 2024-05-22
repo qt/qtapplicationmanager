@@ -33,9 +33,6 @@ using namespace Qt::StringLiterals;
 QT_BEGIN_NAMESPACE_AM
 
 
-const char *QmlInProcRuntime::s_runtimeKey = "_am_runtime";
-
-
 QmlInProcRuntime::QmlInProcRuntime(Application *app, QmlInProcRuntimeManager *manager)
     : AbstractRuntime(nullptr, app, manager)
     , m_applicationInterfaceImpl(new QmlInProcApplicationInterfaceImpl(this))
@@ -121,11 +118,11 @@ bool QmlInProcRuntime::start()
     setState(Am::StartingUp);
 
     // We are running each application in its own, separate Qml context.
-    // This way, we can export a unique runtime-key to this context to then later
+    // This way, we can export a unique runtime-tag to this context to then later
     // determine at runtime which application is currently active.
     auto appContext = new QQmlContext(m_inProcessQmlEngine->rootContext(), this);
-    if (appContext->setProperty(s_runtimeKey, QVariant::fromValue(this)))
-        qCritical() << "Could not set" << s_runtimeKey << "property in QML context";
+    if (!tagQmlContext(appContext, QVariant::fromValue(this)))
+        qCritical() << "Could not tag the application QML context";
 
     QObject *obj = component->beginCreate(appContext);
 
@@ -335,27 +332,7 @@ qint64 QmlInProcRuntime::applicationProcessId() const
 */
 QmlInProcRuntime *QmlInProcRuntime::determineRuntime(QObject *object)
 {
-    auto findRuntime = [](QQmlContext *context) -> QmlInProcRuntime * {
-        while (context) {
-            if (context->property(s_runtimeKey).isValid())
-                return context->property(s_runtimeKey).value<QmlInProcRuntime *>();
-            context = context->parentContext();
-        }
-        return nullptr;
-    };
-
-    // check the context the object lives in
-    QmlInProcRuntime *runtime = findRuntime(QQmlEngine::contextForObject(object));
-    if (!runtime) {
-        // if this didn't work out, check out the calling context
-        if (QQmlEngine *engine = qmlEngine(object)) {
-            if (QV4::ExecutionEngine *v4 = engine->handle()) {
-                if (QQmlContextData *callingContext = v4->callingQmlContext().data())
-                    runtime = findRuntime(callingContext->asQQmlContext());
-            }
-        }
-    }
-    return runtime;
+    return findTaggedQmlContext(object).value<QmlInProcRuntime *>();
 }
 
 QmlInProcRuntimeManager::QmlInProcRuntimeManager(QObject *parent)

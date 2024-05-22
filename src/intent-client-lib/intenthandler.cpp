@@ -7,6 +7,7 @@
 
 #include "intenthandler.h"
 #include "intentclient.h"
+#include "qml-utilities.h"
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -113,6 +114,11 @@ void IntentHandler::classBegin()
 
 void IntentHandler::componentComplete()
 {
+    // The ensure...() check would fail in the qml-launcher (or any other custom QML runtime),
+    // because there's no context tagging like in the appman itself
+    if (IntentClient::instance()->isSystemUI())
+        ensureCurrentContextIsInProcessApplication(this);
+
     IntentClient::instance()->registerHandler(this);
     m_completed = true;
 }

@@ -24,6 +24,7 @@
 #include "error.h"
 #include "exception.h"
 #include "logging.h"
+#include "qml-utilities.h"
 #include "utilities.h"
 #include "intentserver.h"
 #include "intentclient.h"
@@ -255,6 +256,11 @@ QString IntentClientAMImplementation::currentApplicationId(QObject *hint)
 void IntentClientAMImplementation::initialize(IntentClient *intentClient) noexcept(false)
 {
     IntentClientSystemInterface::initialize(intentClient);
+}
+
+bool IntentClientAMImplementation::isSystemUI() const
+{
+    return true;
 }
 
 void IntentClientAMImplementation::requestToSystem(const QPointer<IntentClientRequest> &icr)
@@ -766,11 +772,8 @@ void IntentServerHandler::classBegin()
 
 void IntentServerHandler::componentComplete()
 {
-    if (QmlInProcRuntime::determineRuntime(this)) {
-        qmlWarning(this) << "Using IntentServerHandler for handling events in an application "
-                            "context does not work. Use IntentHandler instead";
+    if (!ensureCurrentContextIsSystemUI(this))
         return;
-    }
 
     QString sysUiId = IntentClient::instance()->systemUiId();
 

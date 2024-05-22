@@ -28,6 +28,7 @@ public:
 
     virtual void initialize(IntentClient *intentClient) noexcept(false);
 
+    virtual bool isSystemUI() const = 0;
     virtual QString currentApplicationId(QObject *hint) = 0;
 
     virtual void requestToSystem(const QPointer<IntentClientRequest> &icr) = 0;

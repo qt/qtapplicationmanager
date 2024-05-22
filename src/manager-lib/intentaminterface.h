@@ -71,6 +71,7 @@ public:
     IntentClientAMImplementation(IntentServerAMImplementation *serverInterface);
 
     void initialize(IntentClient *intentClient) noexcept(false) override;
+    bool isSystemUI() const override;
     QString currentApplicationId(QObject *hint) override;
 
     void requestToSystem(const QPointer<IntentClientRequest> &icr) override;

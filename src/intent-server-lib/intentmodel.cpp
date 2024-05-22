@@ -12,6 +12,7 @@
 #include "intentserver.h"
 #include "intentmodel.h"
 #include "intent.h"
+#include "qml-utilities.h"
 #include "utilities.h"
 
 
@@ -248,6 +249,14 @@ int IntentModel::mapFromSource(int sourceIndex) const
 void IntentModel::invalidate()
 {
     QSortFilterProxyModel::invalidate();
+}
+
+void IntentModel::classBegin()
+{ }
+
+void IntentModel::componentComplete()
+{
+    ensureCurrentContextIsSystemUI(this);
 }
 
 QT_END_NAMESPACE_AM

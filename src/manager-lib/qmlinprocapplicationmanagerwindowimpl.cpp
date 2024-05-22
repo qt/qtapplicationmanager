@@ -10,6 +10,7 @@
 #include <QtQuick/private/qquickevents_p_p.h>
 
 #include "logging.h"
+#include "qml-utilities.h"
 #include "applicationmanagerwindow.h"
 #include "qmlinprocapplicationmanagerwindowimpl.h"
 #include "inprocesssurfaceitem.h"
@@ -224,6 +225,8 @@ void QmlInProcApplicationManagerWindowImpl::classBegin()
 
 void QmlInProcApplicationManagerWindowImpl::componentComplete()
 {
+    ensureCurrentContextIsInProcessApplication(amWindow());
+
     if (!m_runtime)
         m_runtime = QmlInProcRuntime::determineRuntime(amWindow());
 

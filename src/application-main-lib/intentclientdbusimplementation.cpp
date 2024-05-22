@@ -65,6 +65,11 @@ void IntentClientDBusImplementation::initialize(IntentClient *intentClient) noex
     });
 }
 
+bool IntentClientDBusImplementation::isSystemUI() const
+{
+    return false;
+}
+
 void IntentClientDBusImplementation::requestToSystem(const QPointer<IntentClientRequest> &icr)
 {
     QDBusPendingReply<QString> reply =

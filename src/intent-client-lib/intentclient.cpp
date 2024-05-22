@@ -207,6 +207,11 @@ bool IntentClient::broadcastIntentRequest(const QString &intentId, const QVarian
     return true;
 }
 
+bool IntentClient::isSystemUI() const
+{
+    return m_systemInterface->isSystemUI();
+}
+
 IntentClientRequest *IntentClient::requestToSystem(const QString &requestingApplicationId,
                                                    const QString &intentId, const QString &applicationId,
                                                    const QVariantMap &parameters)

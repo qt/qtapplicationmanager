@@ -14,8 +14,8 @@
 
 #include "applicationmanager.h"
 #include "inprocesswindow.h"
-
-#include <QtAppManCommon/logging.h>
+#include "qml-utilities.h"
+#include "logging.h"
 
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -315,6 +315,12 @@ void WindowItem::setFocusOnClick(bool newFocusOnClick)
 QQuickItem *WindowItem::backingItem() const
 {
     return m_impl ? m_impl->backingItem() : nullptr;
+}
+
+void WindowItem::componentComplete()
+{
+    ensureCurrentContextIsSystemUI(this);
+    QQuickFocusScope::componentComplete();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

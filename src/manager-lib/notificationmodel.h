@@ -6,6 +6,7 @@
 
 #include <QtCore/QSortFilterProxyModel>
 #include <QtQml/QJSValue>
+#include <QtQml/QQmlParserStatus>
 #include <QtAppManCommon/global.h>
 
 QT_FORWARD_DECLARE_CLASS(QJSEngine);
@@ -15,10 +16,10 @@ QT_BEGIN_NAMESPACE_AM
 class NotificationModelPrivate;
 class Notification;
 
-class NotificationModel : public QSortFilterProxyModel
+class NotificationModel : public QSortFilterProxyModel, public QQmlParserStatus
 {
     Q_OBJECT
-    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
+    Q_INTERFACES(QQmlParserStatus) Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(QJSValue filterFunction READ filterFunction WRITE setFilterFunction NOTIFY filterFunctionChanged FINAL)
     Q_PROPERTY(QJSValue sortFunction READ sortFunction WRITE setSortFunction NOTIFY sortFunctionChanged FINAL)
 
@@ -39,6 +40,9 @@ public:
     Q_INVOKABLE int mapToSource(int ourIndex) const;
     Q_INVOKABLE int mapFromSource(int sourceIndex) const;
     Q_INVOKABLE void invalidate();
+
+    void classBegin() override;
+    void componentComplete() override;
 
 protected:
     using QSortFilterProxyModel::mapToSource;

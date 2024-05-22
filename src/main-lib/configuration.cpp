@@ -20,10 +20,6 @@
 #include <functional>
 #include <memory>
 
-#if defined(Q_OS_LINUX)
-#  include <sys/file.h>
-#endif
-
 #include "global.h"
 #include "logging.h"
 #include "qtyaml.h"
@@ -38,25 +34,142 @@ using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-
-template<> bool Configuration::value(const char *clname, const bool &cfvalue) const
+// helper functions to (de)serialize std::chrono::durations via QDataStream
+template <typename T, typename U>
+QDataStream &operator<<(QDataStream &ds, const std::chrono::duration<T, U> &duration)
 {
-    return (clname && m_clp.isSet(QString::fromLatin1(clname))) || cfvalue;
+    ds << qint64(duration.count());
+    return ds;
 }
 
-template<> QString Configuration::value(const char *clname, const QString &cfvalue) const
+template <typename T, typename U>
+QDataStream &operator>>(QDataStream &ds, std::chrono::duration<T, U> &duration)
 {
-    return (clname && m_clp.isSet(QString::fromLatin1(clname))) ? m_clp.value(QString::fromLatin1(clname)) : cfvalue;
+    qint64 count;
+    ds >> count;
+    duration = std::chrono::duration<T, U> { count };
+    return ds;
 }
 
-template<> QStringList Configuration::value(const char *clname, const QStringList &cfvalue) const
+
+// helper class that makes it possible to handle QDataStream << and >> in a single function
+class SerializeStream {
+public:
+    SerializeStream(QDataStream &ds, bool write)
+        : m_ds(ds)
+        , m_write(write)
+    { }
+
+    template <typename T> SerializeStream &operator&(T &&t)
+    {
+        if (m_write)
+            m_ds << std::forward<T>(t);
+        else
+            m_ds >> std::forward<T>(t);
+
+        return *this;
+    }
+
+    QDataStream &m_ds;
+    bool m_write;
+};
+
+// helper class to serialize lists within the configuration using the SerializeStream mechanism
+template <typename LIST, typename ...MEMBER_PTRS>
+class SerializeList
 {
-    QStringList result;
-    if (clname)
-        result = m_clp.values(QString::fromLatin1(clname));
-    if (!cfvalue.isEmpty())
-        result += cfvalue;
-    return result;
+public:
+    SerializeList(LIST &list, MEMBER_PTRS... memberPtrs)
+        : m_list(list)
+        , m_memberPtrs(memberPtrs...)
+    { }
+
+    QDataStream &serialize(QDataStream &ds)
+    {
+        // C++ doesn't allow parameter pack expansion directly for the member function calls.
+        // So the ptr-to-members to stream-member-values operation has to been in two steps:
+        //   1) convert the ptr-to-member pack into a member-value pack
+        //   2) parameter expand THAT pack into operator << to stream the values
+        ds << m_list.size();
+        for (const auto &entry : m_list) {
+            std::apply([&](auto... memberPtrs) {
+                [](QDataStream &ds, auto &&... resolvedMembers) {
+                    (ds << ... << resolvedMembers);
+                }(ds, entry.*memberPtrs...);
+            }, m_memberPtrs);
+        }
+        return ds;
+    }
+
+    QDataStream &deserialize(QDataStream &ds)
+    {
+        m_list.clear();
+        qsizetype s;
+        ds >> s;
+        m_list.reserve(s);
+        for (qsizetype i = 0; i < s; ++i) {
+            typename LIST::value_type entry;
+            std::apply([&](auto... memberPtrs) {
+                [](QDataStream &ds, auto &&... resolvedMembers) {
+                    (ds >> ... >> resolvedMembers);
+                }(ds, entry.*memberPtrs...);
+            }, m_memberPtrs);
+            m_list.append(entry);
+        }
+        return ds;
+    }
+
+private:
+    LIST &m_list;
+    std::tuple<MEMBER_PTRS...> m_memberPtrs;
+};
+
+template <typename ENTRY, typename ...MEMBER_PTRS>
+QDataStream &operator<<(QDataStream &ds, SerializeList<ENTRY, MEMBER_PTRS...> &&serialize)
+{
+    return serialize.serialize(ds);
+}
+
+template <typename ENTRY, typename ...MEMBER_PTRS>
+QDataStream &operator>>(QDataStream &ds, SerializeList<ENTRY, MEMBER_PTRS...> &&serialize)
+{
+    return serialize.deserialize(ds);
+}
+
+
+// helper functions to merge configuration fields when loading multiple YAML files
+template <typename T> void mergeField(T &into, const T &from, const T &def)
+{
+    if (from != def)
+        into = from;
+}
+
+void mergeField(QVariantMap &into, const QVariantMap &from, const QVariantMap & /*def*/)
+{
+    recursiveMergeVariantMap(into, from);
+}
+
+template <typename T> void mergeField(QList<T> &into, const QList<T> &from, const QList<T> & /*def*/)
+{
+    into.append(from);
+}
+
+template <typename T, typename U> void mergeField(QMap<T, U> &into, const QMap<T, U> &from, const QMap<T, U> & /*def*/)
+{
+    into.insert(from);
+}
+
+// ordered map
+void mergeField(QList<std::pair<QString, QString>> &into, const QList<std::pair<QString, QString>> &from,
+                const QList<std::pair<QString, QString>> & /*def*/)
+{
+    for (auto &p : from) {
+        auto it = std::find_if(into.begin(), into.end(), [p](const auto &fp) { return fp.first == p.first; });
+        if (it != into.end())
+            it->second = p.second;
+        else
+            into.append(p);
+    }
 }
 
 
@@ -66,23 +179,27 @@ template<> class ConfigCacheAdaptor<ConfigurationData>
 public:
     static ConfigurationData *loadFromSource(QIODevice *source, const QString &fileName)
     {
-        return ConfigurationData::loadFromSource(source, fileName);
+        auto cd = std::make_unique<ConfigurationData>();
+        ConfigurationPrivate::loadFromSource(source, fileName, *cd);
+        return cd.release();
     }
     void preProcessSourceContent(QByteArray &sourceContent, const QString &fileName)
     {
-        sourceContent = ConfigurationData::substituteVars(sourceContent, fileName);
+        sourceContent = ConfigurationPrivate::substituteVars(sourceContent, fileName);
     }
     ConfigurationData *loadFromCache(QDataStream &ds)
     {
-        return ConfigurationData::loadFromCache(ds);
+        auto cd = std::make_unique<ConfigurationData>();
+        ConfigurationPrivate::loadFromCache(ds, *cd);
+        return cd.release();
     }
     void saveToCache(QDataStream &ds, const ConfigurationData *cd)
     {
-        cd->saveToCache(ds);
+        ConfigurationPrivate::saveToCache(ds, *cd);
     }
     static void merge(ConfigurationData *to, const ConfigurationData *from)
     {
-        to->mergeFrom(from);
+        ConfigurationPrivate::merge(*from, *to);
     }
 };
 
@@ -97,10 +214,13 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
                              const QString &buildConfigFilePath,
                              const char *additionalDescription,
                              bool onlyOnePositionalArgument)
-    : m_defaultConfigFilePaths(defaultConfigFilePaths)
-    , m_buildConfigFilePath(buildConfigFilePath)
-    , m_onlyOnePositionalArgument(onlyOnePositionalArgument)
+    : d(new ConfigurationPrivate)
+    , yaml(d->data)
 {
+    d->defaultConfigFilePaths= defaultConfigFilePaths;
+    d->buildConfigFilePath = buildConfigFilePath;
+    d->onlyOnePositionalArgument = onlyOnePositionalArgument;
+
     // using QStringLiteral for all strings here adds a few KB of ro-data, but will also improve
     // startup times slightly: less allocations and copies. MSVC cannot cope with multi-line though
 
@@ -125,70 +245,70 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
         "                         this, if the application manager's crash handler is\n"
         "                         interfering with other debugging tools you are using.\n";
 
-    m_clp.setApplicationDescription(u"\n"_s + QCoreApplication::applicationName() + u"\n\n"_s
+    d->clp.setApplicationDescription(u"\n"_s + QCoreApplication::applicationName() + u"\n\n"_s
                                     + (additionalDescription ? (QString::fromLatin1(additionalDescription) + u"\n\n"_s) : QString())
                                     + QString::fromLatin1(description));
 
-    m_clp.addOption({ { u"h"_s, u"help"_s
+    d->clp.addOption({ { u"h"_s, u"help"_s
 #if defined(Q_OS_WINDOWS)
-                        , u"?"_s
+                         , u"?"_s
 #endif
-                      },                         u"Displays this help."_s });
-    m_clp.addOption({ u"version"_s,              u"Displays version information."_s });
+                     },                         u"Displays this help."_s });
+    d->clp.addOption({ u"version"_s,              u"Displays version information."_s });
     QCommandLineOption cf { { u"c"_s, u"config-file"_s },
-                                                 u"Load configuration from file (can be given multiple times)."_s, u"files"_s };
-    cf.setDefaultValues(m_defaultConfigFilePaths);
-    m_clp.addOption(cf);
-    m_clp.addOption({ { u"o"_s, u"option"_s },   u"Override a specific config option."_s, u"yaml-snippet"_s });
-    m_clp.addOption({ { u"no-cache"_s, u"no-config-cache"_s },
-                                                 u"Disable the use of the config and appdb file cache."_s });
-    m_clp.addOption({ { u"clear-cache"_s, u"clear-config-cache"_s },
-                                                 u"Ignore an existing config and appdb file cache."_s });
-    m_clp.addOption({ { u"r"_s, u"recreate-database"_s },
-                                                 u"Backwards compatibility: synonyms for --clear-cache."_s });
+                          u"Load configuration from file (can be given multiple times)."_s, u"files"_s };
+    cf.setDefaultValues(d->defaultConfigFilePaths);
+    d->clp.addOption(cf);
+    d->clp.addOption({ { u"o"_s, u"option"_s },   u"Override a specific config option."_s, u"yaml-snippet"_s });
+    d->clp.addOption({ { u"no-cache"_s, u"no-config-cache"_s },
+                     u"Disable the use of the config and appdb file cache."_s });
+    d->clp.addOption({ { u"clear-cache"_s, u"clear-config-cache"_s },
+                     u"Ignore an existing config and appdb file cache."_s });
+    d->clp.addOption({ { u"r"_s, u"recreate-database"_s },
+                     u"Backwards compatibility: synonyms for --clear-cache."_s });
     if (!buildConfigFilePath.isEmpty())
-        m_clp.addOption({ u"build-config"_s,     u"Dumps the build configuration and exits."_s });
+        d->clp.addOption({ u"build-config"_s,     u"Dumps the build configuration and exits."_s });
 
-    m_clp.addPositionalArgument(u"qml-file"_s,   u"The main QML file."_s);
-    m_clp.addOption({ u"log-instant"_s,          u"Log instantly at start-up, neglect logging configuration."_s });
-    m_clp.addOption({ u"database"_s,             u"Deprecated (ignored)."_s, u"file"_s });
-    m_clp.addOption({ u"builtin-apps-manifest-dir"_s, u"Base directory for built-in application manifests."_s, u"dir"_s });
-    m_clp.addOption({ u"installation-dir"_s,     u"Base directory for package installations."_s, u"dir"_s });
-    m_clp.addOption({ u"document-dir"_s,         u"Base directory for per-package document directories."_s, u"dir"_s });
-    m_clp.addOption({ u"installed-apps-manifest-dir"_s, u"Deprecated (ignored)."_s, u"dir"_s });
-    m_clp.addOption({ u"app-image-mount-dir"_s,  u"Deprecated (ignored)."_s, u"dir"_s });
-    m_clp.addOption({ u"disable-installer"_s,    u"Disable the application installer sub-system."_s });
-    m_clp.addOption({ u"disable-intents"_s,      u"Disable the intents sub-system."_s });
-    m_clp.addOption({ u"dbus"_s,                 u"Register on the specified D-Bus."_s, u"<bus>|system|session|none|auto"_s, u"auto"_s });
-    m_clp.addOption({ u"fullscreen"_s,           u"Display in full-screen."_s });
-    m_clp.addOption({ u"no-fullscreen"_s,        u"Do not display in full-screen."_s });
-    m_clp.addOption({ u"I"_s,                    u"Additional QML import path."_s, u"dir"_s });
-    m_clp.addOption({ { u"v"_s, u"verbose"_s }, u"Verbose output."_s });
-    m_clp.addOption({ u"slow-animations"_s,      u"Run all animations in slow motion."_s });
-    m_clp.addOption({ u"load-dummydata"_s,       u"Deprecated. Loads QML dummy-data."_s });
-    m_clp.addOption({ u"no-security"_s,          u"Disables all security related checks (dev only!)"_s });
-    m_clp.addOption({ u"development-mode"_s,     u"Enable development mode, allowing installation of dev-signed packages."_s });
-    m_clp.addOption({ u"no-ui-watchdog"_s,       u"Disables detecting hung UI applications (e.g. via Wayland's ping/pong)."_s });
-    m_clp.addOption({ u"no-dlt-logging"_s,       u"Disables logging using automotive DLT."_s });
-    m_clp.addOption({ u"force-single-process"_s, u"Forces single-process mode even on a wayland enabled build."_s });
-    m_clp.addOption({ u"force-multi-process"_s,  u"Forces multi-process mode. Will exit immediately if this is not possible."_s });
-    m_clp.addOption({ u"wayland-socket-name"_s,  u"Use this file name to create the wayland socket."_s, u"socket"_s });
-    m_clp.addOption({ u"single-app"_s,           u"Runs a single application only (ignores the database)"_s, u"info.yaml file"_s }); // rename single-package
-    m_clp.addOption({ u"logging-rule"_s,         u"Adds a standard Qt logging rule."_s, u"rule"_s });
-    m_clp.addOption({ u"qml-debug"_s,            u"Enables QML debugging and profiling."_s });
-    m_clp.addOption({ u"enable-touch-emulation"_s, u"Deprecated (ignored)."_s });
-    m_clp.addOption({ u"instance-id"_s,          u"Use this id to distinguish between multiple instances."_s, u"id"_s });
+    d->clp.addPositionalArgument(u"qml-file"_s,   u"The main QML file."_s);
+    d->clp.addOption({ u"log-instant"_s,          u"Log instantly at start-up, neglect logging configuration."_s });
+    d->clp.addOption({ u"database"_s,             u"Deprecated (ignored)."_s, u"file"_s });
+    d->clp.addOption({ u"builtin-apps-manifest-dir"_s, u"Base directory for built-in application manifests."_s, u"dir"_s });
+    d->clp.addOption({ u"installation-dir"_s,     u"Base directory for package installations."_s, u"dir"_s });
+    d->clp.addOption({ u"document-dir"_s,         u"Base directory for per-package document directories."_s, u"dir"_s });
+    d->clp.addOption({ u"installed-apps-manifest-dir"_s, u"Deprecated (ignored)."_s, u"dir"_s });
+    d->clp.addOption({ u"app-image-mount-dir"_s,  u"Deprecated (ignored)."_s, u"dir"_s });
+    d->clp.addOption({ u"disable-installer"_s,    u"Disable the application installer sub-system."_s });
+    d->clp.addOption({ u"disable-intents"_s,      u"Disable the intents sub-system."_s });
+    d->clp.addOption({ u"dbus"_s,                 u"Register on the specified D-Bus."_s, u"<bus>|system|session|none|auto"_s, u"auto"_s });
+    d->clp.addOption({ u"fullscreen"_s,           u"Display in full-screen."_s });
+    d->clp.addOption({ u"no-fullscreen"_s,        u"Do not display in full-screen."_s });
+    d->clp.addOption({ u"I"_s,                    u"Additional QML import path."_s, u"dir"_s });
+    d->clp.addOption({ { u"v"_s, u"verbose"_s }, u"Verbose output."_s });
+    d->clp.addOption({ u"slow-animations"_s,      u"Run all animations in slow motion."_s });
+    d->clp.addOption({ u"load-dummydata"_s,       u"Deprecated. Loads QML dummy-data."_s });
+    d->clp.addOption({ u"no-security"_s,          u"Disables all security related checks (dev only!)"_s });
+    d->clp.addOption({ u"development-mode"_s,     u"Enable development mode, allowing installation of dev-signed packages."_s });
+    d->clp.addOption({ u"no-ui-watchdog"_s,       u"Disables detecting hung UI applications (e.g. via Wayland's ping/pong)."_s });
+    d->clp.addOption({ u"no-dlt-logging"_s,       u"Disables logging using automotive DLT."_s });
+    d->clp.addOption({ u"force-single-process"_s, u"Forces single-process mode even on a wayland enabled build."_s });
+    d->clp.addOption({ u"force-multi-process"_s,  u"Forces multi-process mode. Will exit immediately if this is not possible."_s });
+    d->clp.addOption({ u"wayland-socket-name"_s,  u"Use this file name to create the wayland socket."_s, u"socket"_s });
+    d->clp.addOption({ u"single-app"_s,           u"Runs a single application only (ignores the database)"_s, u"info.yaml file"_s }); // rename single-package
+    d->clp.addOption({ u"logging-rule"_s,         u"Adds a standard Qt logging rule."_s, u"rule"_s });
+    d->clp.addOption({ u"qml-debug"_s,            u"Enables QML debugging and profiling."_s });
+    d->clp.addOption({ u"enable-touch-emulation"_s, u"Deprecated (ignored)."_s });
+    d->clp.addOption({ u"instance-id"_s,          u"Use this id to distinguish between multiple instances."_s, u"id"_s });
 
     { // qmltestrunner specific, necessary for CI blacklisting
         QCommandLineOption qtrsf { u"qmltestrunner-source-file"_s, u"appman-qmltestrunner only: set the source file path of the test."_s, u"file"_s };
         qtrsf.setFlags(QCommandLineOption::HiddenFromHelp);
-        m_clp.addOption(qtrsf);
+        d->clp.addOption(qtrsf);
     }
 }
 
 QVariant Configuration::buildConfig() const
 {
-    QFile f(m_buildConfigFilePath);
+    QFile f(d->buildConfigFilePath);
     if (f.open(QFile::ReadOnly)) {
         try {
             return YamlParser::parseAllDocuments(f.readAll()).toList();
@@ -203,17 +323,17 @@ Configuration::~Configuration()
 
 void Configuration::parseWithArguments(const QStringList &arguments)
 {
-    if (!m_clp.parse(arguments))
-        throw Exception(m_clp.errorText());
+    if (!d->clp.parse(arguments))
+        throw Exception(d->clp.errorText());
 
-    if (m_clp.isSet(u"version"_s))
-        m_clp.showVersion();
+    if (d->clp.isSet(u"version"_s))
+        d->clp.showVersion();
 
-    if (m_clp.isSet(u"help"_s))
-        m_clp.showHelp();
+    if (d->clp.isSet(u"help"_s))
+        d->clp.showHelp();
 
-    if (!m_buildConfigFilePath.isEmpty() && m_clp.isSet(u"build-config"_s)) {
-        QFile f(m_buildConfigFilePath);
+    if (!d->buildConfigFilePath.isEmpty() && d->clp.isSet(u"build-config"_s)) {
+        QFile f(d->buildConfigFilePath);
         if (f.open(QFile::ReadOnly)) {
             ::fprintf(stdout, "%s\n", f.readAll().constData());
             ::exit(0);
@@ -222,21 +342,12 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         }
     }
 
-    if (m_clp.isSet(u"instance-id"_s)) {
-        auto id = m_clp.value(u"instance-id"_s);
-        try {
-            validateIdForFilesystemUsage(id);
-        } catch (const Exception &e) {
-            throw Exception("Invalid instance-id (%1): %2\n").arg(id, e.errorString());
-        }
-    }
-
 #if defined(AM_TIME_CONFIG_PARSING)
     QElapsedTimer timer;
     timer.start();
 #endif
 
-    const QStringList rawConfigFilePaths = m_clp.values(u"config-file"_s);
+    const QStringList rawConfigFilePaths = d->clp.values(u"config-file"_s);
     QStringList configFilePaths;
     configFilePaths.reserve(rawConfigFilePaths.size());
     for (const auto &path : rawConfigFilePaths) {
@@ -256,18 +367,21 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         cacheOptions |= AbstractConfigCache::ClearCache;
 
     if (configFilePaths.isEmpty()) {
-        m_data.reset(new ConfigurationData());
+        d->data = { };
     } else {
         ConfigCache<ConfigurationData> cache(configFilePaths, u"config"_s, { 'C','F','G','D' },
-                                             ConfigurationData::dataStreamVersion(), cacheOptions);
+                                             ConfigurationPrivate::dataStreamVersion(), cacheOptions);
 
         cache.parse();
-        m_data.reset(cache.takeMergedResult());
-        if (!m_data)
-            m_data.reset(new ConfigurationData());
+        if (auto result = cache.takeMergedResult()) {
+            d->data = *result;
+            delete result;
+        } else {
+            d->data = { };
+        }
     }
 
-    const QStringList options = m_clp.values(u"o"_s);
+    const QStringList options = d->clp.values(u"o"_s);
     for (const QString &option : options) {
         QByteArray yaml("formatVersion: 1\nformatType: am-configuration\n---\n");
         yaml.append(option.toUtf8());
@@ -276,7 +390,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         try {
             ConfigurationData *cd = ConfigCacheAdaptor<ConfigurationData>::loadFromSource(&buffer, u"command line"_s);
             if (cd) {
-                ConfigCacheAdaptor<ConfigurationData>::merge(m_data.get(), cd);
+                ConfigCacheAdaptor<ConfigurationData>::merge(&d->data, cd);
                 delete cd;
             }
         } catch (const Exception &e) {
@@ -285,218 +399,174 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     }
 
     // early sanity checks
-    if (m_onlyOnePositionalArgument && (m_clp.positionalArguments().size() > 1))
+    if (d->onlyOnePositionalArgument && (d->clp.positionalArguments().size() > 1))
         throw Exception("Only one main qml file can be specified.");
 
-    if (installationDir().isEmpty()) {
-        const auto ilocs = m_data->installationLocations;
-        if (!ilocs.isEmpty()) {
-            qCWarning(LogDeployment) << "Support for \"installationLocations\" in the main config file "
-                                        "has been removed:";
-        }
+    // merge in the command-line options that map to YAML fields
+    {
+        ConfigurationData clcd;
 
-        for (const auto &iloc : ilocs) {
-            QVariantMap map = iloc.toMap();
-            QString id = map.value(u"id"_s).toString();
-            if (id == u"internal-0") {
-                m_installationDir = map.value(u"installationPath"_s).toString();
-                m_documentDir = map.value(u"documentPath"_s).toString();
-                qCWarning(LogDeployment) << " * still using installation location \"internal-0\" for backward "
-                                            "compatibility";
-            } else {
-                qCWarning(LogDeployment) << " * ignoring installation location" << id;
+        auto configIfSet = [&](const QString &clp, auto &cd) {
+            if (d->clp.isSet(clp)) {
+                if constexpr (std::is_same_v<decltype(cd), QString &>)
+                    cd = d->clp.value(clp);
+                else if constexpr (std::is_same_v<decltype(cd), bool &>)
+                    cd = true;
+                else if constexpr (std::is_same_v<decltype(cd), QStringList &>)
+                    cd = d->clp.values(clp) + cd;
+                else
+                    static_assert(QtPrivate::value_dependent_false<cd>(), "Unsupported type"); // CWG2518
             }
+        };
+
+        configIfSet(u"instance-id"_s,          clcd.instanceId);
+        configIfSet(u"disable-installer"_s,    clcd.installer.disable);
+        configIfSet(u"disable-intents"_s,      clcd.intents.disable);
+        configIfSet(u"fullscreen"_s,           clcd.ui.fullscreen);
+        configIfSet(u"I"_s,                    clcd.ui.importPaths);
+        configIfSet(u"builtin-apps-manifest-dir"_s, clcd.applications.builtinAppsManifestDir);
+        configIfSet(u"installation-dir"_s,     clcd.applications.installationDir);
+        configIfSet(u"document-dir"_s,         clcd.applications.documentDir);
+        configIfSet(u"load-dummydata"_s,       clcd.ui.loadDummyData);
+        configIfSet(u"no-security"_s,          clcd.flags.noSecurity);
+        configIfSet(u"development-mode"_s,     clcd.flags.developmentMode);
+        configIfSet(u"no-ui-watchdog"_s,       clcd.flags.noUiWatchdog);
+        configIfSet(u"force-single-process"_s, clcd.flags.forceSingleProcess);
+        configIfSet(u"force-multi-process"_s,  clcd.flags.forceMultiProcess);
+        configIfSet(u"logging-rule"_s,         clcd.logging.rules);
+
+        if (d->clp.isSet(u"no-fullscreen"_s))
+            clcd.ui.fullscreen = false;
+
+        ConfigurationPrivate::merge(clcd, d->data);
+
+        const auto args = d->clp.positionalArguments();
+        if (!args.isEmpty())
+            d->data.ui.mainQml = args.at(0);
+
+        QStringList importPaths = d->data.ui.importPaths;
+        for (int i = 0; i < d->data.ui.importPaths.size(); ++i)
+            d->data.ui.importPaths[i] = toAbsoluteFilePath(d->data.ui.importPaths.at(i));
+    }
+
+    if (!d->data.instanceId.isEmpty()) {
+        try {
+            validateIdForFilesystemUsage(d->data.instanceId);
+        } catch (const Exception &e) {
+            throw Exception("Invalid instance-id (%1): %2\n").arg(d->data.instanceId, e.errorString());
         }
     }
 
-    if (installationDir().isEmpty()) {
+    if (d->data.applications.installationDir.isEmpty() && !d->data.installer.disable) {
         qCWarning(LogDeployment) << "No --installation-dir command line parameter or applications/installationDir "
                                     "configuration key specified. It won't be possible to install, remove or "
                                     "access installable packages.";
     }
 }
 
-quint32 ConfigurationData::dataStreamVersion()
+void ConfigurationPrivate::loadFromCache(QDataStream &ds, ConfigurationData &cd)
+
 {
-    return 13;
+    serialize(ds, cd, false);
 }
 
-ConfigurationData *ConfigurationData::loadFromCache(QDataStream &ds)
+void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData &cd)
+{
+    Q_ASSERT(ds.device() && ds.device()->isWritable());
+    serialize(ds, const_cast<ConfigurationData &>(cd), true);
+}
+
+quint32 ConfigurationPrivate::dataStreamVersion()
+{
+    return 14;
+}
+
+void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
 {
     //NOTE: increment dataStreamVersion() above, if you make any changes here
 
-    // IMPORTANT: when doing changes to ConfigurationData, remember to adjust all of
-    //            loadFromCache(), saveToCache() and mergeFrom() at the same time!
+    // IMPORTANT: when doing changes to ConfigurationData, remember to adjust both
+    //            serialize() and merge() at the same time!
 
-    ConfigurationData *cd = new ConfigurationData;
-    ds >> cd->runtimes.configurations
-       >> cd->runtimes.additionalLaunchers
-       >> cd->containers.configurations
-       >> cd->containers.selection
-       >> cd->intents.disable
-       >> cd->intents.timeouts.disambiguation
-       >> cd->intents.timeouts.startApplication
-       >> cd->intents.timeouts.replyFromApplication
-       >> cd->intents.timeouts.replyFromSystem
-       >> cd->plugins.startup
-       >> cd->plugins.container
-       >> cd->logging.dlt.id
-       >> cd->logging.dlt.description
-       >> cd->logging.dlt.longMessageBehavior
-       >> cd->logging.rules
-       >> cd->logging.messagePattern
-       >> cd->logging.useAMConsoleLogger
-       >> cd->installer.disable
-       >> cd->installer.caCertificates
-       >> cd->dbus.policies
-       >> cd->dbus.registrations
-       >> cd->quicklaunch.idleLoad
-       >> cd->quicklaunch.runtimesPerContainer
-       >> cd->quicklaunch.failedStartLimit
-       >> cd->quicklaunch.failedStartLimitIntervalSec
-       >> cd->ui.style
-       >> cd->ui.mainQml
-       >> cd->ui.resources
-       >> cd->ui.fullscreen
-       >> cd->ui.windowIcon
-       >> cd->ui.importPaths
-       >> cd->ui.pluginPaths
-       >> cd->ui.iconThemeName
-       >> cd->ui.loadDummyData
-       >> cd->ui.iconThemeSearchPaths
-       >> cd->ui.opengl
-       >> cd->applications.builtinAppsManifestDir
-       >> cd->applications.installationDir
-       >> cd->applications.documentDir
-       >> cd->applications.installationDirMountPoint
-       >> cd->installationLocations
-       >> cd->crashAction
-       >> cd->systemProperties
-       >> cd->flags.noSecurity
-       >> cd->flags.noUiWatchdog
-       >> cd->flags.developmentMode
-       >> cd->flags.forceMultiProcess
-       >> cd->flags.forceSingleProcess
-       >> cd->flags.allowUnsignedPackages
-       >> cd->flags.allowUnknownUiClients
-       >> cd->wayland.socketName
-       >> cd->wayland.extraSockets
-       >> cd->instanceId;
+    SerializeStream ssm(ds, write);
 
-    return cd;
-}
-
-void ConfigurationData::saveToCache(QDataStream &ds) const
-{
-    //NOTE: increment dataStreamVersion() above, if you make any changes here
-
-    // IMPORTANT: when doing changes to ConfigurationData, remember to adjust all of
-    //            loadFromCache(), saveToCache() and mergeFrom() at the same time!
-
-    ds << runtimes.configurations
-       << runtimes.additionalLaunchers
-       << containers.configurations
-       << containers.selection
-       << intents.disable
-       << intents.timeouts.disambiguation
-       << intents.timeouts.startApplication
-       << intents.timeouts.replyFromApplication
-       << intents.timeouts.replyFromSystem
-       << plugins.startup
-       << plugins.container
-       << logging.dlt.id
-       << logging.dlt.description
-       << logging.dlt.longMessageBehavior
-       << logging.rules
-       << logging.messagePattern
-       << logging.useAMConsoleLogger
-       << installer.disable
-       << installer.caCertificates
-       << dbus.policies
-       << dbus.registrations
-       << quicklaunch.idleLoad
-       << quicklaunch.runtimesPerContainer
-       << quicklaunch.failedStartLimit
-       << quicklaunch.failedStartLimitIntervalSec
-       << ui.style
-       << ui.mainQml
-       << ui.resources
-       << ui.fullscreen
-       << ui.windowIcon
-       << ui.importPaths
-       << ui.pluginPaths
-       << ui.iconThemeName
-       << ui.loadDummyData
-       << ui.iconThemeSearchPaths
-       << ui.opengl
-       << applications.builtinAppsManifestDir
-       << applications.installationDir
-       << applications.documentDir
-       << applications.installationDirMountPoint
-       << installationLocations
-       << crashAction
-       << systemProperties
-       << flags.noSecurity
-       << flags.noUiWatchdog
-       << flags.developmentMode
-       << flags.forceMultiProcess
-       << flags.forceSingleProcess
-       << flags.allowUnsignedPackages
-       << flags.allowUnknownUiClients
-       << wayland.socketName
-       << wayland.extraSockets
-       << instanceId;
-}
-
-template <typename T> void mergeField(T &into, const T &from, const T &def)
-{
-    if (from != def)
-        into = from;
-}
-
-void mergeField(QVariantMap &into, const QVariantMap &from, const QVariantMap & /*def*/)
-{
-    recursiveMergeVariantMap(into, from);
-}
-
-void mergeField(QStringList &into, const QStringList &from, const QStringList & /*def*/)
-{
-    into.append(from);
-}
-
-template <typename T> void mergeField(QList<T> &into, const QList<T> &from, const QList<T> & /*def*/)
-{
-    into.append(from);
-}
-
-template <typename T, typename U> void mergeField(QHash<T, U> &into, const QHash<T, U> &from, const QHash<T, U> & /*def*/)
-{
-    into.insert(from);
-}
-
-void mergeField(QList<QPair<QString, QString>> &into, const QList<QPair<QString, QString>> &from,
-                const QList<QPair<QString, QString>> & /*def*/)
-{
-    for (auto &p : from) {
-        auto it = std::find_if(into.begin(), into.end(), [p](const auto &fp) { return fp.first == p.first; });
-        if (it != into.end())
-            it->second = p.second;
-        else
-            into.append(p);
-    }
+    ssm & cd.runtimes.configurations
+        & cd.runtimes.additionalLaunchers
+        & cd.containers.configurations
+        & cd.containers.selection
+        & cd.intents.disable
+        & cd.intents.timeouts.disambiguation
+        & cd.intents.timeouts.startApplication
+        & cd.intents.timeouts.replyFromApplication
+        & cd.intents.timeouts.replyFromSystem
+        & cd.plugins.startup
+        & cd.plugins.container
+        & cd.logging.dlt.id
+        & cd.logging.dlt.description
+        & cd.logging.dlt.longMessageBehavior
+        & cd.logging.rules
+        & cd.logging.messagePattern
+        & cd.logging.useAMConsoleLogger
+        & cd.installer.disable
+        & cd.installer.caCertificates
+        & cd.dbus.policies
+        & cd.dbus.registrations
+        & cd.quicklaunch.idleLoad
+        & cd.quicklaunch.runtimesPerContainer
+        & cd.quicklaunch.failedStartLimit
+        & cd.quicklaunch.failedStartLimitIntervalSec
+        & cd.ui.style
+        & cd.ui.mainQml
+        & cd.ui.resources
+        & cd.ui.fullscreen
+        & cd.ui.windowIcon
+        & cd.ui.importPaths
+        & cd.ui.pluginPaths
+        & cd.ui.iconThemeName
+        & cd.ui.loadDummyData
+        & cd.ui.iconThemeSearchPaths
+        & cd.ui.opengl.desktopProfile
+        & cd.ui.opengl.esMajorVersion
+        & cd.ui.opengl.esMinorVersion
+        & cd.applications.builtinAppsManifestDir
+        & cd.applications.installationDir
+        & cd.applications.documentDir
+        & cd.applications.installationDirMountPoint
+        & cd.crashAction.printBacktrace
+        & cd.crashAction.printQmlStack
+        & cd.crashAction.waitForGdbAttach
+        & cd.crashAction.dumpCore
+        & cd.crashAction.stackFramesToIgnore.onCrash
+        & cd.crashAction.stackFramesToIgnore.onException
+        & cd.systemProperties
+        & cd.flags.noSecurity
+        & cd.flags.noUiWatchdog
+        & cd.flags.developmentMode
+        & cd.flags.forceMultiProcess
+        & cd.flags.forceSingleProcess
+        & cd.flags.allowUnsignedPackages
+        & cd.flags.allowUnknownUiClients
+        & cd.wayland.socketName
+              & SerializeList {
+                  cd.wayland.extraSockets,
+                  &ConfigurationData::Wayland::ExtraSocket::path,
+                  &ConfigurationData::Wayland::ExtraSocket::permissions,
+                  &ConfigurationData::Wayland::ExtraSocket::userId,
+                  &ConfigurationData::Wayland::ExtraSocket::groupId
+              }
+        & cd.instanceId;
 }
 
 // using templates only would be better, but we cannot get nice pointers-to-member-data for
 // all elements in our sub-structs in a generic way without a lot of boilerplate code
+#define MERGE_FIELD(x) mergeField(into.x, from.x, defaultValue.x)
 
-#define MERGE_FIELD(x) mergeField(this->x, from->x, def.x)
-
-void ConfigurationData::mergeFrom(const ConfigurationData *from)
+void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationData &into)
 {
-    // IMPORTANT: when doing changes to ConfigurationData, remember to adjust all of
-    //            loadFromCache(), saveToCache() and mergeFrom() at the same time!
+    // IMPORTANT: when doing changes to ConfigurationData, remember to adjust both
+    //            serialize() and merge() at the same time!
 
-    static const ConfigurationData def;
+    static const ConfigurationData defaultValue { };
 
     MERGE_FIELD(runtimes.configurations);
     MERGE_FIELD(runtimes.additionalLaunchers);
@@ -534,13 +604,19 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(ui.iconThemeName);
     MERGE_FIELD(ui.loadDummyData);
     MERGE_FIELD(ui.iconThemeSearchPaths);
-    MERGE_FIELD(ui.opengl);
+    MERGE_FIELD(ui.opengl.desktopProfile);
+    MERGE_FIELD(ui.opengl.esMajorVersion);
+    MERGE_FIELD(ui.opengl.esMinorVersion);
     MERGE_FIELD(applications.builtinAppsManifestDir);
     MERGE_FIELD(applications.installationDir);
     MERGE_FIELD(applications.documentDir);
     MERGE_FIELD(applications.installationDirMountPoint);
-    MERGE_FIELD(installationLocations);
-    MERGE_FIELD(crashAction);
+    MERGE_FIELD(crashAction.printBacktrace);
+    MERGE_FIELD(crashAction.printQmlStack);
+    MERGE_FIELD(crashAction.waitForGdbAttach);
+    MERGE_FIELD(crashAction.dumpCore);
+    MERGE_FIELD(crashAction.stackFramesToIgnore.onCrash);
+    MERGE_FIELD(crashAction.stackFramesToIgnore.onException);
     MERGE_FIELD(systemProperties);
     MERGE_FIELD(flags.noSecurity);
     MERGE_FIELD(flags.noUiWatchdog);
@@ -554,7 +630,7 @@ void ConfigurationData::mergeFrom(const ConfigurationData *from)
     MERGE_FIELD(instanceId);
 }
 
-QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, const QString &fileName)
+QByteArray ConfigurationPrivate::substituteVars(const QByteArray &sourceContent, const QString &fileName)
 {
     QByteArray string = sourceContent;
     QByteArray path;
@@ -594,7 +670,7 @@ QByteArray ConfigurationData::substituteVars(const QByteArray &sourceContent, co
     return string;
 }
 
-ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QString &fileName)
+void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &fileName, ConfigurationData &cd)
 {
     try {
         YamlParser yp(source->readAll(), fileName);
@@ -607,660 +683,342 @@ ConfigurationData *ConfigurationData::loadFromSource(QIODevice *source, const QS
         if (!fileName.isEmpty())
             pwd = QFileInfo(fileName).absoluteDir().path();
 
-        auto cd = std::make_unique<ConfigurationData>();
+        yp.parseFields({
+            { "instanceId", false, YamlParser::Scalar, [&]() {
+                 cd.instanceId = yp.parseString(); } },
+            { "runtimes", false, YamlParser::Map, [&]() {
+                 cd.runtimes.configurations = yp.parseMap();
+                 QVariant additionalLaunchers = cd.runtimes.configurations.take(u"additionalLaunchers"_s);
+                 cd.runtimes.additionalLaunchers = variantToStringList(additionalLaunchers); } },
+            { "containers", false, YamlParser::Map, [&]() {
+                 cd.containers.configurations = yp.parseMap();
 
-        YamlParser::Fields fields = {
-            { "instanceId", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                  auto id = p->parseString();
-                  try {
-                      validateIdForFilesystemUsage(id);
-                      cd->instanceId = id;
-                  } catch (const Exception &e) {
-                      throw YamlParserException(p, "invalid instanceId: %1").arg(e.errorString());
-                  }
-              } },
-            { "runtimes", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  cd->runtimes.configurations = p->parseMap();
-                  QVariant additionalLaunchers = cd->runtimes.configurations.take(u"additionalLaunchers"_s);
-                  cd->runtimes.additionalLaunchers = variantToStringList(additionalLaunchers);
-              } },
-            { "containers", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  cd->containers.configurations = p->parseMap();
-
-                  QVariant containerSelection = cd->containers.configurations.take(u"selection"_s);
+                 QVariant containerSelection = cd.containers.configurations.take(u"selection"_s);
 
 
-                  QList<QPair<QString, QString>> config;
+                 QList<QPair<QString, QString>> config;
 
-                  // this is easy to get wrong in the config file, so we do not just ignore a map here
-                  // (this will in turn trigger the warning below)
-                  if (containerSelection.metaType() == QMetaType::fromType<QVariantMap>())
-                      containerSelection = QVariantList { containerSelection };
+                 // this is easy to get wrong in the config file, so we do not just ignore a map here
+                 // (this will in turn trigger the warning below)
+                 if (containerSelection.metaType() == QMetaType::fromType<QVariantMap>())
+                     containerSelection = QVariantList { containerSelection };
 
-                  if (containerSelection.metaType() == QMetaType::fromType<QString>()) {
-                      config.append(qMakePair(u"*"_s, containerSelection.toString()));
-                  } else if (containerSelection.metaType() == QMetaType::fromType<QVariantList>()) {
-                      const QVariantList list = containerSelection.toList();
-                      for (const QVariant &v : list) {
-                          if (v.metaType() == QMetaType::fromType<QVariantMap>()) {
-                              QVariantMap map = v.toMap();
+                 if (containerSelection.metaType() == QMetaType::fromType<QString>()) {
+                     config.append(qMakePair(u"*"_s, containerSelection.toString()));
+                 } else if (containerSelection.metaType() == QMetaType::fromType<QVariantList>()) {
+                     const QVariantList list = containerSelection.toList();
+                     for (const QVariant &v : list) {
+                         if (v.metaType() == QMetaType::fromType<QVariantMap>()) {
+                             QVariantMap map = v.toMap();
 
-                              if (map.size() != 1) {
-                                  qCWarning(LogDeployment) << "The container selection configuration needs to be a "
-                                                              "list of single mappings, in order to preserve the "
-                                                              "evaluation order: found a mapping with"
-                                                           << map.size() << "entries.";
+                             if (map.size() != 1) {
+                                 qCWarning(LogDeployment) << "The container selection configuration needs to be a "
+                                                             "list of single mappings, in order to preserve the "
+                                                             "evaluation order: found a mapping with"
+                                                          << map.size() << "entries.";
+                             }
+
+                             for (auto it = map.cbegin(); it != map.cend(); ++it)
+                                 config.append(qMakePair(it.key(), it.value().toString()));
+                         }
+                     }
+                 }
+                 cd.containers.selection = config; } },
+            { "plugins", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "startup", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          cd.plugins.startup = yp.parseStringOrStringList(); } },
+                     { "container", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          cd.plugins.container = yp.parseStringOrStringList(); } },
+                 }); } },
+            { "logging", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "rules", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          cd.logging.rules = yp.parseStringOrStringList(); } },
+                     { "messagePattern", false, YamlParser::Scalar, [&]() {
+                          cd.logging.messagePattern = yp.parseString(); } },
+                     { "useAMConsoleLogger", false, YamlParser::Scalar, [&]() {
+                          cd.logging.useAMConsoleLogger = yp.parseScalar();
+                          if (cd.logging.useAMConsoleLogger.typeId() != QMetaType::Bool)
+                              cd.logging.useAMConsoleLogger.clear();  } },
+                     { "dlt", false, YamlParser::Map, [&]() {
+                          yp.parseFields({
+                              { "id", false, YamlParser::Scalar, [&]() {
+                                   cd.logging.dlt.id = yp.parseString(); } },
+                              { "description", false, YamlParser::Scalar, [&]() {
+                                   cd.logging.dlt.description = yp.parseString(); } },
+                              { "longMessageBehavior", false, YamlParser::Scalar, [&]() {
+                                   static const QStringList validValues {
+                                       u"split"_s, u"truncate"_s, u"pass"_s
+                                   };
+                                   QString s = yp.parseString().trimmed();
+                                   if (!s.isEmpty() && !validValues.contains(s)) {
+                                       throw YamlParserException(&yp, "dlt.longMessageBehavior needs to be one of %1").arg(validValues);
+                                   }
+                                   cd.logging.dlt.longMessageBehavior = s;
+                               } }
+                          }); } }
+                 }); } },
+            { "installer", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "disable", false, YamlParser::Scalar, [&]() {
+                          cd.installer.disable = yp.parseBool(); } },
+                     { "caCertificates", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          cd.installer.caCertificates = yp.parseStringOrStringList(); } },
+                 }); } },
+            { "quicklaunch", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "idleLoad", false, YamlParser::Scalar, [&]() {
+                          cd.quicklaunch.idleLoad = yp.parseScalar().toDouble(); } },
+                     { "runtimesPerContainer", false, YamlParser::Scalar | YamlParser::Map, [&]() {
+                          // this can be set to different things:
+                          //  - just a number -> the same count for any container/runtime combo (the only option pre 6.7)
+                          //  - a "<container-id>": mapping -> you can map to
+                          //    - just a number -> the same count for any runtime in these containers
+                          //    - a "<runtime-id>": mapping -> a specific count for this container/runtime combo
+                          static const QString anyId = u"*"_s;
+
+                          auto checkRPC = [&yp](const QVariant &v) -> int {
+                              if (v.typeId() == QMetaType::Int) {
+                                  bool ok;
+                                  int rpc = v.toInt(&ok);
+                                  if (ok && (rpc >= 0) && (rpc <= 10))
+                                      return rpc;
                               }
+                              throw YamlParserException(&yp, "runtimesPerContainer needs to be an integer between 0 and 10");
+                          };
 
-                              for (auto it = map.cbegin(); it != map.cend(); ++it)
-                                  config.append(qMakePair(it.key(), it.value().toString()));
-                          }
-                      }
-                  }
-                  cd->containers.selection = config;
-              } },
-            { "installationLocations", false, YamlParser::List, [&cd](YamlParser *p) {
-                  cd->installationLocations = p->parseList(); } },
-            { "plugins", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  p->parseFields({
-                      { "startup", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
-                            cd->plugins.startup = p->parseStringOrStringList(); } },
-                      { "container", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
-                            cd->plugins.container = p->parseStringOrStringList(); } },
-                  }); } },
-            { "logging", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  p->parseFields({
-                      { "rules", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
-                            cd->logging.rules = p->parseStringOrStringList(); } },
-                      { "messagePattern", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->logging.messagePattern = p->parseScalar().toString(); } },
-                      { "useAMConsoleLogger", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->logging.useAMConsoleLogger = p->parseScalar(); } },
-                      { "dlt", false, YamlParser::Map, [&cd](YamlParser *p) {
-                            p->parseFields( {
-                                { "id", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->logging.dlt.id = p->parseScalar().toString(); } },
-                                { "description", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->logging.dlt.description = p->parseScalar().toString(); } },
-                                { "longMessageBehavior", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      static const QStringList validValues {
-                                          u"split"_s, u"truncate"_s, u"pass"_s
-                                      };
-                                      QString s = p->parseScalar().toString().trimmed();
-                                      if (!s.isEmpty() && !validValues.contains(s)) {
-                                          throw YamlParserException(p, "dlt.longMessageBehavior needs to be one of %1").arg(validValues);
+                          if (yp.isScalar()) {
+                              cd.quicklaunch.runtimesPerContainer[{ anyId, anyId }] = checkRPC(yp.parseScalar());
+                          } else {
+                              const QVariantMap containerIdMap = yp.parseMap();
+                              for (auto cit = containerIdMap.cbegin(); cit != containerIdMap.cend(); ++cit) {
+                                  const QString &cId = cit.key();
+                                  const QVariant &value = cit.value();
+
+                                  switch (value.metaType().id()) {
+                                  case QMetaType::Int:
+                                      cd.quicklaunch.runtimesPerContainer[{ cId, anyId }] = checkRPC(value);
+                                      break;
+                                  case QMetaType::QVariantMap: {
+                                      const QVariantMap runtimeIdMap = value.toMap();
+                                      for (auto rit = runtimeIdMap.cbegin(); rit != runtimeIdMap.cend(); ++rit) {
+                                          const QString &rId = rit.key();
+                                          cd.quicklaunch.runtimesPerContainer[{ cId, rId }] = checkRPC(rit.value());
                                       }
-                                      cd->logging.dlt.longMessageBehavior = s;
-                                  } }
-                            }); } }
-                  }); } },
-            { "installer", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  p->parseFields({
-                      { "disable", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->installer.disable = p->parseScalar().toBool(); } },
-                      { "caCertificates", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
-                            cd->installer.caCertificates = p->parseStringOrStringList(); } },
-                  }); } },
-            { "quicklaunch", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  p->parseFields({
-                      { "idleLoad", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->quicklaunch.idleLoad = p->parseScalar().toDouble(); } },
-                      { "runtimesPerContainer", false, YamlParser::Scalar | YamlParser::Map, [&cd](YamlParser *p) {
-                            // this can be set to different things:
-                            //  - just a number -> the same count for any container/runtime combo (the only option pre 6.7)
-                            //  - a "<container-id>": mapping -> you can map to
-                            //    - just a number -> the same count for any runtime in these containers
-                            //    - a "<runtime-id>": mapping -> a specific count for this container/runtime combo
-                            static const QString anyId = u"*"_s;
+                                      break;
+                                  }
+                                  default:
+                                      throw YamlParserException(&yp, "quicklaunch.runtimesPerContainer is invalid");
+                                  }
+                              }
+                          } } },
+                     { "failedStartLimit", false, YamlParser::Scalar, [&]() {
+                          cd.quicklaunch.failedStartLimit = yp.parseInt(0); } },
+                     { "failedStartLimitIntervalSec", false, YamlParser::Scalar, [&]() {
+                          cd.quicklaunch.failedStartLimitIntervalSec = yp.parseDurationAsSec(u"s"); } },
+                 }); } },
+            { "ui", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "enableTouchEmulation", false, YamlParser::Scalar, [&]() {
+                          qCDebug(LogDeployment) << "ignoring 'enableTouchEmulation'";
+                          (void) yp.parseScalar(); } },
+                     { "iconThemeSearchPaths", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          cd.ui.iconThemeSearchPaths = yp.parseStringOrStringList(); } },
+                     { "iconThemeName", false, YamlParser::Scalar, [&]() {
+                          cd.ui.iconThemeName = yp.parseString(); } },
+                     { "style", false, YamlParser::Scalar, [&]() {
+                          cd.ui.style = yp.parseString(); } },
+                     { "loadDummyData", false, YamlParser::Scalar, [&]() {
+                          cd.ui.loadDummyData = yp.parseBool(); } },
+                     { "importPaths", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          cd.ui.importPaths = yp.parseStringOrStringList(); } },
+                     { "pluginPaths", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          cd.ui.pluginPaths = yp.parseStringOrStringList(); } },
+                     { "windowIcon", false, YamlParser::Scalar, [&]() {
+                          cd.ui.windowIcon = yp.parseString(); } },
+                     { "fullscreen", false, YamlParser::Scalar, [&]() {
+                          cd.ui.fullscreen = yp.parseBool(); } },
+                     { "mainQml", false, YamlParser::Scalar, [&]() {
+                          cd.ui.mainQml = yp.parseString(); } },
+                     { "resources", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          cd.ui.resources = yp.parseStringOrStringList(); } },
+                     { "opengl", false, YamlParser::Map, [&]() {
+                          yp.parseFields({
+                              { "desktopProfile", false, YamlParser::Scalar, [&]() {
+                                   cd.ui.opengl.desktopProfile = yp.parseString(); } },
+                              { "esMajorVersion", false, YamlParser::Scalar, [&]() {
+                                   cd.ui.opengl.esMajorVersion = yp.parseInt(2); } },
+                              { "esMinorVersion", false, YamlParser::Scalar, [&]() {
+                                   cd.ui.opengl.esMinorVersion = yp.parseInt(0); } }
+                          });
+                      } },
+                 }); } },
+            { "applications", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "builtinAppsManifestDir", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          cd.applications.builtinAppsManifestDir = yp.parseStringOrStringList(); } },
+                     { "installationDir", false, YamlParser::Scalar | YamlParser::Scalar, [&]() {
+                          cd.applications.installationDir = yp.parseString(); } },
+                     { "documentDir", false, YamlParser::Scalar | YamlParser::Scalar, [&]() {
+                          cd.applications.documentDir = yp.parseString(); } },
+                     { "installationDirMountPoint", false, YamlParser::Scalar | YamlParser::Scalar, [&]() {
+                          cd.applications.installationDirMountPoint = yp.parseString(); } },
+                 }); } },
+            { "flags", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "forceSingleProcess", false, YamlParser::Scalar, [&]() {
+                          cd.flags.forceSingleProcess = yp.parseBool(); } },
+                     { "forceMultiProcess", false, YamlParser::Scalar, [&]() {
+                          cd.flags.forceMultiProcess = yp.parseBool(); } },
+                     { "noSecurity", false, YamlParser::Scalar, [&]() {
+                          cd.flags.noSecurity = yp.parseBool(); } },
+                     { "developmentMode", false, YamlParser::Scalar, [&]() {
+                          cd.flags.developmentMode = yp.parseBool(); } },
+                     { "noUiWatchdog", false, YamlParser::Scalar, [&]() {
+                          cd.flags.noUiWatchdog = yp.parseBool(); } },
+                     { "allowUnsignedPackages", false, YamlParser::Scalar, [&]() {
+                          cd.flags.allowUnsignedPackages = yp.parseBool(); } },
+                     { "allowUnknownUiClients", false, YamlParser::Scalar, [&]() {
+                          cd.flags.allowUnknownUiClients = yp.parseBool(); } },
+                 }); } },
+            { "wayland", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "socketName", false, YamlParser::Scalar, [&]() {
+                          cd.wayland.socketName = yp.parseString(); } },
+                     { "extraSockets", false, YamlParser::List, [&]() {
+                          yp.parseList([&]() {
+                              ConfigurationData::Wayland::ExtraSocket wes;
+                              yp.parseFields({
+                                  { "path", true, YamlParser::Scalar, [&]() {
+                                       wes.path = yp.parseString(); } },
+                                  { "permissions", false, YamlParser::Scalar, [&]() {
+                                       wes.permissions = yp.parseInt(0); } },
+                                  { "userId", false, YamlParser::Scalar, [&]() {
+                                       wes.userId = yp.parseInt(); } },
+                                  { "groupId", false, YamlParser::Scalar, [&]() {
+                                       wes.groupId = yp.parseInt(); } }
+                              });
+                              cd.wayland.extraSockets.append(wes);
+                          }); } }
+                 }); } },
+            { "systemProperties", false, YamlParser::Map, [&]() {
+                 cd.systemProperties = yp.parseMap(); } },
+            { "crashAction", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "printBacktrace", false, YamlParser::Scalar, [&]() {
+                          cd.crashAction.printBacktrace = yp.parseBool(); } },
+                     { "printQmlStack", false, YamlParser::Scalar, [&]() {
+                          cd.crashAction.printQmlStack = yp.parseBool(); } },
+                     { "waitForGdbAttach", false, YamlParser::Scalar, [&]() {
+                          cd.crashAction.waitForGdbAttach = yp.parseDurationAsSec(u"s"); } },
+                     { "dumpCore", false, YamlParser::Scalar, [&]() {
+                          cd.crashAction.dumpCore = yp.parseBool(); } },
+                     { "stackFramesToIgnore", false, YamlParser::Map, [&]() {
+                          yp.parseFields({
+                              { "onCrash", false, YamlParser::Scalar, [&]() {
+                                   cd.crashAction.stackFramesToIgnore.onCrash = yp.parseInt(-1); } },
+                              { "onException", false, YamlParser::Scalar, [&]() {
+                                   cd.crashAction.stackFramesToIgnore.onException = yp.parseInt(-1); } },
+                          }); } }
+                 }); } },
+            { "intents", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "disable", false, YamlParser::Scalar, [&]() {
+                          cd.intents.disable = yp.parseBool(); } },
+                     { "timeouts", false, YamlParser::Map, [&]() {
+                          yp.parseFields({
+                              { "disambiguation", false, YamlParser::Scalar, [&]() {
+                                   cd.intents.timeouts.disambiguation = yp.parseDurationAsMSec(u"ms"); } },
+                              { "startApplication", false, YamlParser::Scalar, [&]() {
+                                   cd.intents.timeouts.startApplication = yp.parseDurationAsMSec(u"ms"); } },
+                              { "replyFromApplication", false, YamlParser::Scalar, [&]() {
+                                   cd.intents.timeouts.replyFromApplication = yp.parseDurationAsMSec(u"ms"); } },
+                              { "replyFromSystem", false, YamlParser::Scalar, [&]() {
+                                   cd.intents.timeouts.replyFromSystem = yp.parseDurationAsMSec(u"ms"); } },
+                          }); } }
+                 }); } },
+            { "dbus", false, YamlParser::Map, [&]() {
+                 const QVariantMap dbus = yp.parseMap();
+                 for (auto it = dbus.cbegin(); it != dbus.cend(); ++it) {
+                     const QString &ifaceName = it.key();
+                     const QVariantMap &ifaceData = it.value().toMap();
 
-                            if (p->isScalar()) {
-                                bool ok;
-                                int rpc = p->parseScalar().toInt(&ok);
-                                if (!ok || (rpc < 0) || (rpc > 10))
-                                    throw YamlParserException(p, "quicklaunch.runtimesPerContainer count needs to be between 0 and 10");
+                     auto rit = ifaceData.constFind(u"register"_s);
+                     if (rit != ifaceData.cend())
+                         cd.dbus.registrations.insert(ifaceName, rit->toString());
 
-                                cd->quicklaunch.runtimesPerContainer[{ anyId, anyId }] = rpc;
-                            } else {
-                                const QVariantMap containerIdMap = p->parseMap();
-                                for (auto cit = containerIdMap.cbegin(); cit != containerIdMap.cend(); ++cit) {
-                                    const QString &containerId = cit.key();
-                                    const QVariant &value = cit.value();
-
-                                    switch (value.metaType().id()) {
-                                    case QMetaType::Int:
-                                        cd->quicklaunch.runtimesPerContainer[{ containerId, anyId }] = value.toInt();
-                                        break;
-                                    case QMetaType::QVariantMap: {
-                                        const QVariantMap runtimeIdMap = value.toMap();
-                                        for (auto rit = runtimeIdMap.cbegin(); rit != runtimeIdMap.cend(); ++rit) {
-                                            const QString &runtimeId = rit.key();
-                                            bool ok;
-                                            int rpc = rit.value().toInt(&ok);
-                                            if (!ok || (rpc < 0) || (rpc > 10))
-                                                throw YamlParserException(p, "quicklaunch.runtimesPerContainer count needs to be between 0 and 10");
-
-                                            cd->quicklaunch.runtimesPerContainer[{ containerId, runtimeId }] = rpc;
-                                        }
-                                        break;
-                                    }
-                                    default:
-                                        throw YamlParserException(p, "quicklaunch.runtimesPerContainer is invalid");
-                                    }
-                                }
-                            } } },
-                      { "failedStartLimit", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->quicklaunch.failedStartLimit = p->parseScalar().toInt(); } },
-                      { "failedStartLimitIntervalSec", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->quicklaunch.failedStartLimitIntervalSec = p->parseScalar().toInt(); } },
-                  }); } },
-            { "ui", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  p->parseFields({
-                      { "enableTouchEmulation", false, YamlParser::Scalar, [](YamlParser *p) {
-                            qCDebug(LogDeployment) << "ignoring 'enableTouchEmulation'";
-                            (void) p->parseScalar(); } },
-                      { "iconThemeSearchPaths", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
-                            cd->ui.iconThemeSearchPaths = p->parseStringOrStringList(); } },
-                      { "iconThemeName", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->ui.iconThemeName = p->parseScalar().toString(); } },
-                      { "style", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->ui.style = p->parseScalar().toString(); } },
-                      { "loadDummyData", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->ui.loadDummyData = p->parseScalar().toBool(); } },
-                      { "importPaths", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
-                            cd->ui.importPaths = p->parseStringOrStringList(); } },
-                      { "pluginPaths", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
-                            cd->ui.pluginPaths = p->parseStringOrStringList(); } },
-                      { "windowIcon", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->ui.windowIcon = p->parseScalar().toString(); } },
-                      { "fullscreen", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->ui.fullscreen = p->parseScalar().toBool(); } },
-                      { "mainQml", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->ui.mainQml = p->parseScalar().toString(); } },
-                      { "resources", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
-                            cd->ui.resources = p->parseStringOrStringList(); } },
-                      { "opengl", false, YamlParser::Map, [&cd](YamlParser *p) {
-                            p->parseFields({
-                                { "desktopProfile", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->ui.opengl.insert(u"desktopProfile"_s, p->parseScalar().toString()); } },
-                                { "esMajorVersion", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->ui.opengl.insert(u"esMajorVersion"_s, p->parseScalar().toInt()); } },
-                                { "esMinorVersion", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->ui.opengl.insert(u"esMinorVersion"_s, p->parseScalar().toInt()); } }
-                            });
-                        } },
-                  }); } },
-            { "applications", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  p->parseFields({
-                      { "builtinAppsManifestDir", false, YamlParser::Scalar | YamlParser::List, [&cd](YamlParser *p) {
-                            cd->applications.builtinAppsManifestDir = p->parseStringOrStringList(); } },
-                      { "installationDir", false, YamlParser::Scalar | YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->applications.installationDir = p->parseScalar().toString(); } },
-                      { "documentDir", false, YamlParser::Scalar | YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->applications.documentDir = p->parseScalar().toString(); } },
-                      { "installationDirMountPoint", false, YamlParser::Scalar | YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->applications.installationDirMountPoint = p->parseScalar().toString(); } },
-                      { "installedAppsManifestDir", false, YamlParser::Scalar, [](YamlParser *p) {
-                            qCDebug(LogDeployment) << "ignoring 'installedAppsManifestDir'";
-                            (void) p->parseScalar(); } },
-                      { "database", false, YamlParser::Scalar | YamlParser::Scalar, [](YamlParser *p) {
-                            qCDebug(LogDeployment) << "ignoring 'database'";
-                            (void) p->parseScalar(); } },
-                      { "appImageMountDir", false, YamlParser::Scalar | YamlParser::Scalar, [](YamlParser *p) {
-                            qCDebug(LogDeployment) << "ignoring 'appImageMountDir'";
-                            (void) p->parseScalar(); } }
-                  }); } },
-            { "flags", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  p->parseFields({
-                      { "forceSingleProcess", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->flags.forceSingleProcess = p->parseScalar().toBool(); } },
-                      { "forceMultiProcess", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->flags.forceMultiProcess = p->parseScalar().toBool(); } },
-                      { "noSecurity", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->flags.noSecurity = p->parseScalar().toBool(); } },
-                      { "developmentMode", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->flags.developmentMode = p->parseScalar().toBool(); } },
-                      { "noUiWatchdog", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->flags.noUiWatchdog = p->parseScalar().toBool(); } },
-                      { "allowUnsignedPackages", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->flags.allowUnsignedPackages = p->parseScalar().toBool(); } },
-                      { "allowUnknownUiClients", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->flags.allowUnknownUiClients = p->parseScalar().toBool(); } },
-                  }); } },
-            { "wayland", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  p->parseFields({
-                      { "socketName", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->wayland.socketName = p->parseScalar().toString(); } },
-                      { "extraSockets", false, YamlParser::List, [&cd](YamlParser *p) {
-                            p->parseList([&cd](YamlParser *p) {
-                                QVariantMap wes;
-                                p->parseFields({
-                                    { "path", true, YamlParser::Scalar, [&wes](YamlParser *p) {
-                                          wes.insert(u"path"_s, p->parseScalar().toString()); } },
-                                    { "permissions", false, YamlParser::Scalar, [&wes](YamlParser *p) {
-                                          wes.insert(u"permissions"_s, p->parseScalar().toInt()); } },
-                                    { "userId", false, YamlParser::Scalar, [&wes](YamlParser *p) {
-                                          wes.insert(u"userId"_s, p->parseScalar().toInt()); } },
-                                    { "groupId", false, YamlParser::Scalar, [&wes](YamlParser *p) {
-                                          wes.insert(u"groupId"_s, p->parseScalar().toInt()); } }
-                                });
-                                cd->wayland.extraSockets.append(wes);
-                            }); } }
-                  }); } },
-            { "systemProperties", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  cd->systemProperties = p->parseMap(); } },
-            { "crashAction", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  cd->crashAction = p->parseMap(); } },
-            { "intents", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  p->parseFields({
-                      { "disable", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                            cd->intents.disable = p->parseScalar().toBool(); } },
-                      { "timeouts", false, YamlParser::Map, [&cd](YamlParser *p) {
-                            p->parseFields({
-                                { "disambiguation", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->intents.timeouts.disambiguation = p->parseScalar().toInt(); } },
-                                { "startApplication", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->intents.timeouts.startApplication = p->parseScalar().toInt(); } },
-                                { "replyFromApplication", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->intents.timeouts.replyFromApplication = p->parseScalar().toInt(); } },
-                                { "replyFromSystem", false, YamlParser::Scalar, [&cd](YamlParser *p) {
-                                      cd->intents.timeouts.replyFromSystem = p->parseScalar().toInt(); } },
-                            }); } }
-                  }); } },
-            { "dbus", false, YamlParser::Map, [&cd](YamlParser *p) {
-                  const QVariantMap dbus = p->parseMap();
-                  for (auto it = dbus.cbegin(); it != dbus.cend(); ++it) {
-                      const QString &ifaceName = it.key();
-                      const QVariantMap &ifaceData = it.value().toMap();
-
-                      auto rit = ifaceData.constFind(u"register"_s);
-                      if (rit != ifaceData.cend())
-                          cd->dbus.registrations.insert(ifaceName, rit->toString());
-
-                      auto pit = ifaceData.constFind(u"policy"_s);
-                      if (pit != ifaceData.cend())
-                          cd->dbus.policies.insert(ifaceName, pit->toMap());
-                  }
-              } }
-        };
-
-        yp.parseFields(fields);
-        return cd.release();
+                     auto pit = ifaceData.constFind(u"policy"_s);
+                     if (pit != ifaceData.cend())
+                         cd.dbus.policies.insert(ifaceName, pit->toMap());
+                 } } },
+        });
     } catch (const Exception &e) {
         throw Exception(e.errorCode(), "Failed to parse config file %1: %2")
-                .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : u"<stream>"_s, e.errorString());
+            .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : u"<stream>"_s, e.errorString());
     }
-}
-
-QString Configuration::instanceId() const
-{
-    return value<QString>("instance-id", m_data->instanceId);
-}
-
-QString Configuration::mainQmlFile() const
-{
-    if (!m_clp.positionalArguments().isEmpty())
-        return m_clp.positionalArguments().at(0);
-    else
-        return m_data->ui.mainQml;
 }
 
 bool Configuration::noCache() const
 {
-    return value<bool>("no-cache");
+    return d->clp.isSet(u"no-cache"_s);
 }
 
 bool Configuration::clearCache() const
 {
-    return value<bool>("clear-cache");
-}
-
-
-QStringList Configuration::builtinAppsManifestDirs() const
-{
-    return value<QStringList>("builtin-apps-manifest-dir", m_data->applications.builtinAppsManifestDir);
-}
-
-QString Configuration::installationDir() const
-{
-    if (m_installationDir.isEmpty())
-        m_installationDir = value<QString>("installation-dir", m_data->applications.installationDir);
-    return m_installationDir;
-}
-
-QString Configuration::documentDir() const
-{
-    if (m_documentDir.isEmpty())
-        m_documentDir = value<QString>("document-dir", m_data->applications.documentDir);
-    return m_documentDir;
-}
-
-QString Configuration::installationDirMountPoint() const
-{
-    return m_data->applications.installationDirMountPoint;
-}
-
-bool Configuration::disableInstaller() const
-{
-    return value<bool>("disable-installer", m_data->installer.disable);
-}
-
-bool Configuration::disableIntents() const
-{
-    return value<bool>("disable-intents", m_data->intents.disable);
-}
-
-int Configuration::intentTimeoutForDisambiguation() const
-{
-    return m_data->intents.timeouts.disambiguation;
-}
-
-int Configuration::intentTimeoutForStartApplication() const
-{
-    return m_data->intents.timeouts.startApplication;
-}
-
-int Configuration::intentTimeoutForReplyFromApplication() const
-{
-    return m_data->intents.timeouts.replyFromApplication;
-}
-
-int Configuration::intentTimeoutForReplyFromSystem() const
-{
-    return m_data->intents.timeouts.replyFromSystem;
-}
-
-bool Configuration::fullscreen() const
-{
-    return value<bool>("fullscreen", m_data->ui.fullscreen);
-}
-
-bool Configuration::noFullscreen() const
-{
-    return value<bool>("no-fullscreen");
-}
-
-QString Configuration::windowIcon() const
-{
-    return m_data->ui.windowIcon;
-}
-
-QStringList Configuration::importPaths() const
-{
-    QStringList importPaths = value<QStringList>("I", m_data->ui.importPaths);
-
-    for (int i = 0; i < importPaths.size(); ++i)
-        importPaths[i] = toAbsoluteFilePath(importPaths.at(i));
-
-    return importPaths;
-}
-
-QStringList Configuration::pluginPaths() const
-{
-    return m_data->ui.pluginPaths;
+    return d->clp.isSet(u"clear-cache"_s);
 }
 
 bool Configuration::verbose() const
 {
-    return value<bool>("verbose") || m_forceVerbose;
+    return d->clp.isSet(u"verbose"_s) || d->forceVerbose;
 }
 
 void Configuration::setForceVerbose(bool forceVerbose)
 {
-    m_forceVerbose = forceVerbose;
-}
-
-bool Configuration::slowAnimations() const
-{
-    return value<bool>("slow-animations");
-}
-
-bool Configuration::loadDummyData() const
-{
-    return value<bool>("load-dummydata", m_data->ui.loadDummyData);
-}
-
-bool Configuration::noSecurity() const
-{
-    return value<bool>("no-security", m_data->flags.noSecurity);
-}
-
-bool Configuration::developmentMode() const
-{
-    return value<bool>("development-mode", m_data->flags.developmentMode);
-}
-
-bool Configuration::allowUnsignedPackages() const
-{
-    return m_data->flags.allowUnsignedPackages;
-}
-
-bool Configuration::allowUnknownUiClients() const
-{
-    return m_data->flags.allowUnknownUiClients;
-}
-
-bool Configuration::noUiWatchdog() const
-{
-    return value<bool>("no-ui-watchdog", m_data->flags.noUiWatchdog) || m_forceNoUiWatchdog;
+    d->forceVerbose = forceVerbose;
 }
 
 void Configuration::setForceNoUiWatchdog(bool noUiWatchdog)
 {
-    m_forceNoUiWatchdog = noUiWatchdog;
+    if (noUiWatchdog)
+        d->data.flags.noUiWatchdog = true;
+}
+
+bool Configuration::slowAnimations() const
+{
+    return d->clp.isSet(u"slow-animations"_s);
 }
 
 bool Configuration::noDltLogging() const
 {
-    return value<bool>("no-dlt-logging");
-}
-
-bool Configuration::forceSingleProcess() const
-{
-    return value<bool>("force-single-process", m_data->flags.forceSingleProcess);
-}
-
-bool Configuration::forceMultiProcess() const
-{
-    return value<bool>("force-multi-process", m_data->flags.forceMultiProcess);
+    return d->clp.isSet(u"no-dlt-logging"_s);
 }
 
 bool Configuration::qmlDebugging() const
 {
-    return value<bool>("qml-debug");
+    return d->clp.isSet(u"qml-debug"_s);
 }
 
 QString Configuration::singleApp() const
 {
     //TODO: single-package
-    return value<QString>("single-app");
+    return d->clp.value(u"single-app"_s);
 }
 
-QStringList Configuration::loggingRules() const
+QString Configuration::dbus() const
 {
-    return value<QStringList>("logging-rule", m_data->logging.rules);
-}
-
-QString Configuration::messagePattern() const
-{
-    return m_data->logging.messagePattern;
-}
-
-QVariant Configuration::useAMConsoleLogger() const
-{
-    // true = use the am logger
-    // false = don't use the am logger
-    // invalid = don't use the am logger when QT_MESSAGE_PATTERN is set
-    const QVariant &val = m_data->logging.useAMConsoleLogger;
-    if (val.metaType() == QMetaType::fromType<bool>())
-        return val;
-    else
-        return QVariant();
-}
-
-QString Configuration::style() const
-{
-    return m_data->ui.style;
-}
-
-QString Configuration::iconThemeName() const
-{
-    return m_data->ui.iconThemeName;
-}
-
-QStringList Configuration::iconThemeSearchPaths() const
-{
-    return m_data->ui.iconThemeSearchPaths;
-}
-
-QString Configuration::dltId() const
-{
-    return value<QString>(nullptr, m_data->logging.dlt.id);
-}
-
-QString Configuration::dltDescription() const
-{
-    return value<QString>(nullptr, m_data->logging.dlt.description);
-}
-
-QString Configuration::dltLongMessageBehavior() const
-{
-    return value<QString>(nullptr, m_data->logging.dlt.longMessageBehavior);
-}
-
-QStringList Configuration::resources() const
-{
-    return m_data->ui.resources;
-}
-
-QVariantMap Configuration::openGLConfiguration() const
-{
-    return m_data->ui.opengl;
-}
-
-QVariantList Configuration::installationLocations() const
-{
-    return m_data->installationLocations;
-}
-
-QList<QPair<QString, QString>> Configuration::containerSelectionConfiguration() const
-{
-    return m_data->containers.selection;
-}
-
-QVariantMap Configuration::containerConfigurations() const
-{
-    return m_data->containers.configurations;
-}
-
-QStringList Configuration::runtimeAdditionalLaunchers() const
-{
-    return m_data->runtimes.additionalLaunchers;
-}
-
-QVariantMap Configuration::runtimeConfigurations() const
-{
-    return m_data->runtimes.configurations;
-}
-
-QVariantMap Configuration::dbusPolicy(const char *interfaceName) const
-{
-    return m_data->dbus.policies.value(QString::fromLatin1(interfaceName)).toMap();
-}
-
-QString Configuration::dbusRegistration(const char *interfaceName) const
-{
-    auto hasConfig = m_data->dbus.registrations.constFind(QString::fromLatin1(interfaceName));
-
-    if (hasConfig != m_data->dbus.registrations.cend())
-        return hasConfig->toString();
-    else
-        return m_clp.value(u"dbus"_s);
-}
-
-QVariantMap Configuration::rawSystemProperties() const
-{
-    return m_data->systemProperties;
-}
-
-qreal Configuration::quickLaunchIdleLoad() const
-{
-    return m_data->quicklaunch.idleLoad;
-}
-
-QHash<std::pair<QString, QString>, int> Configuration::quickLaunchRuntimesPerContainer() const
-{
-    return m_data->quicklaunch.runtimesPerContainer;
-}
-
-int Configuration::quickLaunchFailedStartLimit() const
-{
-    return m_data->quicklaunch.failedStartLimit;
-}
-
-int Configuration::quickLaunchFailedStartLimitIntervalSec() const
-{
-    return m_data->quicklaunch.failedStartLimitIntervalSec;
+    return d->clp.value(u"dbus"_s);
 }
 
 QString Configuration::waylandSocketName() const
 {
-    QString socketName = m_clp.value(u"wayland-socket-name"_s); // get the default value
-    if (!socketName.isEmpty())
-        return socketName;
-
-    if (!m_data->wayland.socketName.isEmpty())
-        return m_data->wayland.socketName;
-
-#if defined(Q_OS_LINUX)
-    // modelled after wl_socket_lock() in wayland_server.c
-    const QString xdgDir = qEnvironmentVariable("XDG_RUNTIME_DIR") + u"/"_s;
-    const QString pattern = u"qtam-wayland-%1"_s;
-    const QString lockSuffix = u".lock"_s;
-
-    for (int i = 0; i < 32; ++i) {
-        socketName = pattern.arg(i);
-        QFile lock(xdgDir + socketName + lockSuffix);
-        if (lock.open(QIODevice::ReadWrite)) {
-            if (::flock(lock.handle(), LOCK_EX | LOCK_NB) == 0) {
-                QFile socket(xdgDir + socketName);
-                if (!socket.exists() || socket.remove())
-                    return socketName;
-            }
-        }
-    }
-#endif
-    return QString();
-
-}
-
-QVariantList Configuration::waylandExtraSockets() const
-{
-    return m_data->wayland.extraSockets;
-}
-
-QVariantMap Configuration::managerCrashAction() const
-{
-    return m_data->crashAction;
-}
-
-QStringList Configuration::caCertificates() const
-{
-    return m_data->installer.caCertificates;
-}
-
-QStringList Configuration::pluginFilePaths(const char *type) const
-{
-    if (qstrcmp(type, "startup") == 0)
-        return m_data->plugins.startup;
-    else if (qstrcmp(type, "container") == 0)
-        return m_data->plugins.container;
-    else
-        return QStringList();
+    return d->clp.value(u"wayland-socket-name"_s);
 }
 
 QStringList Configuration::testRunnerArguments() const
 {
-    QStringList targs = m_clp.positionalArguments();
+    QStringList targs = d->clp.positionalArguments();
     if (!targs.isEmpty() && targs.constFirst().endsWith(u".qml"))
         targs.removeFirst();
     targs.prepend(QCoreApplication::arguments().constFirst());
@@ -1269,7 +1027,7 @@ QStringList Configuration::testRunnerArguments() const
 
 QString Configuration::testRunnerSourceFile() const
 {
-    return m_clp.value(u"qmltestrunner-source-file"_s);
+    return d->clp.value(u"qmltestrunner-source-file"_s);
 }
 
 QT_END_NAMESPACE_AM

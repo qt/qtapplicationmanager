@@ -24,7 +24,7 @@ QT_BEGIN_NAMESPACE_AM
 
 QuickLauncher *QuickLauncher::s_instance = nullptr;
 
-QuickLauncher *QuickLauncher::createInstance(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
+QuickLauncher *QuickLauncher::createInstance(const QMap<std::pair<QString, QString>, int> &runtimesPerContainer,
                                              qreal idleLoad, int failedStartLimit,
                                              int failedStartLimitIntervalSec)
 {
@@ -49,7 +49,7 @@ QuickLauncher::~QuickLauncher()
     s_instance = nullptr;
 }
 
-QuickLauncher::QuickLauncher(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
+QuickLauncher::QuickLauncher(const QMap<std::pair<QString, QString>, int> &runtimesPerContainer,
                              qreal idleLoad, int failedStartLimit, int failedStartLimitIntervalSec,
                              QObject *parent)
     : QObject(parent)

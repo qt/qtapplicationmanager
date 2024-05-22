@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
         if (directLoadManifest.isEmpty())
             am->loadConfiguration();
 
-        CrashHandler::setCrashActionConfiguration(am->runtimeConfiguration().value(u"crashAction"_s).toMap());
+        //CrashHandler::setCrashActionConfiguration(am->runtimeConfiguration().value(u"crashAction"_s).toMap());
         // the verbose flag has already been factored into the rules:
         am->setupLogging(false, am->loggingRules(), QString(), am->useAMConsoleLogger());
         am->setupQmlDebugging(clp.isSet(u"qml-debug"_s));

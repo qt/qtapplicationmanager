@@ -14,6 +14,7 @@
 #include <QtCore/QVector>
 
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/openglconfiguration.h>
 
 QT_FORWARD_DECLARE_CLASS(QDataStream)
 
@@ -43,9 +44,10 @@ public:
     QStringList capabilities() const;
     QStringList supportedMimeTypes() const;
     QString documentUrl() const;
-    QVariantMap openGLConfiguration() const;
+    OpenGLConfiguration openGLConfiguration() const;
     bool supportsApplicationInterface() const;
-    QVariantMap dltConfiguration() const;
+    QString dltId() const;
+    QString dltDescription() const;
 
     QStringList categories() const;
 
@@ -73,10 +75,11 @@ private:
     QVariantMap m_runtimeParameters;
     bool m_supportsApplicationInterface = false;
     QStringList m_capabilities;
-    QVariantMap m_openGLConfiguration;
+    OpenGLConfiguration m_openGLConfiguration;
     QStringList m_supportedMimeTypes; // deprecated
     QString m_documentUrl; // deprecated
-    QVariantMap m_dltConfiguration;
+    QString m_dltId;
+    QString m_dltDescription;
 
     QStringList m_categories;
     QMap<QString, QString> m_names; // language -> name

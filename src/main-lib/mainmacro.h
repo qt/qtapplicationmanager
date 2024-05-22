@@ -25,7 +25,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[]) \
 \
         a->setup(cfg.get()); \
         a->loadQml(); \
-        a->showWindow(cfg->fullscreen() && !cfg->noFullscreen()); \
+        a->showWindow(); \
     } catch (const std::exception &e) { \
         qCritical() << "ERROR:" << e.what(); \
         return 2; \

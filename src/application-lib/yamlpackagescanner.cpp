@@ -60,285 +60,204 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
         }
 
         std::unique_ptr<ApplicationInfo> legacyAppInfo =
-                legacy ? std::make_unique<ApplicationInfo>(pkgInfo.get()) : nullptr;
+            legacy ? std::make_unique<ApplicationInfo>(pkgInfo.get()) : nullptr;
 
         // ----------------- package -----------------
 
-        YamlParser::Fields fields;
-        fields.emplace_back("id", true, YamlParser::Scalar, [&pkgInfo, &legacyAppInfo](YamlParser *p) {
-            QString id = p->parseString();
-            if (id.isEmpty())
-                throw YamlParserException(p, "packages need to have an id");
-            pkgInfo->m_id = id;
-            if (legacyAppInfo)
-                legacyAppInfo->m_id = pkgInfo->id();
+        yp.parseFields({
+            { "id", true, YamlParser::Scalar, [&]() {
+                 QString id = yp.parseString();
+                 if (id.isEmpty())
+                     throw YamlParserException(&yp, "packages need to have an id");
+                 pkgInfo->m_id = id;
+                 if (legacyAppInfo)
+                     legacyAppInfo->m_id = pkgInfo->id(); } },
+            { "icon", false, YamlParser::Scalar, [&]() {
+                 pkgInfo->m_icon = yp.parseString(); } },
+            { "name", false, YamlParser::Map, [&]() {
+                 pkgInfo->m_names = yp.parseStringMap(); } },
+            { !legacy, "description", false, YamlParser::Map, [&]() {
+                 pkgInfo->m_descriptions = yp.parseStringMap(); } },
+            { "categories", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                 pkgInfo->m_categories = yp.parseStringOrStringList();
+                 pkgInfo->m_categories.sort(); } },
+            { "version", false, YamlParser::Scalar, [&]() {
+                 pkgInfo->m_version = yp.parseString(); } },
+            { legacy, "code", true, YamlParser::Scalar, [&]() {
+                 legacyAppInfo->m_codeFilePath = yp.parseString(); } },
+            { legacy, "runtime", true, YamlParser::Scalar, [&]() {
+                 legacyAppInfo->m_runtimeName = yp.parseString(); } },
+            { legacy, "runtimeParameters", false, YamlParser::Map, [&]() {
+                 legacyAppInfo->m_runtimeParameters = yp.parseMap(); } },
+            { legacy, "supportsApplicationInterface", false, YamlParser::Scalar, [&]() {
+                 legacyAppInfo->m_supportsApplicationInterface = yp.parseBool(); } },
+            { legacy, "capabilities", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                 legacyAppInfo->m_capabilities = yp.parseStringOrStringList();
+                 legacyAppInfo->m_capabilities.sort(); } },
+            { legacy, "opengl", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "desktopProfile", false, YamlParser::Scalar, [&]() {
+                          legacyAppInfo->m_openGLConfiguration.desktopProfile = yp.parseString(); } },
+                     { "esMajorVersion", false, YamlParser::Scalar, [&]() {
+                          legacyAppInfo->m_openGLConfiguration.esMajorVersion = yp.parseInt(2); } },
+                     { "esMinorVersion", false, YamlParser::Scalar, [&]() {
+                          legacyAppInfo->m_openGLConfiguration.esMinorVersion = yp.parseInt(0); } },
+                 }); } },
+            { legacy, "applicationProperties", false, YamlParser::Map, [&]() {
+                 const QVariantMap rawMap = yp.parseMap();
+                 legacyAppInfo->m_sysAppProperties = rawMap.value(u"protected"_s).toMap();
+                 legacyAppInfo->m_allAppProperties = legacyAppInfo->m_sysAppProperties;
+                 const QVariantMap pri = rawMap.value(u"private"_s).toMap();
+                 for (auto it = pri.cbegin(); it != pri.cend(); ++it)
+                     legacyAppInfo->m_allAppProperties.insert(it.key(), it.value()); } },
+            { legacy, "documentUrl", false, YamlParser::Scalar, [&]() {
+                 legacyAppInfo->m_documentUrl = yp.parseString(); } },
+            { legacy, "mimeTypes", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                 legacyAppInfo->m_supportedMimeTypes = yp.parseStringOrStringList();
+                 legacyAppInfo->m_supportedMimeTypes.sort(); } },
+            { legacy, "logging", false, YamlParser::Map, [&]() {
+                 yp.parseFields({
+                     { "dlt", false, YamlParser::Map, [&]() {
+                          yp.parseFields({
+                              { "id", false, YamlParser::Scalar, [&]() {
+                                   legacyAppInfo->m_dltId = yp.parseString(); } },
+                              { "description", false, YamlParser::Scalar, [&]() {
+                                   legacyAppInfo->m_dltDescription = yp.parseString(); } },
+                          }); } }
+                 }); } },
+            { legacy, "environmentVariables", false, YamlParser::Map, [&]() {
+                 qCDebug(LogSystem) << "ignoring 'environmentVariables'";
+                 (void) yp.parseMap(); } },
+
+            // ----------------- applications -----------------
+
+            { !legacy, "applications", true, YamlParser::List, [&]() {
+                 yp.parseList([&]() {
+                     auto appInfo = std::make_unique<ApplicationInfo>(pkgInfo.get());
+
+                     yp.parseFields({
+                         { "id", true, YamlParser::Scalar, [&]() {
+                              QString id = yp.parseString();
+                              if (id.isEmpty())
+                                  throw YamlParserException(&yp, "applications need to have an id");
+                              if (appIds.contains(id))
+                                  throw YamlParserException(&yp, "found two applications with the same id %1").arg(id);
+                              appInfo->m_id = id; } },
+                         { "icon", false, YamlParser::Scalar, [&]() {
+                              appInfo->m_icon = yp.parseString(); } },
+                         { "name", false, YamlParser::Map, [&]() {
+                              appInfo->m_names = yp.parseStringMap(); } },
+                         { "description", false, YamlParser::Map, [&]() {
+                              appInfo->m_descriptions = yp.parseStringMap(); } },
+                         { "categories", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                              appInfo->m_categories = yp.parseStringOrStringList();
+                              appInfo->m_categories.sort(); } },
+                         { "code", true, YamlParser::Scalar, [&]() {
+                              appInfo->m_codeFilePath = yp.parseString(); } },
+                         { "runtime", true, YamlParser::Scalar, [&]() {
+                              appInfo->m_runtimeName = yp.parseString(); } },
+                         { "runtimeParameters", false, YamlParser::Map, [&]() {
+                              appInfo->m_runtimeParameters = yp.parseMap(); } },
+                         { "supportsApplicationInterface", false, YamlParser::Scalar, [&]() {
+                              appInfo->m_supportsApplicationInterface = yp.parseBool(); } },
+                         { "capabilities", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                              appInfo->m_capabilities = yp.parseStringOrStringList();
+                              appInfo->m_capabilities.sort(); } },
+                         { "opengl", false, YamlParser::Map, [&]() {
+                              yp.parseFields({
+                                  { "desktopProfile", false, YamlParser::Scalar, [&]() {
+                                       appInfo->m_openGLConfiguration.desktopProfile = yp.parseString(); } },
+                                  { "esMajorVersion", false, YamlParser::Scalar, [&]() {
+                                       appInfo->m_openGLConfiguration.esMajorVersion = yp.parseInt(2); } },
+                                  { "esMinorVersion", false, YamlParser::Scalar, [&]() {
+                                       appInfo->m_openGLConfiguration.esMinorVersion = yp.parseInt(0); } },
+                              }); } },
+                         { "applicationProperties", false, YamlParser::Map, [&]() {
+                              const QVariantMap rawMap = yp.parseMap();
+                              appInfo->m_sysAppProperties = rawMap.value(u"protected"_s).toMap();
+                              appInfo->m_allAppProperties = appInfo->m_sysAppProperties;
+                              const QVariantMap pri = rawMap.value(u"private"_s).toMap();
+                              for (auto it = pri.cbegin(); it != pri.cend(); ++it)
+                                  appInfo->m_allAppProperties.insert(it.key(), it.value()); } },
+                         { "logging", false, YamlParser::Map, [&]() {
+                              yp.parseFields({
+                                  { "dlt", false, YamlParser::Map, [&]() {
+                                       yp.parseFields({
+                                           { "id", false, YamlParser::Scalar, [&]() {
+                                                appInfo->m_dltId = yp.parseString(); } },
+                                           { "description", false, YamlParser::Scalar, [&]() {
+                                                appInfo->m_dltDescription = yp.parseString(); } },
+                                       }); } }
+                              }); } }
+                     });
+
+                     appIds << appInfo->id();
+                     pkgInfo->m_applications << appInfo.release();
+                 }); } },
+
+            // ----------------- intents -----------------
+
+            { "intents", false, YamlParser::List, [&, legacy]() {
+                 QStringList intentIds; // duplicate check
+                 yp.parseList([&, legacy]() {
+                     auto intentInfo = std::make_unique<IntentInfo>(pkgInfo.get());
+
+                     yp.parseFields({
+
+                         { "id", true, YamlParser::Scalar, [&]() {
+                              QString id = yp.parseString();
+                              if (id.isEmpty())
+                                  throw YamlParserException(&yp, "intents need to have an id (package %1)").arg(pkgInfo->id());
+                              if (intentIds.contains(id))
+                                  throw YamlParserException(&yp, "found two intent handlers for intent %2 (package %1)").arg(pkgInfo->id()).arg(id);
+                              intentInfo->m_id = id; } },
+                         { "visibility", false, YamlParser::Scalar, [&]() {
+                              const QString visibilityStr = yp.parseString();
+                              if (visibilityStr == u"private") {
+                                  intentInfo->m_visibility = IntentInfo::Private;
+                              } else if (visibilityStr != u"public") {
+                                  throw YamlParserException(&yp, "intent visibilty '%2' is invalid on intent %1 (valid values are either 'public' or 'private'")
+                                      .arg(intentInfo->m_id).arg(visibilityStr);
+                              } } },
+                         { legacy ? "handledBy" : "handlingApplicationId", false,  YamlParser::Scalar, [&]() {
+                              QString appId = yp.parseString();
+                              if (appIds.contains(appId)) {
+                                  intentInfo->m_handlingApplicationId = appId;
+                              } else {
+                                  throw YamlParserException(&yp, "the 'handlingApplicationId' field on intent %1 points to the unknown application id %2")
+                                      .arg(intentInfo->m_id).arg(appId);
+                              } } },
+                         { "requiredCapabilities", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                              intentInfo->m_requiredCapabilities = yp.parseStringOrStringList(); } },
+                         { "parameterMatch", false, YamlParser::Map, [&]() {
+                              intentInfo->m_parameterMatch = yp.parseMap(); } },
+                         { "icon", false, YamlParser::Scalar, [&]() {
+                              intentInfo->m_icon = yp.parseString(); } },
+                         { "name", false, YamlParser::Map, [&]() {
+                              intentInfo->m_names = yp.parseStringMap(); } },
+                         { "description", false, YamlParser::Map, [&]() {
+                              intentInfo->m_descriptions = yp.parseStringMap(); } },
+                         { "categories", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                              intentInfo->m_categories = yp.parseStringOrStringList();
+                              intentInfo->m_categories.sort(); } },
+                         { "handleOnlyWhenRunning", false, YamlParser::Scalar, [&]() {
+                              intentInfo->m_handleOnlyWhenRunning = yp.parseBool(); } },
+                     });
+
+                     if (intentInfo->handlingApplicationId().isEmpty()) {
+                         if (legacy) {
+                             intentInfo->m_handlingApplicationId = pkgInfo->id();
+                         } else if (pkgInfo->m_applications.count() == 1) {
+                             intentInfo->m_handlingApplicationId = pkgInfo->m_applications.constFirst()->id();
+                         } else {
+                             throw Exception(Error::Parse, "a 'handlingApplicationId' field on intent %1 is needed if more than one application is defined")
+                                 .arg(intentInfo->m_id);
+                         }
+                     }
+
+                     pkgInfo->m_intents << intentInfo.release();
+                 }); } }
         });
-        fields.emplace_back("icon", false, YamlParser::Scalar, [&pkgInfo](YamlParser *p) {
-            pkgInfo->m_icon = p->parseString();
-        });
-        fields.emplace_back("name", false, YamlParser::Map, [&pkgInfo](YamlParser *p) {
-            auto nameMap = p->parseMap();
-            for (auto it = nameMap.constBegin(); it != nameMap.constEnd(); ++it)
-                pkgInfo->m_names.insert(it.key(), it.value().toString());
-        });
-        if (!legacy) {
-            fields.emplace_back("description", false, YamlParser::Map, [&pkgInfo](YamlParser *p) {
-                auto descriptionMap = p->parseMap();
-                for (auto it = descriptionMap.constBegin(); it != descriptionMap.constEnd(); ++it)
-                    pkgInfo->m_descriptions.insert(it.key(), it.value().toString());
-            });
-        }
-        fields.emplace_back("categories", false, YamlParser::Scalar | YamlParser::List, [&pkgInfo](YamlParser *p) {
-            pkgInfo->m_categories = p->parseStringOrStringList();
-            pkgInfo->m_categories.sort();
-        });
-        fields.emplace_back("version", false, YamlParser::Scalar, [&pkgInfo](YamlParser *p) {
-            pkgInfo->m_version = p->parseString();
-        });
-        if (legacy) {
-            fields.emplace_back("code", true, YamlParser::Scalar, [&legacyAppInfo](YamlParser *p) {
-                legacyAppInfo->m_codeFilePath = p->parseString();
-            });
-            fields.emplace_back("runtime", true, YamlParser::Scalar, [&legacyAppInfo](YamlParser *p) {
-                legacyAppInfo->m_runtimeName = p->parseString();
-            });
-            fields.emplace_back("runtimeParameters", false, YamlParser::Map, [&legacyAppInfo](YamlParser *p) {
-                legacyAppInfo->m_runtimeParameters = p->parseMap();
-            });
-            fields.emplace_back("supportsApplicationInterface", false, YamlParser::Scalar, [&legacyAppInfo](YamlParser *p) {
-                legacyAppInfo->m_supportsApplicationInterface = p->parseScalar().toBool();
-            });
-            fields.emplace_back("capabilities", false, YamlParser::Scalar | YamlParser::List, [&legacyAppInfo](YamlParser *p) {
-                legacyAppInfo->m_capabilities = p->parseStringOrStringList();
-                legacyAppInfo->m_capabilities.sort();
-            });
-            fields.emplace_back("opengl", false, YamlParser::Map, [&legacyAppInfo](YamlParser *p) {
-                legacyAppInfo->m_openGLConfiguration = p->parseMap();
-
-                // sanity check - could be rewritten using the "fields" mechanism
-                static QStringList validKeys = {
-                    u"desktopProfile"_s,
-                    u"esMajorVersion"_s,
-                    u"esMinorVersion"_s
-                };
-                for (auto it = legacyAppInfo->m_openGLConfiguration.cbegin();
-                     it != legacyAppInfo->m_openGLConfiguration.cend(); ++it) {
-                    if (!validKeys.contains(it.key())) {
-                        throw YamlParserException(p, "the 'opengl' object contains the unsupported key '%1'")
-                                .arg(it.key());
-                    }
-                }
-            });
-            fields.emplace_back("applicationProperties", false, YamlParser::Map, [&legacyAppInfo](YamlParser *p) {
-                const QVariantMap rawMap = p->parseMap();
-                legacyAppInfo->m_sysAppProperties = rawMap.value(u"protected"_s).toMap();
-                legacyAppInfo->m_allAppProperties = legacyAppInfo->m_sysAppProperties;
-                const QVariantMap pri = rawMap.value(u"private"_s).toMap();
-                for (auto it = pri.cbegin(); it != pri.cend(); ++it)
-                    legacyAppInfo->m_allAppProperties.insert(it.key(), it.value());
-            });
-            fields.emplace_back("documentUrl", false, YamlParser::Scalar, [&legacyAppInfo](YamlParser *p) {
-                legacyAppInfo->m_documentUrl = p->parseScalar().toString();
-            });
-            fields.emplace_back("mimeTypes", false, YamlParser::Scalar | YamlParser::List, [&legacyAppInfo](YamlParser *p) {
-                legacyAppInfo->m_supportedMimeTypes = p->parseStringOrStringList();
-                legacyAppInfo->m_supportedMimeTypes.sort();
-            });
-            fields.emplace_back("logging", false, YamlParser::Map, [&legacyAppInfo](YamlParser *p) {
-                const QVariantMap logging = p->parseMap();
-                if (!logging.isEmpty()) {
-                    if (logging.size() > 1 || logging.firstKey() != u"dlt"_s)
-                        throw YamlParserException(p, "'logging' only supports the 'dlt' key");
-                    legacyAppInfo->m_dltConfiguration = logging.value(u"dlt"_s).toMap();
-
-                    // sanity check
-                    for (auto it = legacyAppInfo->m_dltConfiguration.cbegin(); it != legacyAppInfo->m_dltConfiguration.cend(); ++it) {
-                        if (it.key() != u"id"_s && it.key() != u"description"_s)
-                            throw YamlParserException(p, "unsupported key in 'logging/dlt'");
-                    }
-                }
-            });
-            fields.emplace_back("environmentVariables", false, YamlParser::Map, [](YamlParser *p) {
-                qCDebug(LogSystem) << "ignoring 'environmentVariables'";
-                (void) p->parseMap();
-            });
-        }
-
-        // ----------------- applications -----------------
-
-        if (!legacy) {
-            fields.emplace_back("applications", true, YamlParser::List, [&pkgInfo, &appIds](YamlParser *p) {
-                p->parseList([&pkgInfo, &appIds](YamlParser *p) {
-                    auto appInfo = std::make_unique<ApplicationInfo>(pkgInfo.get());
-                    YamlParser::Fields appFields;
-
-                    appFields.emplace_back("id", true, YamlParser::Scalar, [&appInfo, &appIds](YamlParser *p) {
-                        QString id = p->parseString();
-                        if (id.isEmpty())
-                            throw YamlParserException(p, "applications need to have an id");
-                        if (appIds.contains(id))
-                            throw YamlParserException(p, "found two applications with the same id %1").arg(id);
-                        appInfo->m_id = id;
-                    });
-                    appFields.emplace_back("icon", false, YamlParser::Scalar, [&appInfo](YamlParser *p) {
-                        appInfo->m_icon = p->parseString();
-                    });
-                    appFields.emplace_back("name", false, YamlParser::Map, [&appInfo](YamlParser *p) {
-                        const auto nameMap = p->parseMap();
-                        for (auto it = nameMap.constBegin(); it != nameMap.constEnd(); ++it)
-                            appInfo->m_names.insert(it.key(), it.value().toString());
-                    });
-                    appFields.emplace_back("description", false, YamlParser::Map, [&appInfo](YamlParser *p) {
-                        const auto descriptionMap = p->parseMap();
-                        for (auto it = descriptionMap.constBegin(); it != descriptionMap.constEnd(); ++it)
-                            appInfo->m_descriptions.insert(it.key(), it.value().toString());
-                    });
-                    appFields.emplace_back("categories", false, YamlParser::Scalar | YamlParser::List, [&appInfo](YamlParser *p) {
-                        appInfo->m_categories = p->parseStringOrStringList();
-                        appInfo->m_categories.sort();
-                    });
-                    appFields.emplace_back("code", true, YamlParser::Scalar, [&appInfo](YamlParser *p) {
-                        appInfo->m_codeFilePath = p->parseString();
-                    });
-                    appFields.emplace_back("runtime", true, YamlParser::Scalar, [&appInfo](YamlParser *p) {
-                        appInfo->m_runtimeName = p->parseString();
-                    });
-                    appFields.emplace_back("runtimeParameters", false, YamlParser::Map, [&appInfo](YamlParser *p) {
-                        appInfo->m_runtimeParameters = p->parseMap();
-                    });
-                    appFields.emplace_back("supportsApplicationInterface", false, YamlParser::Scalar, [&appInfo](YamlParser *p) {
-                        appInfo->m_supportsApplicationInterface = p->parseScalar().toBool();
-                    });
-                    appFields.emplace_back("capabilities", false, YamlParser::Scalar | YamlParser::List, [&appInfo](YamlParser *p) {
-                        appInfo->m_capabilities = p->parseStringOrStringList();
-                        appInfo->m_capabilities.sort();
-                    });
-                    appFields.emplace_back("opengl", false, YamlParser::Map, [&appInfo](YamlParser *p) {
-                        appInfo->m_openGLConfiguration = p->parseMap();
-
-                        // sanity check - could be rewritten using the "fields" mechanism
-                        static QStringList validKeys = {
-                            u"desktopProfile"_s,
-                            u"esMajorVersion"_s,
-                            u"esMinorVersion"_s
-                        };
-                        for (auto it = appInfo->m_openGLConfiguration.cbegin();
-                             it != appInfo->m_openGLConfiguration.cend(); ++it) {
-                            if (!validKeys.contains(it.key())) {
-                                throw YamlParserException(p, "the 'opengl' object contains the unsupported key '%1'")
-                                        .arg(it.key());
-                            }
-                        }
-                    });
-                    appFields.emplace_back("applicationProperties", false, YamlParser::Map, [&appInfo](YamlParser *p) {
-                        const QVariantMap rawMap = p->parseMap();
-                        appInfo->m_sysAppProperties = rawMap.value(u"protected"_s).toMap();
-                        appInfo->m_allAppProperties = appInfo->m_sysAppProperties;
-                        const QVariantMap pri = rawMap.value(u"private"_s).toMap();
-                        for (auto it = pri.cbegin(); it != pri.cend(); ++it)
-                            appInfo->m_allAppProperties.insert(it.key(), it.value());
-                    });
-                    appFields.emplace_back("logging", false, YamlParser::Map, [&appInfo](YamlParser *p) {
-                        const QVariantMap logging = p->parseMap();
-                        if (!logging.isEmpty()) {
-                            if (logging.size() > 1 || logging.firstKey() != u"dlt")
-                                throw YamlParserException(p, "'logging' only supports the 'dlt' key");
-                            appInfo->m_dltConfiguration = logging.value(u"dlt"_s).toMap();
-
-                            // sanity check
-                            for (auto it = appInfo->m_dltConfiguration.cbegin(); it != appInfo->m_dltConfiguration.cend(); ++it) {
-                                if (it.key() != u"id"_s && it.key() != u"description")
-                                    throw YamlParserException(p, "unsupported key in 'logging/dlt'");
-                            }
-                        }
-                    });
-
-                    p->parseFields(appFields);
-                    appIds << appInfo->id();
-                    pkgInfo->m_applications << appInfo.release();
-                });
-            });
-        }
-
-        // ----------------- intents -----------------
-
-        fields.emplace_back("intents", false, YamlParser::List, [&pkgInfo, &appIds, legacy](YamlParser *p) {
-            QStringList intentIds; // duplicate check
-            p->parseList([&pkgInfo, &appIds, &intentIds, legacy](YamlParser *p) {
-                auto intentInfo = std::make_unique<IntentInfo>(pkgInfo.get());
-                YamlParser::Fields intentFields;
-
-                intentFields.emplace_back("id", true, YamlParser::Scalar, [&intentInfo, &intentIds, &pkgInfo](YamlParser *p) {
-                    QString id = p->parseString();
-                    if (id.isEmpty())
-                        throw YamlParserException(p, "intents need to have an id (package %1)").arg(pkgInfo->id());
-                    if (intentIds.contains(id))
-                        throw YamlParserException(p, "found two intent handlers for intent %2 (package %1)").arg(pkgInfo->id()).arg(id);
-                    intentInfo->m_id = id;
-                });
-                intentFields.emplace_back("visibility", false, YamlParser::Scalar, [&intentInfo](YamlParser *p) {
-                    const QString visibilityStr = p->parseString();
-                    if (visibilityStr == u"private") {
-                        intentInfo->m_visibility = IntentInfo::Private;
-                    } else if (visibilityStr != u"public") {
-                        throw YamlParserException(p, "intent visibilty '%2' is invalid on intent %1 (valid values are either 'public' or 'private'")
-                                .arg(intentInfo->m_id).arg(visibilityStr);
-                    }
-                });
-                intentFields.emplace_back(legacy ? "handledBy" : "handlingApplicationId", false,  YamlParser::Scalar, [&intentInfo, &appIds](YamlParser *p) {
-                    QString appId = p->parseString();
-                    if (appIds.contains(appId)) {
-                        intentInfo->m_handlingApplicationId = appId;
-                    } else {
-                        throw YamlParserException(p, "the 'handlingApplicationId' field on intent %1 points to the unknown application id %2")
-                                .arg(intentInfo->m_id).arg(appId);
-                    }
-                });
-                intentFields.emplace_back("requiredCapabilities", false, YamlParser::Scalar | YamlParser::List, [&intentInfo](YamlParser *p) {
-                    intentInfo->m_requiredCapabilities = p->parseStringOrStringList();
-                });
-                intentFields.emplace_back("parameterMatch", false, YamlParser::Map, [&intentInfo](YamlParser *p) {
-                    intentInfo->m_parameterMatch = p->parseMap();
-                });
-                intentFields.emplace_back("icon", false, YamlParser::Scalar, [&intentInfo](YamlParser *p) {
-                    intentInfo->m_icon = p->parseString();
-                });
-                intentFields.emplace_back("name", false, YamlParser::Map, [&intentInfo](YamlParser *p) {
-                    auto nameMap = p->parseMap();
-                    for (auto it = nameMap.constBegin(); it != nameMap.constEnd(); ++it)
-                        intentInfo->m_names.insert(it.key(), it.value().toString());
-                });
-                intentFields.emplace_back("description", false, YamlParser::Map, [&intentInfo](YamlParser *p) {
-                    auto descriptionMap = p->parseMap();
-                    for (auto it = descriptionMap.constBegin(); it != descriptionMap.constEnd(); ++it)
-                        intentInfo->m_descriptions.insert(it.key(), it.value().toString());
-                });
-                intentFields.emplace_back("categories", false, YamlParser::Scalar | YamlParser::List, [&intentInfo](YamlParser *p) {
-                    intentInfo->m_categories = p->parseStringOrStringList();
-                    intentInfo->m_categories.sort();
-                });
-                intentFields.emplace_back("handleOnlyWhenRunning", false, YamlParser::Scalar, [&intentInfo](YamlParser *p) {
-                    intentInfo->m_handleOnlyWhenRunning = p->parseScalar().toBool();
-                });
-
-                p->parseFields(intentFields);
-
-                if (intentInfo->handlingApplicationId().isEmpty()) {
-                    if (legacy) {
-                        intentInfo->m_handlingApplicationId = pkgInfo->id();
-                    } else if (pkgInfo->m_applications.count() == 1) {
-                        intentInfo->m_handlingApplicationId = pkgInfo->m_applications.constFirst()->id();
-                    } else {
-                        throw Exception(Error::Parse, "a 'handlingApplicationId' field on intent %1 is needed if more than one application is defined")
-                                .arg(intentInfo->m_id);
-                    }
-                }
-
-                pkgInfo->m_intents << intentInfo.release();
-            });
-        });
-
-        yp.parseFields(fields);
 
         if (legacy)
             pkgInfo->m_applications << legacyAppInfo.release();
@@ -348,7 +267,7 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
         return pkgInfo.release();
     } catch (const Exception &e) {
         throw Exception(e.errorCode(), "Failed to parse manifest file %1: %2")
-                .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : u"<stream>"_s, e.errorString());
+            .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : u"<stream>"_s, e.errorString());
     }
 }
 

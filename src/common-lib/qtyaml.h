@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <vector>
+#include <chrono>
 
 #include <QtCore/QJsonParseError>
 #include <QtCore/QVector>
@@ -63,7 +64,7 @@ public:
     YamlParser(const QByteArray &data, const QString &fileName = QString());
     ~YamlParser();
 
-    QString sourcePath() const;
+    QString sourceUrl() const;
     QString sourceDir() const;
     QString sourceName() const;
 
@@ -75,33 +76,49 @@ public:
     void nextEvent();
 
     bool isScalar() const;
-    QVariant parseScalar() const;
-    QString parseString() const;
+    QVariant parseScalar();
+    QString parseString();
+    int parseInt(int min = std::numeric_limits<int>::min(), int max = std::numeric_limits<int>::max());
+    bool parseBool();
+    std::chrono::seconds parseDurationAsSec(QStringView defaultUnit = { });
+    std::chrono::milliseconds parseDurationAsMSec(QStringView defaultUnit = { });
+    std::chrono::microseconds parseDurationAsUSec(QStringView defaultUnit = { });
 
     bool isMap() const;
     QVariantMap parseMap();
+    QMap<QString, QString> parseStringMap();
 
     bool isList() const;
     QVariantList parseList();
-    void parseList(const std::function<void (YamlParser *)> &callback);
+    void parseList(const std::function<void()> &callback);
 
     // convenience
     QVariant parseVariant();
     QStringList parseStringOrStringList();
 
-    enum FieldType { Scalar = 0x01, List = 0x02, Map = 0x04 };
+    enum FieldType : int { Scalar = 0x01, List = 0x02, Map = 0x04 };
     Q_DECLARE_FLAGS(FieldTypes, FieldType)
     struct Field
     {
         QString name;
-        bool required;
+        bool required : 1;
+        bool enabled : 1;
         FieldTypes types;
-        std::function<void(YamlParser *)> callback;
+        std::function<void()> callback;
 
         Field(const char *_name, bool _required, FieldTypes _types,
-              const std::function<void(YamlParser *)> &_callback)
+              const std::function<void()> &_callback)
             : name(QString::fromLatin1(_name))
             , required(_required)
+            , enabled(true)
+            , types(_types)
+            , callback(_callback)
+        { }
+        Field(bool _enabled, const char *_name, bool _required, FieldTypes _types,
+              const std::function<void()> &_callback)
+            : name(QString::fromLatin1(_name))
+            , required(_required)
+            , enabled(_enabled)
             , types(_types)
             , callback(_callback)
         { }

@@ -72,8 +72,12 @@ public:
     bool isRunningOnEmbedded() const;
 
     void setup(const Configuration *cfg) noexcept(false);
-    void loadQml(bool loadDummyData = false) noexcept(false);
+    QT_DEPRECATED_X("Replaced by loadQml() in 6.7 - will be removed in 6.9")
+    void loadQml(bool loadDummyData) noexcept(false);
+    void loadQml() noexcept(false);
+    QT_DEPRECATED_X("Replaced by showWindow() in 6.8 - will be removed in 6.10")
     void showWindow(bool showFullscreen);
+    void showWindow();
 
     Q_INVOKABLE void shutDown(int exitCode = 0);
 
@@ -85,27 +89,19 @@ protected:
     void registerResources(const QStringList &resources) const;
     void loadStartupPlugins(const QStringList &startupPluginPaths) noexcept(false);
     void parseSystemProperties(const QVariantMap &rawSystemProperties);
-    void setupDBus(const std::function<QString(const char *)> &busForInterface,
-                   const std::function<QVariantMap(const char *)> &policyForInterface);
+    void setupDBus(const Configuration *cfg);
     void setMainQmlFile(const QString &mainQml) noexcept(false);
-    void setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) noexcept(false);
-    void setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QStringList &runtimeAdditionalLaunchers,
-                                    const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths,
-                                    const QVariantMap &openGLConfiguration,
-                                    const QStringList &iconThemeSearchPaths, const QString &iconThemeName);
-    void loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) noexcept(false);
-    void setupIntents(int disambiguationTimeout, int startApplicationTimeout,
-                      int replyFromApplicationTimeout, int replyFromSystemTimeout) noexcept(false);
-    void setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration) noexcept(false);
-    void setupQuickLauncher(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
-                            qreal idleLoad, int failedStartLimit, int failedStartLimitIntervalSec) noexcept(false);
-    void setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths) noexcept(false);
+    void setupSingleOrMultiProcess(const Configuration *cfg) noexcept(false);
+    void setupRuntimesAndContainers(const Configuration *cfg);
+    void loadPackageDatabase(const Configuration *cfg) noexcept(false);
+    void setupIntents(const Configuration *cfg) noexcept(false);
+    void setupSingletons(const Configuration *cfg) noexcept(false);
+    void setupQuickLauncher(const Configuration *cfg);
+    void setupInstaller(const Configuration *cfg) noexcept(false);
     void registerPackages();
 
     void setupQmlEngine(const QStringList &importPaths, const QString &quickControlsStyle = QString());
-    void setupWindowTitle(const QString &title, const QString &iconPath);
-    void setupWindowManager(const QString &waylandSocketName, const QVariantList &waylandExtraSockets,
-                            bool slowAnimations, bool noUiWatchdog, bool allowUnknownUiClients);
+    void setupWindowManager(const Configuration *cfg);
     void createInstanceInfoFile(const QString &instanceId) noexcept(false);
 
     enum SystemProperties {
@@ -120,13 +116,15 @@ private:
     static int &preConstructor(int &argc, char **argv, InitFlags initFlags);
 
     QString registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName,
-                               const char *serviceName, const char *path) noexcept(false);
+                               const QString &serviceName, const QString &path) noexcept(false);
 
 private:
     bool m_isSingleProcessMode = false;
     bool m_isRunningOnEmbedded = false;
     QUrl m_mainQml;
     QString m_mainQmlLocalFile;
+    bool m_showFullscreen;
+    bool m_loadDummyData = false; //TODO: remove in 6.9
 
     QQmlApplicationEngine *m_engine = nullptr;
     QQuickView *m_view = nullptr; // only set if we allocate the window ourselves
@@ -141,12 +139,6 @@ private:
     QVector<StartupInterface *> m_startupPlugins;
     QVector<QVariantMap> m_systemProperties;
 
-    bool m_noSecurity = false;
-    bool m_developmentMode = false;
-    QStringList m_builtinAppsManifestDirs;
-    QString m_installationDir;
-    QString m_documentDir;
-    QString m_installationDirMountPoint;
     QVariantMap m_infoFileContents;
 
     QDBusServer *m_p2pServer = nullptr;

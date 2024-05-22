@@ -199,8 +199,8 @@ void tst_ControllerTool::initTestCase()
     try {
         m_main->setup(m_config);
         m_mainSetupDone = true;
-        m_main->loadQml(false);
-        m_main->showWindow(false);
+        m_main->loadQml();
+        m_main->showWindow();
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
     }

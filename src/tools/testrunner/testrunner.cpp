@@ -33,7 +33,7 @@ QT_BEGIN_NAMESPACE_AM
 
 void TestRunner::setup(Configuration *cfg)
 {
-    const QString testFile = cfg->mainQmlFile();
+    const QString testFile = cfg->yaml.ui.mainQml;
     const QString sourceFile = cfg->testRunnerSourceFile();
     const QStringList testRunnerArguments = cfg->testRunnerArguments();
     cfg->setForceVerbose(qEnvironmentVariableIsSet("AM_VERBOSE_TEST"));
@@ -87,7 +87,8 @@ void TestRunner::setup(Configuration *cfg)
 
     qInfo().nospace().noquote() << "Verbose mode is " << (cfg->verbose() ? "on" : "off")
                                 << " (change by (un)setting $AM_VERBOSE_TEST)\n TEST: " << testFile
-                                << " in " << (cfg->forceMultiProcess() ? "multi" : "single") << "-process mode";
+                                << " in " << (cfg->yaml.flags.forceMultiProcess ? "multi" : "single")
+                                << "-process mode";
 }
 
 int TestRunner::exec(QQmlEngine *qmlEngine)

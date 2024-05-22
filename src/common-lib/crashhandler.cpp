@@ -84,15 +84,19 @@ struct CrashHandlerGlobal
 Q_GLOBAL_STATIC(CrashHandlerGlobal, chg);
 
 
-void CrashHandler::setCrashActionConfiguration(const QVariantMap &config)
+void CrashHandler::setCrashActionConfiguration(bool printBacktrace, bool printQmlStack,
+                                               int waitForGdbAttach, bool dumpCore,
+                                               int stackFramesToIgnoreOnCrash,
+                                               int stackFramesToIgnoreOnException)
 {
-    chg()->printBacktrace = config.value(u"printBacktrace"_s, chg()->printBacktrace).toBool();
-    chg()->printQmlStack = config.value(u"printQmlStack"_s, chg()->printQmlStack).toBool();
-    chg()->waitForGdbAttach = config.value(u"waitForGdbAttach"_s, chg()->waitForGdbAttach).toInt() * timeoutFactor();
-    chg()->dumpCore = config.value(u"dumpCore"_s, chg()->dumpCore).toBool();
-    QVariantMap stackFramesToIgnore = config.value(u"stackFramesToIgnore"_s).toMap();
-    chg()->stackFramesToIgnoreOnCrash = stackFramesToIgnore.value(u"onCrash"_s, chg()->stackFramesToIgnoreOnCrash).toInt();
-    chg()->stackFramesToIgnoreOnException = stackFramesToIgnore.value(u"onException"_s, chg()->stackFramesToIgnoreOnException).toInt();
+    chg()->printBacktrace = printBacktrace;
+    chg()->printQmlStack = printQmlStack;
+    chg()->waitForGdbAttach = waitForGdbAttach * timeoutFactor();
+    chg()->dumpCore = dumpCore;
+    if (stackFramesToIgnoreOnCrash >= 0)
+        chg()->stackFramesToIgnoreOnCrash = stackFramesToIgnoreOnCrash;
+    if (stackFramesToIgnoreOnException >= 0)
+        chg()->stackFramesToIgnoreOnException = stackFramesToIgnoreOnException;
 }
 
 void CrashHandler::setQmlEngine(QQmlEngine *engine)

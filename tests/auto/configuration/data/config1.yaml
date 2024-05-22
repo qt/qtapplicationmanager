@@ -14,8 +14,8 @@ containers:
 intents:
   disable: true
   timeouts:
-    disambiguation: 1
-    startApplication: 2
+    disambiguation: 0.001s
+    startApplication: 2ms
     replyFromApplication: 3
     replyFromSystem: 4
 
@@ -70,7 +70,7 @@ applications:
 crashAction:
   printBacktrace: true
   printQmlStack: true
-  waitForGdbAttach: true
+  waitForGdbAttach: 42
   dumpCore: true
 
 systemProperties:

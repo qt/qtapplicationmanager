@@ -10,7 +10,7 @@
 \ingroup qtappman-highlights
 \title Configuration
 \brief Configure the application manager through configuration (config) files and the command line.
-\section1 Main Configuration
+\section1 Introduction
 
 You can configure the application manager through configuration (config) files and the command line. To display the
 currently supported command line options, run \c{appman --help}. Some of these options can also be
@@ -19,6 +19,8 @@ option.
 
 The config file is a \l{YAML syntax}{YAML file that follows the same rules} as all the other YAML
 files used in the application manager.
+
+\section3 Variable Substitution
 
 Before parsing the YAML document, the application manager substitutes variables denoted by a
 syntax similar to \c bash: \c ${VariableName}. There are different types of variables that can be
@@ -45,6 +47,8 @@ substituted this way:
             otherwise by your system administrator.
 \endtable
 
+\section3 Multiple Values
+
 If an option is specified in more than one place: either on the command line and the config files,
 or across multiple config files, the final value is resolved based on these rules:
 
@@ -58,8 +62,20 @@ or across multiple config files, the final value is resolved based on these rule
 \c ui/importPaths. In this case, all values, regardless of where they are specified, are
 merged into one single, final list.
 
+\section3 Time duration values
+\keyword time-duration
+Starting with version 6.8, all time duration values should be specified with a unit suffix. The
+following units are supported: \c h, \c min, \c s, \c ms and \c us.
+Fields that have existed before 6.8 still accept values without a unit suffix, but it is recommended
+to upgrade all time durations to use the new syntax.
+In addition, a zero time duration can also be specified as \c off.
+
+\section3 Example
+
 A very minimalistic \c am-config.yaml example would be something like this, which defines the
 main qml entry point and two import paths:
+
+\section1 Main Configuration
 
 \badcode
 formatVersion: 1
@@ -369,14 +385,14 @@ ui:
         \li [\c logging/useAMConsoleLogger]
         \li bool
         \li Always use the application manager specific logging function, which enables colored
-            console output. If no value or an invalid value is provided, the logging function is
-            only used when messagePattern isn't set.
+            console output. If any non-boolean value is provided (preferably the string \c auto),
+            the logging function is only used when \c messagePattern isn't set. (default: \c auto)
     \row
         \li [\c logging/dlt/id]
         \li string
         \li If provided, it is used as the automotive DLT application ID. The size is limited to
             four characters, additional characters are discarded.
-            \note The default ID, "PCAM", is used until this configuration option has been applied.
+            \note The default ID, "QTAM", is used until this configuration option has been applied.
     \row
         \li [\c logging/dlt/description]
         \li string
@@ -459,8 +475,9 @@ ui:
             (default: 5)
     \row
         \li [\c quicklaunch/failedStartLimitIntervalSec]
-        \li int
-        \li See \c failedStartLimit above. (default: 10)
+        \li duration
+        \li A \l{time-duration}{time interval} with seconds precision, see \c failedStartLimit above.
+            (default: 10s)
     \row
         \li \b --wayland-socket-name
             \br [\c wayland/socketName]
@@ -730,10 +747,10 @@ The following conditions are handled:
             your kernel configuration. (default: true)
     \row
         \li \c waitForGdbAttach
-        \li int
-        \li Specifies a timeout in seconds while the crashed program is being held in the stopped
-            state, waiting for a debugger to attach. Any value \c{<= 0} skips this step.
-            (default: 0)
+        \li duration
+        \li Specifies a \l{time-duration}{time duration} with seconds precision: it is the time a
+            crashed program is being held in the stopped state, waiting for a debugger to attach.
+            Any value \c{<= 0} skips this step. (default: 0s)
     \row
         \li \c stackFramesToIgnore/onCrash
         \li int
@@ -753,10 +770,10 @@ The following conditions are handled:
 
 \section1 Intent Timeout Specification
 
-The \c intents/timeouts sub-object lets you specify the exact timeouts in milli-seconds for the
-asynchronous IPC used to implement the intents mechanism. Any intent whose lifetime exceeds a
-timeout for the stages shown below is canceled by the system and an error reply is sent back
-to the original sender.
+The \c intents/timeouts sub-object lets you specify the exact \l{time-duration}{timeouts} with
+milli-seconds precision for the asynchronous IPC used to implement the intents mechanism. Any
+intent whose lifetime exceeds a timeout for the stages shown below is canceled by the system and
+an error reply is sent back to the original sender.
 Setting any of the timeout values to \c 0 or a negative number disables the timeout handling for
 that specific stage.
 
@@ -767,25 +784,25 @@ that specific stage.
         \li Description
     \row
         \li \c disambiguation
-        \li int
-        \li The time interval in milli-seconds, in which a disambiguation decision for an intent
-            has to be made in the System UI. (default: 10000)
+        \li duration
+        \li The time interval in which a disambiguation decision for an intent
+            has to be made in the System UI. (default: 10s)
     \row
         \li \c startApplication
-        \li int
-        \li The time interval in milli-seconds, in which an application that should handle an
+        \li duration
+        \li The time interval in which an application that should handle an
             intent request is supposed to be started - of course, only if it is not already
-            running. (default: 3000)
+            running. (default: 3s)
     \row
         \li \c replyFromApplication
-        \li int
-        \li The time interval in milli-seconds, in which the handling application needs to
+        \li duration
+        \li The time interval in which the handling application needs to
             acknowledge the receipt of an intent request. For QML applications, this is done in
-            IntentHandler::requestReceived. (default: 5000)
+            IntentHandler::requestReceived. (default: 5s)
     \row
         \li \c replyFromSystem
-        \li int
-        \li The time interval in milli-seconds, after which the complete handling of a single
+        \li duration
+        \li The time interval after which the complete handling of a single
             intent needs to be finished: this starts when actually creating the intent in the
             requesting application, going through the server to the handling application and then
             returning the (error) result back from the handling to the requesting application.
@@ -794,7 +811,7 @@ that specific stage.
                   sub-steps towards the completion of an intent request, while this timeout
                   represents the whole process. Making it slightly bigger than the sum accounts
                   for processing and communication overhead that is not part of the individual sub
-                  timeouts. (default: 20000)
+                  timeouts. (default: 20s)
 \endtable
 
 Please be aware that due to the asynchronous nature of the intent delivery, an intent might be

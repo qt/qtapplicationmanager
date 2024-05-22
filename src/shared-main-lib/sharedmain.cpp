@@ -158,12 +158,12 @@ void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
     StartupTimer::instance()->checkpoint("after logging setup");
 }
 
-void SharedMain::setupOpenGL(const QVariantMap &openGLConfiguration)
+void SharedMain::setupOpenGL(const OpenGLConfiguration &openGLConfiguration)
 {
 #if !defined(QT_NO_OPENGL)
-    QString profileName = openGLConfiguration.value(u"desktopProfile"_s).toString();
-    int majorVersion = openGLConfiguration.value(u"esMajorVersion"_s, -1).toInt();
-    int minorVersion = openGLConfiguration.value(u"esMinorVersion"_s, -1).toInt();
+    QString profileName = openGLConfiguration.desktopProfile;
+    int majorVersion = openGLConfiguration.esMajorVersion;
+    int minorVersion = openGLConfiguration.esMinorVersion;
 
     QOpenGLContext *globalContext = qt_gl_global_share_context();
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();

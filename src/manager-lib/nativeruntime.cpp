@@ -285,13 +285,13 @@ bool NativeRuntime::start()
     if (m_slowAnimations)
         uiConfig.insert(u"slowAnimations"_s, true);
 
-    QVariantMap openGLConfig;
+    OpenGLConfiguration openGLConfig;
     if (m_app)
         openGLConfig = m_app->info()->openGLConfiguration();
-    if (openGLConfig.isEmpty())
+    if (openGLConfig == OpenGLConfiguration { })
         openGLConfig = manager()->systemOpenGLConfiguration();
-    if (!openGLConfig.isEmpty())
-        uiConfig.insert(u"opengl"_s, openGLConfig);
+    if (openGLConfig != OpenGLConfiguration { })
+        uiConfig.insert(u"opengl"_s, openGLConfig.toMap());
 
     QString iconThemeName = manager()->iconThemeName();
     QStringList iconThemeSearchPaths = manager()->iconThemeSearchPaths();

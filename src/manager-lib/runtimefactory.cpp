@@ -102,7 +102,7 @@ void RuntimeFactory::setSlowAnimations(bool value)
     m_slowAnimations = value;
 }
 
-void RuntimeFactory::setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration)
+void RuntimeFactory::setSystemOpenGLConfiguration(const OpenGLConfiguration &openGLConfiguration)
 {
     for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
         it.value()->setSystemOpenGLConfiguration(openGLConfiguration);

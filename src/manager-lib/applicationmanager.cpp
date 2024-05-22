@@ -445,7 +445,7 @@ void ApplicationManager::setSystemProperties(const QVariantMap &map)
     d->systemProperties = map;
 }
 
-void ApplicationManager::setContainerSelectionConfiguration(const QList<QPair<QString, QString>> &containerSelectionConfig)
+void ApplicationManager::setContainerSelectionConfiguration(const QList<std::pair<QString, QString>> &containerSelectionConfig)
 {
     d->containerSelectionConfig = containerSelectionConfig;
 }

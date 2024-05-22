@@ -186,12 +186,12 @@ void AbstractRuntimeManager::setSystemProperties(const QVariantMap &thirdParty, 
     m_systemPropertiesBuiltIn = builtIn;
 }
 
-QVariantMap AbstractRuntimeManager::systemOpenGLConfiguration() const
+OpenGLConfiguration AbstractRuntimeManager::systemOpenGLConfiguration() const
 {
     return m_systemOpenGLConfiguration;
 }
 
-void AbstractRuntimeManager::setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration)
+void AbstractRuntimeManager::setSystemOpenGLConfiguration(const OpenGLConfiguration &openGLConfiguration)
 {
     m_systemOpenGLConfiguration = openGLConfiguration;
 }

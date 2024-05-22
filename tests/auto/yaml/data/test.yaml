@@ -44,3 +44,13 @@ list-of-maps:
   name: '1'
 - index: 2
   name: '2'
+
+durations:
+  h: -1.5h
+  min: " 1.5 min "
+  s: 1.5  s
+  ms: 1.5 ms
+  us: 1.5us
+  offas0: off
+  default: 1_500
+  invalid: 1.5x

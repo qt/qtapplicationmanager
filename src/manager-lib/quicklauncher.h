@@ -22,7 +22,7 @@ class QuickLauncher : public QObject
     Q_OBJECT
 
 public:
-    static QuickLauncher *createInstance(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
+    static QuickLauncher *createInstance(const QMap<std::pair<QString, QString>, int> &runtimesPerContainer,
                                          qreal idleLoad, int failedStartLimit,
                                          int failedStartLimitIntervalSec);
 
@@ -42,7 +42,7 @@ protected:
     void timerEvent(QTimerEvent *te) override;
 
 private:
-    QuickLauncher(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
+    QuickLauncher(const QMap<std::pair<QString, QString>, int> &runtimesPerContainer,
                   qreal idleLoad, int failedStartLimit, int failedStartLimitIntervalSec,
                   QObject *parent = nullptr);
     QuickLauncher(const QuickLauncher &);

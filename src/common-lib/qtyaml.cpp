@@ -3,12 +3,15 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <charconv>
+
 #include <QVariant>
 #include <QRegularExpression>
 #include <QDebug>
 #include <QtNumeric>
 #include <QFileInfo>
 #include <QDir>
+#include <QByteArray>
 
 #include <yaml.h>
 
@@ -220,9 +223,15 @@ YamlParser::~YamlParser()
     delete d;
 }
 
-QString YamlParser::sourcePath() const
+QString YamlParser::sourceUrl() const
 {
-    return QDir(sourceDir()).absoluteFilePath(sourceName());
+    if (sourceName().isEmpty())
+        return u"<yaml file>"_s;
+    const QString s = QDir(sourceDir()).absoluteFilePath(sourceName());
+    if (s.startsWith(u":/"))
+        return u"qrc://" + s.mid(2);
+    else
+        return u"file://" + s;
 }
 
 QString YamlParser::sourceDir() const
@@ -257,13 +266,12 @@ QPair<QString, int> YamlParser::parseHeader()
 
     QPair<QString, int> result;
 
-    Fields fields = {
-        { "formatType", true, YamlParser::Scalar, [&result](YamlParser *parser) {
-              result.first = parser->parseScalar().toString(); } },
-        { "formatVersion", true, YamlParser::Scalar, [&result](YamlParser *parser) {
-              result.second = parser->parseScalar().toInt(); } }
+    const Fields fields = {
+        { "formatType", true, YamlParser::Scalar, [&, this]() {
+             result.first = parseScalar().toString(); } },
+        { "formatVersion", true, YamlParser::Scalar, [&, this]() {
+              result.second = parseScalar().toInt(); } }
     };
-
     parseFields(fields);
 
     d->parsedHeader = true;
@@ -300,10 +308,10 @@ bool YamlParser::isScalar() const
     return d->event.type == YAML_SCALAR_EVENT;
 }
 
-QString YamlParser::parseString() const
+QString YamlParser::parseString()
 {
     if (!isScalar())
-        return QString{};
+        throw YamlParserException(this, "expected a string value");
 
     Q_ASSERT(d->event.data.scalar.value);
     Q_ASSERT(static_cast<int>(d->event.data.scalar.length) >= 0);
@@ -312,8 +320,93 @@ QString YamlParser::parseString() const
                              static_cast<int>(d->event.data.scalar.length));
 }
 
-QVariant YamlParser::parseScalar() const
+int YamlParser::parseInt(int min, int max)
 {
+    auto v = parseScalar();
+    if (v.typeId() != QMetaType::Int)
+        throw YamlParserException(this, "expected an integer value");
+    int i = v.toInt();
+    if ((min != std::numeric_limits<int>::min()) && (i < min))
+        throw YamlParserException(this, "integer value out of bounds: %1 < %2").arg(i).arg(min);
+    if ((max != std::numeric_limits<int>::max()) && (i > max))
+        throw YamlParserException(this, "integer value out of bounds: %1 > %2").arg(i).arg(max);
+    return i;
+}
+
+bool YamlParser::parseBool()
+{
+    auto v = parseScalar();
+    if (v.typeId() != QMetaType::Bool)
+        throw YamlParserException(this, "expected a boolean value");
+    return v.toBool();
+}
+
+std::chrono::seconds YamlParser::parseDurationAsSec(QStringView defaultUnit)
+{
+    return std::chrono::duration_cast<std::chrono::seconds>(parseDurationAsUSec(defaultUnit));
+}
+
+std::chrono::milliseconds YamlParser::parseDurationAsMSec(QStringView defaultUnit)
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(parseDurationAsUSec(defaultUnit));
+}
+
+std::chrono::microseconds YamlParser::parseDurationAsUSec(QStringView defaultUnit)
+{
+    QString s = parseString().trimmed();
+    if (s == u"off")
+        return { };
+
+    // YAML allows _ as a grouping separator
+    if (s.contains(u'_'))
+        s = s.replace(u'_', u""_s);
+
+    // std::from_chars would be ideal, but clang/libc++ don't implement the floating-point version
+    qsizetype unitPos = 0;
+    for ( ; unitPos < s.size(); ++unitPos) {
+        const auto c = s.at(unitPos);
+        if (!c.isDigit() && (c != u'.') && (c != u'-'))
+            break;
+    }
+
+    double value = 0;
+    bool ok = false;
+    if (unitPos > 0)
+        value = QStringView(s).left(unitPos).toDouble(&ok);
+
+    if (!ok)
+        throw YamlParserException(this, "could not parse as a time duration");
+
+    QStringView unit = QStringView(s).mid(unitPos).trimmed();
+    if (unit.isEmpty()) {
+        if (defaultUnit.isEmpty())
+            throw YamlParserException(this, "time duration requires a unit");
+        unit = defaultUnit;
+    }
+
+    qint64 f;
+
+    if (unit == u"h")
+        f = 1LL * 1000 * 1000 * 60 * 60;
+    else if (unit == u"min")
+        f = 1LL * 1000 * 1000 * 60;
+    else if (unit == u"s")
+        f = 1LL * 1000 * 1000;
+    else if (unit == u"ms")
+        f = 1LL * 1000;
+    else if (unit == u"us")
+        f = 1LL;
+    else
+        throw YamlParserException(this, "unknown time duration unit (can be: h,min,s,ms,us)");
+
+    return std::chrono::microseconds(qint64(value * f));
+}
+
+QVariant YamlParser::parseScalar()
+{
+    if (!isScalar())
+        throw YamlParserException(this, "Cannot parse non-scalar as scalar");
+
     QString scalar = parseString();
 
     if (d->event.data.scalar.style == YAML_SINGLE_QUOTED_SCALAR_STYLE
@@ -464,7 +557,7 @@ QString YamlParser::parseMapKey()
 {
     if (isScalar()) {
         QVariant key = parseScalar();
-        if (key.metaType() == QMetaType::fromType<QString>())
+        if (key.typeId() == QMetaType::QString)
             return key.toString();
     }
     throw YamlParserException(this, "Only strings are supported as mapping keys");
@@ -492,12 +585,33 @@ QVariantMap YamlParser::parseMap()
     }
 }
 
+QMap<QString, QString> YamlParser::parseStringMap()
+{
+    if (!isMap())
+        throw YamlParserException(this, "Cannot parse non-map as map");
+
+    QMap<QString, QString> map;
+    while (true) {
+        nextEvent(); // read key
+        if (d->event.type == YAML_MAPPING_END_EVENT)
+            return map;
+
+        const QString key = parseMapKey();
+        if (map.contains(key))
+            throw YamlParserException(this, "Found duplicate key '%1' in mapping").arg(key);
+
+        nextEvent(); // read value
+        const QString value = parseString();
+        map.insert(key, value);
+    }
+}
+
 bool YamlParser::isList() const
 {
     return d->event.type == YAML_SEQUENCE_START_EVENT;
 }
 
-void YamlParser::parseList(const std::function<void(YamlParser *p)> &callback)
+void YamlParser::parseList(const std::function<void()> &callback)
 {
     if (!isList())
         throw YamlParserException(this, "Cannot parse non-list as list");
@@ -512,7 +626,7 @@ void YamlParser::parseList(const std::function<void(YamlParser *p)> &callback)
         case YAML_SCALAR_EVENT:
         case YAML_MAPPING_START_EVENT:
         case YAML_SEQUENCE_START_EVENT:
-            callback(this);
+            callback();
             break;
         default:
             throw YamlParserException(this, "Unexpected event (%1) encountered while parsing a list").arg(mapEventNames({ d->event.type }));
@@ -539,8 +653,8 @@ QVariant YamlParser::parseVariant()
 QVariantList YamlParser::parseList()
 {
     QVariantList list;
-    parseList([&list](YamlParser *p) {
-        list.append(p->parseVariant());
+    parseList([this, &list]() {
+        list.append(parseVariant());
     });
     return list;
 }
@@ -549,10 +663,10 @@ QStringList YamlParser::parseStringOrStringList()
 {
     if (isList()) {
         QStringList result;
-        parseList([&result](YamlParser *p) {
-            if (!p->isScalar())
-                throw YamlParserException(p, "A list or map is not a valid member of a string-list");
-            result.append(p->parseString());
+        parseList([this, &result]() {
+            if (!isScalar())
+                throw YamlParserException(this, "A list or map is not a valid member of a string-list");
+            result.append(parseString());
         });
         return result;
     } else if (isScalar()) {
@@ -586,7 +700,7 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
                 if (key == field->name)
                     break;
             }
-            if (field == fields.cend())
+            if ((field == fields.cend()) || !field->enabled)
                 throw YamlParserException(this, "Field '%1' is not valid in this context").arg(key);
             fieldsFound << key;
 
@@ -611,7 +725,7 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
             case YAML_SEQUENCE_START_EVENT: typeAfter = YAML_SEQUENCE_END_EVENT; break;
             default: typeAfter = typeBefore; break;
             }
-            field->callback(this);
+            field->callback();
             if (d->event.type != typeAfter) {
                 throw YamlParserException(this, "Invalid YAML event state after field callback for '%3': expected %1, but got %2")
                     .arg(mapEventNames({ typeAfter })).arg(mapEventNames({ d->event.type })).arg(key);
@@ -620,7 +734,7 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
     }
     QStringList fieldsMissing;
     for (const auto &field : fields) {
-        if (field.required && !fieldsFound.contains(field.name))
+        if (field.required && field.enabled && !fieldsFound.contains(field.name))
             fieldsMissing.append(field.name);
     }
     if (!fieldsMissing.isEmpty())
@@ -631,15 +745,14 @@ YamlParserException::YamlParserException(YamlParser *p, const char *errorString)
     : Exception(Error::Parse, "YAML parse error")
 {
     bool isProblem = p->d->parser.problem;
-    yaml_mark_t &mark = isProblem ? p->d->parser.problem_mark : p->d->parser.mark;
-
+    yaml_mark_t &mark = isProblem ? p->d->parser.problem_mark : p->d->event.start_mark;
     QString context = QString::fromUtf8(p->d->data);
     qsizetype lpos = context.lastIndexOf(u'\n', qsizetype(mark.index ? mark.index - 1 : 0));
     qsizetype rpos = context.indexOf(u'\n', qsizetype(mark.index));
     context = context.mid(lpos + 1, rpos == -1 ? context.size() : rpos - lpos - 1);
     qsizetype contextPos = qsizetype(mark.index) - (lpos + 1);
 
-    m_errorString.append(u":\nfile://%1:%2:%3: error"_s.arg(p->sourcePath()).arg(mark.line + 1).arg(mark.column + 1));
+    m_errorString.append(u":\n%1:%2:%3: error"_s.arg(p->sourceUrl()).arg(mark.line + 1).arg(mark.column + 1));
     if (errorString)
         m_errorString.append(u": %1"_s.arg(QString::fromLatin1(errorString)));
     if (isProblem)
@@ -647,5 +760,6 @@ YamlParserException::YamlParserException(YamlParser *p, const char *errorString)
     if (!context.isEmpty())
         m_errorString.append(u"\n %1\n %2^"_s.arg(context, QString(contextPos, u' ')));
 }
+
 
 QT_END_NAMESPACE_AM

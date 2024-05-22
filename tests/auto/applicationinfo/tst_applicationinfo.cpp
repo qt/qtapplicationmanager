@@ -146,12 +146,12 @@ void tst_ApplicationInfo::full()
     QCOMPARE(ai->runtimeParameters().size(), 5);
     QCOMPARE(ai->supportsApplicationInterface(), true);
     QCOMPARE(ai->capabilities(), QStringList { u"app1.cap"_s });
-    QVariantMap app1ogl { { u"desktopProfile"_s, u"core"_s }, { u"esMajorVersion"_s, 3 }, { u"esMinorVersion"_s, 2 }};
+    OpenGLConfiguration app1ogl { u"core"_s, 3, 2 };
     QCOMPARE(ai->openGLConfiguration(), app1ogl);
     QVariantMap app1prop { { u"custom.app1.key"_s, 42 } };
     QCOMPARE(ai->applicationProperties(), app1prop);
-    QVariantMap app1dlt { { u"id"_s, u"app1.dlt.id"_s }, { u"description"_s, u"app1.dlt.desc"_s } };
-    QCOMPARE(ai->dltConfiguration(), app1dlt);
+    QCOMPARE(ai->dltId(), u"app1.dlt.id"_s);
+    QCOMPARE(ai->dltDescription(), u"app1.dlt.desc"_s);
 
     ai = pl.info()->applications().constLast();
 

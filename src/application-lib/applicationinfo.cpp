@@ -59,7 +59,7 @@ QVariantMap ApplicationInfo::allAppProperties() const
 
 quint32 ApplicationInfo::dataStreamVersion()
 {
-    return 4;
+    return 5;
 }
 
 void ApplicationInfo::writeToDataStream(QDataStream &ds) const
@@ -75,8 +75,11 @@ void ApplicationInfo::writeToDataStream(QDataStream &ds) const
        << m_runtimeParameters
        << m_supportsApplicationInterface
        << m_capabilities
-       << m_openGLConfiguration
-       << m_dltConfiguration
+       << m_openGLConfiguration.desktopProfile
+       << m_openGLConfiguration.esMajorVersion
+       << m_openGLConfiguration.esMinorVersion
+       << m_dltId
+       << m_dltDescription
        << m_supportedMimeTypes
        << m_categories
        << m_names
@@ -99,8 +102,11 @@ ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStre
        >> app->m_runtimeParameters
        >> app->m_supportsApplicationInterface
        >> app->m_capabilities
-       >> app->m_openGLConfiguration
-       >> app->m_dltConfiguration
+       >> app->m_openGLConfiguration.desktopProfile
+       >> app->m_openGLConfiguration.esMajorVersion
+       >> app->m_openGLConfiguration.esMinorVersion
+       >> app->m_dltId
+       >> app->m_dltDescription
        >> app->m_supportedMimeTypes
        >> app->m_categories
        >> app->m_names
@@ -147,7 +153,10 @@ QVariantMap ApplicationInfo::toVariantMap() const
     map[u"manifestDir"_s] = map[u"baseDir"_s]; // 5.12 backward compatibility
     map[u"installationLocationId"_s] = packageInfo()->installationReport() ? u"internal-0"_s : QString();
     map[u"supportsApplicationInterface"_s] = m_supportsApplicationInterface;
-    map[u"dlt"_s] = m_dltConfiguration;
+    QVariantMap dltMap;
+    dltMap[u"id"_s] = m_dltId;
+    dltMap[u"description"_s] = m_dltDescription;
+    map[u"dlt"_s] = dltMap;
 
     return map;
 }
@@ -187,7 +196,7 @@ QString ApplicationInfo::documentUrl() const
     return m_documentUrl;
 }
 
-QVariantMap ApplicationInfo::openGLConfiguration() const
+OpenGLConfiguration ApplicationInfo::openGLConfiguration() const
 {
     return m_openGLConfiguration;
 }
@@ -197,9 +206,14 @@ bool ApplicationInfo::supportsApplicationInterface() const
     return m_supportsApplicationInterface;
 }
 
-QVariantMap ApplicationInfo::dltConfiguration() const
+QString ApplicationInfo::dltId() const
 {
-    return m_dltConfiguration;
+    return m_dltId;
+}
+
+QString ApplicationInfo::dltDescription() const
+{
+    return m_dltDescription;
 }
 
 QStringList ApplicationInfo::categories() const

@@ -22,6 +22,7 @@ qt_internal_add_module(AppManCommonPrivate
         filesystemmountwatcher.cpp filesystemmountwatcher.h
         global.h
         logging.cpp logging.h
+        openglconfiguration.h openglconfiguration.cpp
         processtitle.cpp processtitle.h
         qml-utilities.cpp qml-utilities.h
         qtyaml.cpp qtyaml.h

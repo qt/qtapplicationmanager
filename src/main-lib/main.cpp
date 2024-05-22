@@ -46,6 +46,9 @@
 #include <QLibraryInfo>
 #include <QStandardPaths>
 #include <QLockFile>
+#if defined(Q_OS_LINUX)
+#  include <sys/file.h>
+#endif
 
 #include "global.h"
 #include "logging.h"
@@ -177,64 +180,64 @@ void Main::setup(const Configuration *cfg) noexcept(false)
 {
     StartupTimer::instance()->checkpoint("after configuration parsing");
 
-    // basics that are needed in multiple setup functions below
-    m_noSecurity = cfg->noSecurity();
-    m_developmentMode = cfg->developmentMode();
-    m_builtinAppsManifestDirs = cfg->builtinAppsManifestDirs();
-    m_installationDir = cfg->installationDir();
-    m_installationDirMountPoint = cfg->installationDirMountPoint();
-    m_documentDir = cfg->documentDir();
-
-    CrashHandler::setCrashActionConfiguration(cfg->managerCrashAction());
+    CrashHandler::setCrashActionConfiguration(cfg->yaml.crashAction.printBacktrace,
+                                              cfg->yaml.crashAction.printQmlStack,
+                                              cfg->yaml.crashAction.waitForGdbAttach.count(),
+                                              cfg->yaml.crashAction.dumpCore,
+                                              cfg->yaml.crashAction.stackFramesToIgnore.onCrash,
+                                              cfg->yaml.crashAction.stackFramesToIgnore.onException);
     setupQmlDebugging(cfg->qmlDebugging());
-    if (!cfg->dltId().isEmpty() || !cfg->dltDescription().isEmpty())
-        Logging::setSystemUiDltId(cfg->dltId().toLocal8Bit(), cfg->dltDescription().toLocal8Bit());
-    Logging::setDltLongMessageBehavior(cfg->dltLongMessageBehavior());
+    if (!cfg->yaml.logging.dlt.id.isEmpty() || !cfg->yaml.logging.dlt.description.isEmpty())
+        Logging::setSystemUiDltId(cfg->yaml.logging.dlt.id.toLocal8Bit(),
+                                  cfg->yaml.logging.dlt.description.toLocal8Bit());
+    Logging::setDltLongMessageBehavior(cfg->yaml.logging.dlt.longMessageBehavior);
     Logging::registerUnregisteredDltContexts();
-    setupLogging(cfg->verbose(), cfg->loggingRules(), cfg->messagePattern(), cfg->useAMConsoleLogger());
+    setupLogging(cfg->verbose(), cfg->yaml.logging.rules, cfg->yaml.logging.messagePattern,
+                 cfg->yaml.logging.useAMConsoleLogger);
 
-    registerResources(cfg->resources());
+    registerResources(cfg->yaml.ui.resources);
 
-    setupOpenGL(cfg->openGLConfiguration());
-    setupIconTheme(cfg->iconThemeSearchPaths(), cfg->iconThemeName());
+    setupOpenGL(OpenGLConfiguration(cfg->yaml.ui.opengl.desktopProfile,
+                                    cfg->yaml.ui.opengl.esMajorVersion,
+                                    cfg->yaml.ui.opengl.esMinorVersion));
+    setupIconTheme(cfg->yaml.ui.iconThemeSearchPaths, cfg->yaml.ui.iconThemeName);
 
-    loadStartupPlugins(cfg->pluginFilePaths("startup"));
-    parseSystemProperties(cfg->rawSystemProperties());
+    loadStartupPlugins(cfg->yaml.plugins.startup);
+    parseSystemProperties(cfg->yaml.systemProperties);
 
-    setMainQmlFile(cfg->mainQmlFile());
-    setupSingleOrMultiProcess(cfg->forceSingleProcess(), cfg->forceMultiProcess());
-    setupRuntimesAndContainers(cfg->runtimeConfigurations(), cfg->runtimeAdditionalLaunchers(),
-                               cfg->containerConfigurations(), cfg->pluginFilePaths("container"),
-                               cfg->openGLConfiguration(),
-                               cfg->iconThemeSearchPaths(), cfg->iconThemeName());
+    setMainQmlFile(cfg->yaml.ui.mainQml);
+    setupSingleOrMultiProcess(cfg);
+    setupRuntimesAndContainers(cfg);
 
-    loadPackageDatabase(cfg->clearCache() || cfg->noCache(), cfg->singleApp());
+    loadPackageDatabase(cfg);
 
-    setupSingletons(cfg->containerSelectionConfiguration());
-    setupQuickLauncher(cfg->quickLaunchRuntimesPerContainer(), cfg->quickLaunchIdleLoad(),
-                       cfg->quickLaunchFailedStartLimit(), cfg->quickLaunchFailedStartLimitIntervalSec());
+    setupSingletons(cfg);
+    setupQuickLauncher(cfg);
 
-    if (!cfg->disableIntents()) {
-        setupIntents(cfg->intentTimeoutForDisambiguation(), cfg->intentTimeoutForStartApplication(),
-                     cfg->intentTimeoutForReplyFromApplication(), cfg->intentTimeoutForReplyFromSystem());
-    }
+    if (!cfg->yaml.intents.disable)
+        setupIntents(cfg);
 
     registerPackages();
 
-    if (m_installationDir.isEmpty() || cfg->disableInstaller())
+    if (cfg->yaml.applications.installationDir.isEmpty() || cfg->yaml.installer.disable)
         StartupTimer::instance()->checkpoint("skipping installer");
     else
-        setupInstaller(cfg->allowUnsignedPackages(), cfg->caCertificates());
+        setupInstaller(cfg);
 
-    setLibraryPaths(libraryPaths() + cfg->pluginPaths());
-    setupQmlEngine(cfg->importPaths(), cfg->style());
-    setupWindowTitle(QString(), cfg->windowIcon());
-    setupWindowManager(cfg->waylandSocketName(), cfg->waylandExtraSockets(), cfg->slowAnimations(),
-                       cfg->noUiWatchdog(), cfg->allowUnknownUiClients());
+    setLibraryPaths(libraryPaths() + cfg->yaml.ui.pluginPaths);
+    setupQmlEngine(cfg->yaml.ui.importPaths, cfg->yaml.ui.style);
 
-    setupDBus(std::bind(&Configuration::dbusRegistration, cfg, std::placeholders::_1),
-              std::bind(&Configuration::dbusPolicy, cfg, std::placeholders::_1));
-    createInstanceInfoFile(cfg->instanceId());
+    // For development only: set an icon, so you know which window is the AM
+    if (!isRunningOnEmbedded() && !cfg->yaml.ui.windowIcon.isEmpty())
+        QGuiApplication::setWindowIcon(QIcon(cfg->yaml.ui.windowIcon));
+
+    setupWindowManager(cfg);
+    setupDBus(cfg);
+
+    createInstanceInfoFile(cfg->yaml.instanceId);
+
+    m_showFullscreen = cfg->yaml.ui.fullscreen;
+    m_loadDummyData = cfg->yaml.ui.loadDummyData;
 }
 
 bool Main::isSingleProcessMode() const
@@ -377,23 +380,20 @@ void Main::setMainQmlFile(const QString &mainQml) noexcept(false)
     }
 }
 
-void Main::setupSingleOrMultiProcess(bool forceSingleProcess, bool forceMultiProcess) noexcept(false)
+void Main::setupSingleOrMultiProcess(const Configuration *cfg) noexcept(false)
 {
-    m_isSingleProcessMode = forceSingleProcess;
-    if (forceMultiProcess && m_isSingleProcessMode)
+    m_isSingleProcessMode = cfg->yaml.flags.forceSingleProcess;
+    if (cfg->yaml.flags.forceMultiProcess && m_isSingleProcessMode)
         throw Exception("You cannot enforce multi- and single-process mode at the same time.");
 
-#if !QT_CONFIG(am_multi_process)
-    if (forceMultiProcess)
-        throw Exception("This application manager build is not multi-process capable.");
-    m_isSingleProcessMode = true;
-#endif
+    if (!QT_CONFIG(am_multi_process)) {
+        if (cfg->yaml.flags.forceMultiProcess)
+            throw Exception("This application manager build is not multi-process capable.");
+        m_isSingleProcessMode = true;
+    }
 }
 
-void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, const QStringList &runtimeAdditionalLaunchers,
-                                      const QVariantMap &containerConfigurations, const QStringList &containerPluginPaths,
-                                      const QVariantMap &openGLConfiguration,
-                                      const QStringList &iconThemeSearchPaths, const QString &iconThemeName)
+void Main::setupRuntimesAndContainers(const Configuration *cfg)
 {
     QVector<PluginContainerManager *> pluginContainerManagers;
 
@@ -406,12 +406,12 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager());
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(u"qml"_s));
 
-        for (const QString &runtimeId : runtimeAdditionalLaunchers)
+        for (const QString &runtimeId : cfg->yaml.runtimes.additionalLaunchers)
             RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(runtimeId));
 
         ContainerFactory::instance()->registerContainer(new ProcessContainerManager());
 #else
-        if (!runtimeAdditionalLaunchers.isEmpty())
+        if (!cfg->yaml.runtimes.additionalLaunchers.isEmpty())
             qCWarning(LogSystem) << "Addtional runtime launchers are ignored in single-process mode";
 #endif
         QStringList systemContainerPluginPaths;
@@ -424,9 +424,10 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
             systemContainerPluginPaths += filePath;
         }
 
-        QSet<QString> containersWithConfiguration (containerConfigurations.keyBegin(), containerConfigurations.keyEnd());
+        QSet<QString> containersWithConfiguration(cfg->yaml.containers.configurations.keyBegin(),
+                                                  cfg->yaml.containers.configurations.keyEnd());
 
-        auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", systemContainerPluginPaths + containerPluginPaths);
+        auto containerPlugins = loadPlugins<ContainerManagerInterface>("container", systemContainerPluginPaths + cfg->yaml.plugins.container);
         pluginContainerManagers.reserve(containerPlugins.size());
         for (auto iface : std::as_const(containerPlugins)) {
             if (!containersWithConfiguration.contains(iface->identifier()))
@@ -439,7 +440,7 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
     for (auto iface : std::as_const(m_startupPlugins))
         iface->afterRuntimeRegistration();
 
-    ContainerFactory::instance()->setConfiguration(containerConfigurations);
+    ContainerFactory::instance()->setConfiguration(cfg->yaml.containers.configurations);
 
     for (auto pcm : std::as_const(pluginContainerManagers)) {
         if (!pcm->initialize()) {
@@ -448,23 +449,28 @@ void Main::setupRuntimesAndContainers(const QVariantMap &runtimeConfigurations, 
         }
     }
 
-    RuntimeFactory::instance()->setConfiguration(runtimeConfigurations);
-    RuntimeFactory::instance()->setSystemOpenGLConfiguration(openGLConfiguration);
-    RuntimeFactory::instance()->setIconTheme(iconThemeSearchPaths, iconThemeName);
+    RuntimeFactory::instance()->setConfiguration(cfg->yaml.runtimes.configurations);
+    RuntimeFactory::instance()->setSystemOpenGLConfiguration(OpenGLConfiguration(
+        cfg->yaml.ui.opengl.desktopProfile,
+        cfg->yaml.ui.opengl.esMajorVersion,
+        cfg->yaml.ui.opengl.esMinorVersion));
+    RuntimeFactory::instance()->setIconTheme(cfg->yaml.ui.iconThemeSearchPaths,
+                                             cfg->yaml.ui.iconThemeName);
     RuntimeFactory::instance()->setSystemProperties(m_systemProperties.at(SP_ThirdParty),
                                                     m_systemProperties.at(SP_BuiltIn));
 
     StartupTimer::instance()->checkpoint("after runtime registration");
 }
 
-void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePackage) noexcept(false)
+void Main::loadPackageDatabase(const Configuration *cfg) noexcept(false)
 {
-    if (!singlePackage.isEmpty()) {
-        m_packageDatabase = new PackageDatabase(singlePackage);
+    if (!cfg->singleApp().isEmpty()) {
+        m_packageDatabase = new PackageDatabase(cfg->singleApp());
     } else {
-        m_packageDatabase = new PackageDatabase(m_builtinAppsManifestDirs, m_installationDir,
-                                                m_installationDirMountPoint);
-        if (!recreateDatabase)
+        m_packageDatabase = new PackageDatabase(cfg->yaml.applications.builtinAppsManifestDir,
+                                                cfg->yaml.applications.installationDir,
+                                                cfg->yaml.applications.installationDirMountPoint);
+        if (!cfg->clearCache() && !cfg->noCache())
             m_packageDatabase->enableLoadFromCache();
         m_packageDatabase->enableSaveToCache();
     }
@@ -487,29 +493,29 @@ void Main::loadPackageDatabase(bool recreateDatabase, const QString &singlePacka
     StartupTimer::instance()->checkpoint("after package database loading");
 }
 
-void Main::setupIntents(int disambiguationTimeout, int startApplicationTimeout,
-                        int replyFromApplicationTimeout, int replyFromSystemTimeout) noexcept(false)
+void Main::setupIntents(const Configuration *cfg)
 {
-    m_intentServer = IntentAMImplementation::createIntentServerAndClientInstance(m_packageManager,
-                                                                                 disambiguationTimeout,
-                                                                                 startApplicationTimeout,
-                                                                                 replyFromApplicationTimeout,
-                                                                                 replyFromSystemTimeout);
+    m_intentServer = IntentAMImplementation::createIntentServerAndClientInstance(
+        m_packageManager,
+        cfg->yaml.intents.timeouts.disambiguation.count(),
+        cfg->yaml.intents.timeouts.startApplication.count(),
+        cfg->yaml.intents.timeouts.replyFromApplication.count(),
+        cfg->yaml.intents.timeouts.replyFromSystem.count());
     StartupTimer::instance()->checkpoint("after IntentServer instantiation");
 }
 
-void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelectionConfiguration) noexcept(false)
+void Main::setupSingletons(const Configuration *cfg) noexcept(false)
 {
-    m_packageManager = PackageManager::createInstance(m_packageDatabase, m_documentDir);
+    m_packageManager = PackageManager::createInstance(m_packageDatabase, cfg->yaml.applications.documentDir);
     m_applicationManager = ApplicationManager::createInstance(m_isSingleProcessMode);
 
-    if (m_noSecurity)
+    if (cfg->yaml.flags.noSecurity)
         m_applicationManager->setSecurityChecksEnabled(false);
-    if (m_developmentMode)
+    if (cfg->yaml.flags.developmentMode)
         m_packageManager->setDevelopmentMode(true);
 
     m_applicationManager->setSystemProperties(m_systemProperties.at(SP_SystemUi));
-    m_applicationManager->setContainerSelectionConfiguration(containerSelectionConfiguration);
+    m_applicationManager->setContainerSelectionConfiguration(cfg->yaml.containers.selection);
 
     StartupTimer::instance()->checkpoint("after ApplicationManager instantiation");
 
@@ -517,27 +523,27 @@ void Main::setupSingletons(const QList<QPair<QString, QString>> &containerSelect
     StartupTimer::instance()->checkpoint("after NotificationManager instantiation");
 }
 
-void Main::setupQuickLauncher(const QHash<std::pair<QString, QString>, int> &runtimesPerContainer,
-                              qreal idleLoad, int failedStartLimit,
-                              int failedStartLimitIntervalSec) noexcept(false)
+void Main::setupQuickLauncher(const Configuration *cfg)
 {
-    if (!runtimesPerContainer.isEmpty()) {
-        m_quickLauncher = QuickLauncher::createInstance(runtimesPerContainer, idleLoad,
-                                                        failedStartLimit, failedStartLimitIntervalSec);
+    if (!cfg->yaml.quicklaunch.runtimesPerContainer.isEmpty()) {
+        m_quickLauncher = QuickLauncher::createInstance(cfg->yaml.quicklaunch.runtimesPerContainer,
+                                                        cfg->yaml.quicklaunch.idleLoad,
+                                                        cfg->yaml.quicklaunch.failedStartLimit,
+                                                        cfg->yaml.quicklaunch.failedStartLimitIntervalSec.count());
         StartupTimer::instance()->checkpoint("after quick-launcher setup");
     } else {
         qCDebug(LogSystem) << "Not setting up the quick-launch pool (runtimesPerContainer is 0)";
     }
 }
 
-void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePaths) noexcept(false)
+void Main::setupInstaller(const Configuration *cfg) noexcept(false)
 {
 #if QT_CONFIG(am_installer)
     // make sure the installation and document dirs are valid
-    Q_ASSERT(!m_installationDir.isEmpty());
-    const auto instPath = QDir(m_installationDir).canonicalPath();
-    const auto docPath = m_documentDir.isEmpty() ? QString { }
-                                                 : QDir(m_documentDir).canonicalPath();
+    Q_ASSERT(!cfg->yaml.applications.installationDir.isEmpty());
+    const auto instPath = QDir(cfg->yaml.applications.installationDir).canonicalPath();
+    const auto docPath = cfg->yaml.applications.documentDir.isEmpty()
+                             ? QString { } : QDir(cfg->yaml.applications.documentDir).canonicalPath();
 
     if (!docPath.isEmpty() && (instPath.startsWith(docPath) || docPath.startsWith(instPath)))
         throw Exception("either installationDir or documentDir cannot be a sub-directory of the other");
@@ -546,22 +552,22 @@ void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePa
         throw Exception("the installer is enabled, but the device-id is empty");
 
     if (!isRunningOnEmbedded()) { // this is just for convenience sake during development
-        if (Q_UNLIKELY(!m_installationDir.isEmpty() && !QDir::root().mkpath(m_installationDir)))
-            throw Exception("could not create package installation directory: \'%1\'").arg(m_installationDir);
-        if (Q_UNLIKELY(!m_documentDir.isEmpty() && !QDir::root().mkpath(m_documentDir)))
-            throw Exception("could not create document directory for packages: \'%1\'").arg(m_documentDir);
+        if (Q_UNLIKELY(!cfg->yaml.applications.installationDir.isEmpty() && !QDir::root().mkpath(cfg->yaml.applications.installationDir)))
+            throw Exception("could not create package installation directory: \'%1\'").arg(cfg->yaml.applications.installationDir);
+        if (Q_UNLIKELY(!cfg->yaml.applications.documentDir.isEmpty() && !QDir::root().mkpath(cfg->yaml.applications.documentDir)))
+            throw Exception("could not create document directory for packages: \'%1\'").arg(cfg->yaml.applications.documentDir);
     }
 
     StartupTimer::instance()->checkpoint("after installer setup checks");
 
-    if (m_noSecurity || allowUnsigned)
+    if (cfg->yaml.flags.noSecurity || cfg->yaml.flags.allowUnsignedPackages)
         m_packageManager->setAllowInstallationOfUnsignedPackages(true);
 
-    if (!m_noSecurity) {
+    if (!cfg->yaml.flags.noSecurity) {
         QByteArrayList caCertificateList;
-        caCertificateList.reserve(caCertificatePaths.size());
+        caCertificateList.reserve(cfg->yaml.installer.caCertificates.size());
 
-        for (const auto &caFile : caCertificatePaths) {
+        for (const auto &caFile : cfg->yaml.installer.caCertificates) {
             QFile f(caFile);
             if (Q_UNLIKELY(!f.open(QFile::ReadOnly)))
                 throw Exception(f, "could not open CA-certificate file");
@@ -577,8 +583,7 @@ void Main::setupInstaller(bool allowUnsigned, const QStringList &caCertificatePa
 
     StartupTimer::instance()->checkpoint("after installer setup");
 #else
-    Q_UNUSED(allowUnsigned)
-    Q_UNUSED(caCertificatePaths)
+    Q_UNUSED(cfg)
 #endif // QT_CONFIG(am_installer)
 }
 
@@ -624,37 +629,51 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     StartupTimer::instance()->checkpoint("after QML engine instantiation");
 }
 
-void Main::setupWindowTitle(const QString &title, const QString &iconPath)
+void Main::setupWindowManager(const Configuration *cfg)
 {
-    // For development only: set an icon, so you know which window is the AM
-    if (Q_UNLIKELY(!isRunningOnEmbedded())) {
-        if (!iconPath.isEmpty())
-            QGuiApplication::setWindowIcon(QIcon(iconPath));
-        if (!title.isEmpty())
-            QGuiApplication::setApplicationDisplayName(title);
-    }
-}
+    QUnifiedTimer::instance()->setSlowModeEnabled(cfg->slowAnimations());
 
-void Main::setupWindowManager(const QString &waylandSocketName, const QVariantList &waylandExtraSockets,
-                              bool slowAnimations, bool noUiWatchdog, bool allowUnknownUiClients)
-{
-    QUnifiedTimer::instance()->setSlowModeEnabled(slowAnimations);
+    auto waylandSocketName = [cfg]() -> QString {
+        QString socketName = cfg->waylandSocketName(); // get the default value
+        if (!socketName.isEmpty())
+            return socketName;
+        if (!cfg->yaml.wayland.socketName.isEmpty())
+            return cfg->yaml.wayland.socketName;
 
-    m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName);
-    m_windowManager->setAllowUnknownUiClients(m_noSecurity || allowUnknownUiClients);
-    m_windowManager->setSlowAnimations(slowAnimations);
-    m_windowManager->enableWatchdog(!noUiWatchdog);
+#if defined(Q_OS_LINUX)
+        // modelled after wl_socket_lock() in wayland_server.c
+        const QString xdgDir = qEnvironmentVariable("XDG_RUNTIME_DIR") + u"/"_s;
+        const QString pattern = u"qtam-wayland-%1"_s;
+        const QString lockSuffix = u".lock"_s;
+
+        for (int i = 0; i < 32; ++i) {
+            socketName = pattern.arg(i);
+            QFile lock(xdgDir + socketName + lockSuffix);
+            if (lock.open(QIODevice::ReadWrite)) {
+                if (::flock(lock.handle(), LOCK_EX | LOCK_NB) == 0) {
+                    QFile socket(xdgDir + socketName);
+                    if (!socket.exists() || socket.remove())
+                        return socketName;
+                }
+            }
+        }
+#endif
+        return QString();
+    };
+
+    m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName());
+    m_windowManager->setAllowUnknownUiClients(cfg->yaml.flags.noSecurity || cfg->yaml.flags.allowUnknownUiClients);
+    m_windowManager->setSlowAnimations(cfg->slowAnimations());
+    m_windowManager->enableWatchdog(!cfg->yaml.flags.noUiWatchdog);
 
 #if defined(QT_WAYLANDCOMPOSITOR_LIB)
     connect(&m_windowManager->internalSignals, &WindowManagerInternalSignals::compositorAboutToBeCreated,
-            this, [this, waylandExtraSockets] {
+            this, [this, cfg] {
         // This needs to be delayed until directly before creating the Wayland compositor.
         // Otherwise we have a "dangling" socket you cannot connect to.
 
-        for (const auto &v : waylandExtraSockets) {
-            const QVariantMap &wes = v.toMap();
-
-            const QString path = wes.value(u"path"_s).toString();
+        for (const auto &wes : cfg->yaml.wayland.extraSockets) {
+            const QString path = wes.path;
 
             if (path.isEmpty())
                 continue;
@@ -680,9 +699,9 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
                     throw Exception("could not listen on extra Wayland socket %1: %2")
                         .arg(path, extraSocket->errorString());
                 }
-                int mode = wes.value(u"permissions"_s, -1).toInt();
-                int uid = wes.value(u"userId"_s, -1).toInt();
-                int gid = wes.value(u"groupId"_s, -1).toInt();
+                int mode = wes.permissions;
+                int uid = wes.userId;
+                int gid = wes.groupId;
 
                 QByteArray encodedPath = QFile::encodeName(path);
 
@@ -720,8 +739,6 @@ void Main::setupWindowManager(const QString &waylandSocketName, const QVariantLi
             }
         }
     });
-#else
-    Q_UNUSED(waylandExtraSockets)
 #endif
 
     QObject::connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::newRuntimeCreated,
@@ -774,6 +791,12 @@ void Main::createInstanceInfoFile(const QString &instanceId) noexcept(false)
 
 void Main::loadQml(bool loadDummyData) noexcept(false)
 {
+    m_loadDummyData = loadDummyData;
+    loadQml();
+}
+
+void Main::loadQml() noexcept(false)
+{
     for (auto iface : std::as_const(m_startupPlugins))
         iface->beforeQmlEngineLoad(m_engine);
 
@@ -783,7 +806,7 @@ void Main::loadQml(bool loadDummyData) noexcept(false)
     qmlProtectModule("QtApplicationManager", 2);
     qmlProtectModule("QtApplicationManager.SystemUI", 2);
 
-    if (Q_UNLIKELY(loadDummyData)) {
+    if (Q_UNLIKELY(m_loadDummyData)) { //TODO: remove in 6.9
         qCWarning(LogDeployment) << "Loading dummy data is deprecated and will be removed soon";
 
         if (m_mainQmlLocalFile.isEmpty()) {
@@ -805,6 +828,12 @@ void Main::loadQml(bool loadDummyData) noexcept(false)
 }
 
 void Main::showWindow(bool showFullscreen)
+{
+    m_showFullscreen = showFullscreen;
+    showWindow();
+}
+
+void Main::showWindow()
 {
     setQuitOnLastWindowClosed(false);
     connect(this, &QGuiApplication::lastWindowClosed, this, [this]() { shutDown(); });
@@ -860,7 +889,7 @@ void Main::showWindow(bool showFullscreen)
         });
 
         // Main window will always be shown, neglecting visible property for backwards compatibility
-        if (Q_LIKELY(showFullscreen))
+        if (Q_LIKELY(m_showFullscreen))
             window->showFullScreen();
         else
             window->setVisible(true);
@@ -884,8 +913,7 @@ void Main::showWindow(bool showFullscreen)
     }
 }
 
-void Main::setupDBus(const std::function<QString(const char *)> &busForInterface,
-                     const std::function<QVariantMap(const char *)> &policyForInterface)
+void Main::setupDBus(const Configuration *cfg)
 {
 #if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
     registerDBusTypes();
@@ -899,26 +927,29 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
     // <3> D-Bus path
     // <4> Interface name (extracted from Q_CLASSINFO below)
 
-    std::vector<std::tuple<DBusContextAdaptor *, QString, const char *, const char *, const char *>> ifaces;
+    std::vector<std::tuple<DBusContextAdaptor *, QString, QString, QString, QString>> ifaces;
 
-    auto addInterface = [&ifaces, &busForInterface](DBusContextAdaptor *adaptor, const char *service, const char *path) {
+    auto addInterface = [&](DBusContextAdaptor *adaptor, const QString &service, const QString &path) {
         int idx = adaptor->parent()->metaObject()->indexOfClassInfo("D-Bus Interface");
         if (idx < 0) {
             throw Exception("Could not get class-info \"D-Bus Interface\" for D-Bus adapter %1")
                     .arg(QString::fromLatin1(adaptor->parent()->metaObject()->className()));
         }
-        const char *interfaceName = adaptor->parent()->metaObject()->classInfo(idx).value();
-        ifaces.emplace_back(adaptor, busForInterface(interfaceName), service, path, interfaceName);
+        QString interfaceName = QString::fromLatin1(adaptor->parent()->metaObject()->classInfo(idx).value());
+        auto iit = cfg->yaml.dbus.registrations.constFind(interfaceName);
+        QString bus = (iit != cfg->yaml.dbus.registrations.cend()) ? iit->toString() : cfg->dbus();
+
+        ifaces.emplace_back(adaptor, bus, service, path, interfaceName);
     };
 
     addInterface(DBusContextAdaptor::create<PackageManagerAdaptor>(m_packageManager),
-                 "io.qt.ApplicationManager", "/PackageManager");
+                 u"io.qt.ApplicationManager"_s, u"/PackageManager"_s);
     addInterface(DBusContextAdaptor::create<WindowManagerAdaptor>(m_windowManager),
-                 "io.qt.ApplicationManager", "/WindowManager");
+                 u"io.qt.ApplicationManager"_s, u"/WindowManager"_s);
     addInterface(DBusContextAdaptor::create<NotificationsAdaptor>(m_notificationManager),
-                 "org.freedesktop.Notifications", "/org/freedesktop/Notifications");
+                 u"org.freedesktop.Notifications"_s, u"/org/freedesktop/Notifications"_s);
     addInterface(DBusContextAdaptor::create<ApplicationManagerAdaptor>(m_applicationManager),
-                 "io.qt.ApplicationManager", "/ApplicationManager");
+                 u"io.qt.ApplicationManager"_s, u"/ApplicationManager"_s);
 
     bool autoOnly = true;
     bool noneOnly = true;
@@ -963,27 +994,28 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
         for (auto &&iface : ifaces) {
             auto *generatedAdaptor = std::get<0>(iface)->generatedAdaptor<QDBusAbstractAdaptor>();
             QString &dbusName = std::get<1>(iface);
-            const char *interfaceName = std::get<4>(iface);
+            QString &interfaceName = std::get<4>(iface);
 
             if (dbusName.isEmpty())
                 continue;
 
             auto dbusAddress = registerDBusObject(generatedAdaptor, dbusName,
                                                   std::get<2>(iface), std::get<3>(iface));
-            if (!DBusPolicy::instance()->add(generatedAdaptor, policyForInterface(interfaceName)))
-                throw Exception(Error::DBus, "could not set DBus policy for %1").arg(QString::fromLatin1(interfaceName));
+            auto policy = cfg->yaml.dbus.policies.value(interfaceName).toMap();
+
+            if (!DBusPolicy::instance()->add(generatedAdaptor, policy))
+                throw Exception(Error::DBus, "could not set DBus policy for %1").arg(interfaceName);
 
             // Write the bus address to our info file for the appman-controller tool
-            if (QByteArrayView { interfaceName }.startsWith("io.qt.")) {
+            if (interfaceName.startsWith(u"io.qt.")) {
                 auto map = m_infoFileContents[u"dbus"_s].toMap();
-                map.insert(QString::fromLatin1(interfaceName), dbusAddress);
+                map.insert(interfaceName, dbusAddress);
                 m_infoFileContents[u"dbus"_s] = map;
             }
         }
     }
 #else
-    Q_UNUSED(busForInterface)
-    Q_UNUSED(policyForInterface)
+    Q_UNUSED(cfg)
     Q_UNUSED(m_p2pServer)
     Q_UNUSED(m_p2pAdaptors)
     Q_UNUSED(m_p2pFailed)
@@ -991,7 +1023,7 @@ void Main::setupDBus(const std::function<QString(const char *)> &busForInterface
 }
 
 QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName,
-                                 const char *serviceName, const char *path) noexcept(false)
+                                 const QString &serviceName, const QString &path) noexcept(false)
 {
 #if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
     QString dbusAddress;
@@ -1040,7 +1072,7 @@ QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &d
         }
         if (m_p2pFailed)
             return { };
-        m_p2pAdaptors.insert(QString::fromLatin1(path), qobject_cast<DBusContextAdaptor *>(adaptor->parent()));
+        m_p2pAdaptors.insert(path, qobject_cast<DBusContextAdaptor *>(adaptor->parent()));
         dbusAddress = u"p2p:"_s + m_p2pServer->address();
         isP2P = true;
     } else {
@@ -1054,14 +1086,14 @@ QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &d
                 .arg(dbusAddress.isEmpty() ? dbusRealName : dbusAddress).arg(conn.lastError().message());
         }
 
-        if (!conn.registerObject(QString::fromLatin1(path), adaptor->parent(), QDBusConnection::ExportAdaptors)) {
+        if (!conn.registerObject(path, adaptor->parent(), QDBusConnection::ExportAdaptors)) {
             throw Exception("could not register object %1 on D-Bus (%2): %3")
-                .arg(QString::fromLatin1(path)).arg(dbusRealName).arg(conn.lastError().message());
+                .arg(path).arg(dbusRealName).arg(conn.lastError().message());
         }
 
-        if (!conn.registerService(QString::fromLatin1(serviceName))) {
+        if (!conn.registerService(serviceName)) {
             throw Exception("could not register service %1 on D-Bus (%2): %3")
-                .arg(QString::fromLatin1(serviceName)).arg(dbusRealName).arg(conn.lastError().message());
+                .arg(serviceName).arg(dbusRealName).arg(conn.lastError().message());
         }
     }
 

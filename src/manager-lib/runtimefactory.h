@@ -10,6 +10,7 @@
 #include <QtCore/QObject>
 
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/openglconfiguration.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -35,7 +36,7 @@ public:
     void setConfiguration(const QVariantMap &configuration);
     void setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn);
     void setSlowAnimations(bool isSlow);
-    void setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration);
+    void setSystemOpenGLConfiguration(const OpenGLConfiguration &openGLConfiguration);
     void setIconTheme(const QStringList &themeSearchPaths, const QString &themeName);
 
     bool registerRuntime(AbstractRuntimeManager *manager);

@@ -59,8 +59,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         TestRunner::setup(cfg.get());
 #endif
         a->setup(cfg.get());
-        a->loadQml(cfg->loadDummyData());
-        a->showWindow(cfg->fullscreen() && !cfg->noFullscreen());
+        a->loadQml();
+        a->showWindow();
     } catch (const Exception &e) {
         qCCritical(LogSystem).noquote() << "ERROR:" << e.errorString();
         return 2;

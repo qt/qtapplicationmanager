@@ -13,6 +13,7 @@
 #include <QtCore/QVariantMap>
 
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/openglconfiguration.h>
 #include <QtAppManManager/amnamespace.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -48,8 +49,8 @@ public:
     QVariantMap systemProperties3rdParty() const;
     void setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn);
 
-    QVariantMap systemOpenGLConfiguration() const;
-    void setSystemOpenGLConfiguration(const QVariantMap &openGLConfiguration);
+    OpenGLConfiguration systemOpenGLConfiguration() const;
+    void setSystemOpenGLConfiguration(const OpenGLConfiguration &openGLConfiguration);
 
     QStringList iconThemeSearchPaths() const;
     QString iconThemeName() const;
@@ -60,7 +61,7 @@ private:
     QVariantMap m_configuration;
     QVariantMap m_systemPropertiesBuiltIn;
     QVariantMap m_systemProperties3rdParty;
-    QVariantMap m_systemOpenGLConfiguration;
+    OpenGLConfiguration m_systemOpenGLConfiguration;
     QString m_iconThemeName;
     QStringList m_iconThemeSearchPaths;
 };

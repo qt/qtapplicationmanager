@@ -92,29 +92,22 @@ void PSConfiguration::parse(const QStringList &args)
             }
             yp.nextDocument();
 
-            YamlParser::Fields fields = {
-                { "listenAddress", false, YamlParser::Scalar, [this](YamlParser *p) {
-                     listenAddress = p->parseString();
+            yp.parseFields({
+                { "listenAddress", false, YamlParser::Scalar, [&]() {
+                     listenAddress = yp.parseString();
                      if (listenAddress.isEmpty())
-                         throw YamlParserException(p, "the listenAddress field cannot be empty");
-                 } },
-                { "projectId", false, YamlParser::Scalar, [this](YamlParser *p) {
-                     projectId = p->parseString();
+                         throw YamlParserException(&yp, "the listenAddress field cannot be empty"); } },
+                { "projectId", false, YamlParser::Scalar, [&]() {
+                     projectId = yp.parseString();
                      if (projectId.isEmpty())
-                         throw YamlParserException(p, "the projectId field cannot be empty");
-                 } },
-                { "storeSignCertificate", false, YamlParser::Scalar, [this](YamlParser *p) {
-                     storeSignCertificateFile = p->parseString();
-                 } },
-                { "storeSignPassword", false, YamlParser::Scalar, [this](YamlParser *p) {
-                     storeSignPassword = p->parseString();
-                 } },
-                { "developerVerificationCaCertificates", false, YamlParser::Scalar | YamlParser::List, [this](YamlParser *p) {
-                     developerVerificationCaCertificateFiles = p->parseStringOrStringList();
-                 } },
-            };
-
-            yp.parseFields(fields);
+                         throw YamlParserException(&yp, "the projectId field cannot be empty"); } },
+                { "storeSignCertificate", false, YamlParser::Scalar, [&]() {
+                     storeSignCertificateFile = yp.parseString(); } },
+                { "storeSignPassword", false, YamlParser::Scalar, [&]() {
+                     storeSignPassword = yp.parseString(); } },
+                { "developerVerificationCaCertificates", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                     developerVerificationCaCertificateFiles = yp.parseStringOrStringList(); } },
+            });
         } catch (const Exception &e) {
             throw Exception("Failed to parse config file %1: %2").arg(DefaultConfigFile, e.errorString());
         }

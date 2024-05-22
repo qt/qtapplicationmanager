@@ -142,7 +142,7 @@ QString ApplicationMain::notificationDBusName() const
     return m_dbusAddressNotifications.isEmpty() ? QString() : u"am_notification_bus"_s;
 }
 
-QVariantMap ApplicationMain::openGLConfiguration() const
+OpenGLConfiguration ApplicationMain::openGLConfiguration() const
 {
     return m_openGLConfiguration;
 }
@@ -271,7 +271,7 @@ void ApplicationMain::loadConfiguration(const QByteArray &configYaml) noexcept(f
 
     QVariantMap uiConfig = m_configuration.value(u"ui"_s).toMap();
     m_slowAnimations = uiConfig.value(u"slowAnimations"_s).toBool();
-    m_openGLConfiguration = uiConfig.value(u"opengl"_s).toMap();
+    m_openGLConfiguration = OpenGLConfiguration::fromMap(uiConfig.value(u"opengl"_s).toMap());
     m_iconThemeName = uiConfig.value(u"iconThemeName"_s).toString();
     m_iconThemeSearchPaths = uiConfig.value(u"iconThemeSearchPaths"_s).toStringList();
 

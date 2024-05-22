@@ -10,6 +10,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QVector>
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/openglconfiguration.h>
 #include <QtAppManSharedMain/sharedmain.h>
 #if QT_CONFIG(am_widgets_support)
 #  include <QtWidgets/QApplication>
@@ -61,7 +62,7 @@ public:
     QStringList loggingRules() const;
     QVariant useAMConsoleLogger() const;
     QString dltLongMessageBehavior() const;
-    QVariantMap openGLConfiguration() const;
+    OpenGLConfiguration openGLConfiguration() const;
     QString iconThemeName() const;
     QStringList iconThemeSearchPaths() const;
 
@@ -118,7 +119,7 @@ private:
     QByteArray m_securityToken;
 
     bool m_slowAnimations = false;
-    QVariantMap m_openGLConfiguration;
+    OpenGLConfiguration m_openGLConfiguration;
     QString m_iconThemeName;
     QStringList m_iconThemeSearchPaths;
 

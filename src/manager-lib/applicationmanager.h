@@ -84,7 +84,7 @@ public:
     void setSecurityChecksEnabled(bool enabled);
 
     // container selection
-    void setContainerSelectionConfiguration(const QList<QPair<QString, QString> > &containerSelectionConfig);
+    void setContainerSelectionConfiguration(const QList<std::pair<QString, QString> > &containerSelectionConfig);
     QJSValue containerSelectionFunction() const;
     void setContainerSelectionFunction(const QJSValue &callback);
 

@@ -2,11 +2,27 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
 #include <QtCore/QtCore>
-#include <QtTest/QtTest>
 
 #include <QtAppManMain/configuration.h>
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/global.h>
+
+QT_BEGIN_NAMESPACE_AM // ADL for op==
+
+// we only need this operator== for the test here
+inline bool operator==(const ConfigurationData::Wayland::ExtraSocket &wes1,
+                       const ConfigurationData::Wayland::ExtraSocket &wes2)
+{
+    return (wes1.path == wes2.path)
+           && (wes1.permissions == wes2.permissions)
+           && (wes1.userId == wes2.userId)
+           && (wes1.groupId == wes2.groupId);
+}
+
+QT_END_NAMESPACE_AM
+
+#include <QtTest/QtTest>
+
 
 using namespace Qt::StringLiterals;
 
@@ -41,7 +57,7 @@ void tst_Configuration::defaultConfig()
     QVERIFY(c.noCache());
 
     // command line only
-    QCOMPARE(c.noFullscreen(), false);
+    QCOMPARE(c.noFullscreen(), true); // legacy
     QCOMPARE(c.verbose(), false);
     QCOMPARE(c.slowAnimations(), false);
     QCOMPARE(c.noDltLogging(), false);
@@ -49,84 +65,83 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.qmlDebugging(), false);
 
     // values from config file
-    QCOMPARE(c.mainQmlFile(), u""_s);
+    QCOMPARE(c.yaml.ui.mainQml, u""_s);
 
-    QCOMPARE(c.builtinAppsManifestDirs(), {});
-    QCOMPARE(c.documentDir(), u""_s);
+    QCOMPARE(c.yaml.applications.builtinAppsManifestDir, {});
+    QCOMPARE(c.yaml.applications.documentDir, u""_s);
 
-    QCOMPARE(c.installationDir(), u""_s);
-    QCOMPARE(c.disableInstaller(), false);
-    QCOMPARE(c.disableIntents(), false);
-    QCOMPARE(c.intentTimeoutForDisambiguation(), 10000);
-    QCOMPARE(c.intentTimeoutForStartApplication(), 3000);
-    QCOMPARE(c.intentTimeoutForReplyFromApplication(), 5000);
-    QCOMPARE(c.intentTimeoutForReplyFromSystem(), 20000);
+    QCOMPARE(c.yaml.applications.installationDir, u""_s);
+    QCOMPARE(c.yaml.installer.disable, false);
+    QCOMPARE(c.yaml.intents.disable, false);
+    QCOMPARE(c.yaml.intents.timeouts.disambiguation.count(), 10000);
+    QCOMPARE(c.yaml.intents.timeouts.startApplication.count(), 3000);
+    QCOMPARE(c.yaml.intents.timeouts.replyFromApplication.count(), 5000);
+    QCOMPARE(c.yaml.intents.timeouts.replyFromSystem.count(), 20000);
 
-    QCOMPARE(c.fullscreen(), false);
-    QCOMPARE(c.windowIcon(), u""_s);
-    QCOMPARE(c.importPaths(), {});
-    QCOMPARE(c.pluginPaths(), {});
-    QCOMPARE(c.loadDummyData(), false);
-    QCOMPARE(c.noSecurity(), false);
-    QCOMPARE(c.developmentMode(), false);
-    QCOMPARE(c.noUiWatchdog(), false);
-    QCOMPARE(c.allowUnsignedPackages(), false);
-    QCOMPARE(c.allowUnknownUiClients(), false);
-    QCOMPARE(c.forceSingleProcess(), false);
-    QCOMPARE(c.forceMultiProcess(), false);
-    QCOMPARE(c.loggingRules(), {});
-    QCOMPARE(c.messagePattern(), u""_s);
-    QCOMPARE(c.useAMConsoleLogger(), QVariant());
-    QCOMPARE(c.style(), u""_s);
-    QCOMPARE(c.iconThemeName(), u""_s);
-    QCOMPARE(c.iconThemeSearchPaths(), {});
-    QCOMPARE(c.dltId(), u""_s);
-    QCOMPARE(c.dltDescription(), u""_s);
-    QCOMPARE(c.resources(), {});
+    QCOMPARE(c.yaml.ui.fullscreen, false);
+    QCOMPARE(c.yaml.ui.windowIcon, u""_s);
+    QCOMPARE(c.yaml.ui.importPaths, {});
+    QCOMPARE(c.yaml.ui.pluginPaths, {});
+    QCOMPARE(c.yaml.ui.loadDummyData, false);
+    QCOMPARE(c.yaml.flags.noSecurity, false);
+    QCOMPARE(c.yaml.flags.developmentMode, false);
+    QCOMPARE(c.yaml.flags.noUiWatchdog, false);
+    QCOMPARE(c.yaml.flags.allowUnsignedPackages, false);
+    QCOMPARE(c.yaml.flags.allowUnknownUiClients, false);
+    QCOMPARE(c.yaml.flags.forceSingleProcess, false);
+    QCOMPARE(c.yaml.flags.forceMultiProcess, false);
+    QCOMPARE(c.yaml.logging.rules, {});
+    QCOMPARE(c.yaml.logging.messagePattern, u""_s);
+    QCOMPARE(c.yaml.logging.useAMConsoleLogger, QVariant());
+    QCOMPARE(c.yaml.ui.style, u""_s);
+    QCOMPARE(c.yaml.ui.iconThemeName, u""_s);
+    QCOMPARE(c.yaml.ui.iconThemeSearchPaths, {});
+    QCOMPARE(c.yaml.logging.dlt.id, u""_s);
+    QCOMPARE(c.yaml.logging.dlt.description, u""_s);
+    QCOMPARE(c.yaml.ui.resources, {});
 
-    QCOMPARE(c.openGLConfiguration(), QVariantMap {});
+    QCOMPARE(c.yaml.ui.opengl.desktopProfile, u""_s);
+    QCOMPARE(c.yaml.ui.opengl.esMajorVersion, -1);
+    QCOMPARE(c.yaml.ui.opengl.esMinorVersion, -1);
 
-    QCOMPARE(c.installationLocations(), {});
+    QCOMPARE(c.yaml.containers.selection, {});
+    QCOMPARE(c.yaml.containers.configurations, QVariantMap {});
+    QCOMPARE(c.yaml.runtimes.additionalLaunchers, QStringList {});
+    QCOMPARE(c.yaml.runtimes.configurations, QVariantMap {});
 
-    QCOMPARE(c.containerSelectionConfiguration(), {});
-    QCOMPARE(c.containerConfigurations(), QVariantMap {});
-    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList {});
-    QCOMPARE(c.runtimeConfigurations(), QVariantMap {});
+    QVERIFY(c.yaml.dbus.policies.isEmpty());
+    QVERIFY(c.yaml.dbus.registrations.isEmpty());
 
-    QCOMPARE(c.dbusRegistration("iface1"), u"auto"_s);
+    QCOMPARE(c.yaml.systemProperties, QVariantMap {});
 
-    QCOMPARE(c.rawSystemProperties(), QVariantMap {});
+    QCOMPARE(c.yaml.quicklaunch.idleLoad, qreal(0));
+    QVERIFY(c.yaml.quicklaunch.runtimesPerContainer.isEmpty());
 
-    QCOMPARE(c.quickLaunchIdleLoad(), qreal(0));
-    QVERIFY(c.quickLaunchRuntimesPerContainer().isEmpty());
+    QCOMPARE(c.yaml.wayland.socketName, u""_s);
+    QVERIFY(c.yaml.wayland.extraSockets.isEmpty());
 
-    QString defaultWaylandSocketName =
-#if defined(Q_OS_LINUX)
-            u"qtam-wayland-"_s;
-#else
-            QString();
-#endif
-    // we cannot rely on the actual display number, when running on Wayland Desktop
-    QVERIFY(c.waylandSocketName().startsWith(defaultWaylandSocketName));
-    QCOMPARE(c.waylandExtraSockets(), {});
+    QCOMPARE(c.yaml.crashAction.printBacktrace, true);
+    QCOMPARE(c.yaml.crashAction.printQmlStack, true);
+    QCOMPARE(c.yaml.crashAction.waitForGdbAttach.count(), 0);
+    QCOMPARE(c.yaml.crashAction.dumpCore, true);
+    QCOMPARE(c.yaml.crashAction.stackFramesToIgnore.onCrash, -1);
+    QCOMPARE(c.yaml.crashAction.stackFramesToIgnore.onException, -1);
 
-    QCOMPARE(c.managerCrashAction(), QVariantMap {});
+    QCOMPARE(c.yaml.installer.caCertificates, {});
 
-    QCOMPARE(c.caCertificates(), {});
-
-    QCOMPARE(c.pluginFilePaths("container"), {});
-    QCOMPARE(c.pluginFilePaths("startup"), {});
+    QCOMPARE(c.yaml.plugins.container, {});
+    QCOMPARE(c.yaml.plugins.startup, {});
 }
 
 void tst_Configuration::simpleConfig()
 {
     Configuration c({ u":/data/config1.yaml"_s }, u":/build-config.yaml"_s);
-    c.parseWithArguments({ u"test"_s, u"--no-cache"_s });
+    QVERIFY_THROWS_NO_EXCEPTION(c.parseWithArguments({ u"test"_s, u"--no-cache"_s }));
 
     QVERIFY(c.noCache());
 
     // command line only
-    QCOMPARE(c.noFullscreen(), false);
+    QCOMPARE(c.noFullscreen(), false); // legacy
     QCOMPARE(c.verbose(), false);
     QCOMPARE(c.slowAnimations(), false);
     QCOMPARE(c.noDltLogging(), false);
@@ -134,72 +149,67 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.qmlDebugging(), false);
 
     // values from config file
-    QCOMPARE(c.mainQmlFile(), u"main.qml"_s);
+    QCOMPARE(c.yaml.ui.mainQml, u"main.qml"_s);
 
-    QCOMPARE(c.builtinAppsManifestDirs(), { u"builtin-dir"_s });
-    QCOMPARE(c.documentDir(), u"doc-dir"_s);
+    QCOMPARE(c.yaml.applications.builtinAppsManifestDir, { u"builtin-dir"_s });
+    QCOMPARE(c.yaml.applications.documentDir, u"doc-dir"_s);
 
-    QCOMPARE(c.installationDir(), u"installation-dir"_s);
-    QCOMPARE(c.disableInstaller(), true);
-    QCOMPARE(c.disableIntents(), true);
-    QCOMPARE(c.intentTimeoutForDisambiguation(), 1);
-    QCOMPARE(c.intentTimeoutForStartApplication(), 2);
-    QCOMPARE(c.intentTimeoutForReplyFromApplication(), 3);
-    QCOMPARE(c.intentTimeoutForReplyFromSystem(), 4);
+    QCOMPARE(c.yaml.applications.installationDir, u"installation-dir"_s);
+    QCOMPARE(c.yaml.installer.disable, true);
+    QCOMPARE(c.yaml.intents.disable, true);
+    QCOMPARE(c.yaml.intents.timeouts.disambiguation.count(), 1);
+    QCOMPARE(c.yaml.intents.timeouts.startApplication.count(), 2);
+    QCOMPARE(c.yaml.intents.timeouts.replyFromApplication.count(), 3);
+    QCOMPARE(c.yaml.intents.timeouts.replyFromSystem.count(), 4);
 
-    QCOMPARE(c.fullscreen(), true);
-    QCOMPARE(c.windowIcon(), u"icon.png"_s);
-    QCOMPARE(c.importPaths(), QStringList({ pwd.absoluteFilePath(u"ip1"_s), pwd.absoluteFilePath(u"ip2"_s) }));
-    QCOMPARE(c.pluginPaths(), QStringList({ u"pp1"_s, u"pp2"_s }));
-    QCOMPARE(c.loadDummyData(), true);
-    QCOMPARE(c.noSecurity(), true);
-    QCOMPARE(c.developmentMode(), true);
-    QCOMPARE(c.noUiWatchdog(), true);
-    QCOMPARE(c.allowUnsignedPackages(), true);
-    QCOMPARE(c.allowUnknownUiClients(), true);
-    QCOMPARE(c.forceSingleProcess(), true);
-    QCOMPARE(c.forceMultiProcess(), true);
-    QCOMPARE(c.loggingRules(), QStringList({ u"lr1"_s, u"lr2"_s }));
-    QCOMPARE(c.messagePattern(), u"msgPattern"_s);
-    QCOMPARE(c.useAMConsoleLogger(), QVariant(true));
-    QCOMPARE(c.style(), u"mystyle"_s);
-    QCOMPARE(c.iconThemeName(), u"mytheme"_s);
-    QCOMPARE(c.iconThemeSearchPaths(), QStringList({ u"itsp1"_s, u"itsp2"_s }));
-    QCOMPARE(c.dltId(), u"dltid"_s);
-    QCOMPARE(c.dltDescription(), u"dltdesc"_s);
-    QCOMPARE(c.dltLongMessageBehavior(), u"split"_s);
-    QCOMPARE(c.resources(), QStringList({ u"r1"_s, u"r2"_s }));
+    QCOMPARE(c.yaml.ui.fullscreen, true);
+    QCOMPARE(c.yaml.ui.windowIcon, u"icon.png"_s);
+    QCOMPARE(c.yaml.ui.importPaths, QStringList({ pwd.absoluteFilePath(u"ip1"_s), pwd.absoluteFilePath(u"ip2"_s) }));
+    QCOMPARE(c.yaml.ui.pluginPaths, QStringList({ u"pp1"_s, u"pp2"_s }));
+    QCOMPARE(c.yaml.ui.loadDummyData, true);
+    QCOMPARE(c.yaml.flags.noSecurity, true);
+    QCOMPARE(c.yaml.flags.developmentMode, true);
+    QCOMPARE(c.yaml.flags.noUiWatchdog, true);
+    QCOMPARE(c.yaml.flags.allowUnsignedPackages, true);
+    QCOMPARE(c.yaml.flags.allowUnknownUiClients, true);
+    QCOMPARE(c.yaml.flags.forceSingleProcess, true);
+    QCOMPARE(c.yaml.flags.forceMultiProcess, true);
+    QCOMPARE(c.yaml.logging.rules, QStringList({ u"lr1"_s, u"lr2"_s }));
+    QCOMPARE(c.yaml.logging.messagePattern, u"msgPattern"_s);
+    QCOMPARE(c.yaml.logging.useAMConsoleLogger, QVariant(true));
+    QCOMPARE(c.yaml.ui.style, u"mystyle"_s);
+    QCOMPARE(c.yaml.ui.iconThemeName, u"mytheme"_s);
+    QCOMPARE(c.yaml.ui.iconThemeSearchPaths, QStringList({ u"itsp1"_s, u"itsp2"_s }));
+    QCOMPARE(c.yaml.logging.dlt.id, u"dltid"_s);
+    QCOMPARE(c.yaml.logging.dlt.description, u"dltdesc"_s);
+    QCOMPARE(c.yaml.logging.dlt.longMessageBehavior, u"split"_s);
+    QCOMPARE(c.yaml.ui.resources, QStringList({ u"r1"_s, u"r2"_s }));
 
-    QCOMPARE(c.openGLConfiguration(), QVariantMap
-             ({
-                  { u"desktopProfile"_s, u"compatibility"_s },
-                  { u"esMajorVersion"_s, 5 },
-                  { u"esMinorVersion"_s, 15 }
-              }));
+    QCOMPARE(c.yaml.ui.opengl.desktopProfile, u"compatibility"_s);
+    QCOMPARE(c.yaml.ui.opengl.esMajorVersion, 5);
+    QCOMPARE(c.yaml.ui.opengl.esMinorVersion, 15);
 
-    QCOMPARE(c.installationLocations(), {});
-
-    QList<QPair<QString, QString>> containerSelectionConfiguration {
+    QList<QPair<QString, QString>> containerSelection {
         { u"*"_s, u"selectionFunction"_s }
     };
-    QCOMPARE(c.containerSelectionConfiguration(), containerSelectionConfiguration);
-    QCOMPARE(c.containerConfigurations(), QVariantMap
+    QCOMPARE(c.yaml.containers.selection, containerSelection);
+    QCOMPARE(c.yaml.containers.configurations, QVariantMap
              ({
                   { u"c-test"_s, QVariantMap {
                         {  u"c-parameter"_s, u"c-value"_s }
                     } }
               }));
-    QCOMPARE(c.runtimeConfigurations(), QVariantMap
+    QCOMPARE(c.yaml.runtimes.configurations, QVariantMap
              ({
                   { u"r-test"_s, QVariantMap {
                         {  u"r-parameter"_s, u"r-value"_s }
                     } }
               }));
-    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList(u"a"_s));
+    QCOMPARE(c.yaml.runtimes.additionalLaunchers, QStringList(u"a"_s));
 
-    QCOMPARE(c.dbusRegistration("iface1"), u"foobus"_s);
+    QCOMPARE(c.yaml.dbus.registrations, QVariantMap({ { u"iface1"_s, u"foobus"_s } }));
 
-    QCOMPARE(c.rawSystemProperties(), QVariantMap
+    QCOMPARE(c.yaml.systemProperties, QVariantMap
              ({
                   { u"public"_s, QVariantMap {
                         {  u"public-prop"_s, u"public-value"_s }
@@ -212,42 +222,31 @@ void tst_Configuration::simpleConfig()
                     } }
               }));
 
-    QCOMPARE(c.quickLaunchIdleLoad(), qreal(0.5));
-    QHash<std::pair<QString, QString>, int> rpc { { { u"*"_s, u"*"_s}, 5 } };
-    QCOMPARE(c.quickLaunchRuntimesPerContainer(), rpc);
-    QCOMPARE(c.quickLaunchFailedStartLimit(), 42);
-    QCOMPARE(c.quickLaunchFailedStartLimitIntervalSec(), 43);
+    QCOMPARE(c.yaml.quicklaunch.idleLoad, qreal(0.5));
+    QMap<std::pair<QString, QString>, int> rpc { { { u"*"_s, u"*"_s}, 5 } };
+    QCOMPARE(c.yaml.quicklaunch.runtimesPerContainer, rpc);
+    QCOMPARE(c.yaml.quicklaunch.failedStartLimit, 42);
+    QCOMPARE(c.yaml.quicklaunch.failedStartLimitIntervalSec.count(), 43);
 
-    QCOMPARE(c.waylandSocketName(), u"my-wlsock-42"_s);
+    QCOMPARE(c.yaml.wayland.socketName, u"my-wlsock-42"_s);
 
-    QCOMPARE(c.waylandExtraSockets(), QVariantList
-             ({
-                  QVariantMap {
-                      { u"path"_s, u"path-es1"_s },
-                      { u"permissions"_s, 0440 },
-                      { u"userId"_s, 1 },
-                      { u"groupId"_s, 2 }
-                  },
-                  QVariantMap {
-                      { u"path"_s, u"path-es2"_s },
-                      { u"permissions"_s, 0222 },
-                      { u"userId"_s, 3 },
-                      { u"groupId"_s, 4 }
-                  }
-              }));
+    QList<ConfigurationData::Wayland::ExtraSocket> extraSockets {
+        { u"path-es1"_s, 0440, 1, 2 },
+        { u"path-es2"_s, 0222, 3, 4 }
+    };
+    QCOMPARE(c.yaml.wayland.extraSockets, extraSockets);
 
-    QCOMPARE(c.managerCrashAction(), QVariantMap
-             ({
-                  { u"printBacktrace"_s, true },
-                  { u"printQmlStack"_s, true },
-                  { u"waitForGdbAttach"_s, true },
-                  { u"dumpCore"_s, true }
-              }));
+    QCOMPARE(c.yaml.crashAction.printBacktrace, true);
+    QCOMPARE(c.yaml.crashAction.printQmlStack, true);
+    QCOMPARE(c.yaml.crashAction.waitForGdbAttach.count(), 42);
+    QCOMPARE(c.yaml.crashAction.dumpCore, true);
+    QCOMPARE(c.yaml.crashAction.stackFramesToIgnore.onCrash, -1);
+    QCOMPARE(c.yaml.crashAction.stackFramesToIgnore.onException, -1);
 
-    QCOMPARE(c.caCertificates(), QStringList({ u"cert1"_s, u"cert2"_s }));
+    QCOMPARE(c.yaml.installer.caCertificates, QStringList({ u"cert1"_s, u"cert2"_s }));
 
-    QCOMPARE(c.pluginFilePaths("startup"), QStringList({ u"s1"_s, u"s2"_s }));
-    QCOMPARE(c.pluginFilePaths("container"), QStringList({ u"c1"_s, u"c2"_s }));
+    QCOMPARE(c.yaml.plugins.startup, QStringList({ u"s1"_s, u"s2"_s }));
+    QCOMPARE(c.yaml.plugins.container, QStringList({ u"c1"_s, u"c2"_s }));
 }
 
 void tst_Configuration::mergedConfig()
@@ -258,7 +257,7 @@ void tst_Configuration::mergedConfig()
     QVERIFY(c.noCache());
 
     // command line only
-    QCOMPARE(c.noFullscreen(), false);
+    QCOMPARE(c.noFullscreen(), false); // legacy
     QCOMPARE(c.verbose(), false);
     QCOMPARE(c.slowAnimations(), false);
     QCOMPARE(c.noDltLogging(), false);
@@ -266,60 +265,55 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.qmlDebugging(), false);
 
     // values from config file
-    QCOMPARE(c.mainQmlFile(), u"main2.qml"_s);
+    QCOMPARE(c.yaml.ui.mainQml, u"main2.qml"_s);
 
-    QCOMPARE(c.builtinAppsManifestDirs(), QStringList({ u"builtin-dir"_s, u"builtin-dir2"_s }));
-    QCOMPARE(c.documentDir(), u"doc-dir2"_s);
+    QCOMPARE(c.yaml.applications.builtinAppsManifestDir, QStringList({ u"builtin-dir"_s, u"builtin-dir2"_s }));
+    QCOMPARE(c.yaml.applications.documentDir, u"doc-dir2"_s);
 
-    QCOMPARE(c.installationDir(), u"installation-dir2"_s);
-    QCOMPARE(c.disableInstaller(), true);
-    QCOMPARE(c.disableIntents(), true);
-    QCOMPARE(c.intentTimeoutForDisambiguation(), 5);
-    QCOMPARE(c.intentTimeoutForStartApplication(), 6);
-    QCOMPARE(c.intentTimeoutForReplyFromApplication(), 7);
-    QCOMPARE(c.intentTimeoutForReplyFromSystem(), 8);
+    QCOMPARE(c.yaml.applications.installationDir, u"installation-dir2"_s);
+    QCOMPARE(c.yaml.installer.disable, true);
+    QCOMPARE(c.yaml.intents.disable, true);
+    QCOMPARE(c.yaml.intents.timeouts.disambiguation.count(), 5);
+    QCOMPARE(c.yaml.intents.timeouts.startApplication.count(), 6);
+    QCOMPARE(c.yaml.intents.timeouts.replyFromApplication.count(), 7);
+    QCOMPARE(c.yaml.intents.timeouts.replyFromSystem.count(), 8);
 
-    QCOMPARE(c.fullscreen(), true);
-    QCOMPARE(c.windowIcon(), u"icon2.png"_s);
-    QCOMPARE(c.importPaths(), QStringList
+    QCOMPARE(c.yaml.ui.fullscreen, true);
+    QCOMPARE(c.yaml.ui.windowIcon, u"icon2.png"_s);
+    QCOMPARE(c.yaml.ui.importPaths, QStringList
              ({ pwd.absoluteFilePath(u"ip1"_s),
                 pwd.absoluteFilePath(u"ip2"_s),
                 pwd.absoluteFilePath(u"ip3"_s) }));
-    QCOMPARE(c.pluginPaths(), QStringList({ u"pp1"_s, u"pp2"_s, u"pp3"_s }));
-    QCOMPARE(c.loadDummyData(), true);
-    QCOMPARE(c.noSecurity(), true);
-    QCOMPARE(c.developmentMode(), true);
-    QCOMPARE(c.noUiWatchdog(), true);
-    QCOMPARE(c.allowUnsignedPackages(), true);
-    QCOMPARE(c.allowUnknownUiClients(), true);
-    QCOMPARE(c.forceSingleProcess(), true);
-    QCOMPARE(c.forceMultiProcess(), true);
-    QCOMPARE(c.loggingRules(), QStringList({ u"lr1"_s, u"lr2"_s, u"lr3"_s }));
-    QCOMPARE(c.messagePattern(), u"msgPattern2"_s);
-    QCOMPARE(c.useAMConsoleLogger(), QVariant());
-    QCOMPARE(c.style(), u"mystyle2"_s);
-    QCOMPARE(c.iconThemeName(), u"mytheme2"_s);
-    QCOMPARE(c.iconThemeSearchPaths(), QStringList({ u"itsp1"_s, u"itsp2"_s, u"itsp3"_s }));
-    QCOMPARE(c.dltId(), u"dltid2"_s);
-    QCOMPARE(c.dltDescription(), u"dltdesc2"_s);
-    QCOMPARE(c.dltLongMessageBehavior(), u"truncate"_s);
-    QCOMPARE(c.resources(), QStringList({ u"r1"_s, u"r2"_s, u"r3"_s }));
+    QCOMPARE(c.yaml.ui.pluginPaths, QStringList({ u"pp1"_s, u"pp2"_s, u"pp3"_s }));
+    QCOMPARE(c.yaml.ui.loadDummyData, true);
+    QCOMPARE(c.yaml.flags.noSecurity, true);
+    QCOMPARE(c.yaml.flags.developmentMode, true);
+    QCOMPARE(c.yaml.flags.noUiWatchdog, true);
+    QCOMPARE(c.yaml.flags.allowUnsignedPackages, true);
+    QCOMPARE(c.yaml.flags.allowUnknownUiClients, true);
+    QCOMPARE(c.yaml.flags.forceSingleProcess, true);
+    QCOMPARE(c.yaml.flags.forceMultiProcess, true);
+    QCOMPARE(c.yaml.logging.rules, QStringList({ u"lr1"_s, u"lr2"_s, u"lr3"_s }));
+    QCOMPARE(c.yaml.logging.messagePattern, u"msgPattern2"_s);
+    QCOMPARE(c.yaml.logging.useAMConsoleLogger, true);
+    QCOMPARE(c.yaml.ui.style, u"mystyle2"_s);
+    QCOMPARE(c.yaml.ui.iconThemeName, u"mytheme2"_s);
+    QCOMPARE(c.yaml.ui.iconThemeSearchPaths, QStringList({ u"itsp1"_s, u"itsp2"_s, u"itsp3"_s }));
+    QCOMPARE(c.yaml.logging.dlt.id, u"dltid2"_s);
+    QCOMPARE(c.yaml.logging.dlt.description, u"dltdesc2"_s);
+    QCOMPARE(c.yaml.logging.dlt.longMessageBehavior, u"truncate"_s);
+    QCOMPARE(c.yaml.ui.resources, QStringList({ u"r1"_s, u"r2"_s, u"r3"_s }));
 
-    QCOMPARE(c.openGLConfiguration(), QVariantMap
-             ({
-                  { u"desktopProfile"_s, u"classic"_s },
-                  { u"esMajorVersion"_s, 1 },
-                  { u"esMinorVersion"_s, 0 },
-              }));
+    QCOMPARE(c.yaml.ui.opengl.desktopProfile, u"classic"_s);
+    QCOMPARE(c.yaml.ui.opengl.esMajorVersion, 2);
+    QCOMPARE(c.yaml.ui.opengl.esMinorVersion, 0);
 
-    QCOMPARE(c.installationLocations(), {});
-
-    QList<QPair<QString, QString>> containerSelectionConfiguration {
+    QList<QPair<QString, QString>> containerSelection {
         { u"*"_s, u"selectionFunction"_s },
         { u"2"_s, u"second"_s }
     };
-    QCOMPARE(c.containerSelectionConfiguration(), containerSelectionConfiguration);
-    QCOMPARE(c.containerConfigurations(), QVariantMap
+    QCOMPARE(c.yaml.containers.selection, containerSelection);
+    QCOMPARE(c.yaml.containers.configurations, QVariantMap
              ({
                   { u"c-test"_s, QVariantMap {
                         {  u"c-parameter"_s, u"xc-value"_s },
@@ -330,7 +324,7 @@ void tst_Configuration::mergedConfig()
 
               }));
 
-    QCOMPARE(c.runtimeConfigurations(), QVariantMap
+    QCOMPARE(c.yaml.runtimes.configurations, QVariantMap
              ({
                   { u"r-test"_s, QVariantMap {
                         {  u"r-parameter"_s, u"xr-value"_s },
@@ -340,12 +334,16 @@ void tst_Configuration::mergedConfig()
                     } }
 
               }));
-    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList({ u"a"_s, u"b"_s, u"c"_s }));
+    QCOMPARE(c.yaml.runtimes.additionalLaunchers, QStringList({ u"a"_s, u"b"_s, u"c"_s }));
 
-    QCOMPARE(c.dbusRegistration("iface1"), u"foobus1"_s);
-    QCOMPARE(c.dbusRegistration("iface2"), u"foobus2"_s);
+    QVERIFY(c.yaml.dbus.policies.isEmpty());
+    QCOMPARE(c.yaml.dbus.registrations, QVariantMap
+             ({
+                 { u"iface1"_s, u"foobus1"_s },
+                 { u"iface2"_s, u"foobus2"_s }
+             }));
 
-    QCOMPARE(c.rawSystemProperties(), QVariantMap
+    QCOMPARE(c.yaml.systemProperties, QVariantMap
              ({
                   { u"public"_s, QVariantMap {
                         {  u"public-prop"_s, u"xpublic-value"_s },
@@ -361,50 +359,36 @@ void tst_Configuration::mergedConfig()
                     } }
               }));
 
-    QCOMPARE(c.quickLaunchIdleLoad(), qreal(0.2));
-    QHash<std::pair<QString, QString>, int> rpc = {
+    QCOMPARE(c.yaml.quicklaunch.idleLoad, qreal(0.2));
+    QMap<std::pair<QString, QString>, int> rpc = {
         { { u"*"_s, u"*"_s }, 5 },
         { { u"c-foo"_s, u"r-foo"_s }, 1 },
         { { u"c-foo"_s, u"r-bar"_s }, 2 },
         { { u"c-bar"_s, u"*"_s }, 4 },
     };
-    QCOMPARE(c.quickLaunchRuntimesPerContainer(), rpc);
-    QCOMPARE(c.quickLaunchFailedStartLimit(), 44);
-    QCOMPARE(c.quickLaunchFailedStartLimitIntervalSec(), 45);
+    QCOMPARE(c.yaml.quicklaunch.runtimesPerContainer, rpc);
+    QCOMPARE(c.yaml.quicklaunch.failedStartLimit, 44);
+    QCOMPARE(c.yaml.quicklaunch.failedStartLimitIntervalSec.count(), 45);
 
-    QCOMPARE(c.waylandSocketName(), u"other-wlsock-0"_s);
+    QCOMPARE(c.yaml.wayland.socketName, u"other-wlsock-0"_s);
 
-    QCOMPARE(c.waylandExtraSockets(), QVariantList
-             ({
-                  QVariantMap {
-                      { u"path"_s, u"path-es1"_s },
-                      { u"permissions"_s, 0440 },
-                      { u"userId"_s, 1 },
-                      { u"groupId"_s, 2 }
-                  },
-                  QVariantMap {
-                      { u"path"_s, u"path-es2"_s },
-                      { u"permissions"_s, 0222 },
-                      { u"userId"_s, 3 },
-                      { u"groupId"_s, 4 }
-                  },
-                  QVariantMap {
-                      { u"path"_s, u"path-es3"_s },
-                  }
-              }));
+    QList<ConfigurationData::Wayland::ExtraSocket> extraSockets {
+        { u"path-es1"_s, 0440, 1, 2 },
+        { u"path-es2"_s, 0222, 3, 4 },
+        { u"path-es3"_s, -1, -1, -1 }
+    };
+    QCOMPARE(c.yaml.wayland.extraSockets, extraSockets);
+    QCOMPARE(c.yaml.crashAction.printBacktrace, true);
+    QCOMPARE(c.yaml.crashAction.printQmlStack, true);
+    QCOMPARE(c.yaml.crashAction.waitForGdbAttach.count(), 42);
+    QCOMPARE(c.yaml.crashAction.dumpCore, true);
+    QCOMPARE(c.yaml.crashAction.stackFramesToIgnore.onCrash, -1);
+    QCOMPARE(c.yaml.crashAction.stackFramesToIgnore.onException, -1);
 
-    QCOMPARE(c.managerCrashAction(), QVariantMap
-             ({
-                  { u"printBacktrace"_s, true },
-                  { u"printQmlStack"_s, true },
-                  { u"waitForGdbAttach"_s, true },
-                  { u"dumpCore"_s, true }
-              }));
+    QCOMPARE(c.yaml.installer.caCertificates, QStringList({ u"cert1"_s, u"cert2"_s, u"cert3"_s }));
 
-    QCOMPARE(c.caCertificates(), QStringList({ u"cert1"_s, u"cert2"_s, u"cert3"_s }));
-
-    QCOMPARE(c.pluginFilePaths("container"), QStringList({ u"c1"_s, u"c2"_s, u"c3"_s, u"c4"_s }));
-    QCOMPARE(c.pluginFilePaths("startup"), QStringList({ u"s1"_s, u"s2"_s, u"s3"_s }));
+    QCOMPARE(c.yaml.plugins.container, QStringList({ u"c1"_s, u"c2"_s, u"c3"_s, u"c4"_s }));
+    QCOMPARE(c.yaml.plugins.startup, QStringList({ u"s1"_s, u"s2"_s, u"s3"_s }));
 }
 
 void tst_Configuration::commandLineConfig()
@@ -447,73 +431,81 @@ void tst_Configuration::commandLineConfig()
     QVERIFY(c.noCache());
 
     // command line only
-    QCOMPARE(c.noFullscreen(), true);
+    QCOMPARE(c.noFullscreen(), true); // legacy
     QCOMPARE(c.verbose(), true);
     QCOMPARE(c.slowAnimations(), true);
     QCOMPARE(c.noDltLogging(), true);
     QCOMPARE(c.singleApp(), u"appname"_s);
     QCOMPARE(c.qmlDebugging(), true);
+    QCOMPARE(c.waylandSocketName(), u"wlsock-1"_s);
+    QCOMPARE(c.dbus(), u"system"_s);
 
     // values from config file
-    QCOMPARE(c.mainQmlFile(), u"main-cl.qml"_s);
+    QCOMPARE(c.yaml.ui.mainQml, u"main-cl.qml"_s);
 
-    QCOMPARE(c.builtinAppsManifestDirs(), QStringList({ u"builtin-dir-cl1"_s, u"builtin-dir-cl2"_s }));
-    QCOMPARE(c.documentDir(), u"document-dir-cl"_s);
+    QCOMPARE(c.yaml.applications.builtinAppsManifestDir, QStringList({ u"builtin-dir-cl1"_s, u"builtin-dir-cl2"_s }));
+    QCOMPARE(c.yaml.applications.documentDir, u"document-dir-cl"_s);
 
-    QCOMPARE(c.installationDir(), u"installation-dir-cl"_s);
-    QCOMPARE(c.disableInstaller(), true);
-    QCOMPARE(c.disableIntents(), true);
-    QCOMPARE(c.intentTimeoutForDisambiguation(), 10000);
-    QCOMPARE(c.intentTimeoutForStartApplication(), 3000);
-    QCOMPARE(c.intentTimeoutForReplyFromApplication(), 5000);
-    QCOMPARE(c.intentTimeoutForReplyFromSystem(), 20000);
+    QCOMPARE(c.yaml.applications.installationDir, u"installation-dir-cl"_s);
+    QCOMPARE(c.yaml.installer.disable, true);
+    QCOMPARE(c.yaml.intents.disable, true);
+    QCOMPARE(c.yaml.intents.timeouts.disambiguation.count(), 10000);
+    QCOMPARE(c.yaml.intents.timeouts.startApplication.count(), 3000);
+    QCOMPARE(c.yaml.intents.timeouts.replyFromApplication.count(), 5000);
+    QCOMPARE(c.yaml.intents.timeouts.replyFromSystem.count(), 20000);
 
-    QCOMPARE(c.fullscreen(), false);
-    QCOMPARE(c.windowIcon(), u""_s);
-    QCOMPARE(c.importPaths(), QStringList({ pwd.absoluteFilePath(u"ip-cl1"_s),
+    QCOMPARE(c.yaml.ui.fullscreen, false);
+    QCOMPARE(c.yaml.ui.windowIcon, u""_s);
+    QCOMPARE(c.yaml.ui.importPaths, QStringList({ pwd.absoluteFilePath(u"ip-cl1"_s),
                                             pwd.absoluteFilePath(u"ip-cl2"_s) }));
-    QCOMPARE(c.pluginPaths(), {});
-    QCOMPARE(c.loadDummyData(), true);
-    QCOMPARE(c.noSecurity(), true);
-    QCOMPARE(c.developmentMode(), true);
-    QCOMPARE(c.noUiWatchdog(), true);
-    QCOMPARE(c.forceSingleProcess(), true);
-    QCOMPARE(c.forceMultiProcess(), true);
-    QCOMPARE(c.loggingRules(), QStringList({ u"cl-lr1"_s, u"cl-lr2"_s }));
-    QCOMPARE(c.messagePattern(), u""_s);
-    QCOMPARE(c.useAMConsoleLogger(), QVariant());
-    QCOMPARE(c.style(), u""_s);
-    QCOMPARE(c.iconThemeName(), u""_s);
-    QCOMPARE(c.iconThemeSearchPaths(), {});
-    QCOMPARE(c.dltId(), u""_s);
-    QCOMPARE(c.dltDescription(), u""_s);
-    QCOMPARE(c.resources(), {});
+    QCOMPARE(c.yaml.ui.pluginPaths, {});
+    QCOMPARE(c.yaml.ui.loadDummyData, true);
+    QCOMPARE(c.yaml.flags.noSecurity, true);
+    QCOMPARE(c.yaml.flags.developmentMode, true);
+    QCOMPARE(c.yaml.flags.noUiWatchdog, true);
+    QCOMPARE(c.yaml.flags.forceSingleProcess, true);
+    QCOMPARE(c.yaml.flags.forceMultiProcess, true);
+    QCOMPARE(c.yaml.logging.rules, QStringList({ u"cl-lr1"_s, u"cl-lr2"_s }));
+    QCOMPARE(c.yaml.logging.messagePattern, u""_s);
+    QCOMPARE(c.yaml.logging.useAMConsoleLogger, QVariant());
+    QCOMPARE(c.yaml.ui.style, u""_s);
+    QCOMPARE(c.yaml.ui.iconThemeName, u""_s);
+    QCOMPARE(c.yaml.ui.iconThemeSearchPaths, {});
+    QCOMPARE(c.yaml.logging.dlt.id, u""_s);
+    QCOMPARE(c.yaml.logging.dlt.description, u""_s);
+    QCOMPARE(c.yaml.ui.resources, {});
 
-    QCOMPARE(c.openGLConfiguration(), QVariantMap {});
+    QCOMPARE(c.yaml.ui.opengl.desktopProfile, u""_s);
+    QCOMPARE(c.yaml.ui.opengl.esMajorVersion, -1);
+    QCOMPARE(c.yaml.ui.opengl.esMinorVersion, -1);
 
-    QCOMPARE(c.installationLocations(), {});
+    QCOMPARE(c.yaml.containers.selection, {});
+    QCOMPARE(c.yaml.containers.configurations, QVariantMap{});
+    QCOMPARE(c.yaml.runtimes.configurations, QVariantMap{});
+    QCOMPARE(c.yaml.runtimes.additionalLaunchers, QStringList{});
 
-    QCOMPARE(c.containerSelectionConfiguration(), {});
-    QCOMPARE(c.containerConfigurations(), QVariantMap{});
-    QCOMPARE(c.runtimeConfigurations(), QVariantMap{});
-    QCOMPARE(c.runtimeAdditionalLaunchers(), QStringList{});
+    QVERIFY(c.yaml.dbus.policies.isEmpty());
+    QVERIFY(c.yaml.dbus.registrations.isEmpty());
 
-    QCOMPARE(c.dbusRegistration("iface1"), u"system"_s);
+    QCOMPARE(c.yaml.systemProperties, QVariantMap {});
 
-    QCOMPARE(c.rawSystemProperties(), QVariantMap {});
+    QCOMPARE(c.yaml.quicklaunch.idleLoad, qreal(0));
+    QVERIFY(c.yaml.quicklaunch.runtimesPerContainer.isEmpty());
 
-    QCOMPARE(c.quickLaunchIdleLoad(), qreal(0));
-    QVERIFY(c.quickLaunchRuntimesPerContainer().isEmpty());
+    QCOMPARE(c.yaml.wayland.socketName, u""_s);
+    QVERIFY(c.yaml.wayland.extraSockets.isEmpty());
 
-    QCOMPARE(c.waylandSocketName(), u"wlsock-1"_s);
-    QCOMPARE(c.waylandExtraSockets(), {});
+    QCOMPARE(c.yaml.crashAction.printBacktrace, true);
+    QCOMPARE(c.yaml.crashAction.printQmlStack, true);
+    QCOMPARE(c.yaml.crashAction.waitForGdbAttach.count(), 0);
+    QCOMPARE(c.yaml.crashAction.dumpCore, true);
+    QCOMPARE(c.yaml.crashAction.stackFramesToIgnore.onCrash, -1);
+    QCOMPARE(c.yaml.crashAction.stackFramesToIgnore.onException, -1);
 
-    QCOMPARE(c.managerCrashAction(), QVariantMap {});
+    QCOMPARE(c.yaml.installer.caCertificates, {});
 
-    QCOMPARE(c.caCertificates(), {});
-
-    QCOMPARE(c.pluginFilePaths("container"), {});
-    QCOMPARE(c.pluginFilePaths("startup"), {});
+    QCOMPARE(c.yaml.plugins.container, {});
+    QCOMPARE(c.yaml.plugins.startup, {});
 }
 
 

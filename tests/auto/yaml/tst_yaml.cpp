@@ -69,13 +69,13 @@ void tst_Yaml::parser()
         QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
         QByteArray ba = f.readAll();
         QVERIFY(!ba.isEmpty());
-        YamlParser p(ba);
-        auto header = p.parseHeader();
+        YamlParser yp(ba, f.fileName());
+        auto header = yp.parseHeader();
 
         QCOMPARE(header.first, u"testfile"_s);
         QCOMPARE(header.second, 42);
 
-        QVERIFY(p.nextDocument());
+        QVERIFY(yp.nextDocument());
 
         YamlParser::Fields fields;
         for (const auto &pair : tests) {
@@ -86,72 +86,117 @@ void tst_Yaml::parser()
                 type = YamlParser::Map;
             QVariant value = pair.second;
 
-            fields.emplace_back(pair.first, true, type, [type, value](YamlParser *p) {
+            fields.emplace_back(pair.first, true, type, [&yp, type, value]() {
                 switch (type) {
                 case YamlParser::Scalar: {
-                    QVERIFY(p->isScalar());
-                    QVariant v = p->parseScalar();
+                    QVERIFY(yp.isScalar());
+                    QVariant v = yp.parseScalar();
                     QCOMPARE(int(v.metaType().id()), value.metaType().id());
                     QVERIFY(v == value);
                     break;
                 }
                 case YamlParser::List: {
-                    QVERIFY(p->isList());
-                    QVariantList vl = p->parseList();
+                    QVERIFY(yp.isList());
+                    QVariantList vl = yp.parseList();
                     QVERIFY(vl == value.toList());
                     break;
                 }
                 case YamlParser::Map: {
-                    QVERIFY(p->isMap());
-                    QVariantMap vm = p->parseMap();
+                    QVERIFY(yp.isMap());
+                    QVariantMap vm = yp.parseMap();
                     QVERIFY(vm == value.toMap());
                     break;
                 }
                 }
             });
         }
-        fields.emplace_back("extended", true, YamlParser::Map, [](YamlParser *p) {
-            YamlParser::Fields extFields = {
-                { "ext-string", true, YamlParser::Scalar, [](YamlParser *p) {
-                      QVERIFY(p->isScalar());
-                      QVariant v = p->parseScalar();
+        fields.emplace_back("extended", true, YamlParser::Map, [&yp]() {
+            const YamlParser::Fields extFields = {
+                { "ext-string", true, YamlParser::Scalar, [&]() {
+                      QVERIFY(yp.isScalar());
+                      QVariant v = yp.parseScalar();
                       QCOMPARE(v.metaType(), QMetaType::fromType<QString>());
                       QCOMPARE(v.toString(), u"ext string"_s);
                   } }
             };
-            p->parseFields(extFields);
+            yp.parseFields(extFields);
         });
 
-        fields.emplace_back("stringlist-string", true, YamlParser::Scalar | YamlParser::List, [](YamlParser *p) {
-            QCOMPARE(p->parseStringOrStringList(), QStringList { u"string"_s });
+        fields.emplace_back("stringlist-string", true, YamlParser::Scalar | YamlParser::List, [&]() {
+            QCOMPARE(yp.parseStringOrStringList(), QStringList { u"string"_s });
         });
-        fields.emplace_back("stringlist-list1", true, YamlParser::Scalar | YamlParser::List, [](YamlParser *p) {
-            QCOMPARE(p->parseStringOrStringList(), QStringList { u"string"_s });
+        fields.emplace_back("stringlist-list1", true, YamlParser::Scalar | YamlParser::List, [&]() {
+            QCOMPARE(yp.parseStringOrStringList(), QStringList { u"string"_s });
         });
-        fields.emplace_back("stringlist-list2", true, YamlParser::Scalar | YamlParser::List, [](YamlParser *p) {
-            QCOMPARE(p->parseStringOrStringList(), QStringList({ u"string1"_s, u"string2"_s }));
+        fields.emplace_back("stringlist-list2", true, YamlParser::Scalar | YamlParser::List, [&]() {
+            QCOMPARE(yp.parseStringOrStringList(), QStringList({ u"string1"_s, u"string2"_s }));
         });
 
-        fields.emplace_back("list-of-maps", true, YamlParser::List, [](YamlParser *p) {
+        fields.emplace_back("list-of-maps", true, YamlParser::List, [&yp]() {
             int index = 0;
-            p->parseList([&index](YamlParser *p) {
+            yp.parseList([&index, &yp]() {
                 ++index;
-                YamlParser::Fields lomFields = {
-                    { "index", true, YamlParser::Scalar, [&index](YamlParser *p) {
-                          QCOMPARE(p->parseScalar().toInt(), index);
-                      } },
-                    { "name", true, YamlParser::Scalar, [&index](YamlParser *p) {
-                          QCOMPARE(p->parseScalar().toString(), QString::number(index));
-                      } }
+                const YamlParser::Fields lomFields = {
+                    { "index", true, YamlParser::Scalar, [&index, &yp]() {
+                         QCOMPARE(yp.parseScalar().toInt(), index);
+                     } },
+                    { "name", true, YamlParser::Scalar, [&index, &yp]() {
+                         QCOMPARE(yp.parseScalar().toString(), QString::number(index));
+                     } }
                 };
-                p->parseFields(lomFields);
+                yp.parseFields(lomFields);
             });
             QCOMPARE(index, 2);
         });
 
-        p.parseFields(fields);
+        fields.emplace_back("durations", true, YamlParser::Map, [&]() {
+            const YamlParser::Fields durationsFields = {
+                { "h", true, YamlParser::Scalar, [&]() {
+                     std::chrono::seconds d;
+                     QVERIFY_THROWS_NO_EXCEPTION(d = yp.parseDurationAsSec());
+                     QCOMPARE(d, std::chrono::minutes(-90));
+                 } },
+                { "min", true, YamlParser::Scalar, [&]() {
+                     std::chrono::seconds d;
+                     QVERIFY_THROWS_NO_EXCEPTION(d = yp.parseDurationAsSec());
+                     QCOMPARE(d, std::chrono::seconds(90));
+                 } },
+                { "s", true, YamlParser::Scalar, [&]() {
+                     std::chrono::milliseconds d;
+                     QVERIFY_THROWS_NO_EXCEPTION(d = yp.parseDurationAsMSec());
+                     QCOMPARE(d, std::chrono::milliseconds(1500));
+                 } },
+                { "ms", true, YamlParser::Scalar, [&]() {
+                     std::chrono::microseconds d;
+                     QVERIFY_THROWS_NO_EXCEPTION(d = yp.parseDurationAsUSec());
+                     QCOMPARE(d, std::chrono::microseconds(1500));
+                 } },
+                { "us", true, YamlParser::Scalar, [&]() {
+                     std::chrono::microseconds d;
+                     QVERIFY_THROWS_NO_EXCEPTION(d = yp.parseDurationAsUSec());
+                     QCOMPARE(d, std::chrono::microseconds(1));
+                 } },
+                { "default", true, YamlParser::Scalar, [&]() {
+                     std::chrono::milliseconds d;
+                     QVERIFY_THROWS_NO_EXCEPTION(d = yp.parseDurationAsMSec(u"s"));
+                     QCOMPARE(d, std::chrono::seconds(1500));
+                 } },
+                { "offas0", true, YamlParser::Scalar, [&]() {
+                     std::chrono::milliseconds d;
+                     QVERIFY_THROWS_NO_EXCEPTION(d = yp.parseDurationAsMSec());
+                     QCOMPARE(d, std::chrono::milliseconds(0));
+                 } },
+                { "invalid", true, YamlParser::Scalar, [&]() {
+                     std::chrono::seconds d;
+                     QVERIFY_THROWS_EXCEPTION(YamlParserException, d = yp.parseDurationAsSec());
+                 } },
+            };
+            yp.parseFields(durationsFields);
+        });
 
-        QVERIFY(!p.nextDocument());
+        yp.parseFields(fields);
+
+        QVERIFY(!yp.nextDocument());
 
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
@@ -196,7 +241,12 @@ static const QVariantMap testMainDoc = {
     { u"stringlist-list2"_s, QVariantList { u"string1"_s, u"string2"_s } },
 
     { u"list-of-maps"_s, QVariantList { QVariantMap { { u"index"_s, 1 }, { u"name"_s, u"1"_s } },
-                                          QVariantMap { { u"index"_s, 2 }, { u"name"_s, u"2"_s } } } }
+                                          QVariantMap { { u"index"_s, 2 }, { u"name"_s, u"2"_s } } } },
+    { u"durations"_s, QVariantMap {
+                                 { u"h"_s, u"-1.5h"_s }, { u"min"_s, u" 1.5 min "_s },
+                                 { u"s"_s, u"1.5  s"_s }, { u"ms"_s, u"1.5 ms"_s },
+                                 { u"us"_s, u"1.5us"_s }, { u"default"_s, 1500 },
+                                 { u"offas0"_s, false }, { u"invalid"_s, u"1.5x"_s } } },
 };
 
 void tst_Yaml::documentParser()
@@ -230,15 +280,13 @@ public:
     CacheTest *loadFromSource(QIODevice *source, const QString &fileName)
     {
         std::unique_ptr<CacheTest> ct(new CacheTest);
-        YamlParser p(source->readAll(), fileName);
-        p.nextDocument();
-        p.parseFields({ { "name", true, YamlParser::Scalar, [&ct](YamlParser *p) {
-                          ct->name = p->parseScalar().toString(); } },
-                        { "file", true, YamlParser::Scalar, [&ct](YamlParser *p) {
-                          ct->file = p->parseScalar().toString(); } },
-                        { "value", false, YamlParser::Scalar, [&ct](YamlParser *p) {
-                          ct->value = p->parseScalar().toString(); } }
-                      });
+        YamlParser yp(source->readAll(), fileName);
+        yp.nextDocument();
+        yp.parseFields({
+            { "name", true, YamlParser::Scalar, [&]() { ct->name = yp.parseString(); } },
+            { "file", true, YamlParser::Scalar, [&]() { ct->file = yp.parseString(); } },
+            { "value", false, YamlParser::Scalar, [&]() { ct->value = yp.parseString(); } }
+        });
         return ct.release();
     }
     CacheTest *loadFromCache(QDataStream &ds)

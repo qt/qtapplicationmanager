@@ -7,6 +7,7 @@
 #define SHAREDMAIN_H
 
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/openglconfiguration.h>
 #include <QtCore/QVariantMap>
 #include <QtCore/QStringList>
 #include <QtGui/QSurfaceFormat>
@@ -27,7 +28,7 @@ public:
     void setupQmlDebugging(bool qmlDebugging);
     void setupLogging(bool verbose, const QStringList &loggingRules, const QString &messagePattern,
                       const QVariant &useAMConsoleLogger);
-    void setupOpenGL(const QVariantMap &openGLConfiguration);
+    void setupOpenGL(const OpenGLConfiguration &openGLConfiguration);
     void checkOpenGLFormat(const char *what, const QSurfaceFormat &format) const;
 
 private:

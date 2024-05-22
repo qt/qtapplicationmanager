@@ -7,125 +7,37 @@
 #define CONFIGURATION_P_H
 
 #include <QtAppManCommon/global.h>
-#include <QStringList>
-#include <QVariantMap>
-#include <QVector>
-#include <QSet>
-#include <QHash>
+#include <QtCore/QCommandLineParser>
+
+#include "configuration.h"
+#include "configcache.h"
+
 
 QT_FORWARD_DECLARE_CLASS(QIODevice)
 
 QT_BEGIN_NAMESPACE_AM
 
-
-// IMPORTANT: if you add/remove/change anything in this struct, you also have to adjust the
-//            loadFromCache(), saveToCache() and mergeFrom() functions in the cpp file!
-
-struct ConfigurationData
+class ConfigurationPrivate
 {
+public:
     static quint32 dataStreamVersion();
 
-    static ConfigurationData *loadFromSource(QIODevice *source, const QString &fileName);
+    static void loadFromSource(QIODevice *source, const QString &fileName, ConfigurationData &data);
     static QByteArray substituteVars(const QByteArray &sourceContent, const QString &fileName);
-    static ConfigurationData *loadFromCache(QDataStream &ds);
-    void saveToCache(QDataStream &ds) const;
-    void mergeFrom(const ConfigurationData *from);
+    static void loadFromCache(QDataStream &ds, ConfigurationData &data);
+    static void saveToCache(QDataStream &ds, const ConfigurationData &data);
+    static void serialize(QDataStream &ds, ConfigurationData &data, bool write);
+    static void merge(const ConfigurationData &from, ConfigurationData &into);
 
-    QString instanceId;
+    friend class ConfigCacheAdaptor<ConfigurationData>;
 
-    struct Runtimes {
-        QStringList additionalLaunchers;
-        QVariantMap configurations;
-    } runtimes;
-
-    struct {
-        QVariantMap configurations;
-        QList<QPair<QString, QString>> selection;
-    } containers;
-
-    struct {
-        bool disable = false;
-        struct {
-            int disambiguation = 10000;
-            int startApplication = 3000;
-            int replyFromApplication = 5000;
-            int replyFromSystem = 20000;
-        } timeouts;
-    } intents;
-
-    struct {
-        QStringList startup;
-        QStringList container;
-    } plugins;
-
-    struct {
-        struct {
-            QString id;
-            QString description;
-            QString longMessageBehavior;
-        } dlt;
-        QStringList rules;
-        QString messagePattern;
-        QVariant useAMConsoleLogger; // true / false / invalid
-    } logging;
-
-    struct {
-        bool disable = false;
-        QStringList caCertificates;
-    } installer;
-
-    struct {
-        QVariantMap policies;
-        QVariantMap registrations;
-    } dbus;
-
-    struct {
-        double idleLoad = 0.;
-        QHash<std::pair<QString, QString>, int> runtimesPerContainer;
-        int failedStartLimit = 5;
-        int failedStartLimitIntervalSec = 10;
-    } quicklaunch;
-
-    struct {
-        QVariantMap opengl;
-        QStringList iconThemeSearchPaths;
-        QString iconThemeName;
-        QString style;
-        bool loadDummyData = false;
-        QStringList importPaths;
-        QStringList pluginPaths;
-        QString windowIcon;
-        bool fullscreen = false;
-        QString mainQml;
-        QStringList resources;
-    } ui;
-
-    struct {
-        QStringList builtinAppsManifestDir;
-        QString installationDir;
-        QString documentDir;
-        QString installationDirMountPoint;
-    } applications; // TODO: rename to package?
-
-    QVariantList installationLocations; // deprecated
-
-    QVariantMap crashAction;
-    QVariantMap systemProperties;
-
-    struct {
-        bool forceSingleProcess = false;
-        bool forceMultiProcess = false;
-        bool noSecurity = false;
-        bool developmentMode = false;
-        bool allowUnsignedPackages = false;
-        bool allowUnknownUiClients = false;
-        bool noUiWatchdog = false;
-    } flags;
-
-    struct {
-        QString socketName;
-        QVariantList extraSockets;
-    } wayland;
+    QStringList defaultConfigFilePaths;
+    QString buildConfigFilePath;
+    QCommandLineParser clp;
+    ConfigurationData data;
+    bool onlyOnePositionalArgument = false;
+    bool forceVerbose = false;
+    bool forceNoUiWatchdog = false;
 };
 
 QT_END_NAMESPACE_AM

@@ -61,7 +61,7 @@ quicklaunch:
 ui:
   opengl:
     desktopProfile: 'classic'
-    esMajorVersion: 1
+    esMajorVersion: 2
     esMinorVersion: 0
   iconThemeSearchPaths: [ itsp3 ]
   iconThemeName: mytheme2

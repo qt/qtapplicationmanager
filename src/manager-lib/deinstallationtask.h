@@ -11,7 +11,6 @@
 QT_BEGIN_NAMESPACE_AM
 
 class Package;
-class InstallationLocation;
 
 class DeinstallationTask : public AsynchronousTask
 {

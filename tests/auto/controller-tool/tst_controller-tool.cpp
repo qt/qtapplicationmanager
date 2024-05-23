@@ -42,7 +42,7 @@ private Q_SLOTS:
     void instances();
     void applications();
     void packages();
-    void installationLocations();
+    void installationLocation();
     void installCancel();
     void installRemove();
     void startStop();
@@ -308,15 +308,10 @@ void tst_ControllerTool::packages()
     }
 }
 
-void tst_ControllerTool::installationLocations()
+void tst_ControllerTool::installationLocation()
 {
     {
-        ControllerTool ctrl({ u"list-installation-locations"_s });
-        QVERIFY2(ctrl.call(), ctrl.failure);
-        QCOMPARE(ctrl.stdOutList, QStringList({ u"internal-0"_s }));
-    }
-    {
-        ControllerTool ctrl({ u"show-installation-location"_s, u"internal-0"_s });
+        ControllerTool ctrl({ u"show-installation-location"_s });
         QVERIFY2(ctrl.call(), ctrl.failure);
         const auto docs = YamlParser::parseAllDocuments(ctrl.stdOut);
         QCOMPARE(docs.size(), 1);

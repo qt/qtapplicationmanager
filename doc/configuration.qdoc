@@ -418,12 +418,6 @@ ui:
         \li bool
         \li Enables QML Debugging/Profiling. For more information, see \l {Logging and Debugging}.
     \row
-        \li [\c installationLocations]
-        \li list<object>
-        \li The definition of installation locations available on the system. This is deprecated,
-            since only a single installation location is supported now, defined by \c
-            --installationDir or \c{applications/installationDir}.
-    \row
         \li [\c runtimes]
         \li map<object>
         \li This option can be used to specify options for runtimes, as a map of key-value pairs.

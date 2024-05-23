@@ -233,7 +233,6 @@ enum Command {
     RemovePackage,
     ListInstallationTasks,
     CancelInstallationTask,
-    ListInstallationLocations,
     ShowInstallationLocation,
     ListInstances,
     InjectIntentRequest,
@@ -257,7 +256,6 @@ static struct {
     { RemovePackage,    "remove-package",    "Remove a package." },
     { ListInstallationTasks,     "list-installation-tasks",     "List all active installation tasks." },
     { CancelInstallationTask,    "cancel-installation-task",    "Cancel an active installation task." },
-    { ListInstallationLocations, "list-installation-locations", "List all installaton locations." },
     { ShowInstallationLocation,  "show-installation-location",  "Show details for installation location." },
     { ListInstances,    "list-instances",    "List all named application manager instances." },
     { InjectIntentRequest,       "inject-intent-request",       "Inject an intent request for testing." },
@@ -297,7 +295,6 @@ static void installPackage(const QString &packageUrl, bool acknowledge) noexcept
 static void removePackage(const QString &packageId, bool keepDocuments, bool force) noexcept(false);
 static void listInstallationTasks() noexcept(false);
 static void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(false);
-static void listInstallationLocations() noexcept(false);
 static void showInstallationLocation(bool asJson = false) noexcept(false);
 static void listInstances() noexcept(false);
 static void injectIntentRequest(const QString &intentId, bool isBroadcast,
@@ -568,20 +565,12 @@ int main(int argc, char *argv[])
                                  args == 2 ? clp.positionalArguments().at(1) : QString()));
             break;
         }
-        case ListInstallationLocations:
-            clp.process(a);
-            a.runLater(listInstallationLocations);
-            break;
-
         case ShowInstallationLocation:
-            clp.addPositionalArgument(u"installation-location"_s, u"The id of an installation location (deprecated and ignored)."_s);
             clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
             clp.process(a);
 
-            if (clp.positionalArguments().size() > 2)
+            if (clp.positionalArguments().size() > 1)
                 clp.showHelp(1);
-            if (clp.positionalArguments().size() == 2)
-                fprintf(stderr, "Ignoring the deprecated installation-location.\n");
 
             a.runLater(std::bind(showInstallationLocation,
                                  clp.isSet(u"json"_s)));
@@ -1038,16 +1027,6 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
         if (!reply.value())
             throw Exception(Error::IO, "failed to cancel the installation task.");
     }
-}
-
-void listInstallationLocations() noexcept(false)
-{
-    dbus()->connectToPackager();
-
-    auto installationLocation = dbus()->packager()->installationLocation();
-    if (!installationLocation.isEmpty())
-        fputs("internal-0\n", stdout);
-    qApp->quit();
 }
 
 void showInstallationLocation(bool asJson) noexcept(false)

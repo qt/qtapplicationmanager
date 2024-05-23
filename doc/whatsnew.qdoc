@@ -23,6 +23,8 @@ instead of \c /tmp (if available) and they are created in the sub-directories \c
 qtapplicationmanager-session and \c qtapplicationmanager-runtime respectively. This should only
 affect you, if you are using hard coded paths in a container setup.
 
+The \c installationLocations configuration field that was deprecated in 5.14 was finally removed.
+
 \section1 Qt ApplicationManager 6.7
 
 The application manager now has full support for QML tooling (like compilation) for System UIs

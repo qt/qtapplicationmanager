@@ -146,6 +146,7 @@ exec ${ARG_EXECUTABLE} ${CMD_ARGS_STR} ${ARG_MAIN_QML_FILE} \"$@\";
         # This makes all files show up in the IDE
         ${ALL_EXTRA_FILES}
     )
+    target_link_libraries(${target} PRIVATE Qt6::Core)
 
     add_custom_target(${target}_deploy
         DEPENDS ${ALL_EXTRA_FILES}

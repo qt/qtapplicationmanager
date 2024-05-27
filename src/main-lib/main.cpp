@@ -256,12 +256,13 @@ void Main::shutDown(int exitCode)
     };
 
     static int down = 0;
+    static int code = exitCode;
 
-    static auto checkShutDownFinished = [exitCode](int nextDown) {
+    static auto checkShutDownFinished = [](int nextDown) {
         down |= nextDown;
         if (down == (ApplicationManagerDown | QuickLauncherDown | WindowManagerDown)) {
             down = 0;
-            QCoreApplication::exit(exitCode);
+            QCoreApplication::exit(code);
         }
     };
 
@@ -283,7 +284,7 @@ void Main::shutDown(int exitCode)
         m_windowManager->shutDown();
     }
 
-    QTimer::singleShot(5000, this, [exitCode] {
+    QTimer::singleShot(5000, this, [] {
         QStringList resources;
         if (!(down & ApplicationManagerDown))
             resources << u"runtimes"_s;
@@ -292,8 +293,8 @@ void Main::shutDown(int exitCode)
         if (!(down & WindowManagerDown))
             resources << u"windows"_s;
         qCCritical(LogSystem, "There are still resources in use (%s). Check your System UI implementation. "
-                              "Exiting anyhow.", resources.join(u", "_s).toLocal8Bit().constData());
-        QCoreApplication::exit(exitCode);
+                              "Exiting regardless.", resources.join(u", "_s).toLocal8Bit().constData());
+        QCoreApplication::exit(code);
     });
 }
 

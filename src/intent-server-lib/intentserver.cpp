@@ -178,6 +178,10 @@ IntentServer::IntentServer(IntentServerSystemInterface *systemInterface, QObject
 
 IntentServer::~IntentServer()
 {
+    qDeleteAll(m_requestQueue);
+    qDeleteAll(m_disambiguationQueue);
+    qDeleteAll(m_startingAppQueue);
+    qDeleteAll(m_sentToAppQueue);
     qDeleteAll(m_intents);
     s_instance = nullptr;
 }

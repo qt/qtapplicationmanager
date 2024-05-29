@@ -95,7 +95,7 @@ void tst_Runtime::factory()
     QVERIFY(rf.get() == RuntimeFactory::instance());
     QVERIFY(rf->runtimeIds().isEmpty());
 
-    QVERIFY(rf->registerRuntime(new TestRuntimeManager(u"foo"_s, qApp)));
+    QVERIFY(rf->registerRuntime(new TestRuntimeManager(u"foo"_s, QCoreApplication::instance())));
     QVERIFY(rf->runtimeIds() == QStringList() << u"foo"_s);
 
     QVERIFY(!rf->create(nullptr, nullptr));

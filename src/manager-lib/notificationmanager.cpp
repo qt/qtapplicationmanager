@@ -150,6 +150,42 @@ using namespace Qt::StringLiterals;
     For testing purposes, the \e notify-send tool from the \e libnotify package can be used to create
     notifications.
 */
+/*!
+    \qmlsignal NotificationManager::notificationAdded(uint id)
+
+    This signal is emitted after a new notification, identified by \a id, has been added.
+    The model has already been update before this signal is sent out.
+
+    \note In addition to the normal "low-level" QAbstractListModel signals, the application manager
+          will also emit these "high-level" signals for System UIs that cannot work directly on the
+          NotificationManager model: notificationAdded, notificationAboutToBeRemoved and
+          notificationChanged.
+*/
+
+/*!
+    \qmlsignal NotificationManager::notificationAboutToBeRemoved(uint id)
+
+    This signal is emitted before an existing notification, identified by \a id, is removed from the
+    model.
+
+    \note In addition to the normal "low-level" QAbstractListModel signals, the application manager
+          will also emit these "high-level" signals for System UIs that cannot work directly on the
+          NotificationManager model: notificationAdded, notificationAboutToBeRemoved and
+          notificationChanged.
+*/
+
+/*!
+    \qmlsignal NotificationManager::notificationChanged(uint id, list<string> changedRoles)
+
+    Emitted whenever one or more data roles, denoted by \a changedRoles, changed on the notification
+    identified by \a id. An empty list in the \a changedRoles argument means that all roles should
+    be considered modified.
+
+    \note In addition to the normal "low-level" QAbstractListModel signals, the application manager
+          will also emit these "high-level" signals for System UIs that cannot work directly on the
+          NotificationManager model: notificationAdded, notificationAboutToBeRemoved and
+          notificationChanged.
+*/
 
 
 QT_BEGIN_NAMESPACE_AM
@@ -495,7 +531,7 @@ void NotificationManager::triggerNotificationAction(uint id, const QString &acti
             qCDebug(LogNotifications) << "Requested to trigger a notification action, but the action is not registered:"
                                       << (actionId.length() > 20 ? (actionId.left(20) + u"..."_s) : actionId);
         }
-        emit ActionInvoked(id, actionId);
+        emit internalSignals.actionInvoked(id, actionId);
 
         if (n->dismissOnAction)
             dismissNotification(id);
@@ -516,37 +552,9 @@ void NotificationManager::dismissNotification(uint id)
 }
 
 /*! \internal
-    D-Bus API: identify ourselves
+    Someone wants to create or update a notification: either via D-Bus or the in-process QML API
 */
-QString NotificationManager::GetServerInformation(QString &vendor, QString &version, QString &spec_version)
-{
-    //qCDebug(LogNotifications) << "GetServerInformation";
-    vendor = qApp->organizationName();
-    version = u"1.0"_s;
-    spec_version = u"1.2"_s;
-    return qApp->applicationName();
-}
-
-/*! \internal
-    D-Bus API: announce supported features
-*/
-QStringList NotificationManager::GetCapabilities()
-{
-    //qCDebug(LogNotifications) << "GetCapabilities";
-    return QStringList() << u"action-icons"_s
-                         << u"actions"_s
-                         << u"body"_s
-                         << u"body-hyperlinks"_s
-                         << u"body-images"_s
-                         << u"body-markup"_s
-                         << u"icon-static"_s
-                         << u"persistence"_s;
-}
-
-/*! \internal
-    D-Bus API: someone wants to create or update a notification
-*/
-uint NotificationManager::Notify(const QString &app_name, uint replaces_id, const QString &app_icon,
+uint NotificationManager::showNotification(const QString &app_name, uint replaces_id, const QString &app_icon,
                                  const QString &summary, const QString &body, const QStringList &actions,
                                  const QVariantMap &hints, int timeout)
 {
@@ -657,9 +665,9 @@ uint NotificationManager::notifyHelper(NotificationData *n, bool replaces, int t
 }
 
 /*! \internal
-    D-Bus API: some requests that a notification should be closed
+    Someone wants to close a notification: either via D-Bus or the in-process QML API
 */
-void NotificationManager::CloseNotification(uint id)
+void NotificationManager::closeNotification(uint id)
 {
     d->closeNotification(id, CloseNotificationCalled);
 }
@@ -677,7 +685,7 @@ void NotificationManagerPrivate::closeNotification(uint id, CloseReason reason)
         auto n = notifications.takeAt(i);
         q->endRemoveRows();
 
-        emit q->NotificationClosed(id, uint(reason));
+        emit q->internalSignals.notificationClosed(id, uint(reason));
 
         qCDebug(LogNotifications) << "Deleting notification with id:" << id;
         delete n;

@@ -54,7 +54,7 @@ void QmlInProcNotificationImpl::initialize()
 
     auto nm = NotificationManager::instance();
 
-    QObject::connect(nm, &NotificationManager::ActionInvoked,
+    QObject::connect(&nm->internalSignals, &NotificationManagerInternalSignals::actionInvoked,
                      nm, [](uint notificationId, const QString &actionId) {
         qDebug("Notification action triggered signal: %u %s", notificationId, qPrintable(actionId));
         for (const QPointer<Notification> &n : std::as_const(s_allNotifications)) {
@@ -65,7 +65,7 @@ void QmlInProcNotificationImpl::initialize()
         }
     });
 
-    QObject::connect(nm, &NotificationManager::NotificationClosed,
+    QObject::connect(&nm->internalSignals, &NotificationManagerInternalSignals::notificationClosed,
                      nm, [](uint notificationId, uint reason) {
         Q_UNUSED(reason)
 
@@ -84,7 +84,7 @@ void QmlInProcNotificationImpl::initialize()
 
 void QmlInProcNotificationImpl::close()
 {
-    NotificationManager::instance()->CloseNotification(notification()->notificationId());
+    NotificationManager::instance()->closeNotification(notification()->notificationId());
 }
 
 uint QmlInProcNotificationImpl::show()
@@ -92,10 +92,10 @@ uint QmlInProcNotificationImpl::show()
     auto *n = notification();
 
     s_allNotifications << n;
-    return NotificationManager::instance()->Notify(m_applicationId, n->notificationId(),
-                                                   n->icon().toString(), n->summary(), n->body(),
-                                                   n->libnotifyActionList(), n->libnotifyHints(),
-                                                   n->timeout());
+    return NotificationManager::instance()->showNotification(m_applicationId, n->notificationId(),
+                                                             n->icon().toString(), n->summary(),
+                                                             n->body(), n->libnotifyActionList(),
+                                                             n->libnotifyHints(), n->timeout());
 }
 
 QT_END_NAMESPACE_AM

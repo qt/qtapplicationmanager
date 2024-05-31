@@ -18,6 +18,17 @@ QT_BEGIN_NAMESPACE_AM
 struct NotificationData;
 class NotificationManagerPrivate;
 
+// A place to collect signals used internally by appman without polluting
+// NotificationManager's public QML API.
+class NotificationManagerInternalSignals : public QObject
+{
+    Q_OBJECT
+Q_SIGNALS:
+    // these correspond to the org.freedesktop.Notifications signals
+    void notificationClosed(uint id, uint reason);
+    void actionInvoked(uint id, const QString &action_key);
+};
+
 class NotificationManager : public QAbstractListModel
 {
     Q_OBJECT
@@ -43,17 +54,12 @@ public:
     Q_INVOKABLE void triggerNotificationAction(uint id, const QString &actionId);
     Q_INVOKABLE void dismissNotification(uint id);
 
-    // vv libnotify DBus interface
-    Q_SCRIPTABLE QString GetServerInformation(QString &vendor, QString &version, QString &spec_version);
-    Q_SCRIPTABLE QStringList GetCapabilities();
-    Q_SCRIPTABLE uint Notify(const QString &app_name, uint replaces_id, const QString &app_icon, const QString &summary,
-                             const QString &body, const QStringList &actions, const QVariantMap &hints, int timeout);
-    Q_SCRIPTABLE void CloseNotification(uint id);
+    NotificationManagerInternalSignals internalSignals;
 
-Q_SIGNALS:
-    Q_SCRIPTABLE void NotificationClosed(uint id, uint reason);
-    Q_SCRIPTABLE void ActionInvoked(uint id, const QString &action_key);
-    // ^^ libnotify DBus interface
+    uint showNotification(const QString &app_name, uint replaces_id, const QString &app_icon,
+                          const QString &summary, const QString &body, const QStringList &actions,
+                          const QVariantMap &hints, int timeout);
+    void closeNotification(uint id);
 
 Q_SIGNALS:
     void countChanged();

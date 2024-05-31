@@ -23,6 +23,10 @@ instead of \c /tmp (if available) and they are created in the sub-directories \c
 qtapplicationmanager-session and \c qtapplicationmanager-runtime respectively. This should only
 affect you, if you are using hard coded paths in a container setup.
 
+The very simple Wayland surface based watchdog mechanism has been replaced with a fully configurable
+watchdog mechanism that watches the main thread's event loop, the render thread of any of the
+application manager's windows, as well as Wayland clients. See \l{Watchdog} for more information.
+
 The \c installationLocations configuration field that was deprecated in 5.14 was finally removed.
 
 \section1 Qt ApplicationManager 6.7

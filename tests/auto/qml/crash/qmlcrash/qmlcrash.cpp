@@ -31,7 +31,10 @@ void QmlCrashPlugin::registerTypes(const char *uri)
 
 void QmlCrash::accessIllegalMemory() const
 {
+QT_WARNING_PUSH
+QT_WARNING_DISABLE_GCC("-Warray-bounds")
     *reinterpret_cast<int *>(1) = 42;
+QT_WARNING_POP
 }
 
 void QmlCrash::accessIllegalMemoryInThread()

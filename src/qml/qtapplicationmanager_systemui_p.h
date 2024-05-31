@@ -34,6 +34,14 @@ class ForeignIntent
     QML_UNCREATABLE("")
 };
 
+class ForeignListOfIntent
+{
+    Q_GADGET
+    QML_FOREIGN(QList<QtAM::Intent *>)
+    QML_ANONYMOUS
+    QML_SEQUENTIAL_CONTAINER(QtAM::Intent *)
+};
+
 class ForeignIntentModel
 {
     Q_GADGET
@@ -166,6 +174,14 @@ class ForeignApplicationObject
     QML_UNCREATABLE("")
 };
 
+class ForeignListOfApplication
+{
+    Q_GADGET
+    QML_FOREIGN(QList<QtAM::Application *>)
+    QML_ANONYMOUS
+    QML_SEQUENTIAL_CONTAINER(QtAM::Application *)
+};
+
 class ForeignContainer
 {
     Q_GADGET
@@ -200,6 +216,14 @@ class ForeignWindowObject
     QML_NAMED_ELEMENT(WindowObject)
     QML_ADDED_IN_VERSION(2, 0)
     QML_UNCREATABLE("")
+};
+
+class ForeignListOfWindow
+{
+    Q_GADGET
+    QML_FOREIGN(QList<QtAM::Window *>)
+    QML_ANONYMOUS
+    QML_SEQUENTIAL_CONTAINER(QtAM::Window *)
 };
 
 class ForeignNamespaceAm

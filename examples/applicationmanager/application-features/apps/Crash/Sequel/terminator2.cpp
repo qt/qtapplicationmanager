@@ -11,7 +11,10 @@ Terminator2::Terminator2(QObject *parent) : QObject(parent)
 
 void Terminator2::accessIllegalMemory() const
 {
+QT_WARNING_PUSH
+QT_WARNING_DISABLE_GCC("-Warray-bounds")
     *reinterpret_cast<int *>(1) = 42;
+QT_WARNING_POP
 }
 
 void Terminator2::accessIllegalMemoryInThread()

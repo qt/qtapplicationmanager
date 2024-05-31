@@ -6,7 +6,6 @@
 #ifndef WINDOWMANAGER_H
 #define WINDOWMANAGER_H
 
-#include <functional>
 #include <QtCore/QAbstractListModel>
 #include <QtAppManCommon/global.h>
 
@@ -102,12 +101,11 @@ Q_SIGNALS:
 
     void windowPropertyChanged(QtAM::Window *window, const QString &name, const QVariant &value);
 
-private Q_SLOTS:
+public:
     void inProcessSurfaceItemCreated(QtAM::AbstractRuntime *runtime,
                                      QSharedPointer<QtAM::InProcessSurfaceItem> surfaceItem);
     void setupWindow(QtAM::Window *window);
 
-public:
     Q_SCRIPTABLE bool makeScreenshot(const QString &filename, const QString &selector);
 
     QList<QQuickWindow *> compositorViews() const;
@@ -116,11 +114,10 @@ public:
     void setupInProcessRuntime(QtAM::AbstractRuntime *runtime);
 
 #if QT_CONFIG(am_multi_process)
-private Q_SLOTS:
+private:
     void waylandSurfaceCreated(QWaylandSurface *surface);
     void waylandSurfaceMapped(QtAM::WindowSurface *surface);
 
-private:
     void handleWaylandSurfaceDestroyedOrUnmapped(QWaylandSurface *surface);
 #endif
 

@@ -43,15 +43,16 @@ To build the application manager with all its features, the following components
     \li \b Qt 6.5.0 or higher.
     \li \b libyaml 2.2 or higher.
     \li \b libarchive 3.5 or higher \e{- if you need the installer functionality}.
+    \li \b libsystemd 183 or higher \e{- if you need systemd watchdog support}.
 \endlist
 
-On Debian-based systems, this command installs the three required packages:
+On Debian-based systems, this command installs all the required packages:
 \badcode
-apt-get install libyaml-dev libarchive-dev
+apt-get install libyaml-dev libarchive-dev libsystemd-dev
 \endcode
 
 \note On platforms without \c pkg-config (for example, Windows or macOS) as well as on platforms
-that lack one of the prerequisites, the bundled versions of these libraries from the \c src/3rdparty
+that lack one of the prerequisites, the bundled versions of libyaml and libarchive from the \c src/3rdparty
 folder are automatically used instead. Make sure you are aware of the licensing implications,
 since these bundled 3rdparty libs will be linked in as static libraries.
 This option is not meant for production, but for development and testing environments only.
@@ -190,11 +191,15 @@ modules:
       Settings this to \c no disables building and linking against \c stackwalker.
 \row
   \li \c{libdbus}
-  \li Windows and macOS only: If set to \c no, enables building \c libdbus-1 from the 3rdparty
+  \li Windows and macOS only: If set to \c yes, enables building \c libdbus-1 from the 3rdparty
       folder.
       This will allow you to use the \c appman-controller tool (which is also used by the Qt-Creator
       integration) on Windows and macOS. This option is enabled by default.
       Settings this to \c no disables building \c libdbus-1.
+\row
+  \li \c{systemd-watchdog}
+  \li Set to \c no to disable building against \c libsystemd for \l{Watchdog} support and \c
+      yes to force building with it. The default depends on the availability of \c libsystemd-dev.
 \endtable
 
 \section2 The Hardware ID

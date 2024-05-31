@@ -62,8 +62,8 @@ or across multiple config files, the final value is resolved based on these rule
 \c ui/importPaths. In this case, all values, regardless of where they are specified, are
 merged into one single, final list.
 
-\section3 Time duration values
-\keyword time-duration
+\section3 Time Duration Values
+
 Starting with version 6.8, all time duration values should be specified with a unit suffix. The
 following units are supported: \c h, \c min, \c s, \c ms and \c us.
 Fields that have existed before 6.8 still accept values without a unit suffix, but it is recommended
@@ -470,8 +470,8 @@ ui:
     \row
         \li [\c quicklaunch/failedStartLimitIntervalSec]
         \li duration
-        \li A \l{time-duration}{time interval} with seconds precision, see \c failedStartLimit above.
-            (default: 10s)
+        \li A \l{Time Duration Values}{time interval} with seconds precision, see
+            \c failedStartLimit above. (default: 10s)
     \row
         \li \b --wayland-socket-name
             \br [\c wayland/socketName]
@@ -546,6 +546,10 @@ ui:
         \target intentConfiguration
         \li Lets you specify the processing timeouts used in the intent
             sub-system. For more details, see \l{Intent Timeout Specification}.
+    \row
+        \li [\c watchdog]
+        \li object
+        \li Configures the built-in watchdog. See \l{Watchdog} for more information.
 \endtable
 
 \section1 D-Bus Specification
@@ -742,9 +746,9 @@ The following conditions are handled:
     \row
         \li \c waitForGdbAttach
         \li duration
-        \li Specifies a \l{time-duration}{time duration} with seconds precision: it is the time a
-            crashed program is being held in the stopped state, waiting for a debugger to attach.
-            Any value \c{<= 0} skips this step. (default: 0s)
+        \li Specifies a \l{Time Duration Values}{time duration} with seconds precision: it is the
+            time a crashed program is being held in the stopped state, waiting for a debugger to
+            attach. Any value \c{<= 0} skips this step. (default: 0s)
     \row
         \li \c stackFramesToIgnore/onCrash
         \li int
@@ -764,8 +768,8 @@ The following conditions are handled:
 
 \section1 Intent Timeout Specification
 
-The \c intents/timeouts sub-object lets you specify the exact \l{time-duration}{timeouts} with
-milli-seconds precision for the asynchronous IPC used to implement the intents mechanism. Any
+The \c intents/timeouts sub-object lets you specify the exact \l{Time Duration Values}{timeouts}
+with milli-seconds precision for the asynchronous IPC used to implement the intents mechanism. Any
 intent whose lifetime exceeds a timeout for the stages shown below is canceled by the system and
 an error reply is sent back to the original sender.
 Setting any of the timeout values to \c 0 or a negative number disables the timeout handling for

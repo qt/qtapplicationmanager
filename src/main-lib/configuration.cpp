@@ -264,31 +264,22 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
                      u"Disable the use of the config and appdb file cache."_s });
     d->clp.addOption({ { u"clear-cache"_s, u"clear-config-cache"_s },
                      u"Ignore an existing config and appdb file cache."_s });
-    d->clp.addOption({ { u"r"_s, u"recreate-database"_s },
-                     u"Backwards compatibility: synonyms for --clear-cache."_s });
     if (!buildConfigFilePath.isEmpty())
         d->clp.addOption({ u"build-config"_s,     u"Dumps the build configuration and exits."_s });
 
     d->clp.addPositionalArgument(u"qml-file"_s,   u"The main QML file."_s);
     d->clp.addOption({ u"log-instant"_s,          u"Log instantly at start-up, neglect logging configuration."_s });
-    d->clp.addOption({ u"database"_s,             u"Deprecated (ignored)."_s, u"file"_s });
     d->clp.addOption({ u"builtin-apps-manifest-dir"_s, u"Base directory for built-in application manifests."_s, u"dir"_s });
     d->clp.addOption({ u"installation-dir"_s,     u"Base directory for package installations."_s, u"dir"_s });
     d->clp.addOption({ u"document-dir"_s,         u"Base directory for per-package document directories."_s, u"dir"_s });
-    d->clp.addOption({ u"installed-apps-manifest-dir"_s, u"Deprecated (ignored)."_s, u"dir"_s });
-    d->clp.addOption({ u"app-image-mount-dir"_s,  u"Deprecated (ignored)."_s, u"dir"_s });
-    d->clp.addOption({ u"disable-installer"_s,    u"Disable the application installer sub-system."_s });
-    d->clp.addOption({ u"disable-intents"_s,      u"Disable the intents sub-system."_s });
     d->clp.addOption({ u"dbus"_s,                 u"Register on the specified D-Bus."_s, u"<bus>|system|session|none|auto"_s, u"auto"_s });
     d->clp.addOption({ u"fullscreen"_s,           u"Display in full-screen."_s });
     d->clp.addOption({ u"no-fullscreen"_s,        u"Do not display in full-screen."_s });
     d->clp.addOption({ u"I"_s,                    u"Additional QML import path."_s, u"dir"_s });
-    d->clp.addOption({ { u"v"_s, u"verbose"_s }, u"Verbose output."_s });
+    d->clp.addOption({ { u"v"_s, u"verbose"_s },  u"Verbose output."_s });
     d->clp.addOption({ u"slow-animations"_s,      u"Run all animations in slow motion."_s });
-    d->clp.addOption({ u"load-dummydata"_s,       u"Deprecated. Loads QML dummy-data."_s });
     d->clp.addOption({ u"no-security"_s,          u"Disables all security related checks (dev only!)"_s });
     d->clp.addOption({ u"development-mode"_s,     u"Enable development mode, allowing installation of dev-signed packages."_s });
-    d->clp.addOption({ u"no-ui-watchdog"_s,       u"Deprecated (mapped to --disable-watchdog)."_s });
     d->clp.addOption({ u"disable-watchdog"_s,     u"Disables all watchdogs, useful for debugging."_s });
     d->clp.addOption({ u"no-dlt-logging"_s,       u"Disables logging using automotive DLT."_s });
     d->clp.addOption({ u"force-single-process"_s, u"Forces single-process mode even on a wayland enabled build."_s });
@@ -297,8 +288,17 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     d->clp.addOption({ u"single-app"_s,           u"Runs a single application only (ignores the database)"_s, u"info.yaml file"_s }); // rename single-package
     d->clp.addOption({ u"logging-rule"_s,         u"Adds a standard Qt logging rule."_s, u"rule"_s });
     d->clp.addOption({ u"qml-debug"_s,            u"Enables QML debugging and profiling."_s });
-    d->clp.addOption({ u"enable-touch-emulation"_s, u"Deprecated (ignored)."_s });
     d->clp.addOption({ u"instance-id"_s,          u"Use this id to distinguish between multiple instances."_s, u"id"_s });
+
+    d->clp.addOption({ { u"r"_s, u"recreate-database"_s }, u"Deprecated (mapped to --clear-cache."_s });
+    d->clp.addOption({ u"installed-apps-manifest-dir"_s, u"Deprecated (ignored)."_s, u"dir"_s });
+    d->clp.addOption({ u"app-image-mount-dir"_s,  u"Deprecated (ignored)."_s, u"dir"_s });
+    d->clp.addOption({ u"disable-installer"_s,    u"Deprecated (ignored)."_s });
+    d->clp.addOption({ u"disable-intents"_s,      u"Deprecated (ignored)."_s });
+    d->clp.addOption({ u"database"_s,             u"Deprecated (ignored)."_s, u"file"_s });
+    d->clp.addOption({ u"enable-touch-emulation"_s, u"Deprecated (ignored)."_s });
+    d->clp.addOption({ u"load-dummydata"_s,       u"Deprecated (loads QML dummy-data)."_s });
+    d->clp.addOption({ u"no-ui-watchdog"_s,       u"Deprecated (mapped to --watchdog=off)."_s });
 
     { // qmltestrunner specific, necessary for CI blacklisting
         QCommandLineOption qtrsf { u"qmltestrunner-source-file"_s, u"appman-qmltestrunner only: set the source file path of the test."_s, u"file"_s };
@@ -421,8 +421,6 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         };
 
         configIfSet(u"instance-id"_s,          clcd.instanceId);
-        configIfSet(u"disable-installer"_s,    clcd.installer.disable);
-        configIfSet(u"disable-intents"_s,      clcd.intents.disable);
         configIfSet(u"fullscreen"_s,           clcd.ui.fullscreen);
         configIfSet(u"I"_s,                    clcd.ui.importPaths);
         configIfSet(u"builtin-apps-manifest-dir"_s, clcd.applications.builtinAppsManifestDir);
@@ -459,11 +457,13 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         }
     }
 
-    if (d->data.applications.installationDir.isEmpty() && !d->data.installer.disable) {
+#if QT_CONFIG(am_installer)
+    if (d->data.applications.installationDir.isEmpty()) {
         qCWarning(LogDeployment) << "No --installation-dir command line parameter or applications/installationDir "
                                     "configuration key specified. It won't be possible to install, remove or "
                                     "access installable packages.";
     }
+#endif
 }
 
 void ConfigurationPrivate::loadFromCache(QDataStream &ds, ConfigurationData &cd)
@@ -480,7 +480,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 15;
+    return 16;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -496,7 +496,6 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.runtimes.additionalLaunchers
         & cd.containers.configurations
         & cd.containers.selection
-        & cd.intents.disable
         & cd.intents.timeouts.disambiguation
         & cd.intents.timeouts.startApplication
         & cd.intents.timeouts.replyFromApplication
@@ -509,7 +508,6 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.logging.rules
         & cd.logging.messagePattern
         & cd.logging.useAMConsoleLogger
-        & cd.installer.disable
         & cd.installer.caCertificates
         & cd.dbus.policies
         & cd.dbus.registrations
@@ -588,7 +586,6 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(containers.configurations);
     MERGE_FIELD(containers.selection);
 
-    MERGE_FIELD(intents.disable);
     MERGE_FIELD(intents.timeouts.disambiguation);
     MERGE_FIELD(intents.timeouts.startApplication);
     MERGE_FIELD(intents.timeouts.replyFromApplication);
@@ -601,7 +598,6 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(logging.rules);
     MERGE_FIELD(logging.messagePattern);
     MERGE_FIELD(logging.useAMConsoleLogger);
-    MERGE_FIELD(installer.disable);
     MERGE_FIELD(installer.caCertificates);
     MERGE_FIELD(dbus.policies);
     MERGE_FIELD(dbus.registrations);
@@ -790,7 +786,8 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
             { "installer", false, YamlParser::Map, [&]() {
                  yp.parseFields({
                      { "disable", false, YamlParser::Scalar, [&]() {
-                          cd.installer.disable = yp.parseBool(); } },
+                          qCDebug(LogDeployment) << "ignoring 'installer/disable'";
+                          (void) yp.parseBool(); } },
                      { "caCertificates", false, YamlParser::Scalar | YamlParser::List, [&]() {
                           cd.installer.caCertificates = yp.parseStringOrStringList(); } },
                  }); } },
@@ -955,7 +952,8 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
             { "intents", false, YamlParser::Map, [&]() {
                  yp.parseFields({
                      { "disable", false, YamlParser::Scalar, [&]() {
-                          cd.intents.disable = yp.parseBool(); } },
+                          qCDebug(LogDeployment) << "ignoring 'intents/disable'";
+                          (void) yp.parseBool(); } },
                      { "timeouts", false, YamlParser::Map, [&]() {
                           yp.parseFields({
                               { "disambiguation", false, YamlParser::Scalar, [&]() {

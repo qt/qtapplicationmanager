@@ -12,7 +12,7 @@ containers:
     c-parameter: c-value
 
 intents:
-  disable: true
+  disable: true # ignored as of 6.8
   timeouts:
     disambiguation: 0.001s
     startApplication: 2ms
@@ -33,7 +33,7 @@ logging:
   useAMConsoleLogger: true
 
 installer:
-  disable: true
+  disable: true # ignored as of 6.8
   caCertificates: [ cert1, cert2 ]
 
 dbus:

@@ -73,8 +73,6 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.yaml.applications.documentDir, u""_s);
 
     QCOMPARE(c.yaml.applications.installationDir, u""_s);
-    QCOMPARE(c.yaml.installer.disable, false);
-    QCOMPARE(c.yaml.intents.disable, false);
     QCOMPARE(c.yaml.intents.timeouts.disambiguation.count(), 10000);
     QCOMPARE(c.yaml.intents.timeouts.startApplication.count(), 3000);
     QCOMPARE(c.yaml.intents.timeouts.replyFromApplication.count(), 5000);
@@ -171,8 +169,6 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.yaml.applications.documentDir, u"doc-dir"_s);
 
     QCOMPARE(c.yaml.applications.installationDir, u"installation-dir"_s);
-    QCOMPARE(c.yaml.installer.disable, true);
-    QCOMPARE(c.yaml.intents.disable, true);
     QCOMPARE(c.yaml.intents.timeouts.disambiguation.count(), 1);
     QCOMPARE(c.yaml.intents.timeouts.startApplication.count(), 2);
     QCOMPARE(c.yaml.intents.timeouts.replyFromApplication.count(), 3);
@@ -301,8 +297,6 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.yaml.applications.documentDir, u"doc-dir2"_s);
 
     QCOMPARE(c.yaml.applications.installationDir, u"installation-dir2"_s);
-    QCOMPARE(c.yaml.installer.disable, true);
-    QCOMPARE(c.yaml.intents.disable, true);
     QCOMPARE(c.yaml.intents.timeouts.disambiguation.count(), 5);
     QCOMPARE(c.yaml.intents.timeouts.startApplication.count(), 6);
     QCOMPARE(c.yaml.intents.timeouts.replyFromApplication.count(), 7);
@@ -496,8 +490,6 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.yaml.applications.documentDir, u"document-dir-cl"_s);
 
     QCOMPARE(c.yaml.applications.installationDir, u"installation-dir-cl"_s);
-    QCOMPARE(c.yaml.installer.disable, true);
-    QCOMPARE(c.yaml.intents.disable, true);
     QCOMPARE(c.yaml.intents.timeouts.disambiguation.count(), 10000);
     QCOMPARE(c.yaml.intents.timeouts.startApplication.count(), 3000);
     QCOMPARE(c.yaml.intents.timeouts.replyFromApplication.count(), 5000);

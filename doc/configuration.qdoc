@@ -505,8 +505,8 @@ ui:
         \li \b --disable-installer
             \br [\c installer/disable]
         \li bool
-        \li Disables the installer sub-system at runtime completely. Another option would be to
-            not even compile it in the first place, in the \l{config disable installer}{qmake step}.
+        \li Deprecated and ignored. If you do not want to have any installer functionality then
+            \l{config disable installer}{disable it at configure time}.
     \row
         \li [\c installer/caCertificates]
         \li list<string>
@@ -539,7 +539,7 @@ ui:
     \row
         \li [\c intents/disable]
         \li bool
-        \li Disables the intent sub-system at runtime completely.
+        \li Deprecated and ignored. As of version 6.8, the intent sub-system is always enabled.
     \row
         \li [\c intents/timeouts]
         \li object

@@ -38,7 +38,7 @@ logging:
   useAMConsoleLogger: 'auto'
 
 installer:
-  disable: true
+  disable: true # ignored as of 6.8
   caCertificates: [ cert3 ]
 
 dbus:

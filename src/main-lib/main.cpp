@@ -229,13 +229,11 @@ void Main::setup(const Configuration *cfg) noexcept(false)
 
     setupSingletons(cfg);
     setupQuickLauncher(cfg);
-
-    if (!cfg->yaml.intents.disable)
-        setupIntents(cfg);
+    setupIntents(cfg);
 
     registerPackages();
 
-    if (cfg->yaml.applications.installationDir.isEmpty() || cfg->yaml.installer.disable)
+    if (cfg->yaml.applications.installationDir.isEmpty())
         StartupTimer::instance()->checkpoint("skipping installer");
     else
         setupInstaller(cfg);

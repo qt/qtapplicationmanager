@@ -33,7 +33,6 @@ struct ConfigurationData
     } containers;
 
     struct {
-        bool disable = false;
         struct {
             std::chrono::milliseconds disambiguation { 10000 };
             std::chrono::milliseconds startApplication { 3000 };
@@ -59,7 +58,6 @@ struct ConfigurationData
     } logging;
 
     struct {
-        bool disable = false;
         QStringList caCertificates;
     } installer;
 

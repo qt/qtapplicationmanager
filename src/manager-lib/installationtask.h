@@ -40,8 +40,11 @@
 #include <QtAppManManager/asynchronoustask.h>
 #include <QtAppManManager/scopeutilities.h>
 
+#include <memory>
+
 QT_BEGIN_NAMESPACE_AM
 
+class Application;
 class Package;
 class PackageInfo;
 class PackageManager;
@@ -82,7 +85,8 @@ private:
     bool m_managerApproval = false;
     QScopedPointer<PackageInfo> m_package;
     uint m_applicationUid = uint(-1);
-    QScopedPointer<Package> m_tempPackageForAcknowledge;
+    std::unique_ptr<Package> m_tempPackageForAcknowledge;
+    std::vector<std::unique_ptr<Application>> m_tempApplicationsForAcknowledge;
 
     // changes to these 4 member variables are protected by m_mutex
     PackageExtractor *m_extractor = nullptr;

@@ -12,7 +12,7 @@ dependencies:
     ref: 567aee2b7a240b8b90f0590f40909866c023e627
     required: false
   ../qttools:
-    ref: 90d876c43cbdccf4b0b5fbeb6913888c317c43a6
+    ref: 46ffaed90df8c14d67b4b16fdf5e0b87ab227c88
     required: false
   ../qtwayland:
     ref: 3bd7a58abdf80df376697bace45cc1dc4860401e

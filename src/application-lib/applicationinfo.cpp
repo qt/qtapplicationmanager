@@ -6,31 +6,23 @@
 #include <QDataStream>
 
 #include "applicationinfo.h"
-#include "installationreport.h"
 #include "packageinfo.h"
 #include "utilities.h"
 
+#include <QCoreApplication>
+#include <QThread>
 #include <memory>
 
 using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-//TODO Make this really unique
-static int uniqueCounter = 0;
-static int nextUniqueNumber() {
-    uniqueCounter++;
-    if (uniqueCounter > 999)
-        uniqueCounter = 0;
-
-    return uniqueCounter;
-}
-
-
 ApplicationInfo::ApplicationInfo(PackageInfo *packageInfo)
     : m_packageInfo(packageInfo)
-    , m_uniqueNumber(nextUniqueNumber())
-{ }
+{
+    static QAtomicInteger<uint> dltAppId; // the package scanner is multi-threaded
+    m_dltId = QString::asprintf("A%03u", (++dltAppId) % 1000);
+}
 
 PackageInfo *ApplicationInfo::packageInfo() const
 {
@@ -40,11 +32,6 @@ PackageInfo *ApplicationInfo::packageInfo() const
 QString ApplicationInfo::id() const
 {
     return m_id;
-}
-
-int ApplicationInfo::uniqueNumber() const
-{
-    return m_uniqueNumber;
 }
 
 QVariantMap ApplicationInfo::applicationProperties() const
@@ -59,7 +46,7 @@ QVariantMap ApplicationInfo::allAppProperties() const
 
 quint32 ApplicationInfo::dataStreamVersion()
 {
-    return 5;
+    return 6;
 }
 
 void ApplicationInfo::writeToDataStream(QDataStream &ds) const
@@ -67,7 +54,6 @@ void ApplicationInfo::writeToDataStream(QDataStream &ds) const
     //NOTE: increment dataStreamVersion() above, if you make any changes here
 
     ds << m_id
-       << m_uniqueNumber
        << m_sysAppProperties
        << m_allAppProperties
        << m_codeFilePath
@@ -94,7 +80,6 @@ ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStre
     auto app = std::make_unique<ApplicationInfo>(pkg);
 
     ds >> app->m_id
-       >> app->m_uniqueNumber
        >> app->m_sysAppProperties
        >> app->m_allAppProperties
        >> app->m_codeFilePath
@@ -113,7 +98,6 @@ ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStre
        >> app->m_descriptions
        >> app->m_icon;
 
-    uniqueCounter = qMax(uniqueCounter, app->m_uniqueNumber);
     app->m_capabilities.sort();
 
     return app.release();
@@ -128,8 +112,6 @@ QVariantMap ApplicationInfo::toVariantMap() const
     //      This is used for RuntimeInterface::startApplication() and the ContainerInterface
 
     map[u"id"_s] = m_id;
-    map[u"uniqueNumber"_s] = m_uniqueNumber;
-
     {
         QVariantMap displayName;
         const auto n = names();

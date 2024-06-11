@@ -88,7 +88,6 @@ TestCase {
 
         let environment = AmTest.runProgram([ "cat", `/proc/${pid}/environ` ]).stdout
         verify(environment.includes("AM_CONFIG=%YAML"));
-        verify(environment.includes("AM_NO_DLT_LOGGING=1"));
         verify(environment.includes("WAYLAND_DISPLAY="));
 
         runStateChangedSpy.clear();

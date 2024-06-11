@@ -273,13 +273,15 @@ bool NativeRuntime::start()
     };
 
     QVariantMap loggingConfig = {
-        { u"dlt"_s, Logging::isDltEnabled() },
         { u"rules"_s, Logging::filterRules() },
         { u"useAMConsoleLogger"_s, Logging::useAMConsoleLogger() }
     };
 
-    if (Logging::isDltEnabled())
-        loggingConfig.insert(u"dltLongMessageBehavior"_s, Logging::dltLongMessageBehavior());
+    if (Logging::isDltAvailable()) {
+        loggingConfig.insert(u"dlt"_s, Logging::isDltEnabled());
+        if (Logging::isDltEnabled())
+            loggingConfig.insert(u"dltLongMessageBehavior"_s, Logging::dltLongMessageBehavior());
+    }
 
     QVariantMap uiConfig;
     if (m_slowAnimations)
@@ -330,7 +332,7 @@ bool NativeRuntime::start()
             env.insert(QString::fromLatin1(var), qEnvironmentVariable(var));
     }
 
-    if (!Logging::isDltEnabled()) {
+    if (Logging::isDltAvailable() && !Logging::isDltEnabled()) {
         // we need this to disable DLT as soon as possible
         env.insert(u"AM_NO_DLT_LOGGING"_s, u"1"_s);
     }
@@ -365,7 +367,7 @@ bool NativeRuntime::start()
         if (!m_document.isNull())
             args << u"--start-argument"_s << m_document;
 
-        if (!Logging::isDltEnabled())
+        if (Logging::isDltAvailable() && !Logging::isDltEnabled())
             args << u"--no-dlt-logging"_s;
     } else {
         if (m_isQuickLauncher)

@@ -188,11 +188,13 @@ void Main::setup(const Configuration *cfg) noexcept(false)
                                               cfg->yaml.crashAction.stackFramesToIgnore.onCrash,
                                               cfg->yaml.crashAction.stackFramesToIgnore.onException);
     setupQmlDebugging(cfg->qmlDebugging());
-    if (!cfg->yaml.logging.dlt.id.isEmpty() || !cfg->yaml.logging.dlt.description.isEmpty())
-        Logging::setSystemUiDltId(cfg->yaml.logging.dlt.id.toLocal8Bit(),
-                                  cfg->yaml.logging.dlt.description.toLocal8Bit());
-    Logging::setDltLongMessageBehavior(cfg->yaml.logging.dlt.longMessageBehavior);
-    Logging::registerUnregisteredDltContexts();
+    if (Logging::isDltAvailable()) {
+        if (!cfg->yaml.logging.dlt.id.isEmpty() || !cfg->yaml.logging.dlt.description.isEmpty())
+            Logging::setSystemUiDltId(cfg->yaml.logging.dlt.id.toLocal8Bit(),
+                                      cfg->yaml.logging.dlt.description.toLocal8Bit());
+        Logging::setDltLongMessageBehavior(cfg->yaml.logging.dlt.longMessageBehavior);
+        Logging::registerUnregisteredDltContexts();
+    }
     setupLogging(cfg->verbose(), cfg->yaml.logging.rules, cfg->yaml.logging.messagePattern,
                  cfg->yaml.logging.useAMConsoleLogger);
 

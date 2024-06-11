@@ -274,11 +274,8 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     const QVariantMap dlt = qdbus_cast<QVariantMap>(application.value(u"dlt"_s));
     QByteArray dltId = dlt.value(u"id"_s).toString().toLocal8Bit();
     QByteArray dltDescription = dlt.value(u"description"_s).toString().toLocal8Bit();
-    if (dltId.isEmpty()) {
-        char uniqueId[5];
-        qsnprintf(uniqueId, sizeof(uniqueId), "A%03d", application.value(u"uniqueNumber"_s).toInt());
-        dltId = uniqueId;
-    }
+    if (dltId.isEmpty())
+        dltId = "QAPP";
     if (dltDescription.isEmpty())
         dltDescription = QByteArray("Qt Application Manager App: ") + applicationId.toLocal8Bit();
     Logging::setDltApplicationId(dltId, dltDescription);

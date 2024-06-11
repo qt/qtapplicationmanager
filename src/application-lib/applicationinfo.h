@@ -34,7 +34,6 @@ public:
 
     QVariantMap toVariantMap() const;
     QString id() const;
-    int uniqueNumber() const;
     QVariantMap applicationProperties() const;
     QVariantMap allAppProperties() const;
     QString absoluteCodeFilePath() const;
@@ -65,7 +64,6 @@ private:
     PackageInfo *m_packageInfo;
 
     QString m_id;
-    int m_uniqueNumber;
 
     QVariantMap m_sysAppProperties;
     QVariantMap m_allAppProperties;

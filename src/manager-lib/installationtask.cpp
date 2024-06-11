@@ -184,8 +184,7 @@ void InstallationTask::execute()
 
         connect(m_extractor, &PackageExtractor::progress, this, &AsynchronousTask::progress);
 
-        m_extractor->setFileExtractedCallback(std::bind(&InstallationTask::checkExtractedFile,
-                                                        this, std::placeholders::_1));
+        m_extractor->setFileExtractedCallback([this](const QString &f) { checkExtractedFile(f); });
 
         if (!m_extractor->extract())
             throw Exception(m_extractor->errorCode(), m_extractor->errorString());
@@ -323,28 +322,15 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
     }
 
     if (m_foundIcon && m_foundInfo) {
+        // we're not interested in any other files from here on...
+        m_extractor->setFileExtractedCallback(nullptr);
+
         bool doubleInstallation = false;
         QMetaObject::invokeMethod(PackageManager::instance(), [this, &doubleInstallation]() {
             doubleInstallation = PackageManager::instance()->isPackageInstallationActive(m_packageId);
         }, Qt::BlockingQueuedConnection);
         if (doubleInstallation)
             throw Exception(Error::Package, "Cannot install the same package %1 multiple times in parallel").arg(m_packageId);
-
-        qCDebug(LogInstaller) << "emit taskRequestingInstallationAcknowledge" << id() << "for package" << m_package->id();
-
-        // this is a temporary just for the signal emission below
-        m_tempPackageForAcknowledge.reset(new Package(m_package.get(), Package::BeingInstalled));
-        m_tempPackageForAcknowledge->moveToThread(m_pm->thread());
-        const auto &applicationInfos = m_package.get()->applications();
-        for (const auto &applicationInfo : applicationInfos) {
-            auto tempApp = new Application(applicationInfo, m_tempPackageForAcknowledge.get());
-            tempApp->moveToThread(m_pm->thread());
-            m_tempPackageForAcknowledge->addApplication(tempApp);
-            m_tempApplicationsForAcknowledge.emplace_back(tempApp);
-        }
-        emit m_pm->taskRequestingInstallationAcknowledge(id(), m_tempPackageForAcknowledge.get(),
-                                                         m_extractor->installationReport().extraMetaData(),
-                                                         m_extractor->installationReport().extraSignedMetaData());
 
         QDir oldDestinationDirectory = m_extractor->destinationDirectory();
 
@@ -378,6 +364,28 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         if (!m_managerApproval)
             throw Exception("PackageManager declined the installation of %1").arg(packageId);
 
+        qCDebug(LogInstaller) << "emit taskRequestingInstallationAcknowledge" << id() << "for package" << packageId;
+
+        // Create temporary objects for QML just for the signal emission.
+        // The problem here is that the PackageInfo instance backing the Package object is also
+        // temporary and the ownership is with the C++ side of the PackageManager.
+        // Ideally we should have kept the 'package' parameter as a dumb QVariantMap, but changing
+        // that back would be a huge API break nowadays as the QML APIs are fully typed.
+        // At least we have to make sure NOT to change anything in the PackageInfo instance after
+        // the signal emission below.
+        m_tempPackageForAcknowledge.reset(new Package(newPackage->info(), Package::BeingInstalled));
+        m_tempPackageForAcknowledge->moveToThread(m_pm->thread());
+        const auto &applicationInfos = newPackage->info()->applications();
+        for (const auto &applicationInfo : applicationInfos) {
+            auto tempApp = new Application(applicationInfo, m_tempPackageForAcknowledge.get());
+            tempApp->moveToThread(m_pm->thread());
+            m_tempPackageForAcknowledge->addApplication(tempApp);
+            m_tempApplicationsForAcknowledge.emplace_back(tempApp);
+        }
+        emit m_pm->taskRequestingInstallationAcknowledge(id(), m_tempPackageForAcknowledge.get(),
+                                                         m_extractor->installationReport().extraMetaData(),
+                                                         m_extractor->installationReport().extraSignedMetaData());
+
         // if any of the apps in the package were running before, we now need to wait until all of
         // them have actually stopped
         while (!m_canceled && newPackage && !newPackage->areAllApplicationsStoppedDueToBlock())
@@ -385,9 +393,6 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
 
         if (m_canceled || newPackage.isNull())
             throw Exception(Error::Canceled, "canceled");
-
-        // we're not interested in any other files from here on...
-        m_extractor->setFileExtractedCallback(nullptr);
     }
 }
 
@@ -461,7 +466,6 @@ void InstallationTask::finishInstallation() Q_DECL_NOEXCEPT_EXPR(false)
 
     // POSIX cannot atomically rename directories, if the destination directory exists
     // and is non-empty. We need to do a double-rename in this case, which might fail!
-    // The image is a file, so this limitation does not apply!
 
     ScopedRenamer renameApplication;
 

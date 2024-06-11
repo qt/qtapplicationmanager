@@ -66,16 +66,18 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
     QCoreApplication::setApplicationVersion(QString::fromLatin1(QT_AM_VERSION_STR));
 
-    if (qEnvironmentVariableIntValue("AM_NO_DLT_LOGGING") == 1)
-        Logging::setDltEnabled(false);
+    if (Logging::isDltAvailable()) {
+        if (qEnvironmentVariableIntValue("AM_NO_DLT_LOGGING") == 1)
+            Logging::setDltEnabled(false);
 
-    // The common-lib is already registering the DLT Application for the application manager.
-    // As the appID needs to be unique within the system, we cannot use the same appID and
-    // need to change it as early as possible.
+        // The common-lib is already registering the DLT Application for the application manager.
+        // As the appID needs to be unique within the system, we cannot use the same appID and
+        // need to change it as early as possible.
 
-    // As we don't know the app-id yet, we are registering a place holder so we are able to see
-    // something in the dlt logs if general errors occur.
-    Logging::setDltApplicationId("QTLQ", "Qt Application Manager Launcher QML");
+        // As we don't know the app-id yet, we are registering a place holder so we are able to see
+        // something in the dlt logs if general errors occur.
+        Logging::setDltApplicationId("QTLQ", "Qt Application Manager Launcher QML");
+    }
     Logging::setApplicationId("qml-launcher");
     Logging::initialize();
 
@@ -111,7 +113,8 @@ int main(int argc, char *argv[])
         am->setupIconTheme(am->iconThemeSearchPaths(), am->iconThemeName());
         am->registerWaylandExtensions();
 
-        Logging::setDltLongMessageBehavior(am->dltLongMessageBehavior());
+        if (Logging::isDltAvailable())
+            Logging::setDltLongMessageBehavior(am->dltLongMessageBehavior());
 
         StartupTimer::instance()->checkpoint("after basic initialization");
 
@@ -270,17 +273,24 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         StartupTimer::instance()->checkpoint("starting application");
     }
 
-    //Change the DLT Application description, to easily identify the application on the DLT logs.
-    const QVariantMap dlt = qdbus_cast<QVariantMap>(application.value(u"dlt"_s));
-    QByteArray dltId = dlt.value(u"id"_s).toString().toLocal8Bit();
-    QByteArray dltDescription = dlt.value(u"description"_s).toString().toLocal8Bit();
-    if (dltId.isEmpty())
-        dltId = "QAPP";
-    if (dltDescription.isEmpty())
-        dltDescription = QByteArray("Qt Application Manager App: ") + applicationId.toLocal8Bit();
-    Logging::setDltApplicationId(dltId, dltDescription);
-    Logging::registerUnregisteredDltContexts();
 
+    if (Logging::isDltAvailable() && Logging::isDltEnabled()) {
+        // Change the DLT Application description, to easily identify the application on the DLT logs.
+        const QVariantMap dlt = qdbus_cast<QVariantMap>(application.value(u"dlt"_s));
+        QByteArray dltId = dlt.value(u"id"_s).toString().toLocal8Bit();
+        QByteArray dltDescription = dlt.value(u"description"_s).toString().toLocal8Bit();
+
+        if (dltId.isEmpty()) {
+            qCCritical(LogQmlRuntime) << "did not receive a DLT id, but DLT is enabled";
+            QCoreApplication::exit(2);
+            return;
+        }
+        if (dltDescription.isEmpty())
+            dltDescription = QByteArray("Qt Application Manager App: ") + applicationId.toLocal8Bit();
+
+        Logging::setDltApplicationId(dltId, dltDescription);
+        Logging::registerUnregisteredDltContexts();
+    }
     // Dress up the ps output to make it easier to correlate all the launcher processes
     ProcessTitle::augmentCommand(applicationId.toLocal8Bit().constData());
 

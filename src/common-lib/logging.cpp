@@ -515,6 +515,11 @@ bool Logging::hasDeferredMessages()
     return !lg()->deferredMessages.empty();
 }
 
+bool Logging::isDltAvailable()
+{
+    return QT_CONFIG(am_dltlogging);
+}
+
 bool Logging::isDltEnabled()
 {
     return lg()->dltEnabled;
@@ -522,7 +527,7 @@ bool Logging::isDltEnabled()
 
 void Logging::setDltEnabled(bool enabled)
 {
-    lg()->dltEnabled = enabled;
+    lg()->dltEnabled = QT_CONFIG(am_dltlogging) && enabled;
 }
 
 void Logging::registerUnregisteredDltContexts()
@@ -566,12 +571,12 @@ QString Logging::dltLongMessageBehavior()
 
 void Logging::setDltLongMessageBehavior(const QString &behaviorString)
 {
+#if QT_CONFIG(am_dltlogging)
     if (!lg()->dltEnabled)
         return;
 
     lg()->dltLongMessageBehavior = behaviorString;
 
-#if QT_CONFIG(am_dltlogging)
     QDltRegistration::LongMessageBehavior behavior = QDltRegistration::LongMessageBehavior::Truncate;
     if (behaviorString == u"split")
         behavior = QDltRegistration::LongMessageBehavior::Split;
@@ -579,6 +584,8 @@ void Logging::setDltLongMessageBehavior(const QString &behaviorString)
         behavior = QDltRegistration::LongMessageBehavior::Pass;
 
     globalDltRegistration()->setLongMessageBehavior(behavior);
+#else
+    Q_UNUSED(behaviorString)
 #endif
 }
 

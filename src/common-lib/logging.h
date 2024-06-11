@@ -50,6 +50,7 @@ public:
     static void setApplicationId(const QByteArray &appId);
 
     // DLT functionality
+    static bool isDltAvailable();
     static bool isDltEnabled();
     static void setDltEnabled(bool enabled);
 

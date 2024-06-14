@@ -139,6 +139,9 @@ void tst_Main::destroyMain()
         if (mainSetupDone) {
             main->shutDown();
             main->exec();
+        } else {
+            // without this, the watchdog cannot cleanly shutdown
+            qApp->exit(1);
         }
         delete main;
         main = nullptr;

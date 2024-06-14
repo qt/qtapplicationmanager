@@ -104,6 +104,7 @@ public:
     bool m_watchingMainEventLoop = false;
     QThread *m_wdThread;
 
+    static Watchdog *s_instance;
     static QAtomicPointer<QTimer> s_mainThreadTimer; // we can't delete the timer in the destructor
 
     QTimer *m_quickWindowCheck;

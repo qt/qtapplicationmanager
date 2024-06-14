@@ -149,14 +149,13 @@ void SharedMain::setupWatchdog(std::chrono::milliseconds eventloopCheckInterval,
                                std::chrono::milliseconds quickWindowSwapWarn,
                                std::chrono::milliseconds quickWindowSwapKill)
 {
-    if (!m_watchdog)
-        m_watchdog = new Watchdog(qApp);
+    auto *wd = Watchdog::create();
 
-    m_watchdog->setThreadTimeouts(eventloopCheckInterval, eventloopWarn, eventloopKill);
-    m_watchdog->setQuickWindowTimeouts(quickWindowCheckInterval, quickWindowSyncWarn,
-                                       quickWindowSyncKill, quickWindowRenderWarn,
-                                       quickWindowRenderKill, quickWindowSwapWarn,
-                                       quickWindowSwapKill);
+    wd->setThreadTimeouts(eventloopCheckInterval, eventloopWarn, eventloopKill);
+    wd->setQuickWindowTimeouts(quickWindowCheckInterval, quickWindowSyncWarn,
+                               quickWindowSyncKill, quickWindowRenderWarn,
+                               quickWindowRenderKill, quickWindowSwapWarn,
+                               quickWindowSwapKill);
 }
 
 void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,

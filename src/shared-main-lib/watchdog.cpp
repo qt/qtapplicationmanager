@@ -110,6 +110,7 @@ static void killThread(quintptr threadHandle)
 // WatchdogPrivate
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+Watchdog *WatchdogPrivate::s_instance = nullptr;
 QAtomicPointer<QTimer> WatchdogPrivate::s_mainThreadTimer;
 
 WatchdogPrivate::WatchdogPrivate(Watchdog *q)
@@ -151,8 +152,9 @@ WatchdogPrivate::~WatchdogPrivate()
     Q_ASSERT(QThread::currentThread() == m_wdThread);
     for (const auto *eld : std::as_const(m_eventLoops)) {
         if (eld->m_isMainThread) {
-            qCInfo(LogWatchdogStat) << "Stopped watching the event loop of the UI thread";
-            s_mainThreadTimer.fetchAndStoreOrdered(eld->m_timer); // cannot delete from this thread
+            qCInfo(LogWatchdogStat) << "Event loop of thread" << static_cast<void *>(eld->m_thread)
+                                    << "/ the main GUI thread has finished and is not being watched anymore";
+            s_mainThreadTimer = eld->m_timer; // cannot delete from this thread
             m_watchingMainEventLoop = false;
         }
         delete eld;
@@ -252,8 +254,8 @@ void WatchdogPrivate::watchEventLoop(QThread *thread)
 
     if (!thread->eventDispatcher()) {
         qCWarning(LogWatchdogStat).nospace().noquote()
-            << "Thread " << static_cast<void *>(thread) << info
-            << " cannot be watched, because it has no event dispatcher installed";
+            << "Event loop of thread " << static_cast<void *>(thread) << info
+            << " cannot be watched, because the thread has no event dispatcher installed";
         return;
     }
 
@@ -277,7 +279,7 @@ void WatchdogPrivate::watchEventLoop(QThread *thread)
         m_eventLoopCheck->start();
 
     qCInfo(LogWatchdogStat).nospace().noquote()
-        << "Thread " << static_cast<void *>(thread) << info << " is being watched now "
+        << "Event loop of thread " << static_cast<void *>(thread) << info << " is being watched now "
         << "(check every " << m_eventLoopCheckInterval << ", warn/kill after "
         << m_warnEventLoopTime << "/" << m_killEventLoopTime << ")";
 
@@ -312,8 +314,9 @@ void WatchdogPrivate::watchEventLoop(QThread *thread)
 
         if (wasStuck) {
             qCWarning(LogWatchdogLive).nospace()
-                << "Thread " << static_cast<void *>(eld->m_thread.get()) << " was stuck for "
-                << elapsed << "ms, but then continued (the warn threshold is " << maxTime << "ms)";
+                << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
+                << " was stuck for " << elapsed << "ms, but then continued (the warn threshold is "
+                << maxTime << "ms)";
         }
 
         as.eventLoopBits.expectedAt = now + maxTime / 2;
@@ -338,7 +341,7 @@ void WatchdogPrivate::watchEventLoop(QThread *thread)
                 // we're on the wd thread
                 Q_ASSERT(QThread::currentThread() == m_wdThread);
 
-                qCInfo(LogWatchdogStat) << "Thread" << static_cast<void *>(eld->m_thread)
+                qCInfo(LogWatchdogStat) << "Event loop of thread" << static_cast<void *>(eld->m_thread)
                                         << "has finished and is not being watched anymore";
 
                 m_eventLoops.removeOne(eld);
@@ -381,7 +384,7 @@ void WatchdogPrivate::eventLoopCheck()
             }
 
             qCWarning(LogWatchdogStat).nospace()
-                << "Thread " << static_cast<void *>(eld->m_thread.get())
+                << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
                 << " was stuck " << stuckCounterString.constData() << ". "
                 << "The longest period was " << as.eventLoopBits.longestStuckDuration << "ms";
         }
@@ -397,7 +400,7 @@ void WatchdogPrivate::eventLoopCheck()
 
         if (killTime && (elapsed > killTime) && eld->m_thread) {
             qCCritical(LogWatchdogStat).nospace()
-                << "Thread " << static_cast<void *>(eld->m_thread.get())
+                << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
                 << " is getting killed, because it is now stuck for over " << elapsed
                 << "ms (the kill threshold is " << killTime << "ms)";
 
@@ -407,7 +410,7 @@ void WatchdogPrivate::eventLoopCheck()
         } else if (warnTime && (elapsed > (warnTime * 2))
                    && (elapsed > (quint64(m_eventLoopCheckInterval.count()) / 2))) {
             qCWarning(LogWatchdogStat).nospace()
-                << "Thread " << static_cast<void *>(eld->m_thread.get())
+                << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
                 << " is currently stuck for over " << elapsed
                 << "ms (the warn threshold is " << warnTime << "ms)";
         }
@@ -679,33 +682,58 @@ void WatchdogPrivate::quickWindowCheck()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-Watchdog::Watchdog(QObject *parent)
-    : QObject(parent)
+Watchdog::Watchdog()
+    : QObject(qApp)
     , d(new WatchdogPrivate(this))
+{
+    // automatically watch any QQuickWindows that are created
+    qApp->installEventFilter(this);
+
+    // we need to stop event handling in the WD thread *before* ~QCoreApplication,
+    // otherwise we run into a data-race on the qApp vptr:
+    // https://github.com/google/sanitizers/wiki/ThreadSanitizerPopularDataRaces#data-race-on-vptr
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
+        shutdown();
+        m_cleanShutdown = true;
+    });
+    d->m_wdThread->start();
+}
+
+Watchdog *Watchdog::create()
 {
     Q_ASSERT(qApp);
     Q_ASSERT(QThread::currentThread() == qApp->thread());
 
-    // automatically watch any QQuickWindows that are created
-    qApp->installEventFilter(this);
-
-    d->m_wdThread->start();
+    if (!WatchdogPrivate::s_instance)
+        WatchdogPrivate::s_instance = new Watchdog;
+    return WatchdogPrivate::s_instance;
 }
 
 Watchdog::~Watchdog()
 {
+    if (!m_cleanShutdown) {
+        qCCritical(LogWatchdogStat) << "The watchdog could not properly shutdown, as no "
+                                       "QCoreApplication::aboutToQuit signal was received "
+                                       "(this will result in TSAN warnings).";
+        shutdown();
+    }
+    WatchdogPrivate::s_instance = nullptr;
+
+    // the finished() signal of the thread will auto-delete d from within that thread
+}
+
+void Watchdog::shutdown()
+{
+    auto wdThread = d->m_wdThread; // 'd' is dead after quit()
+    wdThread->quit();
+    wdThread->wait();
+
     if (qApp)
         qApp->removeEventFilter(this);
-
-    auto thread = d->m_wdThread; // d is dead after quit()
-    thread->quit();
-    thread->wait();
 
     // the main thread timer must be deleted from the main thread
     if (auto *timer = WatchdogPrivate::s_mainThreadTimer.fetchAndStoreOrdered(nullptr))
         delete timer;
-
-    // the finished() signal of the thread will auto-delete d from within that thread
 }
 
 void Watchdog::setThreadTimeouts(std::chrono::milliseconds check, std::chrono::milliseconds warn,

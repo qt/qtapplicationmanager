@@ -18,7 +18,7 @@ class Watchdog : public QObject
 {
     Q_OBJECT
 public:
-    Watchdog(QObject *parent);
+    static Watchdog *create();
     ~Watchdog() override;
 
     void setThreadTimeouts(std::chrono::milliseconds check, std::chrono::milliseconds warn,
@@ -32,9 +32,12 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
+    Watchdog();
+    void shutdown();
     Q_DISABLE_COPY_MOVE(Watchdog)
 
     WatchdogPrivate *d = nullptr;
+    bool m_cleanShutdown = false;
 };
 
 QT_END_NAMESPACE_AM

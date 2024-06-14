@@ -49,7 +49,6 @@ private:
     QSurfaceFormat::OpenGLContextProfile m_requestedOpenGLProfile = QSurfaceFormat::NoProfile;
     int m_requestedOpenGLMajorVersion = -1;
     int m_requestedOpenGLMinorVersion = -1;
-    Watchdog *m_watchdog = nullptr;
 };
 
 QT_END_NAMESPACE_AM

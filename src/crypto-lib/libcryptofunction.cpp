@@ -30,6 +30,8 @@ struct OSSL_PROVIDER;
 struct OSSL_LIB_CTX;
 static QT_AM_LIBCRYPTO_FUNCTION(OSSL_PROVIDER_load, OSSL_PROVIDER *(*)(OSSL_LIB_CTX *, const char *), nullptr);
 
+// AXIVION ENABLE Qt-NonPodGlobalStatic
+
 QLibrary *Cryptography::LibCryptoFunctionBase::s_library = nullptr;
 bool Cryptography::LibCryptoFunctionBase::s_isOpenSSL11 = false;
 bool Cryptography::LibCryptoFunctionBase::s_isOpenSSL30 = false;

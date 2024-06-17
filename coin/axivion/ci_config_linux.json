@@ -23,6 +23,14 @@
                 "$(delta:-)": []
             }
         },
+        "ReportUnclosedRestOfFileComments": {
+            "_active": true,
+            "excludes": ["src/3rdparty/*", "build/*"]
+        },
+        "ReportUnusedComments": {
+            "_active": true,
+            "excludes": ["src/3rdparty/*", "build/*"]
+        },
         "NextLine": {
             "_active": true
         },

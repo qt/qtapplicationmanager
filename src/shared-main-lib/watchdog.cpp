@@ -736,8 +736,8 @@ void Watchdog::shutdown()
         delete timer;
 }
 
-void Watchdog::setThreadTimeouts(std::chrono::milliseconds check, std::chrono::milliseconds warn,
-                                 std::chrono::milliseconds kill)
+void Watchdog::setEventLoopTimeouts(std::chrono::milliseconds check,
+                                    std::chrono::milliseconds warn, std::chrono::milliseconds kill)
 {
     QMetaObject::invokeMethod(d, [this, check, warn, kill]() {
             d->setEventLoopTimeouts(check, warn, kill);

@@ -21,8 +21,8 @@ public:
     static Watchdog *create();
     ~Watchdog() override;
 
-    void setThreadTimeouts(std::chrono::milliseconds check, std::chrono::milliseconds warn,
-                           std::chrono::milliseconds kill);
+    void setEventLoopTimeouts(std::chrono::milliseconds check,
+                              std::chrono::milliseconds warn, std::chrono::milliseconds kill);
     void setQuickWindowTimeouts(std::chrono::milliseconds check,
                                 std::chrono::milliseconds warnSync, std::chrono::milliseconds killSync,
                                 std::chrono::milliseconds warnRender, std::chrono::milliseconds killRender,

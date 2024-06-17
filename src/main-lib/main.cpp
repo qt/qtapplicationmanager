@@ -199,26 +199,12 @@ void Main::setup(const Configuration *cfg) noexcept(false)
     setupLogging(cfg->verbose(), cfg->yaml.logging.rules, cfg->yaml.logging.messagePattern,
                  cfg->yaml.logging.useAMConsoleLogger);
 
-    if (cfg->yaml.watchdog.disable) {
-        setupWatchdog(0ms, 0ms, 0ms, 0ms, 0ms, 0ms, 0ms, 0ms, 0ms, 0ms);
-    } else {
-        setupWatchdog(cfg->yaml.watchdog.eventloop.checkInterval,
-                      cfg->yaml.watchdog.eventloop.warnTimeout,
-                      cfg->yaml.watchdog.eventloop.killTimeout,
-                      cfg->yaml.watchdog.quickwindow.checkInterval,
-                      cfg->yaml.watchdog.quickwindow.syncWarnTimeout,
-                      cfg->yaml.watchdog.quickwindow.syncKillTimeout,
-                      cfg->yaml.watchdog.quickwindow.renderWarnTimeout,
-                      cfg->yaml.watchdog.quickwindow.renderKillTimeout,
-                      cfg->yaml.watchdog.quickwindow.swapWarnTimeout,
-                      cfg->yaml.watchdog.quickwindow.swapKillTimeout);
-    }
+    if (!cfg->isWatchdogDisabled())
+        setupWatchdog(cfg->yaml.watchdog);
 
     registerResources(cfg->yaml.ui.resources);
 
-    setupOpenGL(OpenGLConfiguration(cfg->yaml.ui.opengl.desktopProfile,
-                                    cfg->yaml.ui.opengl.esMajorVersion,
-                                    cfg->yaml.ui.opengl.esMinorVersion));
+    setupOpenGL(cfg->yaml.ui.opengl);
     setupIconTheme(cfg->yaml.ui.iconThemeSearchPaths, cfg->yaml.ui.iconThemeName);
 
     loadStartupPlugins(cfg->yaml.plugins.startup);
@@ -682,9 +668,7 @@ void Main::setupWindowManager(const Configuration *cfg)
     m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName());
     m_windowManager->setAllowUnknownUiClients(cfg->yaml.flags.noSecurity || cfg->yaml.flags.allowUnknownUiClients);
     m_windowManager->setSlowAnimations(cfg->slowAnimations());
-    if (cfg->yaml.watchdog.disable) {
-        m_windowManager->setWatchdogTimeouts(0ms, 0ms, 0ms);
-    } else {
+    if (!cfg->isWatchdogDisabled()) {
         m_windowManager->setWatchdogTimeouts(cfg->yaml.watchdog.wayland.checkInterval,
                                              cfg->yaml.watchdog.wayland.warnTimeout,
                                              cfg->yaml.watchdog.wayland.killTimeout);

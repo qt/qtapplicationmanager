@@ -95,14 +95,7 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                  legacyAppInfo->m_capabilities = yp.parseStringOrStringList();
                  legacyAppInfo->m_capabilities.sort(); } },
             { legacy, "opengl", false, YamlParser::Map, [&]() {
-                 yp.parseFields({
-                     { "desktopProfile", false, YamlParser::Scalar, [&]() {
-                          legacyAppInfo->m_openGLConfiguration.desktopProfile = yp.parseString(); } },
-                     { "esMajorVersion", false, YamlParser::Scalar, [&]() {
-                          legacyAppInfo->m_openGLConfiguration.esMajorVersion = yp.parseInt(2); } },
-                     { "esMinorVersion", false, YamlParser::Scalar, [&]() {
-                          legacyAppInfo->m_openGLConfiguration.esMinorVersion = yp.parseInt(0); } },
-                 }); } },
+                 legacyAppInfo->m_openGLConfiguration = OpenGLConfiguration::fromYaml(yp); } },
             { legacy, "applicationProperties", false, YamlParser::Map, [&]() {
                  const QVariantMap rawMap = yp.parseMap();
                  legacyAppInfo->m_sysAppProperties = rawMap.value(u"protected"_s).toMap();
@@ -164,14 +157,10 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                               appInfo->m_capabilities = yp.parseStringOrStringList();
                               appInfo->m_capabilities.sort(); } },
                          { "opengl", false, YamlParser::Map, [&]() {
-                              yp.parseFields({
-                                  { "desktopProfile", false, YamlParser::Scalar, [&]() {
-                                       appInfo->m_openGLConfiguration.desktopProfile = yp.parseString(); } },
-                                  { "esMajorVersion", false, YamlParser::Scalar, [&]() {
-                                       appInfo->m_openGLConfiguration.esMajorVersion = yp.parseInt(2); } },
-                                  { "esMinorVersion", false, YamlParser::Scalar, [&]() {
-                                       appInfo->m_openGLConfiguration.esMinorVersion = yp.parseInt(0); } },
-                              }); } },
+                              appInfo->m_openGLConfiguration = OpenGLConfiguration::fromYaml(yp); } },
+                         { "watchdog", false, YamlParser::Map, [&]() {
+                              appInfo->m_watchdogConfiguration =
+                                  WatchdogConfiguration::fromYaml(yp, WatchdogConfiguration::Application); } },
                          { "applicationProperties", false, YamlParser::Map, [&]() {
                               const QVariantMap rawMap = yp.parseMap();
                               appInfo->m_sysAppProperties = rawMap.value(u"protected"_s).toMap();

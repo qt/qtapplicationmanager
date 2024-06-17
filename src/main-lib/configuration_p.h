@@ -37,7 +37,7 @@ public:
     ConfigurationData data;
     bool onlyOnePositionalArgument = false;
     bool forceVerbose = false;
-    bool forceNoUiWatchdog = false;
+    bool forceDisableWatchdog = false;
 };
 
 QT_END_NAMESPACE_AM

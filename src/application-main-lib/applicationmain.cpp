@@ -147,6 +147,11 @@ OpenGLConfiguration ApplicationMain::openGLConfiguration() const
     return m_openGLConfiguration;
 }
 
+WatchdogConfiguration ApplicationMain::watchdogConfiguration() const
+{
+    return m_watchdogConfiguration;
+}
+
 QString ApplicationMain::iconThemeName() const
 {
     return m_iconThemeName;
@@ -274,6 +279,9 @@ void ApplicationMain::loadConfiguration(const QByteArray &configYaml) noexcept(f
     m_openGLConfiguration = OpenGLConfiguration::fromMap(uiConfig.value(u"opengl"_s).toMap());
     m_iconThemeName = uiConfig.value(u"iconThemeName"_s).toString();
     m_iconThemeSearchPaths = uiConfig.value(u"iconThemeSearchPaths"_s).toStringList();
+
+    m_watchdogConfiguration = WatchdogConfiguration::fromMap(m_configuration.value(u"watchdog"_s).toMap(),
+                                                             WatchdogConfiguration::Application);
 
     m_application = m_configuration.value(u"application"_s).toMap();
 

@@ -15,6 +15,7 @@
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/openglconfiguration.h>
+#include <QtAppManCommon/watchdogconfiguration.h>
 
 QT_FORWARD_DECLARE_CLASS(QDataStream)
 
@@ -44,6 +45,7 @@ public:
     QStringList supportedMimeTypes() const;
     QString documentUrl() const;
     OpenGLConfiguration openGLConfiguration() const;
+    WatchdogConfiguration watchdogConfiguration() const;
     bool supportsApplicationInterface() const;
     QString dltId() const;
     QString dltDescription() const;
@@ -74,6 +76,7 @@ private:
     bool m_supportsApplicationInterface = false;
     QStringList m_capabilities;
     OpenGLConfiguration m_openGLConfiguration;
+    WatchdogConfiguration m_watchdogConfiguration;
     QStringList m_supportedMimeTypes; // deprecated
     QString m_documentUrl; // deprecated
     QString m_dltId;

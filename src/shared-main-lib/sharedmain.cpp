@@ -138,24 +138,16 @@ void SharedMain::setupQmlDebugging(bool qmlDebugging)
     }
 }
 
-void SharedMain::setupWatchdog(std::chrono::milliseconds eventloopCheckInterval,
-                               std::chrono::milliseconds eventloopWarn,
-                               std::chrono::milliseconds eventloopKill,
-                               std::chrono::milliseconds quickWindowCheckInterval,
-                               std::chrono::milliseconds quickWindowSyncWarn,
-                               std::chrono::milliseconds quickWindowSyncKill,
-                               std::chrono::milliseconds quickWindowRenderWarn,
-                               std::chrono::milliseconds quickWindowRenderKill,
-                               std::chrono::milliseconds quickWindowSwapWarn,
-                               std::chrono::milliseconds quickWindowSwapKill)
+void SharedMain::setupWatchdog(const WatchdogConfiguration &cfg)
 {
     auto *wd = Watchdog::create();
 
-    wd->setThreadTimeouts(eventloopCheckInterval, eventloopWarn, eventloopKill);
-    wd->setQuickWindowTimeouts(quickWindowCheckInterval, quickWindowSyncWarn,
-                               quickWindowSyncKill, quickWindowRenderWarn,
-                               quickWindowRenderKill, quickWindowSwapWarn,
-                               quickWindowSwapKill);
+    wd->setEventLoopTimeouts(cfg.eventloop.checkInterval,
+                             cfg.eventloop.warnTimeout, cfg.eventloop.killTimeout);
+    wd->setQuickWindowTimeouts(cfg.quickwindow.checkInterval,
+                               cfg.quickwindow.syncWarnTimeout, cfg.quickwindow.syncKillTimeout,
+                               cfg.quickwindow.renderWarnTimeout, cfg.quickwindow.renderKillTimeout,
+                               cfg.quickwindow.swapWarnTimeout, cfg.quickwindow.swapKillTimeout);
 }
 
 void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,

@@ -8,6 +8,7 @@
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/openglconfiguration.h>
+#include <QtAppManCommon/watchdogconfiguration.h>
 #include <QtCore/QVariantMap>
 #include <QtCore/QStringList>
 #include <QtGui/QSurfaceFormat>
@@ -29,16 +30,7 @@ public:
     static int &preConstructor(int &argc);
     void setupIconTheme(const QStringList &themeSearchPaths, const QString &themeName);
     void setupQmlDebugging(bool qmlDebugging);
-    void setupWatchdog(std::chrono::milliseconds eventloopCheckInterval,
-                       std::chrono::milliseconds eventloopWarn,
-                       std::chrono::milliseconds eventloopKill,
-                       std::chrono::milliseconds quickWindowCheckInterval,
-                       std::chrono::milliseconds quickWindowSyncWarn,
-                       std::chrono::milliseconds quickWindowSyncKill,
-                       std::chrono::milliseconds quickWindowRenderWarn,
-                       std::chrono::milliseconds quickWindowRenderKill,
-                       std::chrono::milliseconds quickWindowSwapWarn,
-                       std::chrono::milliseconds quickWindowSwapKill);
+    void setupWatchdog(const WatchdogConfiguration &cfg);
     void setupLogging(bool verbose, const QStringList &loggingRules, const QString &messagePattern,
                       const QVariant &useAMConsoleLogger);
     void setupOpenGL(const OpenGLConfiguration &openGLConfiguration);

@@ -46,7 +46,7 @@ QVariantMap ApplicationInfo::allAppProperties() const
 
 quint32 ApplicationInfo::dataStreamVersion()
 {
-    return 6;
+    return 7;
 }
 
 void ApplicationInfo::writeToDataStream(QDataStream &ds) const
@@ -61,9 +61,8 @@ void ApplicationInfo::writeToDataStream(QDataStream &ds) const
        << m_runtimeParameters
        << m_supportsApplicationInterface
        << m_capabilities
-       << m_openGLConfiguration.desktopProfile
-       << m_openGLConfiguration.esMajorVersion
-       << m_openGLConfiguration.esMinorVersion
+       << m_openGLConfiguration
+       << m_watchdogConfiguration
        << m_dltId
        << m_dltDescription
        << m_supportedMimeTypes
@@ -87,9 +86,8 @@ ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStre
        >> app->m_runtimeParameters
        >> app->m_supportsApplicationInterface
        >> app->m_capabilities
-       >> app->m_openGLConfiguration.desktopProfile
-       >> app->m_openGLConfiguration.esMajorVersion
-       >> app->m_openGLConfiguration.esMinorVersion
+       >> app->m_openGLConfiguration
+       >> app->m_watchdogConfiguration
        >> app->m_dltId
        >> app->m_dltDescription
        >> app->m_supportedMimeTypes
@@ -180,6 +178,11 @@ QString ApplicationInfo::documentUrl() const
 OpenGLConfiguration ApplicationInfo::openGLConfiguration() const
 {
     return m_openGLConfiguration;
+}
+
+WatchdogConfiguration ApplicationInfo::watchdogConfiguration() const
+{
+    return m_watchdogConfiguration;
 }
 
 bool ApplicationInfo::supportsApplicationInterface() const

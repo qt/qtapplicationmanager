@@ -28,6 +28,7 @@ qt_internal_add_module(AppManCommonPrivate
         qtyaml.cpp qtyaml.h
         unixsignalhandler.cpp unixsignalhandler.h
         utilities.cpp utilities.h
+        watchdogconfiguration.h watchdogconfiguration.cpp
     LIBRARIES
         Qt::CorePrivate
         Qt::QmlPrivate

@@ -131,20 +131,19 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.yaml.plugins.container, {});
     QCOMPARE(c.yaml.plugins.startup, {});
 
-    QCOMPARE(c.yaml.watchdog.disable, false);
-    QCOMPARE(c.yaml.watchdog.eventloop.checkInterval, 1s);
-    QCOMPARE(c.yaml.watchdog.eventloop.warnTimeout, 1s);
-    QCOMPARE(c.yaml.watchdog.eventloop.killTimeout, 10s);
-    QCOMPARE(c.yaml.watchdog.quickwindow.checkInterval, 1s);
-    QCOMPARE(c.yaml.watchdog.quickwindow.syncWarnTimeout, 35ms);
-    QCOMPARE(c.yaml.watchdog.quickwindow.syncKillTimeout, 10s);
-    QCOMPARE(c.yaml.watchdog.quickwindow.renderWarnTimeout, 35ms);
-    QCOMPARE(c.yaml.watchdog.quickwindow.renderKillTimeout, 10s);
-    QCOMPARE(c.yaml.watchdog.quickwindow.swapWarnTimeout, 35ms);
-    QCOMPARE(c.yaml.watchdog.quickwindow.swapKillTimeout, 10s);
-    QCOMPARE(c.yaml.watchdog.wayland.checkInterval, 5s);
-    QCOMPARE(c.yaml.watchdog.wayland.warnTimeout, 1s);
-    QCOMPARE(c.yaml.watchdog.wayland.killTimeout, 10s);
+    QCOMPARE(c.yaml.watchdog.eventloop.checkInterval, -1ms);
+    QCOMPARE(c.yaml.watchdog.eventloop.warnTimeout, -1ms);
+    QCOMPARE(c.yaml.watchdog.eventloop.killTimeout, -1ms);
+    QCOMPARE(c.yaml.watchdog.quickwindow.checkInterval, -1ms);
+    QCOMPARE(c.yaml.watchdog.quickwindow.syncWarnTimeout, -1ms);
+    QCOMPARE(c.yaml.watchdog.quickwindow.syncKillTimeout, -1ms);
+    QCOMPARE(c.yaml.watchdog.quickwindow.renderWarnTimeout, -1ms);
+    QCOMPARE(c.yaml.watchdog.quickwindow.renderKillTimeout, -1ms);
+    QCOMPARE(c.yaml.watchdog.quickwindow.swapWarnTimeout, -1ms);
+    QCOMPARE(c.yaml.watchdog.quickwindow.swapKillTimeout, -1ms);
+    QCOMPARE(c.yaml.watchdog.wayland.checkInterval, -1ms);
+    QCOMPARE(c.yaml.watchdog.wayland.warnTimeout, -1ms);
+    QCOMPARE(c.yaml.watchdog.wayland.killTimeout, -1ms);
 }
 
 void tst_Configuration::simpleConfig()
@@ -259,7 +258,6 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.yaml.plugins.startup, QStringList({ u"s1"_s, u"s2"_s }));
     QCOMPARE(c.yaml.plugins.container, QStringList({ u"c1"_s, u"c2"_s }));
 
-    QCOMPARE(c.yaml.watchdog.disable, true);
     QCOMPARE(c.yaml.watchdog.eventloop.checkInterval, 2min);
     QCOMPARE(c.yaml.watchdog.eventloop.warnTimeout, 3min);
     QCOMPARE(c.yaml.watchdog.eventloop.killTimeout, 4min);
@@ -416,7 +414,6 @@ void tst_Configuration::mergedConfig()
 // the QTextStream op<< for std::chrono::duration cannot deal with double based durations
 #define TO_MS(x) std::chrono::duration_cast<std::chrono::milliseconds>(x)
 
-    QCOMPARE(c.yaml.watchdog.disable, true);
     QCOMPARE(c.yaml.watchdog.eventloop.checkInterval, TO_MS(2.5min));
     QCOMPARE(c.yaml.watchdog.eventloop.warnTimeout, TO_MS(3.5min));
     QCOMPARE(c.yaml.watchdog.eventloop.killTimeout, TO_MS(4.5min));
@@ -546,8 +543,6 @@ void tst_Configuration::commandLineConfig()
 
     QCOMPARE(c.yaml.plugins.container, {});
     QCOMPARE(c.yaml.plugins.startup, {});
-
-    QCOMPARE(c.yaml.watchdog.disable, true); // via the legacy flag 'noUiWatchdog'
 }
 
 

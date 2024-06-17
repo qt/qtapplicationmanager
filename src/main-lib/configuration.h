@@ -14,6 +14,9 @@
 #include <chrono>
 #include <memory>
 
+#include "openglconfiguration.h"
+#include "watchdogconfiguration.h"
+
 QT_BEGIN_NAMESPACE_AM
 
 // IMPORTANT: if you add/remove/change anything in this struct, you also have to adjust the
@@ -74,11 +77,7 @@ struct ConfigurationData
     } quicklaunch;
 
     struct Ui {
-        struct OpenGL {
-            QString desktopProfile;
-            int esMajorVersion = -1;
-            int esMinorVersion = -1;
-        } opengl;
+        OpenGLConfiguration opengl;
         QStringList iconThemeSearchPaths;
         QString iconThemeName;
         QString style;
@@ -131,28 +130,7 @@ struct ConfigurationData
         QList<ExtraSocket> extraSockets;
     } wayland;
 
-    struct {
-        bool disable = false;
-        struct {
-            std::chrono::milliseconds checkInterval { 1000 };
-            std::chrono::milliseconds warnTimeout { 1000 };
-            std::chrono::milliseconds killTimeout { 10000 };
-        } eventloop;
-        struct {
-            std::chrono::milliseconds checkInterval { 1000 };
-            std::chrono::milliseconds syncWarnTimeout { 35 };
-            std::chrono::milliseconds syncKillTimeout { 10000 };
-            std::chrono::milliseconds renderWarnTimeout { 35 };
-            std::chrono::milliseconds renderKillTimeout { 10000 };
-            std::chrono::milliseconds swapWarnTimeout { 35 };
-            std::chrono::milliseconds swapKillTimeout { 10000 };
-        } quickwindow;
-        struct {
-            std::chrono::milliseconds checkInterval { 5000 };
-            std::chrono::milliseconds warnTimeout { 1000 };
-            std::chrono::milliseconds killTimeout { 10000 };
-        } wayland;
-    } watchdog;
+    WatchdogConfiguration watchdog;
 };
 
 class ConfigurationPrivate;
@@ -173,7 +151,8 @@ public:
     bool clearCache() const;
     bool verbose() const;
     void setForceVerbose(bool forceVerbose);
-    void setForceWatchdog(bool forceWatchdog);
+    bool isWatchdogDisabled() const;
+    void setForceDisableWatchdog(bool forceDisableWatchdog);
     bool slowAnimations() const;
     bool noDltLogging() const;
     bool qmlDebugging() const;

@@ -313,6 +313,14 @@ bool NativeRuntime::start()
         { u"dbus"_s, dbusConfig }
     };
 
+    if (!grc.watchdogDisabled) {
+        WatchdogConfiguration watchdogConfig = grc.watchdogConfiguration;
+        if (m_app)
+            watchdogConfig.merge(m_app->info()->watchdogConfiguration());
+        if (watchdogConfig.isValid(WatchdogConfiguration::Application))
+            config.insert(u"watchdog"_s, watchdogConfig.toMap(WatchdogConfiguration::Application));
+    }
+
     if (!m_startedViaLauncher && !m_isQuickLauncher)
         config.insert(u"systemProperties"_s, systemProperties());
     if (m_app)

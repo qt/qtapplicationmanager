@@ -846,7 +846,7 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
             { "ui", false, YamlParser::Map, [&]() {
                  yp.parseFields({
                      { "enableTouchEmulation", false, YamlParser::Scalar, [&]() {
-                          qCDebug(LogDeployment) << "ignoring 'enableTouchEmulation'";
+                          qCDebug(LogDeployment) << "ignoring 'ui/enableTouchEmulation'";
                           (void) yp.parseScalar(); } },
                      { "iconThemeSearchPaths", false, YamlParser::Scalar | YamlParser::List, [&]() {
                           cd.ui.iconThemeSearchPaths = yp.parseStringOrStringList(); } },

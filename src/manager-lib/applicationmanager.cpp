@@ -17,9 +17,6 @@
 #if defined(QT_GUI_LIB)
 #  include <QDesktopServices>
 #endif
-#if defined(Q_OS_UNIX)
-#  include <signal.h>
-#endif
 #if defined(Q_OS_WINDOWS)
 #  define write(a, b, c) _write(a, b, static_cast<unsigned int>(c))
 #endif

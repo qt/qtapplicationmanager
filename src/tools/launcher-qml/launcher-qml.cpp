@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
         // the verbose flag has already been factored into the rules:
         am->setupLogging(false, am->loggingRules(), QString(), am->useAMConsoleLogger());
         am->setupQmlDebugging(clp.isSet(u"qml-debug"_s));
+        am->setupWatchdog(am->watchdogConfiguration());
         am->setupOpenGL(am->openGLConfiguration());
         am->setupIconTheme(am->iconThemeSearchPaths(), am->iconThemeName());
         am->registerWaylandExtensions();

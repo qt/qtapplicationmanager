@@ -761,9 +761,13 @@ bool Watchdog::eventFilter(QObject *watched, QEvent *event)
         if (surfaceEventType == QPlatformSurfaceEvent::SurfaceCreated) {
             if (auto *quickWindow = qobject_cast<QQuickWindow *>(watched)) {
                 QPointer p(quickWindow);
+                // We need a blocking invoke here to ensure that quickWindow is still valid
+                // on the watchdog thread when calling watchQuickWindow().
+                // Otherwise, the window could be destroyed prematurely and - even worse - we could
+                // run into an ABA problem on quickWindow.
                 QMetaObject::invokeMethod(d, [this, p]() {
                         d->watchQuickWindow(p.get());
-                    }, Qt::QueuedConnection);
+                    }, Qt::BlockingQueuedConnection);
             }
         }
     }

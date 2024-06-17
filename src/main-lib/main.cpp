@@ -66,6 +66,7 @@
 #endif
 #include "runtimefactory.h"
 #include "containerfactory.h"
+#include "globalruntimeconfiguration.h"
 #include "quicklauncher.h"
 #if QT_CONFIG(am_multi_process)
 #  include "processcontainer.h"
@@ -411,6 +412,15 @@ void Main::setupSingleOrMultiProcess(const Configuration *cfg) noexcept(false)
 
 void Main::setupRuntimesAndContainers(const Configuration *cfg)
 {
+    auto &grc = GlobalRuntimeConfiguration::instance();
+    grc.openGLConfiguration = cfg->yaml.ui.opengl;
+    grc.watchdogDisabled = cfg->isWatchdogDisabled();
+    grc.watchdogConfiguration = cfg->yaml.watchdog;
+    grc.iconThemeSearchPaths = cfg->yaml.ui.iconThemeSearchPaths;
+    grc.iconThemeName = cfg->yaml.ui.iconThemeName;
+    grc.systemPropertiesForBuiltInApps = m_systemProperties.at(SP_BuiltIn);
+    grc.systemPropertiesForThirdPartyApps= m_systemProperties.at(SP_ThirdParty);
+
     QVector<PluginContainerManager *> pluginContainerManagers;
 
     if (m_isSingleProcessMode) {
@@ -466,14 +476,6 @@ void Main::setupRuntimesAndContainers(const Configuration *cfg)
     }
 
     RuntimeFactory::instance()->setConfiguration(cfg->yaml.runtimes.configurations);
-    RuntimeFactory::instance()->setSystemOpenGLConfiguration(OpenGLConfiguration(
-        cfg->yaml.ui.opengl.desktopProfile,
-        cfg->yaml.ui.opengl.esMajorVersion,
-        cfg->yaml.ui.opengl.esMinorVersion));
-    RuntimeFactory::instance()->setIconTheme(cfg->yaml.ui.iconThemeSearchPaths,
-                                             cfg->yaml.ui.iconThemeName);
-    RuntimeFactory::instance()->setSystemProperties(m_systemProperties.at(SP_ThirdParty),
-                                                    m_systemProperties.at(SP_BuiltIn));
 
     StartupTimer::instance()->checkpoint("after runtime registration");
 }

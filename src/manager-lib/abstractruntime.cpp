@@ -10,6 +10,7 @@
 #include "application.h"
 #include "abstractruntime.h"
 #include "abstractcontainer.h"
+#include "globalruntimeconfiguration.h"
 #include "exception.h"
 
 /*!
@@ -53,8 +54,11 @@ QVariantMap AbstractRuntime::configuration() const
 
 QVariantMap AbstractRuntime::systemProperties() const
 {
-    if (m_manager && m_app)
-        return m_app->isBuiltIn() ? m_manager->systemPropertiesBuiltIn() : m_manager->systemProperties3rdParty();
+    if (m_app) {
+        const auto &grc = GlobalRuntimeConfiguration::instance();
+        return m_app->isBuiltIn() ? grc.systemPropertiesForBuiltInApps
+                                  : grc.systemPropertiesForThirdPartyApps;
+    }
     return QVariantMap();
 }
 
@@ -168,48 +172,6 @@ QVariantMap AbstractRuntimeManager::configuration() const
 void AbstractRuntimeManager::setConfiguration(const QVariantMap &configuration)
 {
     m_configuration = configuration;
-}
-
-QVariantMap AbstractRuntimeManager::systemPropertiesBuiltIn() const
-{
-    return m_systemPropertiesBuiltIn;
-}
-
-QVariantMap AbstractRuntimeManager::systemProperties3rdParty() const
-{
-    return m_systemProperties3rdParty;
-}
-
-void AbstractRuntimeManager::setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn)
-{
-    m_systemProperties3rdParty = thirdParty;
-    m_systemPropertiesBuiltIn = builtIn;
-}
-
-OpenGLConfiguration AbstractRuntimeManager::systemOpenGLConfiguration() const
-{
-    return m_systemOpenGLConfiguration;
-}
-
-void AbstractRuntimeManager::setSystemOpenGLConfiguration(const OpenGLConfiguration &openGLConfiguration)
-{
-    m_systemOpenGLConfiguration = openGLConfiguration;
-}
-
-QStringList AbstractRuntimeManager::iconThemeSearchPaths() const
-{
-    return m_iconThemeSearchPaths;
-}
-
-QString AbstractRuntimeManager::iconThemeName() const
-{
-    return m_iconThemeName;
-}
-
-void AbstractRuntimeManager::setIconTheme(const QStringList &themeSearchPaths, const QString &themeName)
-{
-    m_iconThemeSearchPaths = themeSearchPaths;
-    m_iconThemeName = themeName;
 }
 
 QT_END_NAMESPACE_AM

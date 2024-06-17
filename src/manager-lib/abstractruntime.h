@@ -13,7 +13,6 @@
 #include <QtCore/QVariantMap>
 
 #include <QtAppManCommon/global.h>
-#include <QtAppManCommon/openglconfiguration.h>
 #include <QtAppManManager/amnamespace.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -45,25 +44,9 @@ public:
     QVariantMap configuration() const;
     void setConfiguration(const QVariantMap &configuration);
 
-    QVariantMap systemPropertiesBuiltIn() const;
-    QVariantMap systemProperties3rdParty() const;
-    void setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn);
-
-    OpenGLConfiguration systemOpenGLConfiguration() const;
-    void setSystemOpenGLConfiguration(const OpenGLConfiguration &openGLConfiguration);
-
-    QStringList iconThemeSearchPaths() const;
-    QString iconThemeName() const;
-    void setIconTheme(const QStringList &themeSearchPaths, const QString &themeName);
-
 private:
     QString m_id;
     QVariantMap m_configuration;
-    QVariantMap m_systemPropertiesBuiltIn;
-    QVariantMap m_systemProperties3rdParty;
-    OpenGLConfiguration m_systemOpenGLConfiguration;
-    QString m_iconThemeName;
-    QStringList m_iconThemeSearchPaths;
 };
 
 class RuntimeSignaler : public QObject

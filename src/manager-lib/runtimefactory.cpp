@@ -91,27 +91,9 @@ void RuntimeFactory::setConfiguration(const QVariantMap &configuration)
         it.value()->setConfiguration(configuration.value(it.key()).toMap());
 }
 
-void RuntimeFactory::setSystemProperties(const QVariantMap &thirdParty, const QVariantMap &builtIn)
-{
-    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
-        it.value()->setSystemProperties(thirdParty, builtIn);
-}
-
 void RuntimeFactory::setSlowAnimations(bool value)
 {
     m_slowAnimations = value;
-}
-
-void RuntimeFactory::setSystemOpenGLConfiguration(const OpenGLConfiguration &openGLConfiguration)
-{
-    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
-        it.value()->setSystemOpenGLConfiguration(openGLConfiguration);
-}
-
-void RuntimeFactory::setIconTheme(const QStringList &themeSearchPaths, const QString &themeName)
-{
-    for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
-        it.value()->setIconTheme(themeSearchPaths, themeName);
 }
 
 bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager)

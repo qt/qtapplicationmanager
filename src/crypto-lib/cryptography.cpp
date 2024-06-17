@@ -38,6 +38,8 @@ static bool loadOpenSsl3LegacyProvider = false;
 
 static QT_AM_LIBCRYPTO_FUNCTION(ERR_error_string_n, void(*)(unsigned long, char *, size_t));
 
+// AXIVION ENABLE Qt-NonPodGlobalStatic
+
 QT_END_NAMESPACE_AM
 
 #endif

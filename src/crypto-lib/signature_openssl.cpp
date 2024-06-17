@@ -62,6 +62,8 @@ static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_new, X509_STORE *(*)(), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_add_cert, int (*)(X509_STORE *, X509 *), 0);
 static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_verify, int (*)(PKCS7 *, STACK_OF_X509 *, X509_STORE *, BIO *, BIO *, int), 0);
 
+// AXIVION ENABLE Qt-NonPodGlobalStatic
+
 struct OpenSslDeleter {
     static inline void cleanup(X509 *x509)
     { am_X509_free(x509); }

@@ -11,6 +11,7 @@
 #include <QtCore/QVector>
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/openglconfiguration.h>
+#include <QtAppManCommon/watchdogconfiguration.h>
 #include <QtAppManSharedMain/sharedmain.h>
 #if QT_CONFIG(am_widgets_support)
 #  include <QtWidgets/QApplication>
@@ -63,6 +64,7 @@ public:
     QVariant useAMConsoleLogger() const;
     QString dltLongMessageBehavior() const;
     OpenGLConfiguration openGLConfiguration() const;
+    WatchdogConfiguration watchdogConfiguration() const;
     QString iconThemeName() const;
     QStringList iconThemeSearchPaths() const;
 
@@ -120,6 +122,7 @@ private:
 
     bool m_slowAnimations = false;
     OpenGLConfiguration m_openGLConfiguration;
+    WatchdogConfiguration m_watchdogConfiguration;
     QString m_iconThemeName;
     QStringList m_iconThemeSearchPaths;
 

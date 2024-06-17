@@ -7,6 +7,7 @@
 #include <QtCore/QString>
 #include <QtCore/QVariantMap>
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtyaml.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -19,6 +20,7 @@ public:
 
     QVariantMap toMap() const;
     static OpenGLConfiguration fromMap(const QVariantMap &map);
+    static OpenGLConfiguration fromYaml(YamlParser &yp);
 
     OpenGLConfiguration() = default;
     OpenGLConfiguration(const OpenGLConfiguration &copy) = default;
@@ -28,6 +30,9 @@ public:
     bool operator==(const OpenGLConfiguration &other) const;
     bool operator!=(const OpenGLConfiguration &other) const;
 };
+
+QDataStream &operator<<(QDataStream &ds, const OpenGLConfiguration &cfg);
+QDataStream &operator>>(QDataStream &ds, OpenGLConfiguration &cfg);
 
 QT_END_NAMESPACE_AM
 

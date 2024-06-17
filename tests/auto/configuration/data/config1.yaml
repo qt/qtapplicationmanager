@@ -103,7 +103,6 @@ wayland:
       groupId: 4
 
 watchdog:
-  disable: true
   eventloop:
     checkInterval: 2min
     warnTimeout: 3min

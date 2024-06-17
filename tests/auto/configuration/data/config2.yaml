@@ -96,7 +96,6 @@ wayland:
     - path: path-es3
 
 watchdog:
-  disable: true
   eventloop:
     checkInterval: 2.5min
     warnTimeout: 3.5min

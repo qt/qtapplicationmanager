@@ -29,6 +29,20 @@ OpenGLConfiguration OpenGLConfiguration::fromMap(const QVariantMap &map)
     return cfg;
 }
 
+OpenGLConfiguration OpenGLConfiguration::fromYaml(YamlParser &yp)
+{
+    OpenGLConfiguration cfg;
+    yp.parseFields({
+        { "desktopProfile", false, YamlParser::Scalar, [&]() {
+             cfg.desktopProfile = yp.parseString(); } },
+        { "esMajorVersion", false, YamlParser::Scalar, [&]() {
+             cfg.esMajorVersion = yp.parseInt(2); } },
+        { "esMinorVersion", false, YamlParser::Scalar, [&]() {
+             cfg.esMinorVersion = yp.parseInt(0); } }
+    });
+    return cfg;
+}
+
 OpenGLConfiguration::OpenGLConfiguration(const QString &profile, int major, int minor)
     : desktopProfile(profile), esMajorVersion(major), esMinorVersion(minor)
 { }
@@ -43,6 +57,18 @@ bool OpenGLConfiguration::operator==(const OpenGLConfiguration &other) const
 bool OpenGLConfiguration::operator!=(const OpenGLConfiguration &other) const
 {
     return !(*this == other);
+}
+
+QDataStream &operator<<(QDataStream &ds, const OpenGLConfiguration &cfg)
+{
+    ds << cfg.desktopProfile << cfg.esMajorVersion << cfg.esMinorVersion;
+    return ds;
+}
+
+QDataStream &operator>>(QDataStream &ds, OpenGLConfiguration &cfg)
+{
+    ds >> cfg.desktopProfile >> cfg.esMajorVersion >> cfg.esMinorVersion;
+    return ds;
 }
 
 QT_END_NAMESPACE_AM

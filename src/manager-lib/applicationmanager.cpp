@@ -35,6 +35,7 @@
 #include "quicklauncher.h"
 #include "abstractruntime.h"
 #include "abstractcontainer.h"
+#include "globalruntimeconfiguration.h"
 #include "qml-utilities.h"
 #include "utilities.h"
 #include "qtyaml.h"
@@ -733,7 +734,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
                     cannotUseQuickLaunch = "standard I/O is redirected";
                 else if (!app->runtimeParameters().value(u"environmentVariables"_s).toMap().isEmpty())
                     cannotUseQuickLaunch = "the app requests custom environment variables";
-                else if (app->info()->openGLConfiguration() != runtimeManager->systemOpenGLConfiguration())
+                else if (app->info()->openGLConfiguration() != GlobalRuntimeConfiguration::instance().openGLConfiguration)
                     cannotUseQuickLaunch = "the app requests a custom OpenGL configuration";
 
                 if (cannotUseQuickLaunch) {

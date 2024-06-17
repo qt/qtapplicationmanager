@@ -22,6 +22,7 @@
 #include "application.h"
 #include "applicationmanager.h"
 #include "nativeruntime.h"
+#include "globalruntimeconfiguration.h"
 #include "qtyaml.h"
 #include "utilities.h"
 #include "notificationmanager.h"
@@ -283,6 +284,8 @@ bool NativeRuntime::start()
             loggingConfig.insert(u"dltLongMessageBehavior"_s, Logging::dltLongMessageBehavior());
     }
 
+    const auto &grc = GlobalRuntimeConfiguration::instance();
+
     QVariantMap uiConfig;
     if (m_slowAnimations)
         uiConfig.insert(u"slowAnimations"_s, true);
@@ -291,12 +294,12 @@ bool NativeRuntime::start()
     if (m_app)
         openGLConfig = m_app->info()->openGLConfiguration();
     if (openGLConfig == OpenGLConfiguration { })
-        openGLConfig = manager()->systemOpenGLConfiguration();
+        openGLConfig = grc.openGLConfiguration;
     if (openGLConfig != OpenGLConfiguration { })
         uiConfig.insert(u"opengl"_s, openGLConfig.toMap());
 
-    QString iconThemeName = manager()->iconThemeName();
-    QStringList iconThemeSearchPaths = manager()->iconThemeSearchPaths();
+    QString iconThemeName = grc.iconThemeName;
+    QStringList iconThemeSearchPaths = grc.iconThemeSearchPaths;
     if (!iconThemeName.isEmpty())
         uiConfig.insert(u"iconThemeName"_s, iconThemeName);
     if (!iconThemeSearchPaths.isEmpty())

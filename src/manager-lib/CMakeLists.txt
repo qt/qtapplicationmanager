@@ -17,6 +17,7 @@ qt_internal_add_module(AppManManagerPrivate
         asynchronoustask.cpp asynchronoustask.h
         containerfactory.cpp containerfactory.h
         debugwrapper.cpp debugwrapper.h
+        globalruntimeconfiguration.h globalruntimeconfiguration.cpp
         inprocesssurfaceitem.cpp inprocesssurfaceitem.h
         intentaminterface.cpp intentaminterface.h
         notificationmanager.cpp notificationmanager.h

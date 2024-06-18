@@ -7,12 +7,14 @@
 \ingroup qtappman
 \ingroup qtappman-highlights
 \title Watchdog
-\brief Describes configuration and mode of operation of the built in watchdog mechanism.
+\brief Describes configuration and mode of operation of the built-in watchdog mechanism.
 \section1 Introduction
 
 The application manager features a built-in watchdog mechanism that monitors the main thread's
-event loop, every QML Window's render thread and all clients of the application manager's Wayland
+event loop, every Quick window's render thread and all clients of the application manager's Wayland
 compositor for unresponsive behavior.
+The event loop and render thread monitoring is implemented for both the System UI as well as for
+any QML application running in multi-process mode.
 
 The watchdog is implemented as a separate thread that periodically (see \c checkInterval)
 checks the state of the monitored subsystems. If any of these fail to respond within a given time
@@ -22,9 +24,13 @@ Killing the affected thread directly (instead of just aborting the whole process
 will cause the application manager's crash handler to print a backtrace for the stuck thread,
 which can be very useful to diagnose freezes.
 
+\note The watchdog is disabled by default. You need to enable it by setting at least one of the
+      \c checkInterval configuration values in the \l{Configuration}{main configuration} file to
+      a timeout that suits your specific device setup.
+
 \section1 Systemd Support
 
-Support for systemd's watchdog is built into the application manager: see \{Installation}.
+Support for systemd's watchdog is built into the application manager as well: see \{Installation}.
 
 If enabled, the application manager will automatically detect at startup if it was launched by
 systemd and if the systemd unit file has the \c{WatchdogSec} option set. If this is the case, the
@@ -43,7 +49,8 @@ while the \c live category is useful when debugging intermittent freeze problems
 \section1 Configuration
 
 The watchdog is configured via the \c{watchdog} key in the \l{Configuration}{main configuration}
-file.
+file. Applications inherit these settings, but can also override any value by setting the
+corresponding key in their \l{Manifest Definition}{info.yaml manifest} file.
 
 The following interval and timeout values listed below let you specify the exact
 \l{Time Duration Values}{times} with milli-seconds precision.
@@ -51,8 +58,8 @@ The following interval and timeout values listed below let you specify the exact
 Setting any of the values to \c 0ms (or \c off) disables the respective functionality.
 
 There's also the \c{--disable-watchdog} command line option that makes your life easier when
-debugging or testing in a production environment. It has the same effect as seting the \c disable
-field to \c true in the configuration file.
+debugging or testing in a production environment, as it completely disables all watchdog
+functionality in the System UI as well as in QML applications.
 
 \table
     \header
@@ -60,25 +67,21 @@ field to \c true in the configuration file.
         \li Type
         \li Description
     \row
-        \li \c disable
-        \li bool
-        \li Completely disables the watch dog functionality. (default: false)
-    \row
         \li \c eventloop/checkInterval
         \li duration
         \li If set to a positive time duration, the main event loop will be monitored by triggering
-            a timer every \c checkInterval. (default: 1s)
+            a timer every \c checkInterval. (default: off)
     \row
         \li \c eventloop/warnTimeout
         \li duration
         \li In case the check timer is not firing within \c warnTimeout, the watchdog will print a
             warning. In addition another warning will be printed if the timer does eventually fire,
-            stating the exact duration the event loop was blocked. (default: 1s)
+            stating the exact duration the event loop was blocked. (default: off)
     \row
         \li \c eventloop/killTimeout
         \li duration
         \li In case the check timer is not firing within \c killTimeout, the watchdog will print a
-            critical warning and then abort the thread running the main event loop. (default: 10s)
+            critical warning and then abort the thread running the main event loop. (default: off)
     \row
         \li \c quickwindow/checkInterval
         \li duration
@@ -94,48 +97,48 @@ field to \c true in the configuration file.
             As a render thread is not always actively rendering, the watchdog will only print a
             warning every \c checkInterval, if the thread is active and stuck in one of the
             aforementioned states. This periodic report also contains some statistics on how often
-            the render thread got stuck in each state. (default: 1s)
+            the render thread got stuck in each state. (default: off)
     \row
         \li \c quickwindow/syncWarnTimeout
         \li duration
         \li The watchdog will print a warning if a render thread is stuck in the syncing state for
             longer than \c syncWarnTimeout. In addition another warning will be printed if the
             thread eventually finishes syncing, stating the exact duration it was blocked.
-            (default: 35ms)
+            (default: off)
     \row
         \li \c quickwindow/syncKillTimeout
         \li duration
         \li In case a render thread is stuck in the syncing state for longer than
             \c syncKillTimeout, the watchdog will print a critical warning and then abort the
-            thread. (default: 10s)
+            thread. (default: off)
     \row
         \li \c quickwindow/renderWarnTimeout
         \li duration
-        \li This works exactly the same as \c syncWarnTimeout, but for the rendering state. (default: 35ms)
+        \li This works exactly the same as \c syncWarnTimeout, but for the rendering state. (default: off)
     \row
         \li \c quickwindow/renderKillTimeout
         \li duration
-        \li This works exactly the same as \c syncKillTimeout, but for the rendering state. (default: 10s)
+        \li This works exactly the same as \c syncKillTimeout, but for the rendering state. (default: off)
     \row
         \li \c quickwindow/swapWarnTimeout
         \li duration
-        \li This works exactly the same as \c syncWarnTimeout, but for the swapping state. (default: 35ms)
+        \li This works exactly the same as \c syncWarnTimeout, but for the swapping state. (default: off)
     \row
         \li \c quickwindow/swapKillTimeout
         \li duration
-        \li This works exactly the same as \c syncKillTimeout, but for the swapping state. (default: 10s)
+        \li This works exactly the same as \c syncKillTimeout, but for the swapping state. (default: off)
     \row
         \li \c wayland/checkInterval
         \li duration
         \li If set to a positive time duration, all currently active Wayland clients that use the
-            XDG shell protocol will be pinged every \c checkInterval. (default: 5s)
+            XDG shell protocol will be pinged every \c checkInterval. (default: off)
     \row
         \li \c wayland/warnTimeout
         \li duration
         \li In case the pong reply from the Wayland client is not received within \c warnTimeout,
             the watchdog will print a warning. In addition another warning will be printed if the
             pong reply is eventually received, stating the exact duration the ping/pong round-trip
-            took. (default: 1s)
+            took. (default: off)
     \row
         \li \c wayland/killTimeout
         \li duration
@@ -143,7 +146,7 @@ field to \c true in the configuration file.
             the watchdog will print a critical warning and then kill the unresponsive Wayland
             client. For application manager apps, ApplicationObject::stop() with \c forceKill set
             to \c true will be invoked. Other apps will be killed by raising \c SIGKILL on the
-            process id associated with the Wayland client. (default: 10s)
+            process id associated with the Wayland client. (default: off)
 \endtable
 
 */

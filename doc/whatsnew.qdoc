@@ -11,23 +11,40 @@
 
 \section1 Qt ApplicationManager 6.8
 
-The \c ApplicationInterface root context property was the last bit in the application manager that
-was still not using declarative registration.
-Starting with 6.8, the ApplicationInterface is implemented as an attached type that can attach to
-anything. This new mechanism is fully source compatible with the previous one, but now also supports
-modern QML tooling.
+Continuing the theme of the last release, this version improves on the QML tooling support:
+\list
+    \li The \c ApplicationInterface root context property was the last bit in the application
+        manager that was still not using declarative registration.
+        Starting with 6.8, the ApplicationInterface is implemented as an attached type that can
+        attach to anything. This new mechanism is fully source compatible with the previous one,
+        but now also supports modern QML tooling.
+    \li All \c requestId parameters and properties on IntentRequest and IntentServer have been
+        changed from \c uuid to \c string, as the QML engine does not support uuids directly
+        (instead any QUuid is implicitly wrapped in a QVariant). This change is source compatible
+        on the JS side though.
+\endlist
 
-All D-Bus socket names and paths for both the application manager's "auto" session bus, as well as
-the peer-to-peer busses for each application have changed. They now live in \c $XDG_RUNTIME_DIR
-instead of \c /tmp (if available) and they are created in the sub-directories \c
-qtapplicationmanager-session and \c qtapplicationmanager-runtime respectively. This should only
-affect you, if you are using hard coded paths in a container setup.
+These new features have been added:
+\list
+    \li The very simple Wayland surface based watchdog mechanism has been replaced with a fully
+        configurable watchdog mechanism that watches the main thread's event loop, the render thread
+        of any Quick window, as well as Wayland clients. See \l{Watchdog} for more information.
+        Please keep in mind that the new Wayland watchdog is disabled by default, whereas the old
+        one was enabled by default, using hardcoded timeout values (1s check interval / 2s kill
+        timeout).
+\endlist
 
-The very simple Wayland surface based watchdog mechanism has been replaced with a fully configurable
-watchdog mechanism that watches the main thread's event loop, the render thread of any of the
-application manager's windows, as well as Wayland clients. See \l{Watchdog} for more information.
-
-The \c installationLocations configuration field that was deprecated in 5.14 was finally removed.
+In addition, here are some additional, noteworthy changes:
+\list
+    \li All D-Bus socket names and paths for both the application manager's "auto" session bus, as
+        well as the peer-to-peer busses for each application have changed. They now live in \c
+        $XDG_RUNTIME_DIR instead of \c /tmp (if available) and they are created in the
+        sub-directories \c qtapplicationmanager-session and \c qtapplicationmanager-runtime
+        respectively. This should only affect you, if you are using hard coded paths in a container
+        setup.
+    \li The \c installationLocations configuration field that was deprecated in 5.14 was finally
+        removed.
+\endlist
 
 \section1 Qt ApplicationManager 6.7
 

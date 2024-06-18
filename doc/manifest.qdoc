@@ -265,6 +265,12 @@ The fields used for each item within the \c applications list are as follows:
     \li The list of categories for this application. It will default to the \c categories field in
         the global package section, but it can be overwritten for each application by specifying
         this field.
+\row
+    \li \c watchdog
+    \li object
+    \li Use this field to override the global watchdog settings for this application. This allows
+        you to set different timeouts for this application, or to enable/disable the watchdog for
+        this application specifically. See the \l{Watchdog} documentation for more information.
 \endtable
 
 \target manifest-intent

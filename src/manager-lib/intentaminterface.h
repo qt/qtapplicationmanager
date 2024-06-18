@@ -170,17 +170,17 @@ private:
 class IntentServerHandler : public AbstractIntentHandler
 {
     Q_OBJECT
-    // the following properties cannot be changed after construction (hence, also no 'changed' signal)
-    // these replace the meta-data that's provided through the info.yaml manifests for client-side
-    // handlers
-    Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds FINAL)
-    Q_PROPERTY(QUrl icon READ icon WRITE setIcon FINAL)
-    Q_PROPERTY(QVariantMap names READ names WRITE setNames FINAL)
-    Q_PROPERTY(QVariantMap descriptions READ descriptions WRITE setDescriptions FINAL)
-    Q_PROPERTY(QStringList categories READ categories WRITE setCategories FINAL)
-    Q_PROPERTY(QtAM::Intent::Visibility visibility READ visibility WRITE setVisibility FINAL)
-    Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities WRITE setRequiredCapabilities FINAL)
-    Q_PROPERTY(QVariantMap parameterMatch READ parameterMatch WRITE setParameterMatch FINAL)
+    // The following properties cannot be changed after construction (hence, also no real 'changed'
+    // signal). These replace the meta-data that's provided through the info.yaml manifests for
+    // client-side handlers.
+    Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds NOTIFY dummyChanged FINAL)
+    Q_PROPERTY(QUrl icon READ icon WRITE setIcon NOTIFY dummyChanged FINAL)
+    Q_PROPERTY(QVariantMap names READ names WRITE setNames NOTIFY dummyChanged FINAL)
+    Q_PROPERTY(QVariantMap descriptions READ descriptions WRITE setDescriptions NOTIFY dummyChanged FINAL)
+    Q_PROPERTY(QStringList categories READ categories WRITE setCategories NOTIFY dummyChanged FINAL)
+    Q_PROPERTY(QtAM::Intent::Visibility visibility READ visibility WRITE setVisibility NOTIFY dummyChanged FINAL)
+    Q_PROPERTY(QStringList requiredCapabilities READ requiredCapabilities WRITE setRequiredCapabilities NOTIFY dummyChanged FINAL)
+    Q_PROPERTY(QVariantMap parameterMatch READ parameterMatch WRITE setParameterMatch NOTIFY dummyChanged FINAL)
 
 public:
     IntentServerHandler(QObject *parent = nullptr);
@@ -206,6 +206,7 @@ public:
 Q_SIGNALS:
     void intentIdsChanged();
     void requestReceived(QtAM::IntentClientRequest *request);
+    void dummyChanged(); // never emitted
 
 protected:
     void classBegin() override;

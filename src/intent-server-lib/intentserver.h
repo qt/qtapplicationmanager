@@ -77,9 +77,9 @@ public:
                                   const QVariantMap &parameters = QVariantMap{}) const;
     Q_INVOKABLE int indexOfIntent(QtAM::Intent *intent);
 
-    Q_INVOKABLE void acknowledgeDisambiguationRequest(const QUuid &requestId,
+    Q_INVOKABLE void acknowledgeDisambiguationRequest(const QString &requestId,
                                                       QtAM::Intent *selectedIntent);
-    Q_INVOKABLE void rejectDisambiguationRequest(const QUuid &requestId);
+    Q_INVOKABLE void rejectDisambiguationRequest(const QString &requestId);
 
 Q_SIGNALS:
     void intentAdded(QtAM::Intent *intent);
@@ -87,7 +87,7 @@ Q_SIGNALS:
 
     void countChanged();
 
-    void disambiguationRequest(const QUuid &requestId,
+    void disambiguationRequest(const QString &requestId,
                                const QList<QtAM::Intent *> &potentialIntents,
                                const QVariantMap &parameters);
     /// ^^^ QML API ^^^

@@ -108,14 +108,14 @@ public:
     static QAtomicPointer<QTimer> s_mainThreadTimer; // we can't delete the timer in the destructor
 
     QTimer *m_quickWindowCheck;
-    std::chrono::milliseconds m_quickWindowCheckInterval;
-    std::chrono::milliseconds m_warnRenderStateTime[4];
-    std::chrono::milliseconds m_killRenderStateTime[4];
+    std::chrono::milliseconds m_quickWindowCheckInterval { };
+    std::chrono::milliseconds m_warnRenderStateTime[4] { };
+    std::chrono::milliseconds m_killRenderStateTime[4] { };
 
     QTimer *m_eventLoopCheck;
-    std::chrono::milliseconds m_eventLoopCheckInterval;
-    std::chrono::milliseconds m_warnEventLoopTime;
-    std::chrono::milliseconds m_killEventLoopTime;
+    std::chrono::milliseconds m_eventLoopCheckInterval { };
+    std::chrono::milliseconds m_warnEventLoopTime { };
+    std::chrono::milliseconds m_killEventLoopTime { };
 };
 
 QT_END_NAMESPACE_AM

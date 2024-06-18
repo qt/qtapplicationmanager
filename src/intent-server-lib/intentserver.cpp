@@ -530,7 +530,7 @@ void IntentServer::processRequestQueue()
                         }
                     });
                 }
-                emit disambiguationRequest(isr->requestId(), isr->potentialIntents(),
+                emit disambiguationRequest(isr->requestId().toString(), isr->potentialIntents(),
                                            isr->parameters());
             }
         }
@@ -627,7 +627,7 @@ QString IntentServer::packageIdForApplicationId(const QString &applicationId) co
 }
 
 /*!
-    \qmlsignal IntentServer::disambiguationRequest(uuid requestId, list<Intent> potentialIntents, var parameters)
+    \qmlsignal IntentServer::disambiguationRequest(string requestId, list<Intent> potentialIntents, var parameters)
 
     This signal is emitted when the IntentServer receives an intent request that could potentially
     be handled by more than one application.
@@ -646,7 +646,7 @@ QString IntentServer::packageIdForApplicationId(const QString &applicationId) co
     \sa IntentClient::sendIntentRequest
 */
 
-/*! \qmlmethod IntentServer::acknowledgeDisambiguationRequest(uuid requestId, Intent selectedIntent)
+/*! \qmlmethod IntentServer::acknowledgeDisambiguationRequest(string requestId, Intent selectedIntent)
 
     Tells the IntentServer to go ahead with the sender's intent request identified by \a requestId.
     The chosen \a selectedIntent needs to be one of the \c potentialIntents supplied to the
@@ -654,22 +654,22 @@ QString IntentServer::packageIdForApplicationId(const QString &applicationId) co
 
     \sa IntentClient::sendIntentRequest
 */
-void IntentServer::acknowledgeDisambiguationRequest(const QUuid &requestId, Intent *selectedIntent)
+void IntentServer::acknowledgeDisambiguationRequest(const QString &requestId, Intent *selectedIntent)
 {
-    internalDisambiguateRequest(requestId, false, selectedIntent);
+    internalDisambiguateRequest(QUuid::fromString(requestId), false, selectedIntent);
 }
 
 
-/*! \qmlmethod IntentServer::rejectDisambiguationRequest(uuid requestId)
+/*! \qmlmethod IntentServer::rejectDisambiguationRequest(string requestId)
 
     Tells the IntentServer to ignore the sender's intent request identified by \a requestId.
     The original sender will get an error reply back in this case.
 
     \sa IntentClient::sendIntentRequest
 */
-void IntentServer::rejectDisambiguationRequest(const QUuid &requestId)
+void IntentServer::rejectDisambiguationRequest(const QString &requestId)
 {
-    internalDisambiguateRequest(requestId, true, nullptr);
+    internalDisambiguateRequest(QUuid::fromString(requestId), true, nullptr);
 }
 
 void IntentServer::internalDisambiguateRequest(const QUuid &requestId, bool reject, Intent *selectedIntent)

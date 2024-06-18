@@ -149,15 +149,15 @@ QByteArray yamlFromVariantDocuments(const QVector<QVariant> &documents, YamlStyl
 } // namespace QtYaml
 
 
-class YamlParserPrivate
+class YamlParserPrivate   // AXIVION Line Qt-Generic-InitializeAllFieldsInConstructor: not possible
 {
 public:
     QString sourceName;
     QString sourceDir;
     QByteArray data;
     bool parsedHeader = false;
-    yaml_parser_t parser;  // AXIVION Line Qt-Generic-InitializeAllFieldsInConstructor: not possible
-    yaml_event_t event;    // AXIVION Line Qt-Generic-InitializeAllFieldsInConstructor: not possible
+    yaml_parser_t parser;
+    yaml_event_t event;
 
 };
 

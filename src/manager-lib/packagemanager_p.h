@@ -27,7 +27,7 @@ public:
     PackageDatabase *database = nullptr;
     QVector<Package *> packages;
 
-    QMap<Package *, PackageInfo *> pendingPackageInfoUpdates;
+    QMap<Package *, PackageInfo *> pendingPackageInfoUpdates;  // AXIVION Line Qt-QMapWithPointerKey: package is locked
 
     bool enableInstaller = false;
     bool developmentMode = false;

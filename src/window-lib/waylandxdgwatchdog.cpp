@@ -201,7 +201,7 @@ void WaylandXdgWatchdog::onPongKillTimeout()
             if (cd->m_apps.isEmpty()) {
                 cd->m_client->kill(SIGKILL);
             } else {
-                for (auto *app : cd->m_apps)
+                for (auto *app : std::as_const(cd->m_apps))
                     ApplicationManager::instance()->stopApplicationInternal(app, true);
             }
         }

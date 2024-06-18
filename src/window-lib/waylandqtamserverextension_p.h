@@ -46,7 +46,7 @@ private:
     bool setWindowPropertyHelper(QWaylandSurface *surface, const QString &name, const QVariant &value);
     void qtam_extension_set_window_property(Resource *resource, wl_resource *surface_resource, const QString &name, wl_array *value) override;
 
-    QMap<const QWaylandSurface *, QVariantMap> m_windowProperties;
+    QMap<const QWaylandSurface *, QVariantMap> m_windowProperties;  // AXIVION Line Qt-QMapWithPointerKey: cleared on destroyed signal
 };
 
 QT_END_NAMESPACE_AM

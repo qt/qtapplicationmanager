@@ -86,12 +86,12 @@ public:
 
     QDataStream &serialize(QDataStream &ds)
     {
-        // C++ doesn't allow parameter pack expansion directly for the member function calls.
-        // So the ptr-to-members to stream-member-values operation has to been in two steps:
+        // C++ doesn't allow parameter pack expansion directly for member function calls.
+        // So the ptr-to-members to stream-member-values operation has to done in two steps:
         //   1) convert the ptr-to-member pack into a member-value pack
         //   2) parameter expand THAT pack into operator << to stream the values
         ds << m_list.size();
-        for (const auto &entry : m_list) {
+        for (const auto &entry : std::as_const(m_list)) {
             std::apply([&](auto... memberPtrs) {
                 [](QDataStream &ds, auto &&... resolvedMembers) {
                     (ds << ... << resolvedMembers);

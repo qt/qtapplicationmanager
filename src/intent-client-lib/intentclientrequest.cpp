@@ -33,7 +33,7 @@ QT_BEGIN_NAMESPACE_AM
     requests from the system.
 */
 
-/*! \qmlproperty uuid IntentRequest::requestId
+/*! \qmlproperty string IntentRequest::requestId
     \readonly
 
     Every intent request in the system gets an unique requestId assigned by the server that will be
@@ -164,6 +164,11 @@ IntentClientRequest::~IntentClientRequest()
 QUuid IntentClientRequest::requestId() const
 {
     return m_id;
+}
+
+QString IntentClientRequest::requestIdAsString() const
+{
+    return m_id.toString();
 }
 
 QString IntentClientRequest::intentId() const

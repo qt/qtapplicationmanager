@@ -123,7 +123,7 @@ private:
     bool m_isRunningOnEmbedded = false;
     QUrl m_mainQml;
     QString m_mainQmlLocalFile;
-    bool m_showFullscreen;
+    bool m_showFullscreen = false;
     bool m_loadDummyData = false; //TODO: remove in 6.9
 
     QQmlApplicationEngine *m_engine = nullptr;

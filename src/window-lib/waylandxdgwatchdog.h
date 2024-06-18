@@ -40,16 +40,16 @@ private:
     void onPongReceived(uint serial);
 
     QPointer<QWaylandXdgShell> m_xdgShell;
-    std::chrono::milliseconds m_checkInterval;
-    std::chrono::milliseconds m_warnTimeout;
-    std::chrono::milliseconds m_killTimeout;
+    std::chrono::milliseconds m_checkInterval { };
+    std::chrono::milliseconds m_warnTimeout { };
+    std::chrono::milliseconds m_killTimeout { };
     QTimer m_pingTimer;
     QTimer m_pongWarnTimer;
     QTimer m_pongKillTimer;
     QElapsedTimer m_lastPing;
 
     struct ClientData {
-        QWaylandClient *m_client;
+        QWaylandClient *m_client = nullptr;
         uint m_pingSerial = 0;
         QString m_description;
         QList<Application *> m_apps;

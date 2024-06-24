@@ -18,6 +18,8 @@ solve them.
     \header
         \li Possible Issues or questions.
     \row
+        \li \l{ts-cmake-wayland}{What does \c{Unknown CMake command "qt_am_add_systemui_wrapper"} mean?}
+    \row
         \li \l{How do I check whether my application manager instance is running in multi-process mode?}
     \row
         \li \l{How do I find out why my application manager instance doesn't support multi-process mode?}
@@ -30,6 +32,13 @@ solve them.
     \row
         \li \l{My applications are crashing immediately within the application manager. What are some possible solutions?}
 \endtable
+
+\target ts-cmake-wayland
+\section1 What does \c{Unknown CMake command "qt_am_add_systemui_wrapper"} mean?
+
+The most common reason for this error message is that you installed the application manager via the
+Qt Installer, but your Linux system is lacking the \c libwayland-dev development package.
+See \l {wayland-dev-packages}{here for more information}.
 
 \section1 How do I check whether my application manager instance is running in multi-process mode?
 
@@ -97,7 +106,6 @@ the plugin built successfully, you should have the following file:
 If that file isn't available, check QtWayland's configure summary and make sure this plugin is
 built.
 
-\target ts-06
 
 \section1 My applications are crashing immediately within the application manager. What are some possible solutions?
 

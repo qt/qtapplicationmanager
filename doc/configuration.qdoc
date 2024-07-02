@@ -188,7 +188,7 @@ ui:
             \br [\c applications/installationDir]
         \li string
         \li The base directory for package installations. This option must be specified
-            if you want to install new package; otherwise only the built-in ones are
+            if you want to install a new package; otherwise only the built-in ones are
             available. (default: empty/disabled)
     \row
         \li \b --document-dir
@@ -344,8 +344,9 @@ ui:
         \li \b --no-ui-watchdog
             \br [\c flags/noUiWatchdog]
         \li bool
-        \li Disables detecting UI applications that have hung (for example, via Wayland's ping/pong
-            mechanism). (default: false)
+        \li Deprecated and ignored (replaced by \l{Watchdog} functionality). Disables detecting UI
+            applications that have hung (for example, via Wayland's ping/pong mechanism).
+            (default: false)
     \row
         \li \b --force-single-process
             \br [\c flags/forceSingleProcess]

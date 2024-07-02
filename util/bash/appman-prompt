@@ -9,10 +9,10 @@ _appman()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     opts="-c -h -o -v -I --build-config --builtin-apps-manifest-dir --clear-cache --config-file --development-mode \
---dbus --disable-installer --disable-intents --document-dir --force-multi-process --force-single-process --fullscreen \
---help --instance-id --load-dummydata --log-instant --logging-rule --no-cache --no-dlt-logging --no-fullscreen \
---no-security --no-ui-watchdog --option --qml-debug --single-app --slow-animations --verbose --version \
---wayland-socket-name"
+--dbus --disable-installer --disable-intents --disable-watchdog --document-dir --force-multi-process \
+--force-single-process --fullscreen --help --installation-dir --instance-id --load-dummydata --log-instant \
+--logging-rule --no-cache --no-dlt-logging --no-fullscreen --no-security --option --qml-debug --single-app \
+--slow-animations --verbose --version --wayland-socket-name"
     dbusopts="auto session system none"
 
     if [[ ${cur} == -* ]] ; then

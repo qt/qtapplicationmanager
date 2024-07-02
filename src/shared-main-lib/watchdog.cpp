@@ -407,7 +407,7 @@ void WatchdogPrivate::eventLoopCheck()
             // avoid multiple messages, until the thread is actually killed
             m_threadIsBeingKilled = 1;
             killThread(eld->m_threadHandle);
-        } else if (warnTime && (elapsed > (warnTime * 2))
+        } else if (warnTime && (elapsed > warnTime)
                    && (elapsed > (quint64(m_eventLoopCheckInterval.count()) / 2))) {
             qCWarning(LogWatchdogStat).nospace()
                 << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
@@ -666,7 +666,7 @@ void WatchdogPrivate::quickWindowCheck()
             // avoid multiple messages, until the thread is actually killed
             m_threadIsBeingKilled = 1;
             killThread(qwd->m_renderThreadHandle);
-        } else if (warnTime && (elapsed > (warnTime * 2))
+        } else if (warnTime && (elapsed > warnTime)
                    && (elapsed > (quint64(m_quickWindowCheckInterval.count()) / 2))) {
             qCWarning(LogWatchdogStat).nospace()
                 << "Window " << static_cast<void *>(qwd->m_window.get())

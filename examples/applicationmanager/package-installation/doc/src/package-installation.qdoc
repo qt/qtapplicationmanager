@@ -23,11 +23,14 @@ packages.
 You have to run an actual package server to test this example. You can find detailed instructions on
 how to do this in the appman-package-server documentation.
 
-For your convenience, the example comes with two pre-packaged applications (\c installable.red and
-\c installable.green from the \c installable-apps folder).
+For your convenience, the example comes with three pre-packaged applications (\c installable.red,
+\c installable.green and \c installable.pink from the \c installable-apps folder).
 The actual packaging happens in \c CMakeLists.txt, using the \l qt6_am_create_installable_package
 function. Please note that this function is currently in the technical preview state and may change
 in the future.
+
+While \c installable.red and \c installable.green are simple applications, \c installable.pink is
+first compiled into a qml_module and then packaged as a binary.
 
 In addition, this example will also print out a start command to run the package server on these
 packages in the application output: you have to copy and paste that into a shell to run the server.

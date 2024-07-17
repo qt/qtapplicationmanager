@@ -81,7 +81,33 @@ qt6_am_create_installable_package(installable-green
         installable-apps/installable.green/icon.png
         installable-apps/installable.green/main.qml
 )
-add_dependencies(package-installation installable-red installable-green)
+
+set_source_files_properties(
+    installable-apps/installable.pink/main.qml
+    PROPERTIES
+    QT_RESOURCE_ALIAS main.qml
+)
+qt_add_qml_module(installable-pink-module
+    URI "Pink"
+    NO_PLUGIN
+    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Pink"
+    QML_FILES installable-apps/installable.pink/main.qml
+)
+set_target_properties(installable-pink-module PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/installable-pink_package
+)
+
+qt6_am_create_installable_package(installable-pink
+    OUTPUT_DIRECTORY ps-data/upload
+    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/ps-data/upload
+    FILES
+        installable-apps/installable.pink/info.yaml
+        installable-apps/installable.pink/icon.png
+    DEPENDENCIES
+        installable-pink-module
+)
+
+add_dependencies(package-installation installable-red installable-green installable-pink)
 
 install(TARGETS package-installation
     RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"

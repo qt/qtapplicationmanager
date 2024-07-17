@@ -1,0 +1,13 @@
+formatVersion: 1
+formatType: am-package
+---
+id:   'installable.pink'
+icon: 'icon.png'
+name:
+  en: 'Hello Pink'
+applications:
+- id:      'installable.pink'
+  code:    ':/qt/qml/Pink/main.qml'
+  runtime: 'qml'
+  runtimeParameters:
+    resources: [ "libinstallable-pink-module.so" ]

@@ -125,6 +125,13 @@ function is used to create a simple installable package:
 \skipto qt6_am_create_installable_package(installable-red
 \printuntil )
 
+An installable package using a compiled QML module looks like this:
+
+\quotefromfile applicationmanager/package-installation/CMakeLists.txt
+\skipto qt_add_qml_module(installable-pink-module
+\printto qt6_am_create_installable_package(installable-pink
+\printuntil )
+
 */
 
 /*!
@@ -173,7 +180,6 @@ and all dependencies will be installed into.
 
 Here is a snippet from the \l applicationmanager/hello-world example, showing how this
 function is used to create a simple package:
-
 \quotefromfile applicationmanager/hello-world/CMakeLists.txt
 \skipto qt6_am_create_builtin_package(hello-world.blue
 \printuntil )

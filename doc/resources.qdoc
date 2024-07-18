@@ -81,8 +81,8 @@ into the System UI by adding the following lines to the \c am-config.yaml file:
 
 \badcode
 ui:
-  resources: [ "${CONFIG_PWD}/my.rcc",
-               "${CONFIG_PWD}/myplugin" ]
+  resources: [ "${CONFIG_DIR}/my.rcc",
+               "${CONFIG_DIR}/myplugin" ]
 \endcode
 
 As you can see, the library file extension can be omitted. You can also load these two files into

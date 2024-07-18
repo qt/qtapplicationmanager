@@ -641,7 +641,8 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
 QByteArray ConfigurationPrivate::substituteVars(const QByteArray &sourceContent, const QString &fileName)
 {
     QByteArray string = sourceContent;
-    QByteArray path;
+    QByteArray configDir;
+    QByteArray executableDir;
     qsizetype posBeg = -1;
     qsizetype posEnd = -1;
     while (true) {
@@ -653,10 +654,14 @@ QByteArray ConfigurationPrivate::substituteVars(const QByteArray &sourceContent,
         const QByteArray varName = string.mid(posBeg + 2, posEnd - posBeg - 2);
 
         QByteArray varValue;
-        if (varName == "CONFIG_PWD") {
-            if (path.isEmpty() && !fileName.isEmpty())
-                path = QFileInfo(fileName).path().toUtf8();
-            varValue = path;
+        if ((varName == "CONFIG_DIR") || (varName == "CONFIG_PWD")) {
+            if (configDir.isEmpty() && !fileName.isEmpty())
+                configDir = QFileInfo(fileName).path().toUtf8();
+            varValue = configDir;
+        } else if (varName == "EXECUTABLE_DIR") {
+            if (executableDir.isEmpty())
+                executableDir = QCoreApplication::applicationDirPath().toUtf8();
+            varValue = executableDir;
         } else if (varName.startsWith("env:")) {
             varValue = qgetenv(varName.constData() + 4);
         } else if (varName.startsWith("stdpath:")) {
@@ -667,8 +672,8 @@ QByteArray ConfigurationPrivate::substituteVars(const QByteArray &sourceContent,
         }
 
         if (varValue.isNull()) {
-            qCWarning(LogDeployment).nospace() << "Could not replace variable ${" << varName << "} while parsing "
-                                               << fileName;
+            qCWarning(LogDeployment).nospace().noquote()
+                << "Could not replace variable ${" << varName << "} while parsing " << fileName;
             continue;
         }
         string.replace(posBeg, varName.length() + 3, varValue);

@@ -293,7 +293,7 @@ containers:
         /usr/share/fontconfig: '/usr/share/fontconfig'
         /usr/share/ca-certificates: '/usr/share/ca-certificates'
         /sys/dev/char: '/sys/dev/char'
-        ${CONFIG_PWD}/imports: '${CONFIG_PWD}/imports'
+        ${CONFIG_DIR}/imports: '${CONFIG_DIR}/imports'
       ro-bind-try:
         /usr/lib64: '/usr/lib64'
         '/sys/devices/pci0000:00': '/sys/devices/pci0000:00'

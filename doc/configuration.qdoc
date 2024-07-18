@@ -31,10 +31,15 @@ substituted this way:
         \li Type
         \li Description
     \row
-        \li \c ${CONFIG_PWD}
+        \li \c ${CONFIG_DIR}
         \li Is substituted with the absolute path to the config file being parsed. This feature
             makes it possible to have all your import paths and file references relative to your
-            main config file.
+            config files. This variable was named \c ${CONFIG_PWD} in the past and that old name
+            is of course still accepted as well.
+    \li \c ${EXECUTABLE_DIR}
+        \li Is substituted with the absolute path to the current executable that runs this process.
+            This can be the vanilla \c appman binary or a custom appman binary used in your specific
+            project.
     \row
         \li \c ${env:ENV_VAR_NAME}
         \li Is substituted with the value of the \c $ENV_VAR_NAME environment variable. For
@@ -82,8 +87,8 @@ formatVersion: 1
 formatType: am-configuration
 ---
 ui:
-  mainQml: "${CONFIG_PWD}/main.qml"
-  importPaths: [ "${CONFIG_PWD}/imports/shared", "${CONFIG_PWD}/imports/sysui" ]
+  mainQml: "${CONFIG_DIR}/main.qml"
+  importPaths: [ "${CONFIG_DIR}/imports/shared", "${CONFIG_DIR}/imports/sysui" ]
 \endcode
 
 \table 100%

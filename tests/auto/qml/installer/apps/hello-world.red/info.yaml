@@ -1,10 +1,13 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'hello-world.red'
 version: 'v1'
 icon:    'icon1.png'
-code:    'app1.qml'
-runtime: 'qml'
 name:
   en: 'Builtin Installation Test App v1'
+
+applications:
+- id:      'hello-world.red'
+  code:    'app1.qml'
+  runtime: 'qml'

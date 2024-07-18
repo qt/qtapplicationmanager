@@ -1,12 +1,15 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'tld.test.crash'
 icon:    'icon.png'
-code:    'app.qml'
-runtime: 'qml'
-version: '1.0'
 name:
   en: 'Crash test'
-runtimeParameters:
-  importPaths: [ "." ]
+version: '1.0'
+
+applications:
+- id:      'tld.test.crash'
+  code:    'app.qml'
+  runtime: 'qml'
+  runtimeParameters:
+    importPaths: [ "." ]

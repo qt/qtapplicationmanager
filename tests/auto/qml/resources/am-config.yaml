@@ -2,7 +2,7 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  builtinAppsManifestDir: "${CONFIG_DIR}/apps"
   installationDir: "${stdpath:TempLocation}/qtam-test/resources/apps"
 
 quicklaunch:
@@ -19,4 +19,4 @@ ui:
   importPaths: "qrc:///qml"
   resources:
     - "systemuifile.rcc"
-    - "${CONFIG_PWD}/systemuiplugin"   # libsystemuiplugin.so would only work on Linux
+    - "${CONFIG_DIR}/systemuiplugin"   # libsystemuiplugin.so would only work on Linux

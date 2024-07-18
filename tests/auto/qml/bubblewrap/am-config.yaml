@@ -2,7 +2,7 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  builtinAppsManifestDir: "${CONFIG_DIR}/apps"
 
 runtimes:
   qml:
@@ -17,7 +17,7 @@ containers:
 
   bubblewrap:
     sharedNamespaces: [ '-all', '+net' ]
-    networkSetupScript: ${CONFIG_PWD}/netscript.sh
+    networkSetupScript: ${CONFIG_DIR}/netscript.sh
 
     # set to yes, if you build against a system or Installer Qt and the launcher cannot be found
     bindMountHome: yes

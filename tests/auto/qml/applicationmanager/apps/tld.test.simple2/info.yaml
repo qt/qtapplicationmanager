@@ -1,13 +1,15 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'tld.test.simple2'
 icon:    'icon.png'
-code:    'app.qml'
-runtime: 'qml'
 name:
   en: 'Caps'
+applications:
+- id:      'tld.test.simple2'
+  code:    'app.qml'
+  runtime: 'qml'
+  capabilities:
+  - cameraAccess
+  - locationAccess
 
-capabilities:
-- cameraAccess
-- locationAccess

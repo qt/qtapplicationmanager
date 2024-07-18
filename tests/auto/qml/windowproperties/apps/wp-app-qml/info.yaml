@@ -1,6 +1,8 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'wp-app-qml'
-code:    'wp-app.qml'
-runtime: 'qml'
+applications:
+- id:      'wp-app-qml'
+  code:    'wp-app.qml'
+  runtime: 'qml'

@@ -1,9 +1,11 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'TEST_ID'
 icon:    'icon.png'
-code:    'main.qml'
-runtime: 'qml'
 name:
   en: 'ApplicationManagerBench Test'
+applications:
+- id:      'TEST_ID'
+  code:    'main.qml'
+  runtime: 'qml'

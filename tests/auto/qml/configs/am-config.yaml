@@ -2,7 +2,7 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  builtinAppsManifestDir: "${CONFIG_DIR}/apps"
 
 # Workaround for a crash in the mesa software renderer (llvmpipe)
 runtimes:

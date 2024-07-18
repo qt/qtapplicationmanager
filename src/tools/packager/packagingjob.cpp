@@ -167,7 +167,10 @@ void PackagingJob::execute() Q_DECL_NOEXCEPT_EXPR(false)
         if (applications.isEmpty())
             throw Exception(Error::Package, "no applications defined in package");
         for (const auto application : applications) {
-            if (!QFile::exists(source.absoluteFilePath(application->codeFilePath()))) {
+            const auto code = application->codeFilePath();
+            if (code.startsWith(qSL(":/"))) // we just have to accept resource paths as is
+                continue;
+            if (!QFile::exists(source.absoluteFilePath(code))) {
                 throw Exception(Error::Package, "missing the file referenced by the 'code' field for application '%1'")
                     .arg(application->id());
             }

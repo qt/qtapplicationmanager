@@ -6,6 +6,7 @@
 #if 0
 
 #include <QtAppManMain/mainmacro.h>
+
 QT_AM_MAIN()
 
 #else

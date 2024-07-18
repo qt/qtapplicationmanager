@@ -138,7 +138,7 @@ class ConfigurationPrivate;
 class Configuration
 {
 public:
-    Configuration(const QStringList &defaultConfigFilePaths, const QString &buildConfigFilePath,
+    Configuration(const QStringList &defaultConfigFilePaths, const QString &buildConfigFilePath = { },
                   const char *additionalDescription = nullptr, bool onlyOnePositionalArgument = true);
     Configuration(const char *additionalDescription = nullptr, bool onlyOnePositionalArgument = true);
 

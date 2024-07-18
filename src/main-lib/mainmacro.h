@@ -11,7 +11,7 @@ QT_BEGIN_NAMESPACE_AM
 // needed for syncqt
 QT_END_NAMESPACE_AM
 
-#define QT_AM_MAIN() \
+#define QT_AM_MAIN(...) \
 Q_DECL_EXPORT int main(int argc, char *argv[]) \
 { \
     std::unique_ptr<QtAM::Main> a; \
@@ -19,8 +19,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[]) \
 \
     try { \
         a = std::make_unique<QtAM::Main>(argc, argv, QtAM::Main::InitFlag::ForkSudoServer \
-                                                         | QtAM::Main::InitFlag::InitializeLogging); \
-        cfg = std::make_unique<QtAM::Configuration>(); \
+                                                     | QtAM::Main::InitFlag::InitializeLogging); \
+        /* this is deliberately not using make_unique to be able to use initializer lists */ \
+        cfg.reset(new QtAM::Configuration(__VA_ARGS__)); \
         cfg->parseWithArguments(QCoreApplication::arguments()); \
 \
         a->setup(cfg.get()); \

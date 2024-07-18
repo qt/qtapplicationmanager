@@ -1,6 +1,8 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'wp-app-qml-inprocess'
-code:    '../wp-app-qml/wp-app.qml'
-runtime: 'qml-inprocess'
+applications:
+- id:      'wp-app-qml-inprocess'
+  code:    '../wp-app-qml/wp-app.qml'
+  runtime: 'qml-inprocess'

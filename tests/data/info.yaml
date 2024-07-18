@@ -1,13 +1,16 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
-runtime: "native"
+id: "com.pelagicore.test"
+icon: "icon.png"
 name: {
     "en" : "Hello",
     "de" : "Hallo"
 }
-id: "com.pelagicore.test"
-categories: [ "test-category" ]
-code: "test"
-icon: "icon.png"
 version: "1.0"
+categories: [ "test-category" ]
+
+applications:
+- id: "com.pelagicore.test"
+  runtime: "native"
+  code: "test"

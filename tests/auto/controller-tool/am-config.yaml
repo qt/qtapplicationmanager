@@ -2,10 +2,10 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/builtin-apps"
+  builtinAppsManifestDir: "${CONFIG_DIR}/builtin-apps"
   installationDir: "${stdpath:TempLocation}/qtam-test/controller-tool/apps"
   documentDir: "${stdpath:TempLocation}/qtam-test/controller-tool/docs"
 
 ui:
-  mainQml: "${CONFIG_PWD}/system-ui.qml"
+  mainQml: "${CONFIG_DIR}/system-ui.qml"
 instanceId: controller-test-id

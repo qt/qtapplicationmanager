@@ -2,7 +2,7 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  builtinAppsManifestDir: "${CONFIG_DIR}/apps"
   installationDir: "${stdpath:TempLocation}/qtam-test/windowitem/apps"
   documentDir: "${stdpath:TempLocation}/qtam-test/windowitem/docs"
 

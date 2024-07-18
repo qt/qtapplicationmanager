@@ -1,12 +1,15 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'test.configs.app'
 icon:    'icon.png'
-code:    'app.qml'
-runtime: 'qml'
 name:
   en: 'ApplicationManager Application'
+
+applications:
+- id:      'test.configs.app'
+  code:    'app.qml'
+  runtime: 'qml'
 
 intents:
 - id: test-window-property

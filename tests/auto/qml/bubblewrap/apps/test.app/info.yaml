@@ -1,10 +1,13 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'test.app'
 icon:    'icon.png'
-code:    'app.qml'
-runtime: 'qml'
-version: '1.0'
 name:
   en: 'TestApp'
+version: '1.0'
+
+applications:
+- id:      'test.app'
+  code:    'app.qml'
+  runtime: 'qml'

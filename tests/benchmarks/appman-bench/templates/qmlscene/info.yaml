@@ -1,13 +1,15 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'TEST_ID'
 icon:    'icon.png'
-code:    'QT_FOLDER/qmlscene'
-runtimeParameters:
-  arguments: ['main.qml']
-  environmentVariables:
-    QT_LOGGING_RULES: "*=false;*.critical=true"
-runtime: 'native'
 name:
   en: 'ApplicationManagerBench Test'
+applications:
+- id:      'TEST_ID'
+  code:    'QT_FOLDER/qmlscene'
+  runtime: 'native'
+  runtimeParameters:
+    arguments: ['main.qml']
+    environmentVariables:
+      QT_LOGGING_RULES: "*=false;*.critical=true"

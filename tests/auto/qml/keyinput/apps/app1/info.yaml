@@ -1,6 +1,8 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'app1'
-code:    'main.qml'
-runtime: 'qml'
+applications:
+- id:      'app1'
+  code:    'main.qml'
+  runtime: 'qml'

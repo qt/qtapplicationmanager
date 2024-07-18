@@ -2,7 +2,7 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  builtinAppsManifestDir: "${CONFIG_DIR}/apps"
 
 runtimes:
   qml:
@@ -16,7 +16,7 @@ logging:
 
 ui:
   fullscreen: no
-  mainQml: "${CONFIG_PWD}/system-ui/main.qml"
+  mainQml: "${CONFIG_DIR}/system-ui/main.qml"
 
 # development setup:
 flags:

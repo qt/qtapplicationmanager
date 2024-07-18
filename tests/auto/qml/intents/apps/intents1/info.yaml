@@ -1,12 +1,15 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'intents1'
 icon:    'icon.png'
-code:    'intents1.qml'
-runtime: 'qml'
 name:
   en: 'Intents1'
+
+applications:
+- id:      'intents1'
+  code:    'intents1.qml'
+  runtime: 'qml'
 
 intents:
 - id: only1

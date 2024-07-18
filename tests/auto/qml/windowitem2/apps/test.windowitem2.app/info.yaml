@@ -1,9 +1,11 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'test.windowitem2.app'
 icon:    'icon.png'
-code:    'main.qml'
-runtime: 'qml'
 name:
   en: 'WindowItem2 Test App'
+applications:
+- id:      'test.windowitem2.app'
+  code:    'main.qml'
+  runtime: 'qml'

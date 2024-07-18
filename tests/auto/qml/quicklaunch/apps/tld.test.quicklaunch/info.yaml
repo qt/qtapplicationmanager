@@ -1,10 +1,12 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'tld.test.quicklaunch'
 icon:    'icon.png'
-code:    'app.qml'
-runtime: 'qml'
-version: '1.0'
 name:
   en: 'Quicklaunch'
+version: '1.0'
+applications:
+- id:      'tld.test.quicklaunch'
+  code:    'app.qml'
+  runtime: 'qml'

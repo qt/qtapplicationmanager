@@ -1,9 +1,11 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'test.winmap.loader'
 icon:    'icon.png'
-code:    'loader.qml'
-runtime: 'qml'
 name:
   en: 'Dynamic loading'
+applications:
+- id:      'test.winmap.loader'
+  code:    'loader.qml'
+  runtime: 'qml'

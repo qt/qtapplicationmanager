@@ -1,9 +1,12 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id: 'tld.test.lifecycle'
+icon: 'icon.png'
 name:
   en: 'Lifecycle Tests'
-icon: 'icon.png'
-code: 'app.qml'
-runtime: 'qml'
+
+applications:
+- id: 'tld.test.lifecycle'
+  code: 'app.qml'
+  runtime: 'qml'

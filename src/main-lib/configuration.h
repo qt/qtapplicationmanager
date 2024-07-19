@@ -138,9 +138,10 @@ class ConfigurationPrivate;
 class Configuration
 {
 public:
-    Configuration(const QStringList &defaultConfigFilePaths, const QString &buildConfigFilePath = { },
-                  const char *additionalDescription = nullptr, bool onlyOnePositionalArgument = true);
-    Configuration(const char *additionalDescription = nullptr, bool onlyOnePositionalArgument = true);
+    Configuration(const QStringList &defaultConfigFilePaths = { },
+                  const QString &buildConfigFilePath = { },
+                  const char *additionalDescription = nullptr,
+                  bool onlyOnePositionalArgument = true);
 
     virtual ~Configuration();
     virtual void parseWithArguments(const QStringList &arguments);

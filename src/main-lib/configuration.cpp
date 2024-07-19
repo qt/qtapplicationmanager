@@ -204,11 +204,6 @@ public:
 };
 
 
-Configuration::Configuration(const char *additionalDescription,
-                             bool onlyOnePositionalArgument)
-    : Configuration({ }, { }, additionalDescription, onlyOnePositionalArgument)
-{ }
-
 Configuration::Configuration(const QStringList &defaultConfigFilePaths,
                              const QString &buildConfigFilePath,
                              const char *additionalDescription,
@@ -217,8 +212,7 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     , yaml(d->data)
 {
     d->defaultConfigFilePaths = defaultConfigFilePaths;
-    d->buildConfigFilePath = buildConfigFilePath.isEmpty()
-                                 ? u":/build-config.yaml"_s : buildConfigFilePath;
+    d->buildConfigFilePath = buildConfigFilePath;
     d->onlyOnePositionalArgument = onlyOnePositionalArgument;
 
     // using QStringLiteral for all strings here adds a few KB of ro-data, but will also improve

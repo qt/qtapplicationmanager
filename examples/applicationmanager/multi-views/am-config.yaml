@@ -2,7 +2,7 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  builtinAppsManifestDir: "${EXECUTABLE_DIR}/apps"
 
 ui:
-  mainQml: "${CONFIG_PWD}/system-ui/main.qml"
+  mainQml: "${CONFIG_DIR}/system-ui/main.qml"

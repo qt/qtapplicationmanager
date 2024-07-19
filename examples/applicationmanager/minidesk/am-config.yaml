@@ -2,7 +2,7 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  builtinAppsManifestDir: "${EXECUTABLE_DIR}/apps"
   installationDir: "${stdpath:TempLocation}/qtam-example/minidesk/apps"
   documentDir: "${stdpath:TempLocation}/qtam-example/minidesk/docs"
 
@@ -17,7 +17,7 @@ logging:
 
 ui:
   fullscreen: no
-  mainQml: "${CONFIG_PWD}/system-ui/main.qml"
+  mainQml: "${CONFIG_DIR}/system-ui/main.qml"
 
 systemProperties:
   protected:

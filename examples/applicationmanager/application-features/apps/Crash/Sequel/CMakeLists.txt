@@ -6,13 +6,11 @@ qt6_add_qml_module(
     QML_FILES CrashAnimation.qml
 )
 
-set(INSTALL_DIR "${INSTALL_EXAMPLEDIR}/apps/Crash/Sequel")
-
 install(
     TARGETS sequelmoduleplugin
-    LIBRARY DESTINATION "${INSTALL_DIR}"
-    RUNTIME DESTINATION "${INSTALL_DIR}"
-    BUNDLE DESTINATION "${INSTALL_DIR}"
+    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}/apps/Crash/Sequel"
+    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}/apps/Crash/Sequel"
+    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}/apps/Crash/Sequel"
 )
 
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/qmldir DESTINATION "${INSTALL_DIR}")
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/qmldir DESTINATION "${INSTALL_EXAMPLEDIR}/apps/Crash/Sequel")

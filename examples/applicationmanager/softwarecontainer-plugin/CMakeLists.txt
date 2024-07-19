@@ -1,12 +1,5 @@
-
 cmake_minimum_required(VERSION 3.16)
 project(softwarecontainer-plugin LANGUAGES CXX)
-
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
 
 if(NOT DEFINED INSTALL_EXAMPLESDIR)
   set(INSTALL_EXAMPLESDIR "examples")
@@ -14,16 +7,16 @@ endif()
 
 set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/softwarecontainer-plugin")
 
+
 find_package(Qt6 COMPONENTS Core DBus AppManCommonPrivate AppManPluginInterfacesPrivate)
 
-qt_add_plugin(softwarecontainer-plugin)
-target_sources(softwarecontainer-plugin PRIVATE
-    softwarecontainer.cpp softwarecontainer.h
+qt_standard_project_setup(REQUIRES 6.5)
+
+qt_add_plugin(softwarecontainer-plugin
+    softwarecontainer.h
+    softwarecontainer.cpp
 )
-set_target_properties(softwarecontainer-plugin PROPERTIES
-    WIN32_EXECUTABLE TRUE
-    MACOSX_BUNDLE TRUE
-)
+
 target_link_libraries(softwarecontainer-plugin PUBLIC
     Qt::Core
     Qt::DBus

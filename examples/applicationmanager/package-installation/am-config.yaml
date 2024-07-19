@@ -2,16 +2,17 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  builtinAppsManifestDir: "${EXECUTABLE_DIR}/apps"
   installationDir: "${stdpath:TempLocation}/qtam-example/package-installation/apps"
 
 ui:
   fullscreen: no
-  mainQml: "${CONFIG_PWD}/system-ui/main.qml"
+  mainQml: "${CONFIG_DIR}/system-ui/main.qml"
   style: Universal
 
 systemProperties:
   public:
+    serverBaseDir: '${EXECUTABLE_DIR}/ps-data'
     packageServer:
       url: "http://localhost:8020"
       projectId: 'PROJECT'

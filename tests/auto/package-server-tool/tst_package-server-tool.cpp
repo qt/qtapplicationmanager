@@ -173,7 +173,7 @@ void tst_PackageServerTool::httpInterface()
              { u"architecture"_s, u""_s },
              { u"id"_s, u"com.pelagicore.test"_s },
              { u"categories"_s, QJsonArray { u"test-category"_s } },
-             { u"iconUrl"_s, u"package/icon?id=com.pelagicore.test"_s },
+             { u"iconUrl"_s, u"package/icon?id=com.pelagicore.test&architecture=all"_s },
              { u"names"_s, QJsonObject { { u"de"_s, u"Hallo"_s }, { u"en"_s, u"Hello"_s } } },
              { u"descriptions"_s, QJsonObject { } },
              { u"version"_s, u"1.0"_s },

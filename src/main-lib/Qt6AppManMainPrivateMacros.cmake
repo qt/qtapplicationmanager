@@ -273,21 +273,54 @@ function (qt_am_internal_add_qml_test target)
 
 endfunction()
 
-function(qt_am_internal_create_package target)
+# in tech-preview state (6.7)
+function(qt6_am_create_installable_package target)
     cmake_parse_arguments(
         PARSE_ARGV 1
         ARG
-        "BUILTIN" "SOURCE_DIR;OUTPUT_PACKAGE" ""
+        "" "OUTPUT_DIRECTORY;INSTALL_DIRECTORY;PACKAGE_DIRECTORY;PACKAGE_NAME" "FILES;DEPENDENCIES"
     )
 
-    if (NOT ARG_SOURCE_DIR)
-        message(FATAL_ERROR "SOURCE_DIR needs to be provided")
+    if (DEFINED ARG_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR "Keywords can't be empty: ${ARG_KEYWORDS_MISSING_VALUES}")
     endif()
-    if (NOT EXISTS "${ARG_SOURCE_DIR}/info.yaml")
-        message(FATAL_ERROR "SOURCE_DIR does not contain info.yaml")
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unknown/unexpected arguments: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
-    if (NOT ARG_BUILTIN AND NOT ARG_OUTPUT_PACKAGE)
-        message(FATAL_ERROR "OUTPUT_PACKAGE needs to be provided")
+
+    if (NOT DEFINED ARG_FILES)
+        message(FATAL_ERROR "Missing mandatory FILES argument")
+    endif()
+
+    foreach(file IN LISTS ARG_FILES)
+        get_filename_component(filename ${file} NAME)
+        if (filename STREQUAL info.yaml)
+            set(FOUND_INFO_YAML TRUE)
+        endif()
+    endforeach()
+
+    if (NOT FOUND_INFO_YAML)
+        message(FATAL_ERROR "FILES does not contain a info.yaml")
+    endif()
+
+    if (ARG_PACKAGE_DIRECTORY)
+        if (NOT IS_ABSOLUTE ${ARG_PACKAGE_DIRECTORY})
+            set(ARG_PACKAGE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_PACKAGE_DIRECTORY})
+        endif()
+    else()
+        set(ARG_PACKAGE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${target}_package)
+    endif()
+
+    if (NOT ARG_PACKAGE_NAME)
+        set(ARG_PACKAGE_NAME ${target}.ampkg)
+    endif()
+
+    if (ARG_OUTPUT_DIRECTORY)
+        if (NOT IS_ABSOLUTE ${ARG_OUTPUT_DIRECTORY})
+            set(ARG_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_OUTPUT_DIRECTORY})
+        endif()
+    else()
+        set(ARG_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     endif()
 
     if (COMMAND qt_internal_collect_command_environment)
@@ -299,31 +332,104 @@ function(qt_am_internal_create_package target)
 
     qt_am_internal_find_host_packager()
 
-    if (ARG_BUILTIN)
-        add_custom_target(${target})
-    else()
-        add_custom_command(
-            OUTPUT  ${ARG_OUTPUT_PACKAGE}
-            COMMAND ${CMAKE_COMMAND} -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
-                        $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>
-                        create-package ${ARG_OUTPUT_PACKAGE} ${ARG_SOURCE_DIR}
-            DEPENDS ${ARG_SOURCE_DIR}
-            VERBATIM
+    set(PACKAGE_PATH ${ARG_OUTPUT_DIRECTORY}/${ARG_PACKAGE_NAME})
+    add_custom_command(
+        OUTPUT  ${PACKAGE_PATH}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${ARG_PACKAGE_DIRECTORY}
+        COMMAND ${CMAKE_COMMAND} -E copy ${ARG_FILES} ${ARG_PACKAGE_DIRECTORY}
+        COMMAND ${CMAKE_COMMAND} -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
+                    $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>
+                    create-package ${PACKAGE_PATH} ${ARG_PACKAGE_DIRECTORY}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        DEPENDS ${ARG_DEPENDENCIES} ${ARG_FILES}
+        VERBATIM
+    )
+
+    if (ARG_INSTALL_DIRECTORY)
+        install(
+            FILES ${PACKAGE_PATH}
+            DESTINATION "${ARG_INSTALL_DIRECTORY}"
         )
-        add_custom_target(${target} DEPENDS ${ARG_OUTPUT_PACKAGE})
     endif()
 
-    target_sources(${target} PRIVATE ${ARG_SOURCE_DIR}/info.yaml)
-
-endfunction()
-
-# in tech-preview state (6.7)
-function(qt6_am_create_installable_package target)
-    qt_am_internal_create_package(${target} ${ARGN})
+    add_custom_target(${target} DEPENDS ${PACKAGE_PATH})
+    target_sources(${target} PRIVATE ${ARG_FILES})
 endfunction()
 
 function(qt6_am_create_builtin_package target)
-    qt_am_internal_create_package(${target} ${ARGN} BUILTIN)
+    cmake_parse_arguments(
+        PARSE_ARGV 1
+        ARG
+        "" "OUTPUT_DIRECTORY;INSTALL_DIRECTORY" "FILES;DEPENDENCIES"
+    )
+
+    if (DEFINED ARG_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR "Keywords can't be empty: ${ARG_KEYWORDS_MISSING_VALUES}")
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unknown/unexpected arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+
+    if (NOT DEFINED ARG_FILES)
+        message(FATAL_ERROR "Missing mandatory FILES argument")
+    endif()
+
+    foreach(file IN LISTS ARG_FILES)
+        get_filename_component(filename ${file} NAME)
+        if (filename STREQUAL info.yaml)
+            set(FOUND_INFO_YAML TRUE)
+        endif()
+    endforeach()
+
+    if (NOT FOUND_INFO_YAML)
+        message(FATAL_ERROR "FILES does not contain a info.yaml")
+    endif()
+
+    if (ARG_OUTPUT_DIRECTORY)
+        if (NOT IS_ABSOLUTE ${ARG_OUTPUT_DIRECTORY})
+            set(ARG_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_OUTPUT_DIRECTORY})
+        endif()
+    else()
+        get_filename_component(DIR_NAME ${CMAKE_CURRENT_BINARY_DIR} NAME)
+        if (${target} STREQUAL ${DIR_NAME})
+            set(ARG_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        else()
+            message(WARNING "No OUTPUT_DIRECTORY specified and target name is not the same as the build directory name. Files are NOT copied to the build directory.")
+        endif()
+    endif()
+
+    if (ARG_OUTPUT_DIRECTORY)
+        add_custom_target(${target} ALL
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${ARG_OUTPUT_DIRECTORY}
+            COMMAND ${CMAKE_COMMAND} -E copy ${ARG_FILES} ${ARG_OUTPUT_DIRECTORY}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            DEPENDS ${ARG_DEPENDENCIES} ${ARG_FILES}
+            VERBATIM
+        )
+    else()
+        add_custom_target(${target})
+    endif()
+
+    target_sources(${target} PRIVATE ${ARG_FILES})
+
+    if (ARG_INSTALL_DIRECTORY)
+        install (FILES ${ARG_FILES} DESTINATION "${ARG_INSTALL_DIRECTORY}")
+
+        foreach(dep IN LISTS ARG_DEPENDENCIES)
+            get_target_property(INSTALL_DESTINATION ${dep} INSTALL_DESTINATION)
+            if (INSTALL_DESTINATION)
+                set(INSTALL_DESTINATION ${ARG_INSTALL_DIRECTORY}/${INSTALL_DESTINATION})
+            else()
+                set(INSTALL_DESTINATION ${ARG_INSTALL_DIRECTORY})
+            endif()
+            install(
+                TARGETS ${dep}
+                LIBRARY DESTINATION "${INSTALL_DESTINATION}"
+                RUNTIME DESTINATION "${INSTALL_DESTINATION}"
+                BUNDLE DESTINATION "${INSTALL_DESTINATION}"
+            )
+        endforeach()
+    endif()
 endfunction()
 
 if(NOT QT_NO_CREATE_VERSIONLESS_FUNCTIONS)

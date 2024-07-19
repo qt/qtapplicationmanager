@@ -28,10 +28,22 @@ qt6_am_add_systemui_wrapper(package-installation
                -o "systemProperties: { public: { serverBaseDir: '${CMAKE_CURRENT_BINARY_DIR}/ps-data' }}"
 )
 
-foreach (PKG_NAME red green)
-    qt6_am_create_installable_package(package-installation-create-${PKG_NAME}-ampkg
-        SOURCE_DIR     ${CMAKE_CURRENT_SOURCE_DIR}/installable-apps/hello-world.${PKG_NAME}/
-        OUTPUT_PACKAGE ${CMAKE_CURRENT_BINARY_DIR}/ps-data/upload/hello-${PKG_NAME}.ampkg
-    )
-    add_dependencies(package-installation package-installation-create-${PKG_NAME}-ampkg)
-endforeach()
+qt6_am_create_installable_package(hello-world-red
+    OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ps-data/upload
+    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/ps-data/upload
+    FILES
+        installable-apps/hello-world.red/info.yaml
+        installable-apps/hello-world.red/icon.png
+        installable-apps/hello-world.red/main.qml
+)
+
+qt6_am_create_installable_package(hello-world-green
+    OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ps-data/upload
+    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/ps-data/upload
+    FILES
+        installable-apps/hello-world.green/info.yaml
+        installable-apps/hello-world.green/icon.png
+        installable-apps/hello-world.green/main.qml
+)
+
+add_dependencies(package-installation hello-world-red hello-world-green)

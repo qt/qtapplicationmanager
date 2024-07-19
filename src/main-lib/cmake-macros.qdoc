@@ -85,8 +85,12 @@ used there:
 \badcode
 qt_am_create_installable_package(
     target
-    SOURCE_DIR <dir>
-    OUTPUT_PACKAGE <package.ampkg>
+    FILES ...
+    [OUTPUT_DIRECTORY output_dir]
+    [INSTALL_DIRECTORY install_dir]
+    [PACKAGE_DIRECTORY package_dir]
+    [PACKAGE_NAME package_name]
+    [DEPENDENCIES ...]
 )
 \endcode
 
@@ -95,13 +99,16 @@ qt_am_create_installable_package(
 \section1 Description
 
 Adds a custom \c target that, when executed, uses the \l{Packager}{appman-packager} tool to create
-a package for the application found in \c SOURCE_DIR. The result is written to \c OUTPUT_PACKAGE.
+a package for the application found in \c PACKAGE_DIRECTORY. The result is written to \c OUTPUT_DIRECTORY,
+which defaults to ${CMAKE_CURRENT_BINARY_DIR}. The \c PACKAGE_NAME is used as the name of the package
+and defaults to \c ${target}.ampkg.
 
-The complete content of the source directory is packaged, which works out of the box for QML-only
-applications, but needs installation rules to temporary directories for more sophisticated setups
-(e.g. QML plugins).
+The \c FILES argument is a list of files that will be copied to the package directory and needs
+to at least contain an \c info.yaml file that describes the package.
 
-The \c info.yaml manifest from \c SOURCE_DIR is added as source file to the \c target.
+Using the \c DEPENDENCIES argument, you can specify a list of targets this package depends on.
+
+The \c INSTALL_DIRECTORY argument can be used to specify a directory where the package will be installed into.
 
 \note This function will serve as an anchor for the application manager's QtCreator integration
       to discover the available packages in a System UI.
@@ -112,8 +119,8 @@ Here is a snippet from the \l applicationmanager/package-installation example, s
 function is used there:
 
 \quotefromfile applicationmanager/package-installation/CMakeLists.txt
-\skipto foreach
-\printuntil endforeach
+\skipto qt6_am_create_installable_package(hello-world-red
+\printuntil )
 
 */
 
@@ -121,7 +128,7 @@ function is used there:
 \page cmake-qt6_am_create_builtin_package.html
 \ingroup cmake-macros-qtapplicationmanager
 
-\title qt6_am_create_builtin_package
+\title qt_am_create_builtin_package
 \target qt6_am_create_builtin_package
 
 \brief Marks a directory containing a package as built-in.
@@ -133,7 +140,10 @@ function is used there:
 \badcode
 qt6_am_create_builtin_package(
     target
-    SOURCE_DIR <dir>
+    FILES ...
+    [OUTPUT_DIRECTORY output_dir]
+    [INSTALL_DIRECTORY install_dir]
+    [DEPENDENCIES ...]
 )
 \endcode
 
@@ -141,12 +151,18 @@ qt6_am_create_builtin_package(
 
 \section1 Description
 
-Adds a custom \c target, containing the \c info.yaml manifest from \c SOURCE_DIR as source file.
+Adds a custom \c target that acts as a built-in package for the application-manager.
+The supplied \c FILES need to contain at least an info.yaml file that describes the package.
 
-This is a dummy function that works exactly like \l qt_am_create_installable_package, but for
-built-in packages.
+If \c OUTPUT_DIRECTORY is specified, all files specified in \c FILES will be copied to this folder.
+
+Using the \c DEPENDENCIES argument, you can specify a list of targets this package depends on.
+
+The \c INSTALL_DIRECTORY argument can be used to specify a directory where all files specified in \c FILES
+and all dependencies will be installed into.
+
+\sa qt_am_create_installable_package for packages which can be installed and uninstalled.
 
 \note This function will serve as an anchor for the application manager's QtCreator integration
       to discover the available packages in a System UI.
-
 */

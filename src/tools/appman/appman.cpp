@@ -52,7 +52,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     try {
         a = std::make_unique<Main>(argc, argv, Main::InitFlag::ForkSudoServer
                                                    | Main::InitFlag::InitializeLogging);
-        cfg = std::make_unique<Configuration>(additionalDescription, onlyOnePositionalArgument);
+        cfg = std::make_unique<Configuration>(QStringList { }, u":/build-config.yaml"_s,
+                                              additionalDescription, onlyOnePositionalArgument);
         cfg->parseWithArguments(QCoreApplication::arguments());
 
 #if defined(AM_TESTRUNNER)

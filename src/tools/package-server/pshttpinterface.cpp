@@ -102,6 +102,11 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
                     continue;
             }
 
+            const QString iconUrl = u"package/icon?id="_s
+                                    + QString::fromLatin1(QUrl::toPercentEncoding(sp->packageInfo->id()))
+                                    + u"&architecture="_s
+                                    + QString::fromLatin1(QUrl::toPercentEncoding(sp->architectureOrAll()));
+
             pkgs.append(QJsonObject {
                 { u"id"_s, sp->packageInfo->id() },
                 { u"architecture"_s, sp->architecture },
@@ -109,10 +114,9 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
                 { u"descriptions"_s, asJson(sp->packageInfo->descriptions()) },
                 { u"version"_s, sp->packageInfo->version() },
                 { u"categories"_s, QJsonArray::fromStringList(sp->packageInfo->categories()) },
-                { u"iconUrl"_s, QString { u"package/icon?id="_s + sp->packageInfo->id() } },
-                });
+                { u"iconUrl"_s, iconUrl },
+            });
         }
-
         return QHttpServerResponse { pkgs };
     });
 

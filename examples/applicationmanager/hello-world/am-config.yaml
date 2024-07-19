@@ -5,4 +5,4 @@ applications:
   builtinAppsManifestDir: "${EXECUTABLE_DIR}/apps"
 
 ui:
-  mainQml: "${CONFIG_DIR}/system-ui/main.qml"
+  mainQml: "${CONFIG_DIR}/system-ui.qml"

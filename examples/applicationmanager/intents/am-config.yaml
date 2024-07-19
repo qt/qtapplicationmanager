@@ -2,10 +2,16 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  builtinAppsManifestDir: "${EXECUTABLE_DIR}/apps"
+
+
+runtimes:
+  qml:
+    importPaths: "${EXECUTABLE_DIR}/imports"
 
 ui:
-  mainQml: "${CONFIG_PWD}/system-ui.qml"
+  mainQml: "${CONFIG_DIR}/system-ui.qml"
+  importPaths: "${EXECUTABLE_DIR}/imports"
   style: Material
 
 # development setup:

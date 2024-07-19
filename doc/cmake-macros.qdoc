@@ -59,13 +59,16 @@ CMake.
 
 \section1 Examples
 
-Here is a snippet from the \l applicationmanager/minidesk example, showing how this function is
-used there:
+Here is a snippet showing how this function is used:
 
-\quotefromfile applicationmanager/minidesk/CMakeLists.txt
-
-\skipto qt6_am_add_systemui_wrapper
-\printuntil /^\)/
+\badcode
+qt6_am_add_systemui_wrapper(minidesk
+    INSTALL_DIR "${INSTALL_EXAMPLEDIR}"
+    CONFIG_YAML am-config.yaml
+    EXTRA_FILES apps system-ui
+    EXTRA_ARGS --verbose
+)
+\endcode
 
 */
 
@@ -116,10 +119,10 @@ The \c INSTALL_DIRECTORY argument can be used to specify a directory where the p
 \section1 Examples
 
 Here is a snippet from the \l applicationmanager/package-installation example, showing how this
-function is used there:
+function is used to create a simple installable package:
 
 \quotefromfile applicationmanager/package-installation/CMakeLists.txt
-\skipto qt6_am_create_installable_package(hello-world-red
+\skipto qt6_am_create_installable_package(installable-red
 \printuntil )
 
 */
@@ -165,4 +168,21 @@ and all dependencies will be installed into.
 
 \note This function will serve as an anchor for the application manager's QtCreator integration
       to discover the available packages in a System UI.
+
+\section1 Examples
+
+Here is a snippet from the \l applicationmanager/hello-world example, showing how this
+function is used to create a simple package:
+
+\quotefromfile applicationmanager/hello-world/CMakeLists.txt
+\skipto qt6_am_create_builtin_package(hello-world.blue
+\printuntil )
+
+A builtin package using a compiled QML module looks like this:
+
+\quotefromfile applicationmanager/application-features/apps/Twins/CMakeLists.txt
+\skipto qt6_add_qml_module
+\printto qt6_am_create_builtin_package
+\printuntil )
+
 */

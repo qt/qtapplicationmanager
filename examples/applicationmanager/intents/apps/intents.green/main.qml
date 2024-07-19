@@ -3,6 +3,6 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-import "../../shared"
+import shared
 
 IntentsApplicationWindow { }

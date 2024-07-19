@@ -62,25 +62,37 @@ filename, and more.
 
 \section1 Run the System UI
 
-Verify that you have the \c appman binary in your path. Otherwise, you have to explicitly specify
-the location for your \c appman binary when you use it.
+The compiled hello-world binary contains a complete application manager including the
+\c am-config.yaml configuration file and the System UI QML files.
 
-If you have the \c appman binary in your path, you can run the System UI as follows:
-
-\badcode
-examples/applicationmanager/hello-world$ appman --builtin-apps-manifest-dir ./apps system-ui.qml
-\endcode
-
-The \c --builtin-apps-manifest-dir command line parameter tells \c appman where to find bult-in
-applications, in this case the \c apps subdirectory. Built-in applications are those that come
-pre-installed and cannot be removed via the PackageManager APIs. The next parameter is the
-System UI's \c main.qml filename, \c system-ui.qml.
-
-The screenshot below is what you should see:
+The screenshot below is what you should see when running the binary:
 
 \image hello-world-launched.png
 
-For more information on the command line options, run \c {appman --help}.
+\section1 CMake integration and ApplicationManager configuration
+
+As said above the example binary contains the QML files and the \c am-config.yaml configuration file.
+This is done by adding all those files into the executable as follows in the CMakeLists.txt file:
+
+\quotefromfile applicationmanager/hello-world/CMakeLists.txt
+\skipto qt_add_qml_module(hello-world
+\printuntil )
+
+The \c am-config.yaml file contains the configuration for the Application Manager. It specifies where
+the builtin applications can be found by setting \c applications/builtinAppsManifestDir to
+\c "${EXECUTABLE_DIR}/apps".
+In addition the configuration file specifies the location of the main QML file by setting
+\c ui/mainQml to \c "${CONFIG_DIR}/system-ui.qml".
+
+For information on the contents of \c am-config.yaml and other command line options you can run
+\tt{appman --help} or have a look at the \l{Configuration} documentation.
+
+In addition to the System UI itself, the application packages also need to be added to our
+CMakeLists.txt file. This is done by adding the following lines:
+
+\quotefromfile applicationmanager/hello-world/CMakeLists.txt
+\skipto qt6_am_create_builtin_package(hello-world.blue
+\printuntil )
 
 \section1 Implement the System UI
 

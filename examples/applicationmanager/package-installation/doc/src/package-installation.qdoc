@@ -23,8 +23,8 @@ packages.
 You have to run an actual package server to test this example. You can find detailed instructions on
 how to do this in the appman-package-server documentation.
 
-For your convenience, the example comes with two pre-packaged applications (\c hello-world.red and
-\c hello-world.green from the \c installable-apps folder).
+For your convenience, the example comes with two pre-packaged applications (\c installable.red and
+\c installable.green from the \c installable-apps folder).
 The actual packaging happens in \c CMakeLists.txt, using the \l qt6_am_create_installable_package
 function. Please note that this function is currently in the technical preview state and may change
 in the future.

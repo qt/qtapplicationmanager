@@ -41,12 +41,6 @@ The following features are supported:
 use multi-process and its corresponding terminology. The terms \e client and \e application;
 \e server and \e {System UI} are used interchangeably.
 
-To start the example, navigate to the \c minidesk folder, and run the following command:
-\badcode
-<path-to-appman-binary> -c am-config.yaml
-\endcode
-The \c appman binary (executable file) is usually located in the Qt installation \c bin folder.
-
 \section1 Walkthrough
 
 \section2 System UI Window

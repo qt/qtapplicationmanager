@@ -10,7 +10,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtApplicationManager.SystemUI
 import QtApplicationManager
-import "shared"
+import shared
 
 Item {
     id: root

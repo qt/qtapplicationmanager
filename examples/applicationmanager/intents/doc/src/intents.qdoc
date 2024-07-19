@@ -91,19 +91,9 @@ definition of the intents that this application can handle.
 
 \section1 Running the Example
 
-Assuming the \c appman executable is in your path, you can run the System UI as follows:
-
-\badcode
-examples/applicationmanager/intents$ appman -c am-config.yaml
-\endcode
-
-And this is what you should see:
+After starting the example you should see the following:
 
 \image intents-launched.png
-
-For information on the contents of \c am-config.yaml and other command line options you can run
-\tt{appman --help} or have a look at the \l{Configuration} documentation.
-
 
 \section1 Application Implementation
 

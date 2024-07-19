@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 //! [Main]
-import "../../shared"
+import shared
 
 IntentsApplicationWindow { }
 //! [Main]

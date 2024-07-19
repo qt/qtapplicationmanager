@@ -2,7 +2,7 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  builtinAppsManifestDir: "${EXECUTABLE_DIR}/apps"
   installationDir: "${stdpath:TempLocation}/qtam-example/application-features/apps"
 
 logging:
@@ -15,8 +15,7 @@ logging:
     - "*.critical=true"
 
 ui:
-  mainQml: ":/qt/qml/SystemUi/main.qml"
-  resources: [ "${CONFIG_PWD}/SystemUi/libsystemuimodule" ]
+  mainQml: "${CONFIG_DIR}/SystemUi/main.qml"
 
 # development setup:
 flags:

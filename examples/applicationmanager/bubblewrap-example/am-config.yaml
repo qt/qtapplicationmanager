@@ -2,14 +2,14 @@ formatVersion: 1
 formatType: am-configuration
 ---
 applications:
-  builtinAppsManifestDir: "${CONFIG_PWD}/apps"
+  builtinAppsManifestDir: "${EXECUTABLE_DIR}/apps"
 
 ui:
-  mainQml: "${CONFIG_PWD}/system-ui.qml"
+  mainQml: "${CONFIG_DIR}/system-ui.qml"
 
 runtimes:
   qml:
-    importPaths: "${CONFIG_PWD}/imports"
+    importPaths: "${EXECUTABLE_DIR}/imports"
 
 quicklaunch:
   runtimesPerContainer:
@@ -22,7 +22,7 @@ containers:
     sharedNamespaces: [ '-all', '+net' ]
     # You can use this script as a starting point. It has to be adapted to
     # your network setup though:
-    # networkSetupScript: 'sudo "${CONFIG_PWD}/bubblewrap-network-setup.sh"'
+    # networkSetupScript: 'sudo "${EXECUTABLE_DIR}/bubblewrap-network-setup.sh"'
 
     # set to yes, if you build against a system or Installer Qt and the launcher cannot be found
     bindMountHome: yes
@@ -39,7 +39,7 @@ containers:
         /usr/share/fontconfig: '/usr/share/fontconfig'
         /usr/share/ca-certificates: '/usr/share/ca-certificates'
         /sys/dev/char: '/sys/dev/char'
-        ${CONFIG_PWD}/imports: '${CONFIG_PWD}/imports'
+        ${EXECUTABLE_DIR}/imports: '${EXECUTABLE_DIR}/imports'
       ro-bind-try:
         /usr/lib64: '/usr/lib64'
         '/sys/devices/pci0000:00': '/sys/devices/pci0000:00'
@@ -49,8 +49,6 @@ containers:
       dev: '/dev'
       dev-bind:
         /dev/dri: '/dev/dri'
-      tmpfs:
-        /tmp
       proc:
         /proc
 

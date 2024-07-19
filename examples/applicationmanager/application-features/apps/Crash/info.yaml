@@ -5,8 +5,8 @@ id:      'Crash'
 icon:    'icon.png'
 code:    ':/qt/qml/Crash/crashapp.qml'
 runtime: 'qml'
+runtimeParameters:
+  resources: [ "Crash_module" ]
+  importPaths: [ "." ]
 name:
   en: 'Crash Simulation'
-runtimeParameters:
-  resources: [ "libcrashmodule" ]
-  importPaths: [ "." ]

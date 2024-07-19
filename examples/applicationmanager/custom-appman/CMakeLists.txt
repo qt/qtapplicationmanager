@@ -1,12 +1,5 @@
-
 cmake_minimum_required(VERSION 3.16)
 project(custom-appman LANGUAGES CXX)
-
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
 
 if(NOT DEFINED INSTALL_EXAMPLESDIR)
   set(INSTALL_EXAMPLESDIR "examples")
@@ -16,23 +9,20 @@ set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/custom-appman"
 
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
+qt_standard_project_setup(REQUIRES 6.5)
 
-qt_add_executable(custom-appman
+qt_add_executable(custom-appman WIN32
     custom-appman.cpp
 )
 
 # This define flags us as an "appman" and allows us to link against the AppMan's private libraries
 target_compile_definitions(custom-appman PRIVATE AM_COMPILING_APPMAN)
 
-set_target_properties(custom-appman PROPERTIES
-    WIN32_EXECUTABLE FALSE
-    MACOSX_BUNDLE FALSE
-)
-target_compile_definitions(custom-appman PUBLIC
+target_compile_definitions(custom-appman PRIVATE
     QT_MESSAGELOGCONTEXT
 )
 
-target_link_libraries(custom-appman PUBLIC
+target_link_libraries(custom-appman PRIVATE
     Qt::AppManMainPrivate
 )
 

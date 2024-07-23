@@ -149,13 +149,13 @@ an ApplicationManagerWindow, provided by the \c QtApplicationManager.Application
 \section2 Application Metadata
 
 The \c info.yaml file contains the metadata about an application. It starts with some boilerplate
-describing that this file contains Qt Application Manager application metadata.
+describing that this file contains Qt Application Manager package metadata.
 
 \quotefromfile applicationmanager/hello-world/apps/hello-world.blue/info.yaml
 \printuntil --
 
-Then comes the application ID, which uniquely identifies the application. It's recommended to
-follow a reverse DNS scheme, but it's not enforced. Here it's the "Blue" application from the
+Then comes the package ID, which uniquely identifies the package. It's recommended to
+follow a reverse DNS scheme, but it's not enforced. Here it's the "Blue" package from the
 "Hello World" example UI.
 
 \printline id:
@@ -163,6 +163,17 @@ follow a reverse DNS scheme, but it's not enforced. Here it's the "Blue" applica
 Then the icon filename:
 
 \printline icon:
+
+Following comes the user-visible name of the package in any number of languages. For this
+example, we only provide English:
+
+\printuntil en:
+
+After this package level metadata, any number of applications can be added. In this simple example
+we define exactly one application and give it the same application id as the package.
+Since the application does not have an icon or name, it will inherit the package's icon and name.
+
+\printuntil id:
 
 The \c code field specifies the entry point of the application. For QML applications, this means
 the filename of its main QML file.
@@ -175,10 +186,5 @@ applications are written in QML and hence we use the \c 'qml' runtime. Another r
 entry would point to its binary executable filename.
 
 \printline runtime:
-
-And finally comes the user-visible name of the application in any number of languages. For this
-example, we only provide English:
-
-\printuntil
 
 */

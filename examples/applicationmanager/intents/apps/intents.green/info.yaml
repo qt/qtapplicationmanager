@@ -1,12 +1,14 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'intents.green'
 icon:    'icon.png'
-code:    'main.qml'
-runtime: 'qml-inprocess'
 name:
   en: 'Green Intents'
+applications:
+- id:      'intents.green'
+  code:    'main.qml'
+  runtime: 'qml-inprocess'
 
 intents:
 - id: rotate-window

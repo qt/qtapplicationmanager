@@ -171,7 +171,7 @@ Using the \c DEPENDENCIES argument, you can specify a list of targets this packa
 The \c INSTALL_DIRECTORY argument can be used to specify a directory where all files specified in \c FILES
 and all dependencies will be installed into.
 
-\sa qt_am_create_installable_package for packages which can be installed and uninstalled.
+See also \l qt_am_create_installable_package for packages which can be installed and uninstalled.
 
 \note This function will serve as an anchor for the application manager's QtCreator integration
       to discover the available packages in a System UI.

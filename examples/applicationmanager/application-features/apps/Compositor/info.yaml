@@ -1,11 +1,13 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'Compositor'
 icon:    'icon.png'
-code:    ':/qt/qml/Compositor/compositor.qml'
-runtime: 'qml'
-runtimeParameters:
-  resources: [ "Compositor_module" ]
 name:
   en: 'Nested Compositor'
+applications:
+- id:      'Compositor'
+  code:    ':/qt/qml/Compositor/compositor.qml'
+  runtime: 'qml'
+  runtimeParameters:
+    resources: [ "Compositor_module" ]

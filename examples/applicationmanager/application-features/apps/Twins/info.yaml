@@ -1,11 +1,13 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'Twins'
 icon:    'icon.png'
-code:    ':/qt/qml/Twins/twins.qml'
-runtime: 'qml'
-runtimeParameters:
-  resources: [ "Twins_module" ]
 name:
   en: 'Two Top-Level Windows'
+applications:
+- id:      'Twins'
+  code:    ':/qt/qml/Twins/twins.qml'
+  runtime: 'qml'
+  runtimeParameters:
+    resources: [ "Twins_module" ]

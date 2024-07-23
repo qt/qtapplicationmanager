@@ -1,10 +1,12 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'hello-world.red'
 icon:    'icon.png'
-code:    'main.qml'
-runtime: 'qml'
 name:
   en: 'Hello Red'
-capabilities: [ "foo" ]
+applications:
+- id:      'hello-world.red'
+  code:    'main.qml'
+  runtime: 'qml'
+  capabilities: [ "foo" ]

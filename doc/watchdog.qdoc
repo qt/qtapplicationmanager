@@ -99,34 +99,18 @@ functionality in the System UI as well as in QML applications.
             aforementioned states. This periodic report also contains some statistics on how often
             the render thread got stuck in each state. (default: off)
     \row
-        \li \c quickwindow/syncWarnTimeout
+        \li \c quickwindow/warnTimeout
         \li duration
-        \li The watchdog will print a warning if a render thread is stuck in the syncing state for
-            longer than \c syncWarnTimeout. In addition another warning will be printed if the
-            thread eventually finishes syncing, stating the exact duration it was blocked.
-            (default: off)
+        \li The watchdog will print a warning if a render thread is stuck in any of the syncing,
+            rendering or swapping states for longer than \c warnTimeout. In addition another warning
+            will be printed if the thread eventually leaves the state it was stuck in, stating the
+            exact duration it was blocked. (default: off)
     \row
-        \li \c quickwindow/syncKillTimeout
+        \li \c quickwindow/killTimeout
         \li duration
-        \li In case a render thread is stuck in the syncing state for longer than
-            \c syncKillTimeout, the watchdog will print a critical warning and then abort the
-            thread. (default: off)
-    \row
-        \li \c quickwindow/renderWarnTimeout
-        \li duration
-        \li This works exactly the same as \c syncWarnTimeout, but for the rendering state. (default: off)
-    \row
-        \li \c quickwindow/renderKillTimeout
-        \li duration
-        \li This works exactly the same as \c syncKillTimeout, but for the rendering state. (default: off)
-    \row
-        \li \c quickwindow/swapWarnTimeout
-        \li duration
-        \li This works exactly the same as \c syncWarnTimeout, but for the swapping state. (default: off)
-    \row
-        \li \c quickwindow/swapKillTimeout
-        \li duration
-        \li This works exactly the same as \c syncKillTimeout, but for the swapping state. (default: off)
+        \li In case a render thread is stuck in any of the syncing, rendering or swapping states for
+            longer than \c killTimeout, the watchdog will print a critical warning and then abort
+            the thread. (default: off)
     \row
         \li \c wayland/checkInterval
         \li duration

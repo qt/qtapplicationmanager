@@ -24,9 +24,7 @@ public:
     void setEventLoopTimeouts(std::chrono::milliseconds check,
                               std::chrono::milliseconds warn, std::chrono::milliseconds kill);
     void setQuickWindowTimeouts(std::chrono::milliseconds check,
-                                std::chrono::milliseconds warnSync, std::chrono::milliseconds killSync,
-                                std::chrono::milliseconds warnRender, std::chrono::milliseconds killRender,
-                                std::chrono::milliseconds warnSwap, std::chrono::milliseconds killSwap);
+                                std::chrono::milliseconds warn, std::chrono::milliseconds kill);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;

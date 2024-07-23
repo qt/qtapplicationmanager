@@ -424,9 +424,8 @@ void WatchdogPrivate::eventLoopCheck()
 
 
 void WatchdogPrivate::setQuickWindowTimeouts(std::chrono::milliseconds check,
-                                             std::chrono::milliseconds warnSync, std::chrono::milliseconds killSync,
-                                             std::chrono::milliseconds warnRender, std::chrono::milliseconds killRender,
-                                             std::chrono::milliseconds warnSwap, std::chrono::milliseconds killSwap)
+                                             std::chrono::milliseconds warn,
+                                             std::chrono::milliseconds kill)
 {
     m_quickWindowCheckInterval = std::max(0ms, check);
     m_quickWindowCheck->setInterval(m_quickWindowCheckInterval);
@@ -436,19 +435,16 @@ void WatchdogPrivate::setQuickWindowTimeouts(std::chrono::milliseconds check,
         m_quickWindowCheck->stop();
 
     // these will be picked up automatically
-    m_warnRenderStateTime[Sync] = std::max(0ms, warnSync);
-    m_warnRenderStateTime[Render] = std::max(0ms, warnRender);
-    m_warnRenderStateTime[Swap] = std::max(0ms, warnSwap);
-    m_killRenderStateTime[Sync] = std::max(0ms, killSync);
-    m_killRenderStateTime[Render] = std::max(0ms, killRender);
-    m_killRenderStateTime[Swap] = std::max(0ms, killSwap);
+    m_warnQuickWindowTime = std::max(0ms, warn);
+    m_killQuickWindowTime = std::max(0ms, kill);
 
-    for (auto rs : { RenderState::Sync, RenderState::Render, RenderState::Swap }) {
-        if (m_warnRenderStateTime[rs] > m_killRenderStateTime[rs]) {
-            qCWarning(LogWatchdogStat).nospace()
-                << "Quick window " << rs << " warning timeout (" << m_warnRenderStateTime[rs]
-                << ") is greater than kill timeout (" << m_killRenderStateTime[rs] << ")";
-        }
+    if (m_warnQuickWindowTime == m_killQuickWindowTime)
+        m_warnQuickWindowTime = 0ms;
+
+    if (m_warnQuickWindowTime > m_killQuickWindowTime) {
+        qCWarning(LogWatchdogStat).nospace()
+            << "Quick window warning timeout (" << m_warnQuickWindowTime
+            << ") is greater than kill timeout (" << m_killQuickWindowTime << ")";
     }
 }
 
@@ -456,10 +452,8 @@ bool WatchdogPrivate::isQuickWindowWatchingEnabled() const
 {
     if (m_quickWindowCheckInterval <= 0ms)
         return false;
-    bool enabled = false;
-    for (auto rs : { RenderState::Sync, RenderState::Render, RenderState::Swap })
-        enabled = enabled || (m_warnRenderStateTime[rs] > 0ms) || (m_killRenderStateTime[rs] > 0ms);
-    return enabled;
+    else
+        return (m_warnQuickWindowTime > 0ms) || (m_killQuickWindowTime > 0ms);
 }
 
 void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
@@ -500,10 +494,8 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
 
     qCInfo(LogWatchdogStat).nospace().noquote()
         << "Window " << static_cast<void *>(quickWindow) << info << " is being watched now "
-        << "(check every " << m_quickWindowCheckInterval << ", sync, render, swap warn/kill after "
-        << m_warnRenderStateTime[RenderState::Sync] << "/" << m_killRenderStateTime[RenderState::Sync] << ", "
-        << m_warnRenderStateTime[RenderState::Render] << "/" << m_killRenderStateTime[RenderState::Render] << ", "
-        << m_warnRenderStateTime[RenderState::Swap] << "/" << m_killRenderStateTime[RenderState::Swap] << ")";
+        << "(check every " << m_quickWindowCheckInterval << ", warn/kill after "
+        << m_warnQuickWindowTime << "/" << m_killQuickWindowTime << ")";
 
     connect(quickWindow, &QObject::destroyed, this, [this, qwd](QObject *o) {
         // we're on wd thread
@@ -549,7 +541,7 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
         as.quickWindowBits.startedAt =  now;
 
         bool wasStuck = false;
-        quint64 maxTime = quint64(m_warnRenderStateTime[fromState].count());
+        quint64 maxTime = quint64(m_warnQuickWindowTime.count());
 
         if (maxTime && (elapsed > maxTime)) {
             wasStuck = true;
@@ -652,8 +644,8 @@ void WatchdogPrivate::quickWindowCheck()
         quint64 now = quint64(et.msecsSinceReference() - m_referenceTime);
         quint64 startedAt = as.quickWindowBits.startedAt;
         quint64 elapsed = (!startedAt || (now < startedAt)) ? 0 : (now - startedAt);
-        quint64 warnTime = quint64(m_warnRenderStateTime[as.quickWindowBits.state].count());
-        quint64 killTime = quint64(m_killRenderStateTime[as.quickWindowBits.state].count());
+        quint64 warnTime = quint64(m_warnQuickWindowTime.count());
+        quint64 killTime = quint64(m_killQuickWindowTime.count());
 
         if (killTime && (elapsed > killTime) && qwd->m_renderThread) {
             qCCritical(LogWatchdogStat).nospace()
@@ -745,12 +737,10 @@ void Watchdog::setEventLoopTimeouts(std::chrono::milliseconds check,
 }
 
 void Watchdog::setQuickWindowTimeouts(std::chrono::milliseconds check,
-                                      std::chrono::milliseconds warnSync, std::chrono::milliseconds killSync,
-                                      std::chrono::milliseconds warnRender, std::chrono::milliseconds killRender,
-                                      std::chrono::milliseconds warnSwap, std::chrono::milliseconds killSwap)
+                                      std::chrono::milliseconds warn, std::chrono::milliseconds kill)
 {
-    QMetaObject::invokeMethod(d, [this, check, warnSync, killSync, warnRender, killRender, warnSwap, killSwap]() {
-            d->setQuickWindowTimeouts(check, warnSync, killSync, warnRender, killRender, warnSwap, killSwap);
+    QMetaObject::invokeMethod(d, [this, check, warn, kill]() {
+            d->setQuickWindowTimeouts(check, warn, kill);
         }, Qt::QueuedConnection);
 }
 

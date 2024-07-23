@@ -24,12 +24,8 @@ public:
     } eventloop;
     struct {
         std::chrono::milliseconds checkInterval { -1 };
-        std::chrono::milliseconds syncWarnTimeout { -1 };
-        std::chrono::milliseconds syncKillTimeout { -1 };
-        std::chrono::milliseconds renderWarnTimeout { -1 };
-        std::chrono::milliseconds renderKillTimeout { -1 };
-        std::chrono::milliseconds swapWarnTimeout { -1 };
-        std::chrono::milliseconds swapKillTimeout { -1 };
+        std::chrono::milliseconds warnTimeout { -1 };
+        std::chrono::milliseconds killTimeout { -1 };
     } quickwindow;
     struct {
         std::chrono::milliseconds checkInterval { -1 };

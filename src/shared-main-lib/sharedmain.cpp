@@ -145,9 +145,7 @@ void SharedMain::setupWatchdog(const WatchdogConfiguration &cfg)
     wd->setEventLoopTimeouts(cfg.eventloop.checkInterval,
                              cfg.eventloop.warnTimeout, cfg.eventloop.killTimeout);
     wd->setQuickWindowTimeouts(cfg.quickwindow.checkInterval,
-                               cfg.quickwindow.syncWarnTimeout, cfg.quickwindow.syncKillTimeout,
-                               cfg.quickwindow.renderWarnTimeout, cfg.quickwindow.renderKillTimeout,
-                               cfg.quickwindow.swapWarnTimeout, cfg.quickwindow.swapKillTimeout);
+                               cfg.quickwindow.warnTimeout, cfg.quickwindow.killTimeout);
 }
 
 void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,

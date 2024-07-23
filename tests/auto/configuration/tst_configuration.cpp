@@ -135,12 +135,8 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.yaml.watchdog.eventloop.warnTimeout, -1ms);
     QCOMPARE(c.yaml.watchdog.eventloop.killTimeout, -1ms);
     QCOMPARE(c.yaml.watchdog.quickwindow.checkInterval, -1ms);
-    QCOMPARE(c.yaml.watchdog.quickwindow.syncWarnTimeout, -1ms);
-    QCOMPARE(c.yaml.watchdog.quickwindow.syncKillTimeout, -1ms);
-    QCOMPARE(c.yaml.watchdog.quickwindow.renderWarnTimeout, -1ms);
-    QCOMPARE(c.yaml.watchdog.quickwindow.renderKillTimeout, -1ms);
-    QCOMPARE(c.yaml.watchdog.quickwindow.swapWarnTimeout, -1ms);
-    QCOMPARE(c.yaml.watchdog.quickwindow.swapKillTimeout, -1ms);
+    QCOMPARE(c.yaml.watchdog.quickwindow.warnTimeout, -1ms);
+    QCOMPARE(c.yaml.watchdog.quickwindow.killTimeout, -1ms);
     QCOMPARE(c.yaml.watchdog.wayland.checkInterval, -1ms);
     QCOMPARE(c.yaml.watchdog.wayland.warnTimeout, -1ms);
     QCOMPARE(c.yaml.watchdog.wayland.killTimeout, -1ms);
@@ -262,12 +258,8 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.yaml.watchdog.eventloop.warnTimeout, 3min);
     QCOMPARE(c.yaml.watchdog.eventloop.killTimeout, 4min);
     QCOMPARE(c.yaml.watchdog.quickwindow.checkInterval, 2s);
-    QCOMPARE(c.yaml.watchdog.quickwindow.syncWarnTimeout, 3s);
-    QCOMPARE(c.yaml.watchdog.quickwindow.syncKillTimeout, 4s);
-    QCOMPARE(c.yaml.watchdog.quickwindow.renderWarnTimeout, 5s);
-    QCOMPARE(c.yaml.watchdog.quickwindow.renderKillTimeout, 6s);
-    QCOMPARE(c.yaml.watchdog.quickwindow.swapWarnTimeout, 7s);
-    QCOMPARE(c.yaml.watchdog.quickwindow.swapKillTimeout, 8s);
+    QCOMPARE(c.yaml.watchdog.quickwindow.warnTimeout, 3s);
+    QCOMPARE(c.yaml.watchdog.quickwindow.killTimeout, 4s);
     QCOMPARE(c.yaml.watchdog.wayland.checkInterval, 2ms);
     QCOMPARE(c.yaml.watchdog.wayland.warnTimeout, 3ms);
     QCOMPARE(c.yaml.watchdog.wayland.killTimeout, 4ms);
@@ -418,12 +410,8 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.yaml.watchdog.eventloop.warnTimeout, TO_MS(3.5min));
     QCOMPARE(c.yaml.watchdog.eventloop.killTimeout, TO_MS(4.5min));
     QCOMPARE(c.yaml.watchdog.quickwindow.checkInterval, TO_MS(2.5s));
-    QCOMPARE(c.yaml.watchdog.quickwindow.syncWarnTimeout, TO_MS(3.5s));
-    QCOMPARE(c.yaml.watchdog.quickwindow.syncKillTimeout, TO_MS(4.5s));
-    QCOMPARE(c.yaml.watchdog.quickwindow.renderWarnTimeout, TO_MS(5.5s));
-    QCOMPARE(c.yaml.watchdog.quickwindow.renderKillTimeout, TO_MS(6.5s));
-    QCOMPARE(c.yaml.watchdog.quickwindow.swapWarnTimeout, TO_MS(7.5s));
-    QCOMPARE(c.yaml.watchdog.quickwindow.swapKillTimeout, TO_MS(8.5s));
+    QCOMPARE(c.yaml.watchdog.quickwindow.warnTimeout, TO_MS(3.5s));
+    QCOMPARE(c.yaml.watchdog.quickwindow.killTimeout, TO_MS(4.5s));
     QCOMPARE(c.yaml.watchdog.wayland.checkInterval, TO_MS(2.5h));
     QCOMPARE(c.yaml.watchdog.wayland.warnTimeout, TO_MS(3.5h));
     QCOMPARE(c.yaml.watchdog.wayland.killTimeout, 5ms); // round to precision

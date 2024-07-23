@@ -29,16 +29,14 @@ public:
     void setupSystemdWatchdog();
 
     void setEventLoopTimeouts(std::chrono::milliseconds check, std::chrono::milliseconds warn,
-                           std::chrono::milliseconds kill);
+                              std::chrono::milliseconds kill);
     bool isEventLoopWatchingEnabled() const;
     void watchEventLoop(QThread *thread);
     void eventLoopCheck();
 
 
-    void setQuickWindowTimeouts(std::chrono::milliseconds check,
-                                std::chrono::milliseconds warnSync, std::chrono::milliseconds killSync,
-                                std::chrono::milliseconds warnRender, std::chrono::milliseconds killRender,
-                                std::chrono::milliseconds warnSwap, std::chrono::milliseconds killSwap);
+    void setQuickWindowTimeouts(std::chrono::milliseconds check, std::chrono::milliseconds warn,
+                                std::chrono::milliseconds kill);
     bool isQuickWindowWatchingEnabled() const;
     void watchQuickWindow(QQuickWindow *quickWindow);
     void quickWindowCheck();
@@ -109,8 +107,8 @@ public:
 
     QTimer *m_quickWindowCheck;
     std::chrono::milliseconds m_quickWindowCheckInterval { };
-    std::chrono::milliseconds m_warnRenderStateTime[4] { };
-    std::chrono::milliseconds m_killRenderStateTime[4] { };
+    std::chrono::milliseconds m_warnQuickWindowTime { };
+    std::chrono::milliseconds m_killQuickWindowTime { };
 
     QTimer *m_eventLoopCheck;
     std::chrono::milliseconds m_eventLoopCheckInterval { };

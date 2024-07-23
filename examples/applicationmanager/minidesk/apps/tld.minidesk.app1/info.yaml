@@ -9,3 +9,6 @@ applications:
   - id:      'tld.minidesk.app1'
     code:    'app1.qml'
     runtime: 'qml'
+    watchdog:
+      eventloop:
+        warnTimeout: 799ms

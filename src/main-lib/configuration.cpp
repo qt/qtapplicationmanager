@@ -472,7 +472,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 17;
+    return 18;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -550,12 +550,8 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.watchdog.eventloop.warnTimeout
         & cd.watchdog.eventloop.killTimeout
         & cd.watchdog.quickwindow.checkInterval
-        & cd.watchdog.quickwindow.syncWarnTimeout
-        & cd.watchdog.quickwindow.syncKillTimeout
-        & cd.watchdog.quickwindow.renderWarnTimeout
-        & cd.watchdog.quickwindow.renderKillTimeout
-        & cd.watchdog.quickwindow.swapWarnTimeout
-        & cd.watchdog.quickwindow.swapKillTimeout
+        & cd.watchdog.quickwindow.warnTimeout
+        & cd.watchdog.quickwindow.killTimeout
         & cd.watchdog.wayland.checkInterval
         & cd.watchdog.wayland.warnTimeout
         & cd.watchdog.wayland.killTimeout;

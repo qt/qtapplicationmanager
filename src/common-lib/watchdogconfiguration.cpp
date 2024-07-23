@@ -23,12 +23,8 @@ void WatchdogConfiguration::merge(const WatchdogConfiguration &other)
     mergeMs(eventloop.killTimeout, other.eventloop.killTimeout);
 
     mergeMs(quickwindow.checkInterval, other.quickwindow.checkInterval);
-    mergeMs(quickwindow.syncWarnTimeout, other.quickwindow.syncWarnTimeout);
-    mergeMs(quickwindow.syncKillTimeout, other.quickwindow.syncKillTimeout);
-    mergeMs(quickwindow.renderWarnTimeout, other.quickwindow.renderWarnTimeout);
-    mergeMs(quickwindow.renderKillTimeout, other.quickwindow.renderKillTimeout);
-    mergeMs(quickwindow.swapWarnTimeout, other.quickwindow.swapWarnTimeout);
-    mergeMs(quickwindow.swapKillTimeout, other.quickwindow.swapKillTimeout);
+    mergeMs(quickwindow.warnTimeout, other.quickwindow.warnTimeout);
+    mergeMs(quickwindow.killTimeout, other.quickwindow.killTimeout);
 
     mergeMs(wayland.checkInterval, other.wayland.checkInterval);
     mergeMs(wayland.warnTimeout, other.wayland.warnTimeout);
@@ -60,12 +56,8 @@ QVariantMap WatchdogConfiguration::toMap(Type type) const
 
     QVariantMap qwMap;
     msToMap(qwMap, u"checkInterval"_s, quickwindow.checkInterval, def.quickwindow.checkInterval);
-    msToMap(qwMap, u"syncWarnTimeout"_s, quickwindow.syncWarnTimeout, def.quickwindow.syncWarnTimeout);
-    msToMap(qwMap, u"syncKillTimeout"_s, quickwindow.syncKillTimeout, def.quickwindow.syncKillTimeout);
-    msToMap(qwMap, u"renderWarnTimeout"_s, quickwindow.renderWarnTimeout, def.quickwindow.renderWarnTimeout);
-    msToMap(qwMap, u"renderKillTimeout"_s, quickwindow.renderKillTimeout, def.quickwindow.renderKillTimeout);
-    msToMap(qwMap, u"swapWarnTimeout"_s, quickwindow.swapWarnTimeout, def.quickwindow.swapWarnTimeout);
-    msToMap(qwMap, u"swapKillTimeout"_s, quickwindow.swapKillTimeout, def.quickwindow.swapKillTimeout);
+    msToMap(qwMap, u"warnTimeout"_s, quickwindow.warnTimeout, def.quickwindow.warnTimeout);
+    msToMap(qwMap, u"killTimeout"_s, quickwindow.killTimeout, def.quickwindow.killTimeout);
     map[u"quickwindow"_s] = qwMap;
 
     if (type == SystemUI) {
@@ -93,12 +85,8 @@ WatchdogConfiguration WatchdogConfiguration::fromMap(const QVariantMap &map, Typ
 
     QVariantMap qwMap = map.value(u"quickwindow"_s).toMap();
     msFromMap(qwMap, u"checkInterval"_s, cfg.quickwindow.checkInterval);
-    msFromMap(qwMap, u"syncWarnTimeout"_s, cfg.quickwindow.syncWarnTimeout);
-    msFromMap(qwMap, u"syncKillTimeout"_s, cfg.quickwindow.syncKillTimeout);
-    msFromMap(qwMap, u"renderWarnTimeout"_s, cfg.quickwindow.renderWarnTimeout);
-    msFromMap(qwMap, u"renderKillTimeout"_s, cfg.quickwindow.renderKillTimeout);
-    msFromMap(qwMap, u"swapWarnTimeout"_s, cfg.quickwindow.swapWarnTimeout);
-    msFromMap(qwMap, u"swapKillTimeout"_s, cfg.quickwindow.swapKillTimeout);
+    msFromMap(qwMap, u"warnTimeout"_s, cfg.quickwindow.warnTimeout);
+    msFromMap(qwMap, u"killTimeout"_s, cfg.quickwindow.killTimeout);
 
     if (type == SystemUI) {
         QVariantMap wlMap = map.value(u"wayland"_s).toMap();
@@ -126,18 +114,10 @@ WatchdogConfiguration WatchdogConfiguration::fromYaml(YamlParser &yp, Type type)
              yp.parseFields({
                  { "checkInterval", false, YamlParser::Scalar, [&]() {
                       cfg.quickwindow.checkInterval = yp.parseDurationAsMSec(); } },
-                 { "syncWarnTimeout", false, YamlParser::Scalar, [&]() {
-                      cfg.quickwindow.syncWarnTimeout = yp.parseDurationAsMSec(); } },
-                 { "syncKillTimeout", false, YamlParser::Scalar, [&]() {
-                      cfg.quickwindow.syncKillTimeout = yp.parseDurationAsMSec(); } },
-                 { "renderWarnTimeout", false, YamlParser::Scalar, [&]() {
-                      cfg.quickwindow.renderWarnTimeout = yp.parseDurationAsMSec(); } },
-                 { "renderKillTimeout", false, YamlParser::Scalar, [&]() {
-                      cfg.quickwindow.renderKillTimeout = yp.parseDurationAsMSec(); } },
-                 { "swapWarnTimeout", false, YamlParser::Scalar, [&]() {
-                      cfg.quickwindow.swapWarnTimeout = yp.parseDurationAsMSec(); } },
-                 { "swapKillTimeout", false, YamlParser::Scalar, [&]() {
-                      cfg.quickwindow.swapKillTimeout = yp.parseDurationAsMSec(); } },
+                 { "warnTimeout", false, YamlParser::Scalar, [&]() {
+                      cfg.quickwindow.warnTimeout = yp.parseDurationAsMSec(); } },
+                 { "killTimeout", false, YamlParser::Scalar, [&]() {
+                      cfg.quickwindow.killTimeout = yp.parseDurationAsMSec(); } },
              }); } },
         { (type == SystemUI), "wayland", false, YamlParser::Map, [&]() {
              yp.parseFields({
@@ -157,17 +137,13 @@ bool WatchdogConfiguration::operator==(const WatchdogConfiguration &other) const
     return std::tie(eventloop.checkInterval,
                     eventloop.warnTimeout, eventloop.killTimeout,
                     quickwindow.checkInterval,
-                    quickwindow.syncWarnTimeout, quickwindow.syncKillTimeout,
-                    quickwindow.renderWarnTimeout, quickwindow.renderKillTimeout,
-                    quickwindow.swapWarnTimeout, quickwindow.swapKillTimeout,
+                    quickwindow.warnTimeout, quickwindow.killTimeout,
                     wayland.checkInterval,
                     wayland.warnTimeout, wayland.killTimeout) ==
            std::tie(other.eventloop.checkInterval,
                     other.eventloop.warnTimeout, other.eventloop.killTimeout,
                     other.quickwindow.checkInterval,
-                    other.quickwindow.syncWarnTimeout, other.quickwindow.syncKillTimeout,
-                    other.quickwindow.renderWarnTimeout, other.quickwindow.renderKillTimeout,
-                    other.quickwindow.swapWarnTimeout, other.quickwindow.swapKillTimeout,
+                    other.quickwindow.warnTimeout, other.quickwindow.killTimeout,
                     other.wayland.checkInterval,
                     other.wayland.warnTimeout, other.wayland.killTimeout);
 }
@@ -177,22 +153,22 @@ bool WatchdogConfiguration::operator!=(const WatchdogConfiguration &other) const
     return !(*this == other);
 }
 
+static constexpr quint32 WatchdogConfigurationVersion = 1;
+
 QDataStream &operator<<(QDataStream &ds, const WatchdogConfiguration &cfg)
 {
     auto msOut = [](QDataStream &ds, std::chrono::milliseconds ms) {
         ds << qint64(ms.count());
     };
 
+    ds << quint32(WatchdogConfigurationVersion);
+
     msOut(ds, cfg.eventloop.checkInterval);
     msOut(ds, cfg.eventloop.warnTimeout);
     msOut(ds, cfg.eventloop.killTimeout);
     msOut(ds, cfg.quickwindow.checkInterval);
-    msOut(ds, cfg.quickwindow.syncWarnTimeout);
-    msOut(ds, cfg.quickwindow.syncKillTimeout);
-    msOut(ds, cfg.quickwindow.renderWarnTimeout);
-    msOut(ds, cfg.quickwindow.renderKillTimeout);
-    msOut(ds, cfg.quickwindow.swapWarnTimeout);
-    msOut(ds, cfg.quickwindow.swapKillTimeout);
+    msOut(ds, cfg.quickwindow.warnTimeout);
+    msOut(ds, cfg.quickwindow.killTimeout);
     msOut(ds, cfg.wayland.checkInterval);
     msOut(ds, cfg.wayland.warnTimeout);
     msOut(ds, cfg.wayland.killTimeout);
@@ -207,16 +183,21 @@ QDataStream &operator>>(QDataStream &ds, WatchdogConfiguration &cfg)
         ms = std::chrono::milliseconds(cnt);
     };
 
+    quint32 version = 0;
+    ds >> version;
+
+    if (version != WatchdogConfigurationVersion) {
+        cfg = { };
+        ds.setStatus(QDataStream::ReadCorruptData);
+        return ds;
+    }
+
     msIn(ds, cfg.eventloop.checkInterval);
     msIn(ds, cfg.eventloop.warnTimeout);
     msIn(ds, cfg.eventloop.killTimeout);
     msIn(ds, cfg.quickwindow.checkInterval);
-    msIn(ds, cfg.quickwindow.syncWarnTimeout);
-    msIn(ds, cfg.quickwindow.syncKillTimeout);
-    msIn(ds, cfg.quickwindow.renderWarnTimeout);
-    msIn(ds, cfg.quickwindow.renderKillTimeout);
-    msIn(ds, cfg.quickwindow.swapWarnTimeout);
-    msIn(ds, cfg.quickwindow.swapKillTimeout);
+    msIn(ds, cfg.quickwindow.warnTimeout);
+    msIn(ds, cfg.quickwindow.killTimeout);
     msIn(ds, cfg.wayland.checkInterval);
     msIn(ds, cfg.wayland.warnTimeout);
     msIn(ds, cfg.wayland.killTimeout);

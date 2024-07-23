@@ -26,3 +26,18 @@ systemProperties:
 # development setup:
 flags:
   noSecurity: yes
+
+watchdog:
+  eventloop:
+    checkInterval: 1s
+    warnTimeout: 1s
+    killTimeout: 10s
+  quickwindow:
+    checkInterval: 2s
+    warnTimeout: 35ms
+    killTimeout: 10s
+  wayland:
+    checkInterval: 5s
+    warnTimeout: 1s
+    killTimeout: 10s
+

@@ -102,12 +102,8 @@ watchdog:
     killTimeout: 4.5min
   quickwindow:
     checkInterval: 2.5s
-    syncWarnTimeout: 3.5s
-    syncKillTimeout: 4.5s
-    renderWarnTimeout: 5.5s
-    renderKillTimeout: 6.5s
-    swapWarnTimeout: 7.5s
-    swapKillTimeout: 8.5s
+    warnTimeout: 3.5s
+    killTimeout: 4.5s
   wayland:
     checkInterval: 2.5h
     warnTimeout: 3.5h

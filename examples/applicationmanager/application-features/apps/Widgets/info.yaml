@@ -1,13 +1,15 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'Widgets'
+icon:    'icon.png'
 name:
   en: 'Native Widgets'
-icon:    'icon.png'
-code:    'widgets'
-runtime: 'native'
-runtimeParameters:
-  environmentVariables:
-    QT_WAYLAND_DISABLE_WINDOWDECORATION: "1"
-supportsApplicationInterface: yes
+applications:
+- id:      'Widgets'
+  code:    'widgets'
+  runtime: 'native'
+  runtimeParameters:
+    environmentVariables:
+      QT_WAYLAND_DISABLE_WINDOWDECORATION: "1"
+  supportsApplicationInterface: yes

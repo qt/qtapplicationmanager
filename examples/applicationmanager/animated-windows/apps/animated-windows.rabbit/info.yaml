@@ -1,9 +1,11 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'animated-windows.rabbit'
 icon:    'rabbit.svg'
-code:    'rabbit.qml'
-runtime: 'qml'
 name:
   en: 'Rabbit'
+applications:
+- id:      'animated-windows.rabbit'
+  code:    'rabbit.qml'
+  runtime: 'qml'

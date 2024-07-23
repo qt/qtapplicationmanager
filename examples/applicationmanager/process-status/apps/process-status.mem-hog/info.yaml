@@ -1,9 +1,11 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'process-status.mem-hog'
 icon:    'icon.png'
-code:    'main.qml'
-runtime: 'qml'
 name:
   en: 'Memory Hog'
+applications:
+- id:      'process-status.mem-hog'
+  code:    'main.qml'
+  runtime: 'qml'

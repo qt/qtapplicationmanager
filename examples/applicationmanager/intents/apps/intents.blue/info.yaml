@@ -1,12 +1,14 @@
 formatVersion: 1
-formatType: am-application
+formatType: am-package
 ---
 id:      'intents.blue'
 icon:    'icon.png'
-code:    'main.qml'
-runtime: 'qml'
 name:
   en: 'Blue Intents'
+applications:
+- id:      'intents.blue'
+  code:    'main.qml'
+  runtime: 'qml'
 
 intents:
 - id: rotate-window

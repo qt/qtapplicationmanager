@@ -10,14 +10,25 @@ logging:
     - "*=false"
     - "qt.*=false"
     - "am.*=false"
+    - "am.wd*=true"
     - "qml*=true"
+    - "app.glitches.info=true"
     - "*.warning=true"
     - "*.critical=true"
 
 ui:
   mainQml: "${CONFIG_DIR}/SystemUi/main.qml"
 
+watchdog:
+  eventloop:
+    checkInterval: 200ms
+    warnTimeout: 1200ms
+    killTimeout: 4s
+# wayland:
+#   checkInterval: 200ms
+#   warnTimeout: 1200s
+#   killTimeout: 4s
+
 # development setup:
 flags:
   noSecurity: yes
-  noUiWatchdog: yes

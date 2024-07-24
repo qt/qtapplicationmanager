@@ -20,9 +20,9 @@ application, such as:
 \list
     \li how to implement a nested compositor
     \li how to simulate a crash and recover from it
+    \li how to analyze glitches with the watchdog
     \li how to show multiple top-level windows simultaneously
     \li how to use the native runtime, with no QML
-
 \endlist
 
 Most of these features are only supported properly in
@@ -72,6 +72,21 @@ The QML code for the crash simulation and recovery application is as follows:
 \skipto import QtQuick
 \printuntil crashAnimation.mode = parent.modelData;
 \printuntil /^\}/
+
+\section2 Analyze Glitches with the Watchdog
+
+This application allows to introduce delays in the program execution at various points:
+\list
+    \li Sleep GUI: pauses the main (GUI) thread of the application for the given number of seconds
+    \li Sleep sync: pauses the render thread (if the threaded render loops is used) in the sync
+        state. QQuickItems' \c updatePaintNode methods are called in the sync state for instance.
+    \li Sleep render: pauses the render thread (if the threaded render loop is used) in the render
+        state. Backend (OpenGL, Vulkan, etc.) draw commands are executed in the render state.
+\endlist
+
+The application manager's \l{Watchdog} is enabled in the System UI's, as well as the application's
+configuration file. Warnings will be printed, if the application is stuck for a certain amount of
+time and it might even be killed if it is stuck for too long.
 
 \section2 Two Top-Level Windows
 

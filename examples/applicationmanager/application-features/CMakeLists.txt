@@ -42,6 +42,7 @@ target_link_libraries(application-features PRIVATE
 add_subdirectory(apps/Twins)
 add_subdirectory(apps/Compositor)
 add_subdirectory(apps/Crash)
+add_subdirectory(apps/Glitches)
 add_subdirectory(apps/Widgets)
 
 install(TARGETS application-features

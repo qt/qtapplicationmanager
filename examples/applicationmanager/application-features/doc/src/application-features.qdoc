@@ -97,11 +97,11 @@ This application only works in multi-process mode, as application processes cann
 single-process mode.
 
 Linking against the private application manager modules is prohibited by default to prevent
-potential problems with duplicate symbols coming from QML plugins. However here building against
+potential problems with duplicate symbols coming from QML plugins. However, here building against
 them is both intended and required, so we need to set the define \c AM_COMPILING_LAUNCHER:
 
 \quotefromfile applicationmanager/application-features/apps/Widgets/CMakeLists.txt
-\skipuntil /allows us to link against/
+\skipuntil /flags us as a "launcher"/
 \printuntil /AM_COMPILING_LAUNCHER/
 
 The C++ code for the native widgets application is as follows:

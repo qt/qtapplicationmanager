@@ -170,7 +170,7 @@ Window {
     Connections {
         target: ApplicationManager
         function onApplicationRunStateChanged(id, runState) {
-            if (runState === Am.NotRunning
+            if (runState === Am.NotRunning && id === "Crash"
                 && ApplicationManager.application(id).lastExitStatus === Am.CrashExit) {
                 ApplicationManager.startApplication(id);
             }

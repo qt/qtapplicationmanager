@@ -1,0 +1,23 @@
+%YAML 1.1
+---
+formatVersion: 1
+formatType: am-package
+---
+id: 'Glitches'
+icon: 'icon.png'
+name:
+ en: 'Glitches Package'
+
+applications:
+- id: 'Glitches'
+  code: 'glitchesapp.qml'
+  runtime: qml
+  name:
+    en: 'Glitches'
+  runtimeParameters:
+    importPaths: [ "." ]
+  watchdog:
+    quickwindow:
+      checkInterval: 200ms
+      warnTimeout: 1000ms
+      killTimeout: 3s

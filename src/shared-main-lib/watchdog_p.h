@@ -9,7 +9,8 @@
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtQuick/QQuickWindow>
-#include <QtCore//QEventLoop>
+#include <QtCore/QEventLoop>
+#include <QtCore/QReadWriteLock>
 
 #include "watchdog.h"
 
@@ -52,7 +53,7 @@ public:
         quint64 pod = 0;
         struct {
             quint64 state                : 2;  // enum RenderState
-            quint64 startedAt            : 30; // ~ max 12days (msecs since reference)
+            quint64 startedAt            : 30; // ~ max 12days (msecs since reference offset)
             quint64 stuckCounterSync     : 4;
             quint64 stuckCounterRender   : 4;
             quint64 stuckCounterSwap     : 4;
@@ -61,7 +62,7 @@ public:
         } quickWindowBits;
         struct {
             quint64 reserved1            : 2;
-            quint64 expectedAt           : 30; // ~ max 12days (msecs since reference)
+            quint64 expectedAt           : 30; // ~ max 12days (msecs since reference offset)
             quint64 stuckCounter         : 4;
             quint64 reserved2            : 8;
             quint64 longestStuckDuration : 20; // ~ max 16min (msecs)
@@ -99,9 +100,13 @@ public:
     QList<EventLoopData *> m_eventLoops;
 
     QAtomicInteger<int> m_threadIsBeingKilled = 0;
-    QAtomicInteger<qint64> m_referenceTime;
     bool m_watchingMainEventLoop = false;
     QThread *m_wdThread;
+
+    mutable QReadWriteLock m_referenceTimeLock;
+    qint64 m_referenceTimeOffset;
+    qint64 msecsSinceReferenceOffset() const;
+    QTimer *m_referenceTimeResetTimer;
 
     static Watchdog *s_instance;
     static QAtomicPointer<QTimer> s_mainThreadTimer; // we can't delete the timer in the destructor

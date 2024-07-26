@@ -3,6 +3,8 @@
 
 #include <QCoreApplication>
 #include <QThread>
+#include <private/qquickwindow_p.h>
+#include <private/qsgrenderloop_p.h>
 
 #include "logging.h"
 #include "utilities.h"
@@ -472,10 +474,18 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
             return;
     }
 
+    auto renderLoop = QQuickWindowPrivate::get(quickWindow)->windowManager;
+    if (!renderLoop) {
+        // this is not a visible window, but a render target
+        return;
+    }
+
     auto *qwd = new QuickWindowData;
     static quint64 uniqueCounter = 0;
     qwd->m_window = quickWindow;
     qwd->m_uniqueCounter = ++uniqueCounter;
+    qwd->m_threadedRenderLoop = (qstrcmp(renderLoop->metaObject()->className(),
+                                         "QSGGuiThreadRenderLoop") != 0);
     m_quickWindows << qwd;
 
     if (!m_quickWindowCheck->isActive())
@@ -487,6 +497,8 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
     const auto title = quickWindow->title();
     if (className && qstrcmp(className, "QQuickWindowQmlImpl"))
         info = info + u" / class: " + QString::fromLatin1(className);
+    if (qwd->m_threadedRenderLoop)
+        info = info + u" / threaded rendering";
     if (!objectName.isEmpty())
         info = info + u" / name: \"" + objectName + u'"';
     if (!title.isEmpty())
@@ -514,7 +526,10 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
     {
         // we're on the render thread
         Q_ASSERT(QThread::currentThread() != m_wdThread);
-        Q_ASSERT(QThread::currentThread() != qApp->thread());
+        if (qwd->m_threadedRenderLoop)
+            Q_ASSERT(QThread::currentThread() != qApp->thread());
+        else
+            Q_ASSERT(QThread::currentThread() == qApp->thread());
 
         // this function is never called on the same wd concurrently!
 

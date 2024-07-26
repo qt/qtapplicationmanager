@@ -74,6 +74,7 @@ public:
         QPointer<QQuickWindow> m_window;
         quint64 m_uniqueCounter = 0; // to avoid an ABA problem on m_window
         AtomicState m_lastState = { 0 };
+        bool m_threadedRenderLoop = false;
 
         // written from the render thread, read from the watchdog thread
         QAtomicInteger<quint64> m_state = { 0 };

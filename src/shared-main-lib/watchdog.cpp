@@ -25,6 +25,37 @@
 using namespace Qt::StringLiterals;
 using namespace std::chrono_literals;
 
+/*
+
+The watchdog is a class that monitors the event loop and the rendering of a QQuickWindow.
+Since the code is running on a lot of different threads, we need to be careful with the
+synchronization and atomicity of our data structures.
+
+The 64 bit "state" fields need to be atomic because they are read and written from multiple threads,
+but this leaves us with only 30 bits for time duration values, which gives us a duration of about
+12 days before we wrap around.
+
+QElapsedTimer::msecsSinceReference() gives us a monotonic clock with msec resolution.
+The problem is that this is a 64bit value and it might not even start at zero when the
+system boots (or the application starts).
+
+In order to deal with this, we need to "zero" the reference time when the application starts,
+but we also need to handle wrap arounds before we reach 12 days, i.e. we need to re-zero the
+reference time via a dynamic offset.
+The difficulty here is that multiple threads are using that offset to calculate the current time.
+If we wanted to keep this completely lock-free, we would need to either use 128 bit atomics or MCAS
+(Multi-Word Compare And Swap), but both are not available in standard C++ or Qt.
+
+The next best option is a read-write-lock, because we are reading from multiple threads all the
+time and only write the updated reference time offset once every 12 days latest.
+QReadWriteLock is luckily very efficient here, as locking and unlocking for reading is just an
+atomic operation. Only locking and unlocking for writing needs an expensive mutex lock.
+
+When resetting the offset, we need to make sure that all the old 30 bit time values get invalidated,
+as they were based on the old offset. We might not detect a hang when this update happens, but this
+is a rare occurrence.
+
+*/
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -118,6 +149,7 @@ QAtomicPointer<QTimer> WatchdogPrivate::s_mainThreadTimer;
 WatchdogPrivate::WatchdogPrivate(Watchdog *q)
     : QObject(nullptr)
     , m_wdThread(new QThread(q))
+    , m_referenceTimeResetTimer(new QTimer(this))
     , m_quickWindowCheck(new QTimer(this))
     , m_eventLoopCheck(new QTimer(this))
 {
@@ -135,10 +167,40 @@ WatchdogPrivate::WatchdogPrivate(Watchdog *q)
     QElapsedTimer et;
     et.start();
     Q_ASSERT(et.isMonotonic());
-    m_referenceTime = et.msecsSinceReference();
+    m_referenceTimeOffset = et.msecsSinceReference();
 
-    //TODO: detect overflow on the 30 bit elapsed timer and reset the reference time
-    //      needs to < ~12days, maybe default to 1day
+    // Our 30 bit elapsed timer is only good for a maximum time duration of ~12 days. After that
+    // we need to reset the reference time and also clear the stuck counters.
+    constexpr auto daysUntilReset = uint(((1UL << 30) -1) / (1000 * 60 * 60 * 24)); // 12 days
+    static_assert(daysUntilReset == 12, "daysUntilReset must be 12 for 30 bist of precision");
+    constexpr std::chrono::milliseconds resetInterval = daysUntilReset * 24h; // 'd' is only available in C++20
+    m_referenceTimeResetTimer->setInterval(resetInterval);
+
+    connect(m_referenceTimeResetTimer, &QTimer::timeout,
+            this, [this]() {
+        Q_ASSERT(QThread::currentThread() == m_wdThread);
+
+        qCWarning(LogWatchdogStat) << "Resetting reference time and stuck counters";
+
+        // Write Lock required here, as other threads are reading the reference time
+
+        m_referenceTimeLock.lockForWrite(); // vvv Write Lock Start vvv
+        QElapsedTimer et;
+        et.start();
+        m_referenceTimeOffset = et.msecsSinceReference();
+
+        // invalidate all current 30 bit counters, as they are based on the old value
+
+        AtomicState resetState { };
+        for (auto *qwd : std::as_const(m_quickWindows))
+            qwd->m_state = resetState.pod;
+        for (auto *eld : std::as_const(m_eventLoops))
+            eld->m_state = resetState.pod;
+
+        m_referenceTimeLock.unlock(); // ^^^ Write Lock End ^^^
+    });
+
+    QMetaObject::invokeMethod(m_referenceTimeResetTimer, qOverload<>(&QTimer::start), Qt::QueuedConnection);
 
     connect(m_quickWindowCheck, &QTimer::timeout,
             this, &WatchdogPrivate::quickWindowCheck);
@@ -296,11 +358,14 @@ void WatchdogPrivate::watchEventLoop(QThread *thread)
             eld->m_threadHandle = currentThreadHandle();
 
         AtomicState as;
+
+        // Read Lock required here, as we're NOT on the WD thread
+
+        m_referenceTimeLock.lockForRead(); // vvv Read Lock Start vvv
+
         as.pod = eld->m_state;
 
-        QElapsedTimer et;
-        et.start();
-        quint64 now = quint64(et.msecsSinceReference() - m_referenceTime);
+        quint64 now = quint64(msecsSinceReferenceOffset());
         quint64 expectedAt = as.eventLoopBits.expectedAt;
         quint64 elapsed = (!expectedAt || (now < expectedAt)) ? 0 : (now - expectedAt);
 
@@ -314,15 +379,17 @@ void WatchdogPrivate::watchEventLoop(QThread *thread)
         if (wasStuck && (elapsed > as.eventLoopBits.longestStuckDuration))
             as.eventLoopBits.longestStuckDuration = std::clamp(elapsed, 0ULL, (1ULL << 20) - 1);
 
+        as.eventLoopBits.expectedAt = now + maxTime / 2;
+        eld->m_state = as.pod;
+
+        m_referenceTimeLock.unlock(); // ^^^ Read Lock End ^^^
+
         if (wasStuck) {
             qCWarning(LogWatchdogLive).nospace()
                 << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
                 << " was stuck for " << elapsed << "ms, but then continued (the warn threshold is "
                 << maxTime << "ms)";
         }
-
-        as.eventLoopBits.expectedAt = now + maxTime / 2;
-        eld->m_state = as.pod;
 
         auto nextDuration = (m_warnEventLoopTime > 0ms ? m_warnEventLoopTime : m_killEventLoopTime) / 2;
         if (eld->m_timer->intervalAsDuration() != nextDuration)
@@ -370,6 +437,8 @@ void WatchdogPrivate::eventLoopCheck()
         if (!eld->m_thread || m_threadIsBeingKilled)
             continue;
 
+        // No Read Lock required here, as we're on the WD thread
+
         AtomicState as;
         as.pod = eld->m_state;
 
@@ -392,9 +461,7 @@ void WatchdogPrivate::eventLoopCheck()
         }
         eld->m_lastState.pod = as.pod;
 
-        QElapsedTimer et;
-        et.start();
-        quint64 now = quint64(et.msecsSinceReference() - m_referenceTime);
+        quint64 now = quint64(msecsSinceReferenceOffset());
         quint64 expectedAt = as.eventLoopBits.expectedAt;
         quint64 elapsed = (!expectedAt || (now < expectedAt)) ? 0 : (now - expectedAt);
         quint64 warnTime = quint64(m_warnEventLoopTime.count());
@@ -548,12 +615,15 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
         }
 
         AtomicState as;
-        as.pod = qwd->m_state;
 
+        // Read Lock required here, as we're NOT on the WD thread
+
+        m_referenceTimeLock.lockForRead(); // vvv Read Lock Start vvv
+
+        as.pod = qwd->m_state;
         as.quickWindowBits.state = quint64(toState);
-        QElapsedTimer et;
-        et.start();
-        quint64 now = quint64(et.msecsSinceReference() - m_referenceTime);
+
+        quint64 now = quint64(msecsSinceReferenceOffset());
         quint64 startedAt = as.quickWindowBits.startedAt;
         quint64 elapsed = (!startedAt || (now < startedAt)) ? 0 : (now - startedAt);
         as.quickWindowBits.startedAt =  now;
@@ -561,22 +631,26 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
         bool wasStuck = false;
         quint64 maxTime = quint64(m_warnQuickWindowTime.count());
 
-        if (maxTime && (elapsed > maxTime)) {
-            wasStuck = true;
+        if (fromState != Idle) { // being stuck in the 'Idle' state is not an issue
+            if (maxTime && (elapsed > maxTime)) {
+                wasStuck = true;
 
-            if ((fromState == Sync) && (toState == Render))
-                as.quickWindowBits.stuckCounterSync = std::clamp(as.quickWindowBits.stuckCounterSync + 1ULL, 0ULL, (1ULL << 4) - 1);
-            else if ((fromState == Render) && (toState == Swap))
-                as.quickWindowBits.stuckCounterRender = std::clamp(as.quickWindowBits.stuckCounterRender + 1ULL, 0ULL, (1ULL << 4) - 1);
-            else if ((fromState == Swap) && (toState == Idle))
-                as.quickWindowBits.stuckCounterSwap = std::clamp(as.quickWindowBits.stuckCounterSwap + 1ULL, 0ULL, (1ULL << 4) - 1);
-        }
-        if (wasStuck && (elapsed > as.quickWindowBits.longestStuckDuration)) {
-            as.quickWindowBits.longestStuckType = quint64(fromState);
-            as.quickWindowBits.longestStuckDuration = std::clamp(elapsed, 0ULL, (1ULL << 18) - 1);
+                if ((fromState == Sync) && (toState == Render))
+                    as.quickWindowBits.stuckCounterSync = std::clamp(as.quickWindowBits.stuckCounterSync + 1ULL, 0ULL, (1ULL << 4) - 1);
+                else if ((fromState == Render) && (toState == Swap))
+                    as.quickWindowBits.stuckCounterRender = std::clamp(as.quickWindowBits.stuckCounterRender + 1ULL, 0ULL, (1ULL << 4) - 1);
+                else if ((fromState == Swap) && (toState == Idle))
+                    as.quickWindowBits.stuckCounterSwap = std::clamp(as.quickWindowBits.stuckCounterSwap + 1ULL, 0ULL, (1ULL << 4) - 1);
+            }
+            if (wasStuck && (elapsed > as.quickWindowBits.longestStuckDuration)) {
+                as.quickWindowBits.longestStuckType = quint64(fromState);
+                as.quickWindowBits.longestStuckDuration = std::clamp(elapsed, 0ULL, (1ULL << 18) - 1);
+            }
         }
 
         qwd->m_state = as.pod;
+
+        m_referenceTimeLock.unlock(); // ^^^ Read Lock End ^^^
 
         if (wasStuck) {
             qCWarning(LogWatchdogLive).nospace()
@@ -620,6 +694,8 @@ void WatchdogPrivate::quickWindowCheck()
         if (!qwd->m_window)
             continue;
 
+        // No Read Lock required here, as we're on the WD thread
+
         AtomicState as;
         as.pod = qwd->m_state;
 
@@ -657,9 +733,7 @@ void WatchdogPrivate::quickWindowCheck()
         if (as.quickWindowBits.state == quint64(Idle))
             continue;
 
-        QElapsedTimer et;
-        et.start();
-        quint64 now = quint64(et.msecsSinceReference() - m_referenceTime);
+        quint64 now = quint64(msecsSinceReferenceOffset());
         quint64 startedAt = as.quickWindowBits.startedAt;
         quint64 elapsed = (!startedAt || (now < startedAt)) ? 0 : (now - startedAt);
         quint64 warnTime = quint64(m_warnQuickWindowTime.count());
@@ -684,6 +758,14 @@ void WatchdogPrivate::quickWindowCheck()
                 << " for over " << elapsed << "ms (the warn threshold is " << warnTime << "ms)";
         }
     }
+}
+
+qint64 WatchdogPrivate::msecsSinceReferenceOffset() const
+{
+    QElapsedTimer et;
+    et.start();
+    qint64 refTime = et.msecsSinceReference();
+    return refTime - m_referenceTimeOffset;
 }
 
 

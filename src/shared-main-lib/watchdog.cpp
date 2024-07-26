@@ -460,6 +460,9 @@ bool WatchdogPrivate::isQuickWindowWatchingEnabled() const
 
 void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
 {
+    // This function is called from the main thread with Qt::BlockingQueuedConnection.
+    // We need to be as quick as possible here to not block the UI.
+
     // we're on the wd thread
     Q_ASSERT(QThread::currentThread() == m_wdThread);
 
@@ -504,10 +507,15 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
     if (!title.isEmpty())
         info = info + u" / title: \"" + title + u'"';
 
-    qCInfo(LogWatchdogStat).nospace().noquote()
-        << "Window " << static_cast<void *>(quickWindow) << info << " is being watched now "
-        << "(check every " << m_quickWindowCheckInterval << ", warn/kill after "
-        << m_warnQuickWindowTime << "/" << m_killQuickWindowTime << ")";
+    // We're in a BlockingQueued slot call from the UI thread, we cannot log here
+    QMetaObject::invokeMethod(this, [win = static_cast<void *>(quickWindow), info,
+               check = m_quickWindowCheckInterval, warn = m_warnQuickWindowTime,
+               kill = m_killQuickWindowTime]() {
+            qCInfo(LogWatchdogStat).nospace().noquote()
+                << "Window " << win << info << " is being watched now "
+                << "(check every " << check << ", warn/kill after "
+                << warn << "/" << kill << ")";
+        }, Qt::QueuedConnection);
 
     connect(quickWindow, &QObject::destroyed, this, [this, qwd](QObject *o) {
         // we're on wd thread

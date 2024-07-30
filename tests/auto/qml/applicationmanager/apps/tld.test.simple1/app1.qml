@@ -34,4 +34,15 @@ ApplicationManagerWindow {
                           })
         }
     }
+    IntentHandler {
+        intentIds: [ "qapplicationProperties" ]
+        onRequestReceived: function(req) {
+            req.sendReply({
+                              "name": Application.name,
+                              "domain": Application.domain,
+                              "organization": Application.organization,
+                              "version": Application.version
+                          })
+        }
+    }
 }

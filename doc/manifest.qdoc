@@ -129,6 +129,9 @@ The fields within the \c info.yaml manifest data (second YAML document) are as f
     \li \c version
     \li string
     \li The version of the package as a string.
+
+        This will also be used to set up QCoreApplication::applicationVersion for multi-process QML
+        applications.
 \row
     \li \c applications
     \li list
@@ -159,6 +162,12 @@ The fields used for each item within the \c applications list are as follows:
         help keep track of your IDs in the long run. The helper function
         \l{PackageManager::validateDnsName} can help you to enforce this policy from the
         System UI.
+
+        This ID will also be used to set up QCoreApplication::applicationName for multi-process QML
+        applications. If you are using reverse DNS notation, the QCoreApplication::organizationName
+        and QCoreApplication::organizationDomain properties will both be set to the domain part of
+        the ID. Otherwise the organization name and domain will default to \e{QtProject} and
+        \e{qt-project.org} respectively.
 \row
     \li \c code
     \li string

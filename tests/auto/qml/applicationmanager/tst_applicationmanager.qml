@@ -500,4 +500,35 @@ TestCase {
         ApplicationManager.stopApplication(simpleApplication.id)
         tryVerify(() => { return simpleApplication.runState === Am.NotRunning })
     }
+
+    function test_qapplicationProperties() {
+        let req = IntentClient.sendIntentRequest("qapplicationProperties", simpleApplication.id, { })
+        verify(req)
+        tryVerify(() => { return req.succeeded })
+
+        let qap = { }
+
+        if (singleProcess) {
+            qap = {
+                "name": Application.name,
+                "domain": Application.domain,
+                "organization": Application.organization,
+                "version": Application.version
+            }
+        } else {
+            qap = {
+                "name": "simple1",
+                "domain": "test.tld",
+                "organization": "test.tld",
+                "version": simpleApplication.version
+            }
+        }
+
+        compare(req.result, qap)
+
+        // cleanup
+        compare(simpleApplication.runState, Am.Running)
+        ApplicationManager.stopApplication(simpleApplication.id)
+        tryVerify(() => { return simpleApplication.runState === Am.NotRunning })
+    }
 }

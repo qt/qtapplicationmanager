@@ -48,8 +48,9 @@ make sure that you can see at least one \c appman-launcher-qml process running.
 
 \section1 How do I find out why my application manager instance doesn't support multi-process mode?
 
-Check the "Application Manager configuration", which is visible when you run the \c qmake command.
-It's possible that your configuration doesn't support the \c QtCompositor module.
+Check the "Application Manager configuration" summary, which is visible at the end of the
+configuration step. It's possible that your Qt installation doesn't come with the \c QtCompositor
+module.
 
 \section1 My applications are running slowly within the application manager. What are some possible solutions?
 

@@ -1,8 +1,0 @@
-<!-- Only needed for qmake -->
-<!DOCTYPE RCC><RCC version="1.0">
-<qresource prefix="qt/qml/SystemUi">
-    <file>main.qml</file>
-    <file>close.png</file>
-    <file>grab.png</file>
-</qresource>
-</RCC>

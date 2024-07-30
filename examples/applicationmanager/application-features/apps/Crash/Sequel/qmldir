@@ -1,3 +1,0 @@
-module Sequel
-plugin sequelmoduleplugin
-CrashAnimation 1.0 CrashAnimation.qml

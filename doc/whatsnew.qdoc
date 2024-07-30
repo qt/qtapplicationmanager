@@ -44,6 +44,12 @@ In addition, here are some additional, noteworthy changes:
         setup.
     \li The \c installationLocations configuration field that was deprecated in 5.14 was finally
         removed.
+    \li All examples have been modernized: support for QMake has been removed and they now all use
+        CMake's QML support to create compiled modules. This means that the simple examples will
+        not run directly from the source directory out of the box anymore using the \c appman
+        binary as a runtime (like \c qml and \c qmlscene).
+        You can still start them this way, but you have to manually specify the location of the
+        \c apps folder via the \c --builtin-apps-manifest-dir command line option.
 \endlist
 
 \section1 Qt ApplicationManager 6.7

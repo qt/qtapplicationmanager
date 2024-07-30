@@ -262,18 +262,43 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         return;
     m_launched = true;
 
-    static QString applicationId = application.value(u"id"_s).toString();
-    auto *am = ApplicationMain::instance();
-    am->setApplication(convertFromDBusVariant(application).toMap());
-    am->setSystemProperties(convertFromDBusVariant(systemProperties).toMap());
+    static const QString applicationId = application.value(u"id"_s).toString();
 
-    if (m_quickLaunched) {
-        //StartupTimer::instance()->createReport(applicationId  + u" [process launch]"_s);
-        StartupTimer::instance()->reset();
-    } else {
-        StartupTimer::instance()->checkpoint("starting application");
+    if (applicationId.isEmpty()) {
+        qCCritical(LogQmlRuntime) << "did not receive an application id";
+        QCoreApplication::exit(2);
+        return;
     }
 
+    const QStringList applicationIdParts = applicationId.split(u'.');
+    if (applicationIdParts.size() < 2) {
+        Logging::setApplicationId(applicationId.toLocal8Bit());
+        QCoreApplication::setApplicationName(applicationId);
+    } else {
+        const QString appName = applicationIdParts.last();
+        QString domainName;
+        QString loggingId;
+
+        for (qsizetype i = 0; i < applicationIdParts.size() - 1; ++i) {
+            // reverse the reverse-DNS domain name
+            if (!domainName.isEmpty())
+                domainName.prepend(u'.');
+            domainName.prepend(applicationIdParts.at(i));
+
+            // shorten application id to make the debug output more readable
+            loggingId.append(applicationIdParts.at(i).at(0));
+            loggingId.append(u'.');
+        }
+        loggingId.append(applicationIdParts.last());
+        Logging::setApplicationId(loggingId.toLocal8Bit());
+
+        // we need these to be unique, because other libraries (e.g. QtInsights) expect them to be
+        QCoreApplication::setApplicationName(appName);
+        QCoreApplication::setOrganizationName(domainName);
+        QCoreApplication::setOrganizationDomain(domainName);
+    }
+    if (const auto version = application.value(u"version"_s).toString(); !version.isEmpty())
+        QCoreApplication::setApplicationVersion(version);
 
     if (Logging::isDltAvailable() && Logging::isDltEnabled()) {
         // Change the DLT Application description, to easily identify the application on the DLT logs.
@@ -295,6 +320,17 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     // Dress up the ps output to make it easier to correlate all the launcher processes
     ProcessTitle::augmentCommand(applicationId.toLocal8Bit().constData());
 
+    auto *am = ApplicationMain::instance();
+    am->setApplication(convertFromDBusVariant(application).toMap());
+    am->setSystemProperties(convertFromDBusVariant(systemProperties).toMap());
+
+    if (m_quickLaunched) {
+        //StartupTimer::instance()->createReport(applicationId  + u" [process launch]"_s);
+        StartupTimer::instance()->reset();
+    } else {
+        StartupTimer::instance()->checkpoint("starting application");
+    }
+
     QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(u"runtimeParameters"_s));
 
     qCDebug(LogQmlRuntime) << "loading" << applicationId << "- main:" << qmlFile << "- document:" << document
@@ -303,23 +339,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     if (!QDir::setCurrent(baseDir)) {
         qCCritical(LogQmlRuntime) << "could not set the current directory to" << baseDir;
-        QCoreApplication::exit(2);
-        return;
-    }
-
-    if (!applicationId.isEmpty()) {
-        // shorten application id to make the debug output more readable
-
-        auto sl = applicationId.split(u'.');
-        applicationId.clear();
-        for (int i = 0; i < sl.size() - 1; ++i) {
-            applicationId.append(sl.at(i).at(0));
-            applicationId.append(u'.');
-        }
-        applicationId.append(sl.last());
-        Logging::setApplicationId(applicationId.toLocal8Bit());
-    } else {
-        qCCritical(LogQmlRuntime) << "did not receive an application id";
         QCoreApplication::exit(2);
         return;
     }

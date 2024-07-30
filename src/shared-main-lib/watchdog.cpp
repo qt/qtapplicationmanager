@@ -550,11 +550,6 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
         AtomicState as;
         as.pod = qwd->m_state;
 
-        if (as.quickWindowBits.state != quint64(fromState))
-            qCWarning(LogWatchdogLive) << "Window" << static_cast<void *>(qwd->m_window.get())
-                                       << "state mismatch: expected" << fromState
-                                       << "but got" << RenderState(as.quickWindowBits.state);
-
         as.quickWindowBits.state = quint64(toState);
         QElapsedTimer et;
         et.start();

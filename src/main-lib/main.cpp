@@ -1157,6 +1157,12 @@ QString Main::hardwareId() const
     return hardwareId;
 }
 
+bool Main::notify(QObject *receiver, QEvent *event)
+{
+    const SharedMain::EventNotifyWatcher enw(receiver, event);
+    return MainBase::notify(receiver, event);
+}
+
 QT_END_NAMESPACE_AM
 
 #include "moc_main.cpp"

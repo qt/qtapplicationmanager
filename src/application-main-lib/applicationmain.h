@@ -111,6 +111,9 @@ public:
     // Notification helper
     Notification *createNotification(QObject *parent = nullptr);
 
+public:
+    bool notify(QObject *receiver, QEvent *event) override;
+
 private:
     static ApplicationMain *s_instance;
     Q_DISABLE_COPY_MOVE(ApplicationMain)

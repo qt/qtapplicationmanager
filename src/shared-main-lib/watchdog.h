@@ -19,6 +19,7 @@ class Watchdog : public QObject
     Q_OBJECT
 public:
     static Watchdog *create();
+    inline static Watchdog *instance() { return s_instance; }
     ~Watchdog() override;
 
     void setEventLoopTimeouts(std::chrono::milliseconds check,
@@ -26,16 +27,22 @@ public:
     void setQuickWindowTimeouts(std::chrono::milliseconds check,
                                 std::chrono::milliseconds warn, std::chrono::milliseconds kill);
 
-protected:
-    bool eventFilter(QObject *watched, QEvent *event) override;
+    inline bool isActive() const { return m_active.loadRelaxed(); }
+
+    // callback API that needs to be fed from QCoreApplication::notify
+    void eventCallback(const QThread *thread, bool begin, QObject *receiver, QEvent *event);
 
 private:
     Watchdog();
     void shutdown();
     Q_DISABLE_COPY_MOVE(Watchdog)
+    static Watchdog *s_instance;
 
     WatchdogPrivate *d = nullptr;
+    QAtomicInteger<bool> m_active = false;
     bool m_cleanShutdown = false;
+
+    friend class WatchdogPrivate;
 };
 
 QT_END_NAMESPACE_AM

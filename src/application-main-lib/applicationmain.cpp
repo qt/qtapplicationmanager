@@ -496,6 +496,12 @@ Notification *ApplicationMain::createNotification(QObject *parent)
     return new Notification(parent, applicationId());
 }
 
+bool ApplicationMain::notify(QObject *receiver, QEvent *event)
+{
+    const SharedMain::EventNotifyWatcher enw(receiver, event);
+    return ApplicationMainBase::notify(receiver, event);
+}
+
 QT_END_NAMESPACE_AM
 
 #include "moc_applicationmain.cpp"

@@ -112,6 +112,9 @@ protected:
 
     QString hardwareId() const;
 
+public:
+    bool notify(QObject *receiver, QEvent *event) override; // for watchdog
+
 private:
     static int &preConstructor(int &argc, char **argv, InitFlags initFlags);
 

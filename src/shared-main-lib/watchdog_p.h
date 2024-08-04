@@ -10,7 +10,7 @@
 #include <QtCore/QTimer>
 #include <QtQuick/QQuickWindow>
 #include <QtCore/QEventLoop>
-#include <QtCore/QReadWriteLock>
+#include <QtCore/QThreadStorage>
 
 #include "watchdog.h"
 
@@ -49,36 +49,21 @@ public:
         Swap,
     };
 
-    union AtomicState {
-        quint64 pod = 0;
-        struct {
-            quint64 state                : 2;  // enum RenderState
-            quint64 startedAt            : 30; // ~ max 12days (msecs since reference offset)
-            quint64 stuckCounterSync     : 4;
-            quint64 stuckCounterRender   : 4;
-            quint64 stuckCounterSwap     : 4;
-            quint64 longestStuckType     : 2;  // enum RenderState
-            quint64 longestStuckDuration : 18; // ~ max 4min (msecs)
-        } quickWindowBits;
-        struct {
-            quint64 reserved1            : 2;
-            quint64 expectedAt           : 30; // ~ max 12days (msecs since reference offset)
-            quint64 stuckCounter         : 4;
-            quint64 reserved2            : 8;
-            quint64 longestStuckDuration : 20; // ~ max 16min (msecs)
-        } eventLoopBits;
-    };
-    Q_STATIC_ASSERT(sizeof(AtomicState) == 8);
-
     struct QuickWindowData {
         // watchdog thread use only
         QPointer<QQuickWindow> m_window;
         quint64 m_uniqueCounter = 0; // to avoid an ABA problem on m_window
-        AtomicState m_lastState = { 0 };
         bool m_threadedRenderLoop = false;
+        uint m_stuckCounterSync = 0;
+        uint m_stuckCounterRender = 0;
+        uint m_stuckCounterSwap = 0;
+        uint m_lastCounter = 0;
+        std::chrono::milliseconds m_longestStuckDuration = { };
+        RenderState m_longestStuckType = Idle;
 
         // written from the render thread, read from the watchdog thread
-        QAtomicInteger<quint64> m_state = { 0 };
+        QAtomicInteger<qint64> m_timer = { 0 };
+        QAtomicInteger<char> m_renderState = { char(Idle) };
         QPointer<QThread> m_renderThread;
         quintptr m_renderThreadHandle = 0;
         QAtomicInteger<int> m_renderThreadSet = 0; // QPointer is not thread-safe
@@ -88,28 +73,29 @@ public:
     struct EventLoopData {
         // watchdog thread use only
         QPointer<QThread> m_thread;
-        quint64 m_uniqueCounter = 0; // to avoid an ABA problem on m_window
-        AtomicState m_lastState = { 0 };
+        quint64 m_uniqueCounter = 0; // to avoid an ABA problem on m_thread
         bool m_isMainThread = false;
+        uint m_stuckCounter = 0;
+        uint m_lastCounter = 0;
+        std::chrono::milliseconds m_longestStuckDuration = { };
 
         // written from the watched thread, read from the watchdog thread
-        QAtomicInteger<quint64> m_state = { 0 };
-        QTimer *m_timer = nullptr;
+        QAtomicInteger<qint64> m_timer = { 0 };
         QAtomicInteger<quintptr> m_threadHandle = 0; // QPointer is not thread-safe
     };
+    void eventNotify(EventLoopData *eld, bool begin);
+    // This needs to be static to outlive qApp, as we cannot remove local data once set,
+    // which is a bit of design flaw in QThreadStorage
+    static QThreadStorage<EventLoopData *> s_eventLoopData;
+
     QList<EventLoopData *> m_eventLoops;
 
     QAtomicInteger<int> m_threadIsBeingKilled = 0;
     bool m_watchingMainEventLoop = false;
     QThread *m_wdThread;
 
-    mutable QReadWriteLock m_referenceTimeLock;
-    qint64 m_referenceTimeOffset;
-    qint64 msecsSinceReferenceOffset() const;
-    QTimer *m_referenceTimeResetTimer;
-
-    static Watchdog *s_instance;
-    static QAtomicPointer<QTimer> s_mainThreadTimer; // we can't delete the timer in the destructor
+    quint64 now() const;
+    qint64 m_referenceTime;
 
     QTimer *m_quickWindowCheck;
     std::chrono::milliseconds m_quickWindowCheckInterval { };

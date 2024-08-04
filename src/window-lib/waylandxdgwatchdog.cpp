@@ -76,7 +76,7 @@ void WaylandXdgWatchdog::setTimeouts(std::chrono::milliseconds checkInterval,
         m_warnTimeout = 0ms;
 
     if (m_warnTimeout > m_killTimeout) {
-        qCWarning(LogWatchdogStat).nospace()
+        qCWarning(LogWatchdog).nospace()
             << "Wayland client warning timeout (" << m_warnTimeout
             << ") is greater than kill timeout (" << m_killTimeout << ")";
     }
@@ -125,12 +125,12 @@ void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
     if (!m_pingTimer.isActive())
         m_pingTimer.start();
 
-    qCInfo(LogWatchdogStat).nospace().noquote()
+    qCInfo(LogWatchdog).nospace().noquote()
         << cd->m_description << " is being watched now (check every " << m_checkInterval
         << ", warn/kill after " << m_warnTimeout << "/" << m_killTimeout << ")";
 
     connect(client, &QObject::destroyed, this, [this, cd](QObject *) {
-        qCInfo(LogWatchdogStat).noquote()
+        qCInfo(LogWatchdog).noquote()
             << cd->m_description << "has disconnected and is not being watched anymore";
         m_clients.removeOne(cd);
         delete cd;
@@ -175,7 +175,7 @@ void WaylandXdgWatchdog::onPongWarnTimeout()
 
     for (auto *cd : std::as_const(m_clients)) {
         if (cd->m_pingSerial) {
-            qCCritical(LogWatchdogStat).nospace().noquote()
+            qCCritical(LogWatchdog).nospace().noquote()
                 << cd->m_description
                 << " still hasn't sent a pong reply to a ping request in over "
                 << elapsed << " (the warn threshold is" << m_warnTimeout << ")";
@@ -193,7 +193,7 @@ void WaylandXdgWatchdog::onPongKillTimeout()
         if (cd->m_pingSerial) {
             cd->m_pingSerial = 0;
 
-            qCCritical(LogWatchdogStat).nospace().noquote()
+            qCCritical(LogWatchdog).nospace().noquote()
                 << cd->m_description
                 << " is getting killed, because it failed to send a pong reply to a ping request within "
                 << m_killTimeout;
@@ -230,7 +230,7 @@ void WaylandXdgWatchdog::onPongReceived(uint serial)
         return;
 
     if ((m_warnTimeout > 0ms) && (elapsed > m_warnTimeout)) {
-        qCWarning(LogWatchdogLive).nospace().noquote()
+        qCWarning(LogWatchdog).nospace().noquote()
             << foundCd->m_description << " needed " << elapsed
             << " to send a pong reply to a ping request (the warn threshold is "
             << m_warnTimeout << ")";

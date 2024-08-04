@@ -140,6 +140,7 @@ void SharedMain::setupQmlDebugging(bool qmlDebugging)
 
 void SharedMain::setupWatchdog(const WatchdogConfiguration &cfg)
 {
+    // we always need a Watchdog instance, as it might need to service the systemd API
     auto *wd = Watchdog::create();
 
     wd->setEventLoopTimeouts(cfg.eventloop.checkInterval,

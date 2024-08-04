@@ -31,29 +31,21 @@ The watchdog is a class that monitors the event loop and the rendering of a QQui
 Since the code is running on a lot of different threads, we need to be careful with the
 synchronization and atomicity of our data structures.
 
-The 64 bit "state" fields need to be atomic because they are read and written from multiple threads,
-but this leaves us with only 30 bits for time duration values, which gives us a duration of about
-12 days before we wrap around.
+The "exactly how long" part of the watchdog is run directly on the monitored threads, using
+synchronous callbacks. In order to minimize the runtime impact, these callbacks do very little
+work: they just record the current time and the state in atomic variables. Any logging due to
+exceeding timeouts is delegated to the watchdog thread via QMetaObject::invokeMethod.
 
-QElapsedTimer::msecsSinceReference() gives us a monotonic clock with msec resolution.
-The problem is that this is a 64bit value and it might not even start at zero when the
-system boots (or the application starts).
+The periodic checks and all logging is done from the dedicated watchdog thread.
 
-In order to deal with this, we need to "zero" the reference time when the application starts,
-but we also need to handle wrap arounds before we reach 12 days, i.e. we need to re-zero the
-reference time via a dynamic offset.
-The difficulty here is that multiple threads are using that offset to calculate the current time.
-If we wanted to keep this completely lock-free, we would need to either use 128 bit atomics or MCAS
-(Multi-Word Compare And Swap), but both are not available in standard C++ or Qt.
-
-The next best option is a read-write-lock, because we are reading from multiple threads all the
-time and only write the updated reference time offset once every 12 days latest.
-QReadWriteLock is luckily very efficient here, as locking and unlocking for reading is just an
-atomic operation. Only locking and unlocking for writing needs an expensive mutex lock.
-
-When resetting the offset, we need to make sure that all the old 30 bit time values get invalidated,
-as they were based on the old offset. We might not detect a hang when this update happens, but this
-is a rare occurrence.
+Shutdown of the watchdog is tricky. Ideally we get the QCoreApplication::aboutToQuit signal: In this
+case we can just stop the watchdog thread, wait for it to finish and then set the 'clean shutdown'
+flag.
+If the application's event loop was never started, there will be no aboutToQuit signal: In this case
+we have to rely on the Watchdog destructor (being triggered by the QCoreApplication destructor) to
+stop the watchdog thread, if the 'clean shutdown' flag is not set. This is not ideal, because the
+watchdog thread is still active while the QCoreApplication instance is being destroyed and this will
+result in TSAN warnings.
 
 */
 
@@ -128,7 +120,7 @@ static void killThread(quintptr threadHandle)
             ::CloseHandle(winHandle);
         }
         if (!ok) {
-            qCCritical(LogWatchdogStat).nospace()
+            qCCritical(LogWatchdog).nospace()
                 << "Failed to kill thread " << winId << ". Aborting process instead";
             ::abort();
         }
@@ -143,13 +135,12 @@ static void killThread(quintptr threadHandle)
 // WatchdogPrivate
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-Watchdog *WatchdogPrivate::s_instance = nullptr;
-QAtomicPointer<QTimer> WatchdogPrivate::s_mainThreadTimer;
+QThreadStorage<WatchdogPrivate::EventLoopData *> WatchdogPrivate::s_eventLoopData = { };
+
 
 WatchdogPrivate::WatchdogPrivate(Watchdog *q)
     : QObject(nullptr)
     , m_wdThread(new QThread(q))
-    , m_referenceTimeResetTimer(new QTimer(this))
     , m_quickWindowCheck(new QTimer(this))
     , m_eventLoopCheck(new QTimer(this))
 {
@@ -167,40 +158,7 @@ WatchdogPrivate::WatchdogPrivate(Watchdog *q)
     QElapsedTimer et;
     et.start();
     Q_ASSERT(et.isMonotonic());
-    m_referenceTimeOffset = et.msecsSinceReference();
-
-    // Our 30 bit elapsed timer is only good for a maximum time duration of ~12 days. After that
-    // we need to reset the reference time and also clear the stuck counters.
-    constexpr auto daysUntilReset = uint(((1UL << 30) -1) / (1000 * 60 * 60 * 24)); // 12 days
-    static_assert(daysUntilReset == 12, "daysUntilReset must be 12 for 30 bist of precision");
-    constexpr std::chrono::milliseconds resetInterval = daysUntilReset * 24h; // 'd' is only available in C++20
-    m_referenceTimeResetTimer->setInterval(resetInterval);
-
-    connect(m_referenceTimeResetTimer, &QTimer::timeout,
-            this, [this]() {
-        Q_ASSERT(QThread::currentThread() == m_wdThread);
-
-        qCWarning(LogWatchdogStat) << "Resetting reference time and stuck counters";
-
-        // Write Lock required here, as other threads are reading the reference time
-
-        m_referenceTimeLock.lockForWrite(); // vvv Write Lock Start vvv
-        QElapsedTimer et;
-        et.start();
-        m_referenceTimeOffset = et.msecsSinceReference();
-
-        // invalidate all current 30 bit counters, as they are based on the old value
-
-        AtomicState resetState { };
-        for (auto *qwd : std::as_const(m_quickWindows))
-            qwd->m_state = resetState.pod;
-        for (auto *eld : std::as_const(m_eventLoops))
-            eld->m_state = resetState.pod;
-
-        m_referenceTimeLock.unlock(); // ^^^ Write Lock End ^^^
-    });
-
-    QMetaObject::invokeMethod(m_referenceTimeResetTimer, qOverload<>(&QTimer::start), Qt::QueuedConnection);
+    m_referenceTime = et.msecsSinceReference();
 
     connect(m_quickWindowCheck, &QTimer::timeout,
             this, &WatchdogPrivate::quickWindowCheck);
@@ -216,12 +174,11 @@ WatchdogPrivate::~WatchdogPrivate()
     Q_ASSERT(QThread::currentThread() == m_wdThread);
     for (const auto *eld : std::as_const(m_eventLoops)) {
         if (eld->m_isMainThread) {
-            qCInfo(LogWatchdogStat) << "Event loop of thread" << static_cast<void *>(eld->m_thread)
-                                    << "/ the main GUI thread has finished and is not being watched anymore";
-            s_mainThreadTimer = eld->m_timer; // cannot delete from this thread
+            qCInfo(LogWatchdog) << "Event loop of thread" << static_cast<void *>(eld->m_thread)
+                                << "has finished and is not being watched anymore";
             m_watchingMainEventLoop = false;
         }
-        delete eld;
+        // eld is owned by QThreadStorage
     }
     for (const auto *qwd : std::as_const(m_quickWindows))
         delete qwd;
@@ -246,8 +203,8 @@ void WatchdogPrivate::setupSystemdWatchdog()
         sdTrigger();
         sdTimer->start();
 
-        qCInfo(LogWatchdogStat).nospace() << "Systemd watchdog enabled (timeout is "
-                                          << (wdTimeoutUsec / 1000) << "ms)";
+        qCInfo(LogWatchdog).nospace() << "Systemd watchdog enabled (timeout is "
+                                      << (wdTimeoutUsec / 1000) << "ms)";
     }
 #endif
 }
@@ -276,10 +233,12 @@ void WatchdogPrivate::setEventLoopTimeouts(std::chrono::milliseconds check, std:
         m_warnEventLoopTime = 0ms;
 
     if (m_warnEventLoopTime > m_killEventLoopTime) {
-        qCWarning(LogWatchdogStat).nospace()
+        qCWarning(LogWatchdog).nospace()
             << "Event loop warning timeout (" << m_warnEventLoopTime
             << ") is greater than kill timeout (" << m_killEventLoopTime << ")";
     }
+
+    Watchdog::s_instance->m_active = isEventLoopWatchingEnabled() || isQuickWindowWatchingEnabled();
 
     // watch the main event loop
     if (!m_watchingMainEventLoop)
@@ -313,11 +272,9 @@ void WatchdogPrivate::watchEventLoop(QThread *thread)
         info = info + u" / class: " + QString::fromLatin1(className);
     if (!objectName.isEmpty())
         info = info + u" / name: " + objectName;
-    if (isMainThread)
-        info = info + u" / the main GUI thread";
 
     if (!thread->eventDispatcher()) {
-        qCWarning(LogWatchdogStat).nospace().noquote()
+        qCWarning(LogWatchdog).nospace().noquote()
             << "Event loop of thread " << static_cast<void *>(thread) << info
             << " cannot be watched, because the thread has no event dispatcher installed";
         return;
@@ -332,7 +289,6 @@ void WatchdogPrivate::watchEventLoop(QThread *thread)
     static quint64 uniqueCounter = 0;
     eld->m_thread = thread;
     eld->m_uniqueCounter = ++uniqueCounter;
-    eld->m_timer = new QTimer;
     eld->m_isMainThread = isMainThread;
     m_eventLoops << eld;
 
@@ -342,83 +298,76 @@ void WatchdogPrivate::watchEventLoop(QThread *thread)
     if (!m_eventLoopCheck->isActive())
         m_eventLoopCheck->start();
 
-    qCInfo(LogWatchdogStat).nospace().noquote()
+    qCInfo(LogWatchdog).nospace().noquote()
         << "Event loop of thread " << static_cast<void *>(thread) << info << " is being watched now "
         << "(check every " << m_eventLoopCheckInterval << ", warn/kill after "
         << m_warnEventLoopTime << "/" << m_killEventLoopTime << ")";
 
-    eld->m_timer->setInterval((m_warnEventLoopTime > 0ms ? m_warnEventLoopTime : m_killEventLoopTime) / 2);
-    eld->m_timer->start();
-    eld->m_timer->moveToThread(thread);
-    connect(eld->m_timer, &QTimer::timeout, eld->m_timer, [this, eld]() {
-        // we're on the watched thread
-        Q_ASSERT(QThread::currentThread() == eld->m_thread);
-
-        if (!eld->m_threadHandle)
-            eld->m_threadHandle = currentThreadHandle();
-
-        AtomicState as;
-
-        // Read Lock required here, as we're NOT on the WD thread
-
-        m_referenceTimeLock.lockForRead(); // vvv Read Lock Start vvv
-
-        as.pod = eld->m_state;
-
-        quint64 now = quint64(msecsSinceReferenceOffset());
-        quint64 expectedAt = as.eventLoopBits.expectedAt;
-        quint64 elapsed = (!expectedAt || (now < expectedAt)) ? 0 : (now - expectedAt);
-
-        bool wasStuck = false;
-        quint64 maxTime = quint64(m_warnEventLoopTime.count());
-
-        if (maxTime && (elapsed > maxTime)) {
-            wasStuck = true;
-            as.eventLoopBits.stuckCounter = std::clamp(as.eventLoopBits.stuckCounter + 1ULL, 0ULL, (1ULL << 4) - 1);
-        }
-        if (wasStuck && (elapsed > as.eventLoopBits.longestStuckDuration))
-            as.eventLoopBits.longestStuckDuration = std::clamp(elapsed, 0ULL, (1ULL << 20) - 1);
-
-        as.eventLoopBits.expectedAt = now + maxTime / 2;
-        eld->m_state = as.pod;
-
-        m_referenceTimeLock.unlock(); // ^^^ Read Lock End ^^^
-
-        if (wasStuck) {
-            qCWarning(LogWatchdogLive).nospace()
-                << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
-                << " was stuck for " << elapsed << "ms, but then continued (the warn threshold is "
-                << maxTime << "ms)";
-        }
-
-        auto nextDuration = (m_warnEventLoopTime > 0ms ? m_warnEventLoopTime : m_killEventLoopTime) / 2;
-        if (eld->m_timer->intervalAsDuration() != nextDuration)
-            eld->m_timer->setInterval(nextDuration);
-    });
-
     // no finished signal for the main thread - only the destructor
     if (!eld->m_isMainThread) {
-        connect(thread, &QThread::finished, this, [eld]() {
-                // we're on the watched thread
-                Q_ASSERT(QThread::currentThread() == eld->m_thread);
-
-                delete eld->m_timer;
-                eld->m_timer = nullptr;
-            }, Qt::DirectConnection);
-
         connect(thread, &QThread::finished, this, [this, eld]() {
                 // we're on the wd thread
                 Q_ASSERT(QThread::currentThread() == m_wdThread);
 
-                qCInfo(LogWatchdogStat) << "Event loop of thread" << static_cast<void *>(eld->m_thread)
-                                        << "has finished and is not being watched anymore";
+                qCInfo(LogWatchdog) << "Event loop of thread" << static_cast<void *>(eld->m_thread)
+                                    << "has finished and is not being watched anymore";
 
                 m_eventLoops.removeOne(eld);
-                delete eld;
+                // eld is owned by QThreadStorage and deleted automatically
 
                 if (m_eventLoops.isEmpty() && m_eventLoopCheck->isActive())
                     m_eventLoopCheck->stop();
             }, Qt::QueuedConnection);
+    }
+
+    // Our notifyEvent callback does not know which EventLoopData is assigned to the current
+    // thread. Looking this information up on each event in a thread-safe map/hash would be too
+    // expensive. Instead we save the EventLoopData in a QThreadStorage, which is thread-local and
+    // can be accessed quickly.
+    // In order to set this up, we need to execute setLocalData() on the watched thread though:
+
+    QObject *dummy = new QObject();
+    dummy->moveToThread(thread);
+    QMetaObject::invokeMethod(dummy, [=]() {
+            WatchdogPrivate::s_eventLoopData.setLocalData(eld);
+            delete dummy;
+        }, Qt::QueuedConnection);
+
+    // eld is now owned by QThreadStorage and deleted automatically
+}
+
+void WatchdogPrivate::eventNotify(EventLoopData *eld, bool begin)
+{
+    // we're on the watched thread
+
+    Q_ASSERT(QThread::currentThread() == eld->m_thread);
+
+    if (begin) {
+        eld->m_timer = now();
+    } else if (eld->m_timer) {
+        // !begin && !m_timer would be the end of a nested event loop - we need to ignore that,
+        // because we cannot record nested event start times
+        auto elapsed = std::chrono::milliseconds(now() - eld->m_timer.fetchAndStoreAcquire(0));
+
+        if (m_warnEventLoopTime.count() && (elapsed > m_warnEventLoopTime)) {
+            QMetaObject::invokeMethod(m_eventLoopCheck,
+                //[this, eld](std::chrono::milliseconds elapsed) { // TODO: modernize in 6.9
+                [this, eld, elapsed]() {
+                    // we're on the wd thread
+                    Q_ASSERT(QThread::currentThread() == m_wdThread);
+
+                    ++eld->m_stuckCounter;
+                    if (elapsed > eld->m_longestStuckDuration)
+                        eld->m_longestStuckDuration = elapsed;
+
+                    qCWarning(LogWatchdog).nospace()
+                        << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
+                        << " was stuck for " << elapsed
+                        << ", but then continued (the warn threshold is "
+                        << m_warnEventLoopTime << ")";
+
+                }, Qt::QueuedConnection /*, elapsed*/); // TODO: modernize in 6.9
+        }
     }
 }
 
@@ -433,55 +382,43 @@ void WatchdogPrivate::eventLoopCheck()
     if (m_threadIsBeingKilled)
         return;
 
+    const auto timeNow = now();
+
     for (auto *eld : std::as_const(m_eventLoops)) {
         if (!eld->m_thread || m_threadIsBeingKilled)
             continue;
 
-        // No Read Lock required here, as we're on the WD thread
+        const quint64 counter = eld->m_stuckCounter;
+        if (counter > eld->m_lastCounter) {
+            eld->m_lastCounter = counter;
 
-        AtomicState as;
-        as.pod = eld->m_state;
-
-        if (as.eventLoopBits.stuckCounter > eld->m_lastState.eventLoopBits.stuckCounter) {
-            static constexpr quint64 maxCounter = (1ULL << 4) - 2;
-            QByteArray stuckCounterString;
-            quint64 counter = as.eventLoopBits.stuckCounter;
-
-            if (counter) {
-                if (counter > maxCounter)
-                    stuckCounterString += "more than ";
-                stuckCounterString = stuckCounterString + QByteArray::number(counter)
-                                     + ((counter == 1) ? " time" : " times");
-            }
-
-            qCWarning(LogWatchdogStat).nospace()
+            qCWarning(LogWatchdog).nospace()
                 << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
-                << " was stuck " << stuckCounterString.constData() << ". "
-                << "The longest period was " << as.eventLoopBits.longestStuckDuration << "ms";
+                << " was stuck " << counter << ((counter == 1) ? " time" : " times") << ". "
+                << "The longest period was " << eld->m_longestStuckDuration << ".";
         }
-        eld->m_lastState.pod = as.pod;
 
-        quint64 now = quint64(msecsSinceReferenceOffset());
-        quint64 expectedAt = as.eventLoopBits.expectedAt;
-        quint64 elapsed = (!expectedAt || (now < expectedAt)) ? 0 : (now - expectedAt);
-        quint64 warnTime = quint64(m_warnEventLoopTime.count());
-        quint64 killTime = quint64(m_killEventLoopTime.count());
+        const quint64 lastEvent = eld->m_timer;
+        if (!lastEvent)
+            continue;
 
-        if (killTime && (elapsed > killTime) && eld->m_thread) {
-            qCCritical(LogWatchdogStat).nospace()
+        const auto elapsed = std::chrono::milliseconds(timeNow - lastEvent);
+
+        if (m_killEventLoopTime.count() && (elapsed > m_killEventLoopTime) && eld->m_thread) {
+            qCCritical(LogWatchdog).nospace()
                 << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
                 << " is getting killed, because it is now stuck for over " << elapsed
-                << "ms (the kill threshold is " << killTime << "ms)";
+                << " (the kill threshold is " << m_killEventLoopTime << ")";
 
             // avoid multiple messages, until the thread is actually killed
             m_threadIsBeingKilled = 1;
             killThread(eld->m_threadHandle);
-        } else if (warnTime && (elapsed > warnTime)
-                   && (elapsed > (quint64(m_eventLoopCheckInterval.count()) / 2))) {
-            qCWarning(LogWatchdogStat).nospace()
+        } else if (m_warnEventLoopTime.count() && (elapsed > m_warnEventLoopTime)
+                   && (elapsed > (m_eventLoopCheckInterval / 2))) {
+            qCWarning(LogWatchdog).nospace()
                 << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
                 << " is currently stuck for over " << elapsed
-                << "ms (the warn threshold is " << warnTime << "ms)";
+                << " (the warn threshold is " << m_warnEventLoopTime << ")";
         }
     }
 }
@@ -511,10 +448,12 @@ void WatchdogPrivate::setQuickWindowTimeouts(std::chrono::milliseconds check,
         m_warnQuickWindowTime = 0ms;
 
     if (m_warnQuickWindowTime > m_killQuickWindowTime) {
-        qCWarning(LogWatchdogStat).nospace()
+        qCWarning(LogWatchdog).nospace()
             << "Quick window warning timeout (" << m_warnQuickWindowTime
             << ") is greater than kill timeout (" << m_killQuickWindowTime << ")";
     }
+
+    Watchdog::s_instance->m_active = isEventLoopWatchingEnabled() || isQuickWindowWatchingEnabled();
 }
 
 bool WatchdogPrivate::isQuickWindowWatchingEnabled() const
@@ -578,7 +517,7 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
     QMetaObject::invokeMethod(this, [win = static_cast<void *>(quickWindow), info,
                check = m_quickWindowCheckInterval, warn = m_warnQuickWindowTime,
                kill = m_killQuickWindowTime]() {
-            qCInfo(LogWatchdogStat).nospace().noquote()
+            qCInfo(LogWatchdog).nospace().noquote()
                 << "Window " << win << info << " is being watched now "
                 << "(check every " << check << ", warn/kill after "
                 << warn << "/" << kill << ")";
@@ -588,8 +527,8 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
         // we're on wd thread
         Q_ASSERT(QThread::currentThread() == m_wdThread);
 
-        qCInfo(LogWatchdogStat) << "Window" << static_cast<void *>(o)
-                                << "has been destroyed and is not being watched anymore";
+        qCInfo(LogWatchdog) << "Window" << static_cast<void *>(o)
+                            << "has been destroyed and is not being watched anymore";
         m_quickWindows.removeOne(qwd);
         delete qwd;
 
@@ -614,50 +553,38 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
             qwd->m_renderThreadSet = 1;
         }
 
-        AtomicState as;
-
-        // Read Lock required here, as we're NOT on the WD thread
-
-        m_referenceTimeLock.lockForRead(); // vvv Read Lock Start vvv
-
-        as.pod = qwd->m_state;
-        as.quickWindowBits.state = quint64(toState);
-
-        quint64 now = quint64(msecsSinceReferenceOffset());
-        quint64 startedAt = as.quickWindowBits.startedAt;
-        quint64 elapsed = (!startedAt || (now < startedAt)) ? 0 : (now - startedAt);
-        as.quickWindowBits.startedAt =  now;
-
-        bool wasStuck = false;
-        quint64 maxTime = quint64(m_warnQuickWindowTime.count());
+        const auto timeNow = now();
+        const auto elapsed = std::chrono::milliseconds(timeNow - qwd->m_timer.fetchAndStoreOrdered(timeNow));
 
         if (fromState != Idle) { // being stuck in the 'Idle' state is not an issue
-            if (maxTime && (elapsed > maxTime)) {
-                wasStuck = true;
+            if (m_warnQuickWindowTime.count() && (elapsed > m_warnQuickWindowTime)) {
+                QMetaObject::invokeMethod(m_quickWindowCheck,
+                    //[this, qwd](std::chrono::milliseconds elapsed, RenderState fromState) { // TODO: modernize in 6.9
+                    [this, qwd, elapsed, fromState] {
+                        // we're on the wd thread
+                        Q_ASSERT(QThread::currentThread() == m_wdThread);
+                        if (fromState == Sync)
+                            ++qwd->m_stuckCounterSync;
+                        else if (fromState == Render)
+                            ++qwd->m_stuckCounterRender;
+                        else if (fromState == Swap)
+                            ++qwd->m_stuckCounterSwap;
 
-                if ((fromState == Sync) && (toState == Render))
-                    as.quickWindowBits.stuckCounterSync = std::clamp(as.quickWindowBits.stuckCounterSync + 1ULL, 0ULL, (1ULL << 4) - 1);
-                else if ((fromState == Render) && (toState == Swap))
-                    as.quickWindowBits.stuckCounterRender = std::clamp(as.quickWindowBits.stuckCounterRender + 1ULL, 0ULL, (1ULL << 4) - 1);
-                else if ((fromState == Swap) && (toState == Idle))
-                    as.quickWindowBits.stuckCounterSwap = std::clamp(as.quickWindowBits.stuckCounterSwap + 1ULL, 0ULL, (1ULL << 4) - 1);
-            }
-            if (wasStuck && (elapsed > as.quickWindowBits.longestStuckDuration)) {
-                as.quickWindowBits.longestStuckType = quint64(fromState);
-                as.quickWindowBits.longestStuckDuration = std::clamp(elapsed, 0ULL, (1ULL << 18) - 1);
+                        if (elapsed > qwd->m_longestStuckDuration) {
+                            qwd->m_longestStuckType = fromState;
+                            qwd->m_longestStuckDuration = elapsed;
+                        }
+
+                        qCWarning(LogWatchdog).nospace()
+                            << "Window " << static_cast<void *>(qwd->m_window.get())
+                            << " was stuck in state " << fromState << " for " << elapsed
+                            << ", but then continued (the warn threshold is "
+                            << m_warnQuickWindowTime << ")";
+
+                    }, Qt::QueuedConnection /*, elapsed, fromState*/); // TODO: modernize in 6.9
             }
         }
-
-        qwd->m_state = as.pod;
-
-        m_referenceTimeLock.unlock(); // ^^^ Read Lock End ^^^
-
-        if (wasStuck) {
-            qCWarning(LogWatchdogLive).nospace()
-                << "Window " << static_cast<void *>(qwd->m_window.get())
-                << " was stuck in state " << fromState << " for " << elapsed
-                << "ms, but then continued (the warn threshold is " << maxTime << "ms)";
-        }
+        qwd->m_renderState = char(toState);
     };
 
     connect(quickWindow, &QQuickWindow::beforeSynchronizing, this, [=]() {
@@ -673,9 +600,7 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
             changeState(qwd, Swap, Idle);
         }, Qt::DirectConnection);
     connect(quickWindow, &QQuickWindow::sceneGraphAboutToStop, this, [=]() {
-            AtomicState as = { 0 };
-            as.quickWindowBits.state = quint64(Idle);
-            qwd->m_state = as.pod;
+            qwd->m_renderState = Idle;
         }, Qt::DirectConnection);
 }
 
@@ -690,82 +615,73 @@ void WatchdogPrivate::quickWindowCheck()
     if (m_threadIsBeingKilled)
         return;
 
+    const auto timeNow = now();
+
     for (auto *qwd : std::as_const(m_quickWindows)) {
         if (!qwd->m_window)
             continue;
 
-        // No Read Lock required here, as we're on the WD thread
+        const uint allCounters = qwd->m_stuckCounterSync + qwd->m_stuckCounterRender
+                                 + qwd->m_stuckCounterSwap;
 
-        AtomicState as;
-        as.pod = qwd->m_state;
+        if (allCounters > qwd->m_lastCounter) {
+            qwd->m_lastCounter = allCounters;
 
-        // only print the stats, if any "stuck" counter changed since last time
-        if ((as.quickWindowBits.stuckCounterSync > qwd->m_lastState.quickWindowBits.stuckCounterSync)
-            || (as.quickWindowBits.stuckCounterRender > qwd->m_lastState.quickWindowBits.stuckCounterRender)
-            || (as.quickWindowBits.stuckCounterSwap > qwd->m_lastState.quickWindowBits.stuckCounterSwap)) {
-            static constexpr quint64 maxCounter = (1ULL << 4) - 2;
             QByteArray stuckCounterString;
 
             auto appendStuckCounter = [&](quint64 counter, RenderState rs) {
                 if (counter) {
                     if (!stuckCounterString.isEmpty())
                         stuckCounterString += ", ";
-                    if (counter > maxCounter)
-                        stuckCounterString += "more than ";
                     stuckCounterString = stuckCounterString + QByteArray::number(counter)
                                          + ((counter == 1) ? " time" : " times")
                                          + " in state " + renderStateName(rs);
                 }
             };
 
-            appendStuckCounter(as.quickWindowBits.stuckCounterSync, RenderState::Sync);
-            appendStuckCounter(as.quickWindowBits.stuckCounterRender, RenderState::Render);
-            appendStuckCounter(as.quickWindowBits.stuckCounterSwap, RenderState::Swap);
+            appendStuckCounter(qwd->m_stuckCounterSync, RenderState::Sync);
+            appendStuckCounter(qwd->m_stuckCounterRender, RenderState::Render);
+            appendStuckCounter(qwd->m_stuckCounterSwap, RenderState::Swap);
 
-            qCWarning(LogWatchdogStat).nospace()
+            qCWarning(LogWatchdog).nospace()
                 << "Window " << static_cast<void *>(qwd->m_window.get()) << " was stuck "
                 << stuckCounterString.constData() << ". The longest period was "
-                << as.quickWindowBits.longestStuckDuration << "ms in state "
-                << RenderState(as.quickWindowBits.longestStuckType);
+                << qwd->m_longestStuckDuration << " in state " << qwd->m_longestStuckType;
         }
-        qwd->m_lastState.pod = as.pod;
 
-        if (as.quickWindowBits.state == quint64(Idle))
+        const auto renderState = static_cast<RenderState>(qwd->m_renderState.loadAcquire());
+        if (renderState == Idle)
             continue;
 
-        quint64 now = quint64(msecsSinceReferenceOffset());
-        quint64 startedAt = as.quickWindowBits.startedAt;
-        quint64 elapsed = (!startedAt || (now < startedAt)) ? 0 : (now - startedAt);
-        quint64 warnTime = quint64(m_warnQuickWindowTime.count());
-        quint64 killTime = quint64(m_killQuickWindowTime.count());
+        const auto elapsed = std::chrono::milliseconds(timeNow - qwd->m_timer);
 
-        if (killTime && (elapsed > killTime) && qwd->m_renderThread) {
-            qCCritical(LogWatchdogStat).nospace()
+        if (m_killQuickWindowTime.count() && (elapsed > m_killQuickWindowTime) && qwd->m_renderThread) {
+            qCCritical(LogWatchdog).nospace()
                 << "Window " << static_cast<void *>(qwd->m_window.get())
                 << " is getting its render thread (" << static_cast<void *>(qwd->m_renderThread.get())
                 << ") killed, because it is now stuck in state "
-                << RenderState(as.quickWindowBits.state) << " for over " << elapsed
-                << "ms (the kill threshold is " << killTime << "ms)";
+                << renderState << " for over " << elapsed
+                << " (the kill threshold is " << m_killQuickWindowTime << ")";
 
             // avoid multiple messages, until the thread is actually killed
             m_threadIsBeingKilled = 1;
             killThread(qwd->m_renderThreadHandle);
-        } else if (warnTime && (elapsed > warnTime)
-                   && (elapsed > (quint64(m_quickWindowCheckInterval.count()) / 2))) {
-            qCWarning(LogWatchdogStat).nospace()
+        } else if (m_warnQuickWindowTime.count() && (elapsed > m_warnQuickWindowTime)
+                   && (elapsed > (m_quickWindowCheckInterval / 2))) {
+            qCWarning(LogWatchdog).nospace()
                 << "Window " << static_cast<void *>(qwd->m_window.get())
-                << " is currently stuck in state " << RenderState(as.quickWindowBits.state)
-                << " for over " << elapsed << "ms (the warn threshold is " << warnTime << "ms)";
+                << " is currently stuck in state " << renderState
+                << " for over " << elapsed << " (the warn threshold is " << m_warnQuickWindowTime << ")";
         }
     }
 }
 
-qint64 WatchdogPrivate::msecsSinceReferenceOffset() const
+quint64 WatchdogPrivate::now() const
 {
     QElapsedTimer et;
     et.start();
-    qint64 refTime = et.msecsSinceReference();
-    return refTime - m_referenceTimeOffset;
+    qint64 msr = et.msecsSinceReference();
+    return (msr < m_referenceTime) ? 0ULL : quint64(msr - m_referenceTime);
 }
 
 
@@ -773,14 +689,12 @@ qint64 WatchdogPrivate::msecsSinceReferenceOffset() const
 // Watchdog
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+Watchdog *Watchdog::s_instance = nullptr;
 
 Watchdog::Watchdog()
     : QObject(qApp)
     , d(new WatchdogPrivate(this))
 {
-    // automatically watch any QQuickWindows that are created
-    qApp->installEventFilter(this);
-
     // we need to stop event handling in the WD thread *before* ~QCoreApplication,
     // otherwise we run into a data-race on the qApp vptr:
     // https://github.com/google/sanitizers/wiki/ThreadSanitizerPopularDataRaces#data-race-on-vptr
@@ -796,36 +710,31 @@ Watchdog *Watchdog::create()
     Q_ASSERT(qApp);
     Q_ASSERT(QThread::currentThread() == qApp->thread());
 
-    if (!WatchdogPrivate::s_instance)
-        WatchdogPrivate::s_instance = new Watchdog;
-    return WatchdogPrivate::s_instance;
+    if (!s_instance)
+        s_instance = new Watchdog;
+    return s_instance;
 }
 
 Watchdog::~Watchdog()
 {
     if (!m_cleanShutdown) {
-        qCCritical(LogWatchdogStat) << "The watchdog could not properly shutdown, as no "
-                                       "QCoreApplication::aboutToQuit signal was received "
-                                       "(this will result in TSAN warnings).";
+        qCCritical(LogWatchdog) << "The watchdog could not properly shutdown, as no "
+                                   "QCoreApplication::aboutToQuit signal was received "
+                                   "(this will result in TSAN warnings).";
         shutdown();
     }
-    WatchdogPrivate::s_instance = nullptr;
+    s_instance = nullptr;
 
     // the finished() signal of the thread will auto-delete d from within that thread
 }
 
 void Watchdog::shutdown()
 {
+    m_active = false;
+
     auto wdThread = d->m_wdThread; // 'd' is dead after quit()
     wdThread->quit();
     wdThread->wait();
-
-    if (qApp)
-        qApp->removeEventFilter(this);
-
-    // the main thread timer must be deleted from the main thread
-    if (auto *timer = WatchdogPrivate::s_mainThreadTimer.fetchAndStoreOrdered(nullptr))
-        delete timer;
 }
 
 void Watchdog::setEventLoopTimeouts(std::chrono::milliseconds check,
@@ -844,12 +753,26 @@ void Watchdog::setQuickWindowTimeouts(std::chrono::milliseconds check,
         }, Qt::QueuedConnection);
 }
 
-bool Watchdog::eventFilter(QObject *watched, QEvent *event)
+void Watchdog::eventCallback(const QThread *thread, bool begin, QObject *receiver, QEvent *event)
 {
-    if (event->type() == QEvent::PlatformSurface) {
-        auto surfaceEventType = static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType();
+    // This function is called twice for every event: it has to be as efficient as possible.
+
+    Q_ASSERT(this);
+    Q_ASSERT(thread);
+    Q_ASSERT(begin == bool(receiver));
+    Q_ASSERT(begin == bool(event));
+    Q_ASSERT(m_active);
+    Q_ASSERT(d);
+
+    if (auto *eld = std::as_const(WatchdogPrivate::s_eventLoopData).localData()) {
+        Q_ASSERT(eld->m_thread == thread);
+        d->eventNotify(eld, begin);
+    }
+
+    if (begin && (event->type() == QEvent::PlatformSurface)) {
+        auto surfaceEventType = static_cast<const QPlatformSurfaceEvent *>(event)->surfaceEventType();
         if (surfaceEventType == QPlatformSurfaceEvent::SurfaceCreated) {
-            if (auto *quickWindow = qobject_cast<QQuickWindow *>(watched)) {
+            if (auto *quickWindow = qobject_cast<QQuickWindow *>(receiver)) {
                 QPointer p(quickWindow);
                 // We need a blocking invoke here to ensure that quickWindow is still valid
                 // on the watchdog thread when calling watchQuickWindow().
@@ -861,7 +784,6 @@ bool Watchdog::eventFilter(QObject *watched, QEvent *event)
             }
         }
     }
-    return QObject::eventFilter(watched, event);
 }
 
 QT_END_NAMESPACE_AM

@@ -59,6 +59,77 @@ QT_BEGIN_NAMESPACE_AM
 
 namespace QtYaml {
 
+enum ValueIndex {
+    ValueNull,
+    ValueTrue,
+    ValueFalse,
+    ValueNaN,
+    ValueInf
+};
+
+struct StaticMapping
+{
+    QString text;
+    ValueIndex index;
+};
+
+static const StaticMapping staticMappings[] = { // keep this sorted for bsearch !!
+    { qSL(".INF"),  ValueInf },
+    { qSL(".Inf"),  ValueInf },
+    { qSL(".NAN"),  ValueNaN },
+    { qSL(".NaN"),  ValueNaN },
+    { qSL(".inf"),  ValueInf },
+    { qSL(".nan"),  ValueNaN },
+    { qSL("FALSE"), ValueFalse },
+    { qSL("False"), ValueFalse },
+    { qSL("N"),     ValueFalse },
+    { qSL("NO"),    ValueFalse },
+    { qSL("NULL"),  ValueNull },
+    { qSL("No"),    ValueFalse },
+    { qSL("Null"),  ValueNull },
+    { qSL("OFF"),   ValueFalse },
+    { qSL("Off"),   ValueFalse },
+    { qSL("ON"),    ValueTrue },
+    { qSL("On"),    ValueTrue },
+    { qSL("TRUE"),  ValueTrue },
+    { qSL("True"),  ValueTrue },
+    { qSL("Y"),     ValueTrue },
+    { qSL("YES"),   ValueTrue },
+    { qSL("Yes"),   ValueTrue },
+    { qSL("false"), ValueFalse },
+    { qSL("n"),     ValueFalse },
+    { qSL("no"),    ValueFalse },
+    { qSL("null"),  ValueNull },
+    { qSL("off"),   ValueFalse },
+    { qSL("on"),    ValueTrue },
+    { qSL("true"),  ValueTrue },
+    { qSL("y"),     ValueTrue },
+    { qSL("yes"),   ValueTrue },
+    { qSL("~"),     ValueNull }
+};
+
+
+static inline StaticMapping *findStaticMapping(const QString &str)
+{
+    static const QString firstCharStaticMappings = qSL(".FNOTYfnoty~");
+    const QChar firstChar = str.isEmpty() ? QChar(0) : str.at(0);
+
+    if (firstCharStaticMappings.contains(firstChar)) { // cheap check to avoid expensive bsearch
+        StaticMapping key { str, ValueNull };
+        auto found = bsearch(&key,
+                             staticMappings,
+                             sizeof(staticMappings) / sizeof(staticMappings[0]),
+                             sizeof(staticMappings[0]),
+                             [](const void *m1, const void *m2) {
+                                 return static_cast<const StaticMapping *>(m1)->text.compare(static_cast<const StaticMapping *>(m2)->text);
+                             });
+
+        return static_cast<StaticMapping *>(found);
+    }
+    return nullptr;
+};
+
+
 static inline void yerr(int result) Q_DECL_NOEXCEPT_EXPR(false)
 {
     if (!result)
@@ -124,7 +195,16 @@ static void emitYaml(yaml_emitter_t *e, const QVariant &value, YamlStyle style) 
 
         QVariantMap map = value.toMap();
         for (auto it = map.constBegin(); it != map.constEnd(); ++it) {
-            emitYamlScalar(e, it.key().toUtf8());
+            const QString &key = it.key();
+            // We could just quote everything, but this would break backwards compatibility
+            // inside the AM itself (e.g. HMAC calculations for installation-report.yaml)
+            bool needsQuoting = key.isEmpty() || findStaticMapping(key);
+            if (!needsQuoting) {
+                char16_t firstChar = key.at(0).unicode();
+                needsQuoting = ((firstChar >= u'0' && firstChar <= u'9')
+                                || firstChar == u'+' || firstChar == u'-' || firstChar == u'.');
+            }
+            emitYamlScalar(e, key.toUtf8(), needsQuoting);
             emitYaml(e, it.value(), style);
         }
 
@@ -181,6 +261,7 @@ QByteArray yamlFromVariantDocuments(const QVector<QVariant> &documents, YamlStyl
 
 } // namespace QtYaml
 
+using namespace QtYaml;
 
 class YamlParserPrivate
 {
@@ -333,20 +414,6 @@ QVariant YamlParser::parseScalar() const
         return scalar;
     }
 
-    enum ValueIndex {
-        ValueNull,
-        ValueTrue,
-        ValueFalse,
-        ValueNaN,
-        ValueInf
-    };
-
-    struct StaticMapping
-    {
-        QString text;
-        ValueIndex index;
-    };
-
     static const QVariant staticValues[] = {
         QVariant::fromValue(nullptr),  // ValueNull
         QVariant(true),                // ValueTrue
@@ -355,61 +422,15 @@ QVariant YamlParser::parseScalar() const
         QVariant(qInf()),              // ValueInf
     };
 
-    static const StaticMapping staticMappings[] = { // keep this sorted for bsearch !!
-        { qSL(""),      ValueNull },
-        { qSL(".INF"),  ValueInf },
-        { qSL(".Inf"),  ValueInf },
-        { qSL(".NAN"),  ValueNaN },
-        { qSL(".NaN"),  ValueNaN },
-        { qSL(".inf"),  ValueInf },
-        { qSL(".nan"),  ValueNaN },
-        { qSL("FALSE"), ValueFalse },
-        { qSL("False"), ValueFalse },
-        { qSL("N"),     ValueFalse },
-        { qSL("NO"),    ValueFalse },
-        { qSL("NULL"),  ValueNull },
-        { qSL("No"),    ValueFalse },
-        { qSL("Null"),  ValueNull },
-        { qSL("OFF"),   ValueFalse },
-        { qSL("Off"),   ValueFalse },
-        { qSL("ON"),    ValueTrue },
-        { qSL("On"),    ValueTrue },
-        { qSL("TRUE"),  ValueTrue },
-        { qSL("True"),  ValueTrue },
-        { qSL("Y"),     ValueTrue },
-        { qSL("YES"),   ValueTrue },
-        { qSL("Yes"),   ValueTrue },
-        { qSL("false"), ValueFalse },
-        { qSL("n"),     ValueFalse },
-        { qSL("no"),    ValueFalse },
-        { qSL("null"),  ValueNull },
-        { qSL("off"),   ValueFalse },
-        { qSL("on"),    ValueTrue },
-        { qSL("true"),  ValueTrue },
-        { qSL("y"),     ValueTrue },
-        { qSL("yes"),   ValueTrue },
-        { qSL("~"),     ValueNull }
-    };
+    if (scalar.isEmpty())
+        return staticValues[ValueNull];
 
-    static const char *firstCharStaticMappings = ".FNOTYfnoty~";
-    char firstChar = scalar.isEmpty() ? 0 : scalar.at(0).toLatin1();
+    if (auto sm = findStaticMapping(scalar))
+        return staticValues[sm->index];
 
-    if (strchr(firstCharStaticMappings, firstChar)) { // cheap check to avoid expensive bsearch
-        StaticMapping key { scalar, ValueNull };
-        auto found = bsearch(&key,
-                             staticMappings,
-                             sizeof(staticMappings) / sizeof(staticMappings[0]),
-                sizeof(staticMappings[0]),
-                [](const void *m1, const void *m2) {
-            return static_cast<const StaticMapping *>(m1)->text.compare(static_cast<const StaticMapping *>(m2)->text);
-        });
-
-        if (found)
-            return staticValues[static_cast<StaticMapping *>(found)->index];
-    }
-
-    if ((firstChar >= '0' && firstChar <= '9')   // cheap check to avoid expensive regexps
-            || firstChar == '+' || firstChar == '-' || firstChar == '.') {
+    char16_t firstChar = scalar.at(0).unicode();
+    if ((firstChar >= u'0' && firstChar <= u'9')   // cheap check to avoid expensive regexps
+            || firstChar == u'+' || firstChar == u'-' || firstChar == u'.') {
         // We are using QRegularExpressions in multiple threads here, although the class is not
         // marked thread-safe. We are relying on the const match() function to behave thread-safe
         // which it does. There's an autotest (tst_yaml / parallel) to make sure we catch changes

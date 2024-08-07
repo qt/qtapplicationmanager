@@ -29,6 +29,7 @@ private Q_SLOTS:
     void cache();
     void mergedCache();
     void parallel();
+    void generate();
 };
 
 
@@ -475,6 +476,35 @@ void tst_Yaml::parallel()
     QVERIFY(tp.waitForDone(5000));
     QCOMPARE(fail.loadAcquire(), 0);
     QCOMPARE(success.loadAcquire(), threadCount);
+}
+
+void tst_Yaml::generate()
+{
+    QFile f(u":/data/tricky.yaml"_s);
+    QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
+    QByteArray ba = f.readAll().replace('\r', "");
+    QVERIFY(!ba.isEmpty());
+
+    QVector<QVariant> result;
+    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments("no: yes\n"));
+    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments("1: a\n"));
+    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments("-1: b\n"));
+    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments(".1: c\n"));
+    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments("a\'a"));
+    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments("a\"a"));
+    QVERIFY_THROWS_NO_EXCEPTION(result = YamlParser::parseAllDocuments("k: \"a'a\""));
+    QCOMPARE(result.value(0).toMap().value(u"k"_s).toString(), u"a'a"_s);
+    QVERIFY_THROWS_NO_EXCEPTION(result = YamlParser::parseAllDocuments("k: \"a\\\"a\""));
+    QCOMPARE(result.value(0).toMap().value(u"k"_s).toString(), u"a\"a"_s);
+    QVERIFY_THROWS_NO_EXCEPTION(result = YamlParser::parseAllDocuments("k: 'a''a'"));
+    QCOMPARE(result.value(0).toMap().value(u"k"_s).toString(), u"a'a"_s);
+
+    QVector<QVariant> docs;
+    QVERIFY_THROWS_NO_EXCEPTION(docs = YamlParser::parseAllDocuments(ba));
+    QCOMPARE(docs.size(), 1);
+
+    QByteArray baGen = QtYaml::yamlFromVariantDocuments(docs);
+    QCOMPARE(ba, baGen);
 }
 
 QTEST_GUILESS_MAIN(tst_Yaml)

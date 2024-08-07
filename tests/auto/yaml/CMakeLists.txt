@@ -17,6 +17,7 @@ qt_internal_add_resource(tst_yaml "yaml_testdata"
         "data/cache1.yaml"
         "data/cache2.yaml"
         "data/test.yaml"
+        "data/tricky.yaml"
 )
 
 qt_internal_extend_target(tst_yaml CONDITION TARGET Qt::DBus

@@ -1,0 +1,11 @@
+%YAML 1.1
+---
+tricky:
+- 'no': 'a\"a'
+- '1': 'b''b'
+- '-a': 'c\"c'
+- '.5': 2
+- '~': false
+- normal: 'normal'
+- number: 42
+- ' sp''ace ': ' space '

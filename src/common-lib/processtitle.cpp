@@ -19,12 +19,13 @@ QT_END_NAMESPACE_AM
 #include <QVarLengthArray>
 #include <QByteArray>
 
-#include <unistd.h>
-#include <string.h>
-#include <stdarg.h>
-#include <errno.h>
-#include <stdlib.h>
+#include <cstdio>
 
+#include <errno.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 /* \internal
 
@@ -168,7 +169,8 @@ void ProcessTitle::setTitle(const char *fmt, ...)
 
         va_list ap;
         va_start(ap, fmt);
-        size_t result = static_cast<size_t>(qvsnprintf(title + len, sizeof(title) - len, fmt, ap));
+        size_t result = static_cast<size_t>(
+            std::vsnprintf(title + len, sizeof(title) - len, fmt, ap));
         va_end(ap);
         len += qMin(result, sizeof(title) - len); // clamp to buffer size in case of overflow
         if ((len + 1) > maxArgvSize)

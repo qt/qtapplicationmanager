@@ -159,7 +159,8 @@ QByteArray StartupTimer::formatMicroSecs(quint64 micros)
     int usec = int(micros % 1000);
 
     char timeBuffer[20];
-    qsnprintf(timeBuffer, sizeof(timeBuffer), "%d'%03d.%03d", sec, msec, usec);
+    std::snprintf(timeBuffer, sizeof(timeBuffer), "%d'%03d.%03d", sec, msec,
+                  usec);
     return QByteArray(timeBuffer);
 }
 

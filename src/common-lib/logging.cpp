@@ -289,7 +289,8 @@ static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &contex
         filename = context.file + pos + 1;
         filenameLength = fileView.size() - pos - 1;
 
-        linenumberLength = qsnprintf(linenumber, 8, "%d", qMin(context.line, 9999999));
+        linenumberLength =
+            std::snprintf(linenumber, 8, "%d", qMin(context.line, 9999999));
         if (linenumberLength < 0 || linenumberLength >= int(sizeof(linenumber)))
             linenumberLength = 0;
         linenumber[linenumberLength] = 0;

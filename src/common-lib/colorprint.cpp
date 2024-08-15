@@ -62,7 +62,7 @@ ColorPrint &ColorPrint::operator<<(const char *str)
 ColorPrint &ColorPrint::operator<<(int i)
 {
     char tmp[12]; // 32 bit ints are at most 10 digits long, plus sign and terminating null
-    qsnprintf(tmp, sizeof(tmp), "%d", i);
+    std::snprintf(tmp, sizeof(tmp), "%d", i);
     m_buffer.append(tmp);
     return *this;
 }

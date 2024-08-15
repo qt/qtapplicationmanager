@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include <cinttypes>
+#include <cstdio>
 #include <typeinfo>
 
 #if defined(QT_QML_LIB)
@@ -201,7 +202,7 @@ static void logBacktraceLine(LogToDestination logTo, int level, const char *symb
         return;
 #endif
 
-    if (level > 999)
+    if (level > 999 || level < 0)
         return;
 
     bool wantClickableUrl = (Console::isRunningInQtCreator() && !Console::stderrIsConsoleWindow());
@@ -214,7 +215,7 @@ static void logBacktraceLine(LogToDestination logTo, int level, const char *symb
     ColorPrint cprt(lineOut, (logTo == Console) && Console::stderrSupportsAnsiColor() && !wantClickableUrl);
 
     char levelStr[5];
-    qsnprintf(levelStr, sizeof(levelStr), "%4d", level);
+    std::snprintf(levelStr, sizeof(levelStr), "%4d", level);
     cprt << levelStr << ": ";
 
     if (errorString)

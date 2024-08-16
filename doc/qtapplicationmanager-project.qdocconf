@@ -71,15 +71,10 @@ qhp.QtApplicationManager.filterAttributes = QtApplicationManager $QT_VERSION
 qhp.QtApplicationManager.customFilters.QtApplicationManager.name = Qt Application Manager $QT_VERSION
 qhp.QtApplicationManager.customFilters.QtApplicationManager.filterAttributes = QtApplicationManager $QT_VERSION
 
-qhp.QtApplicationManager.subprojects = manual qmltypes
+qhp.QtApplicationManager.subprojects = manual
 qhp.QtApplicationManager.subprojects.manual.title = Qt Application Manager
 qhp.QtApplicationManager.subprojects.manual.indexTitle = Qt Application Manager
 qhp.QtApplicationManager.subprojects.manual.type = manual
-
-qhp.QtApplicationManager.subprojects.qmltypes.title = QML Types
-qhp.QtApplicationManager.subprojects.qmltypes.indexTitle = Qt Application Manager QML Types
-qhp.QtApplicationManager.subprojects.qmltypes.selectors = qmltype
-qhp.QtApplicationManager.subprojects.qmltypes.sortPages = true
 
 navigation.landingpage = "Qt Application Manager"
 buildversion = "Qt Application Manager $QT_VERSION"

@@ -3,13 +3,17 @@ qt_feature_evaluate_features("${CMAKE_CURRENT_SOURCE_DIR}/common-lib/configure.c
 
 set(QT_SBOM_DEFAULT_QT_LICENSE_ID_LIBRARIES "QT_COMMERCIAL_OR_GPL3")
 
-qt_exclude_tool_directories_from_default_target(
-    tools/appman
-    tools/testrunner
-    tools/controller
-    tools/launcher-qml
-    tools/package-server
-)
+# Workaround for boot2qt to successfully build, until someone can figure out
+# why it doesn't like the tools from being excluded.
+if(NOT QT_APPMAN_SKIP_EXCLUDE_TOOLS_FROM_DEFAULT_TARGET)
+    qt_exclude_tool_directories_from_default_target(
+        tools/appman
+        tools/testrunner
+        tools/controller
+        tools/launcher-qml
+        tools/package-server
+    )
+endif()
 
 add_subdirectory(3rdparty)
 add_subdirectory(wayland-extensions)

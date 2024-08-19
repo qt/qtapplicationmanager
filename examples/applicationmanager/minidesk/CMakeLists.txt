@@ -63,4 +63,6 @@ qt6_am_create_builtin_package(tld.minidesk.app2
 
 install(TARGETS minidesk
     RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
+    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
 )

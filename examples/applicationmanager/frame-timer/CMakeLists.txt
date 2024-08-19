@@ -57,4 +57,6 @@ qt6_am_create_builtin_package(frame-timer.rabbit
 
 install(TARGETS frame-timer
     RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
+    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
 )

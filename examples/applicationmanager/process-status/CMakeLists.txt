@@ -71,4 +71,6 @@ qt6_am_create_builtin_package(process-status.slim
 
 install(TARGETS process-status
     RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
+    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
 )

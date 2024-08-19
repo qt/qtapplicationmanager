@@ -47,4 +47,6 @@ add_subdirectory(apps/Widgets)
 
 install(TARGETS application-features
     RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
+    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
 )

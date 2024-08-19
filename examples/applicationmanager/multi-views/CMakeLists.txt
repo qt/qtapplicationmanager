@@ -50,4 +50,6 @@ qt6_am_create_builtin_package(tld.multi-views.app
 
 install(TARGETS multi-views
     RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
+    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
 )

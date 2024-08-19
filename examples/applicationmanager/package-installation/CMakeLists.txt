@@ -111,4 +111,6 @@ add_dependencies(package-installation installable-red installable-green installa
 
 install(TARGETS package-installation
     RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
+    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
 )

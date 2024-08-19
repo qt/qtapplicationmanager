@@ -78,6 +78,8 @@ qt6_am_create_builtin_package(intents.green
 
 install(TARGETS intents
     RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
+    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
 )
 
 install(TARGETS shared

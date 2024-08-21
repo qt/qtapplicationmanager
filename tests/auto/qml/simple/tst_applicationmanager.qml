@@ -30,6 +30,8 @@ TestCase {
 
     ListView {
         id: listView
+        width: 200
+        height: 200
         model: ApplicationManager
         delegate: Item {
             property var modelData: model

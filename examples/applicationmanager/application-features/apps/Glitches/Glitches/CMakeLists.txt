@@ -1,4 +1,4 @@
-qt6_add_qml_module(
+qt_add_qml_module(
     glitchesmoduleplugin
     URI "Glitches"
     PLUGIN_TARGET glitchesmoduleplugin

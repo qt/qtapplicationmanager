@@ -42,7 +42,7 @@ target_link_libraries(process-status PRIVATE
 
 ## Apps ##
 
-qt6_am_create_builtin_package(process-status.cpu-hog
+qt_am_create_builtin_package(process-status.cpu-hog
     OUTPUT_DIRECTORY apps/process-status.cpu-hog
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/process-status.cpu-hog
     FILES
@@ -51,7 +51,7 @@ qt6_am_create_builtin_package(process-status.cpu-hog
         apps/process-status.cpu-hog/main.qml
 )
 
-qt6_am_create_builtin_package(process-status.mem-hog
+qt_am_create_builtin_package(process-status.mem-hog
     OUTPUT_DIRECTORY apps/process-status.mem-hog
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/process-status.mem-hog
     FILES
@@ -60,7 +60,7 @@ qt6_am_create_builtin_package(process-status.mem-hog
         apps/process-status.mem-hog/main.qml
 )
 
-qt6_am_create_builtin_package(process-status.slim
+qt_am_create_builtin_package(process-status.slim
     OUTPUT_DIRECTORY apps/process-status.slim
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/process-status.slim
     FILES

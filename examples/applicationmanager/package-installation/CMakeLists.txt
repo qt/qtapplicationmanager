@@ -30,7 +30,7 @@ formatType: am-configuration
 ---
 systemProperties:
   public:
-    serverBinary: '${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}/appman-package-server'"
+    serverBinary: '${qt_INSTALL_PREFIX}/${qt_INSTALL_BINS}/appman-package-server'"
 )
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/extra.yaml PROPERTIES QT_RESOURCE_ALIAS extra.yaml)
 
@@ -55,7 +55,7 @@ target_link_libraries(package-installation PRIVATE
 
 ## Apps ##
 
-qt6_am_create_builtin_package(builtin.blue
+qt_am_create_builtin_package(builtin.blue
     OUTPUT_DIRECTORY apps/builtin.blue
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/builtin.blue
     FILES
@@ -64,7 +64,7 @@ qt6_am_create_builtin_package(builtin.blue
         apps/builtin.blue/main.qml
 )
 
-qt6_am_create_installable_package(installable-red
+qt_am_create_installable_package(installable-red
     OUTPUT_DIRECTORY ps-data/upload
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/ps-data/upload
     FILES
@@ -73,7 +73,7 @@ qt6_am_create_installable_package(installable-red
         installable-apps/installable.red/main.qml
 )
 
-qt6_am_create_installable_package(installable-green
+qt_am_create_installable_package(installable-green
     OUTPUT_DIRECTORY ps-data/upload
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/ps-data/upload
     FILES
@@ -97,7 +97,7 @@ set_target_properties(installable-pink-module PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/installable-pink_package
 )
 
-qt6_am_create_installable_package(installable-pink
+qt_am_create_installable_package(installable-pink
     OUTPUT_DIRECTORY ps-data/upload
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/ps-data/upload
     FILES

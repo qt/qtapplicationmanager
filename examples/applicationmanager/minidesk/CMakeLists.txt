@@ -43,7 +43,7 @@ target_link_libraries(minidesk PRIVATE
 ## Apps ##
 
 
-qt6_am_create_builtin_package(tld.minidesk.app1
+qt_am_create_builtin_package(tld.minidesk.app1
     OUTPUT_DIRECTORY apps/tld.minidesk.app1
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/tld.minidesk.app1
     FILES
@@ -52,7 +52,7 @@ qt6_am_create_builtin_package(tld.minidesk.app1
         apps/tld.minidesk.app1/app1.qml
 )
 
-qt6_am_create_builtin_package(tld.minidesk.app2
+qt_am_create_builtin_package(tld.minidesk.app2
     OUTPUT_DIRECTORY apps/tld.minidesk.app2
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/tld.minidesk.app2
     FILES

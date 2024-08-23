@@ -42,7 +42,7 @@ qt_internal_extend_target(AppManApplicationMainPrivate CONDITION QT_FEATURE_am_w
 )
 
 if(TARGET Qt::WaylandClient)
-    qt6_generate_wayland_protocol_client_sources(AppManApplicationMainPrivate
+    qt_generate_wayland_protocol_client_sources(AppManApplicationMainPrivate
         FILES
             ${CMAKE_CURRENT_SOURCE_DIR}/../wayland-extensions/qtam-extension.xml
     )

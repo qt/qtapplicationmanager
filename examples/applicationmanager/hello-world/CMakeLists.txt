@@ -38,7 +38,7 @@ target_link_libraries(hello-world PRIVATE
 
 ## Apps ##
 
-qt6_am_create_builtin_package(hello-world.blue
+qt_am_create_builtin_package(hello-world.blue
     OUTPUT_DIRECTORY apps/hello-world.blue
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/hello-world.blue
     FILES
@@ -47,7 +47,7 @@ qt6_am_create_builtin_package(hello-world.blue
         apps/hello-world.blue/main.qml
 )
 
-qt6_am_create_builtin_package(hello-world.green
+qt_am_create_builtin_package(hello-world.green
     OUTPUT_DIRECTORY apps/hello-world.green
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/hello-world.green
     FILES
@@ -56,7 +56,7 @@ qt6_am_create_builtin_package(hello-world.green
         apps/hello-world.green/main.qml
 )
 
-qt6_am_create_builtin_package(hello-world.red
+qt_am_create_builtin_package(hello-world.red
     OUTPUT_DIRECTORY apps/hello-world.red
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/hello-world.red
     FILES

@@ -18,7 +18,7 @@ qt_internal_set_exceptions_flags(wp-app-native TRUE)
 
 qt_autogen_tools_initial_setup(wp-app-native)
 
-qt6_generate_wayland_protocol_client_sources(wp-app-native
+qt_generate_wayland_protocol_client_sources(wp-app-native
     FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../src/wayland-extensions/qtam-extension.xml
 )

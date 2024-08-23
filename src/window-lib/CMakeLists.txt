@@ -29,7 +29,7 @@ qt_internal_add_module(AppManWindowPrivate
 
 if(QT_FEATURE_am_multi_process)
 
-    qt6_generate_wayland_protocol_server_sources(AppManWindowPrivate
+    qt_generate_wayland_protocol_server_sources(AppManWindowPrivate
         FILES
             ${CMAKE_CURRENT_SOURCE_DIR}/../wayland-extensions/qtam-extension.xml
     )

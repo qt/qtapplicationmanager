@@ -38,7 +38,7 @@ target_link_libraries(launch-intents PRIVATE
 
 ## Apps ##
 
-qt6_am_create_builtin_package(launch-intents.red
+qt_am_create_builtin_package(launch-intents.red
     OUTPUT_DIRECTORY apps/launch-intents.red
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/launch-intents.red
     FILES
@@ -47,7 +47,7 @@ qt6_am_create_builtin_package(launch-intents.red
         apps/launch-intents.red/main.qml
 )
 
-qt6_am_create_builtin_package(launch-intents.blue
+qt_am_create_builtin_package(launch-intents.blue
     OUTPUT_DIRECTORY apps/launch-intents.blue
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/launch-intents.blue
     FILES
@@ -56,7 +56,7 @@ qt6_am_create_builtin_package(launch-intents.blue
         apps/launch-intents.blue/main.qml
 )
 
-qt6_am_create_builtin_package(launch-intents.green
+qt_am_create_builtin_package(launch-intents.green
     OUTPUT_DIRECTORY apps/launch-intents.green
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/launch-intents.green
     FILES

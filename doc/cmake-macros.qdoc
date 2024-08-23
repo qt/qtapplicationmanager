@@ -62,7 +62,7 @@ CMake.
 Here is a snippet showing how this function is used:
 
 \badcode
-qt6_am_add_systemui_wrapper(minidesk
+qt_am_add_systemui_wrapper(minidesk
     INSTALL_DIR "${INSTALL_EXAMPLEDIR}"
     CONFIG_YAML am-config.yaml
     EXTRA_FILES apps system-ui
@@ -122,14 +122,14 @@ Here is a snippet from the \l applicationmanager/package-installation example, s
 function is used to create a simple installable package:
 
 \quotefromfile applicationmanager/package-installation/CMakeLists.txt
-\skipto qt6_am_create_installable_package(installable-red
+\skipto qt_am_create_installable_package(installable-red
 \printuntil )
 
 An installable package using a compiled QML module looks like this:
 
 \quotefromfile applicationmanager/package-installation/CMakeLists.txt
 \skipto qt_add_qml_module(installable-pink-module
-\printto qt6_am_create_installable_package(installable-pink
+\printto qt_am_create_installable_package(installable-pink
 \printuntil )
 
 */
@@ -148,7 +148,7 @@ An installable package using a compiled QML module looks like this:
 \section1 Synopsis
 
 \badcode
-qt6_am_create_builtin_package(
+qt_am_create_builtin_package(
     target
     FILES ...
     [OUTPUT_DIRECTORY output_dir]
@@ -181,14 +181,14 @@ See also \l qt_am_create_installable_package for packages which can be installed
 Here is a snippet from the \l applicationmanager/hello-world example, showing how this
 function is used to create a simple package:
 \quotefromfile applicationmanager/hello-world/CMakeLists.txt
-\skipto qt6_am_create_builtin_package(hello-world.blue
+\skipto qt_am_create_builtin_package(hello-world.blue
 \printuntil )
 
 A builtin package using a compiled QML module looks like this:
 
 \quotefromfile applicationmanager/application-features/apps/Twins/CMakeLists.txt
-\skipto qt6_add_qml_module
-\printto qt6_am_create_builtin_package
+\skipto qt_add_qml_module
+\printto qt_am_create_builtin_package
 \printuntil )
 
 */

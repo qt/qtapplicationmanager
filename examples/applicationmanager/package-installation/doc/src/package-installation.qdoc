@@ -25,7 +25,7 @@ how to do this in the appman-package-server documentation.
 
 For your convenience, the example comes with three pre-packaged applications (\c installable.red,
 \c installable.green and \c installable.pink from the \c installable-apps folder).
-The actual packaging happens in \c CMakeLists.txt, using the \l qt6_am_create_installable_package
+The actual packaging happens in \c CMakeLists.txt, using the \l qt_am_create_installable_package
 function. Please note that this function is currently in the technical preview state and may change
 in the future.
 

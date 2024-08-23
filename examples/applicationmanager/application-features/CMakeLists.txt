@@ -23,7 +23,7 @@ qt_add_executable(application-features WIN32
 # This define flags us as an "appman" and allows us to link against the AppMan's private libraries
 target_compile_definitions(application-features PRIVATE AM_COMPILING_APPMAN)
 
-qt6_add_qml_module(application-features
+qt_add_qml_module(application-features
     URI "SystemUI"
     QML_FILES
         SystemUi/main.qml

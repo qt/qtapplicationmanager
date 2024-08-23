@@ -39,7 +39,7 @@ target_link_libraries(multi-views PRIVATE
 
 ## Apps ##
 
-qt6_am_create_builtin_package(tld.multi-views.app
+qt_am_create_builtin_package(tld.multi-views.app
     OUTPUT_DIRECTORY apps/tld.multi-views.app
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/tld.multi-views.app
     FILES

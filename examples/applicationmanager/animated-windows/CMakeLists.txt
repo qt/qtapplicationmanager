@@ -37,7 +37,7 @@ target_link_libraries(animated-windows PRIVATE
 
 ## Apps ##
 
-qt6_am_create_builtin_package(animated-windows.fish
+qt_am_create_builtin_package(animated-windows.fish
     OUTPUT_DIRECTORY apps/animated-windows.fish
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/animated-windows.fish
     FILES
@@ -46,7 +46,7 @@ qt6_am_create_builtin_package(animated-windows.fish
         apps/animated-windows.fish/fish.qml
 )
 
-qt6_am_create_builtin_package(animated-windows.rabbit
+qt_am_create_builtin_package(animated-windows.rabbit
     OUTPUT_DIRECTORY apps/animated-windows.rabbit
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/animated-windows.rabbit
     FILES

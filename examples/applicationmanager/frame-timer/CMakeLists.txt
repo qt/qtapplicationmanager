@@ -37,7 +37,7 @@ target_link_libraries(frame-timer PRIVATE
 
 ## Apps ##
 
-qt6_am_create_builtin_package(frame-timer.fish
+qt_am_create_builtin_package(frame-timer.fish
     OUTPUT_DIRECTORY apps/frame-timer.fish
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/frame-timer.fish
     FILES
@@ -46,7 +46,7 @@ qt6_am_create_builtin_package(frame-timer.fish
         apps/frame-timer.fish/fish.qml
 )
 
-qt6_am_create_builtin_package(frame-timer.rabbit
+qt_am_create_builtin_package(frame-timer.rabbit
     OUTPUT_DIRECTORY apps/frame-timer.rabbit
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/frame-timer.rabbit
     FILES

@@ -91,7 +91,7 @@ In addition to the System UI itself, the application packages also need to be ad
 CMakeLists.txt file. This is done by adding the following lines:
 
 \quotefromfile applicationmanager/hello-world/CMakeLists.txt
-\skipto qt6_am_create_builtin_package(hello-world.blue
+\skipto qt_am_create_builtin_package(hello-world.blue
 \printuntil )
 
 \section1 Implement the System UI

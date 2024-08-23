@@ -47,7 +47,7 @@ target_link_libraries(bubblewrap-example PRIVATE
 ## Apps ##
 
 
-qt6_am_create_builtin_package(bubblewrap.browser
+qt_am_create_builtin_package(bubblewrap.browser
     OUTPUT_DIRECTORY apps/bubblewrap.browser
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/bubblewrap.browser
     FILES
@@ -57,7 +57,7 @@ qt6_am_create_builtin_package(bubblewrap.browser
         apps/bubblewrap.browser/Browser.qml
 )
 
-qt6_am_create_builtin_package(bubblewrap.networkinfo
+qt_am_create_builtin_package(bubblewrap.networkinfo
     OUTPUT_DIRECTORY apps/bubblewrap.networkinfo
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/bubblewrap.networkinfo
     FILES
@@ -66,7 +66,7 @@ qt6_am_create_builtin_package(bubblewrap.networkinfo
         apps/bubblewrap.networkinfo/main.qml
 )
 
-qt6_am_create_builtin_package(bubblewrap.simple
+qt_am_create_builtin_package(bubblewrap.simple
     OUTPUT_DIRECTORY apps/bubblewrap.simple
     INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/bubblewrap.simple
     FILES

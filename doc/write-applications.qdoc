@@ -21,7 +21,7 @@ stand-alone QML application, except for these three additional tasks or limitati
     \li Restart the application manager to make it aware of your application.
 \endlist
 
-\section2 The Root Element
+\section1 The Root Element
 
 It's recommended to use either an ApplicationManagerWindow or a QtObject as the root of your QML
 application. This is especially important if you require similar behavior in single-process and
@@ -40,94 +40,108 @@ Here are a few things to consider:
         System UI.
 \endlist
 
-\section2 The Manifest and Updating the Database
+\section1 The Manifest
 
 The \l{Manifest Definition} has all the information you need to produce a minimal \c info.yaml
 file.
 
-Finding and and parsing \c info.yaml files recursively, for potentially hundreds of applications
-can be a very time consuming task and would severely slow down the application manager's startup.
-Therefore, all manifest files are cached in a binary database. To notify the application manager
-about changes to an \c info.yaml file, you have to force a rebuild of this database by calling
-\c{appman --recreate-database}.
+Finding and parsing \c info.yaml files recursively, for potentially hundreds of applications can be
+a very time consuming task and would severely slow down the application manager's startup.
+Therefore, all manifest files are cached in a binary database. The application manager
+automatically detects when a manifest has changed and updates the cache accordingly, but you can
+also force a rebuild of this database by calling \c{appman --clear-cache}.
 
 \note Dynamically adding, updating, or removing individual applications is supported via the
 PackageManager interface.
 
-\section2 qmake Integration
+\section1 CMake Integration
 
-To install applications into a System UI using the \l{Installer}{Installer Sub-System}, the
-application needs to be packaged first. This can be done using the \l{Packager} utility. To better
-integrate the packaging into your usual developer workflow you can also use the qmake integration
-provided.
+The Application Manager CMake integration provides two functions to add applications to the build
+system:
 
-The integration adds an additional \c{package} target to the Makefile. You can create a new
-application in one of two ways:
-
-\list
-    \li Call \c{make package} on the command line.
-    \li Add \c{make package} as an additional build step in QtCreator.
+\list 1
+    \li \c{qt_am_create_builtin_package} for builtin packages
+    \li \c{qt_am_create_installable_package} for dynamically installable packages
 \endlist
 
-\section3 Simple QML Applications
+\section2 Builtin Packages
 
-For simple QML-only applications, create a qmake project file which defines an install step for all
-the needed files. The actual install location doesn't matter in this case, because it is used as a
-temporary path when the package is being created.
+Builtin packages are applications that are built into the System UI and are always available. They
+are defined in the System UI's am-config.yaml file using the \c applications/builtinAppsManifestDir.
 
-\code
-TEMPLATE = aux
+The \c{qt_am_create_builtin_package} function is mainly used to provide a good QtCreator integration,
+as it provides a Run Target for every application added this way. This makes it easier to
+start, stop, debug and profile applications.
+In addition this function manages installable files: it copies them to the build directory when
+necessary and also provides a CMake install target.
 
-FILES += info.yaml \
-         icon.png \
-         Main.qml
-
-app.files = $$FILES
-app.path = /apps/com.example.application
-INSTALLS += app
-\endcode
-
-In addition add the following two lines to provide the install location to the packaging step and
-to load the qmake integration.
+A simple builtin application could look like this:
 
 \code
-AM_PACKAGE_DIR = $$app.path
-
-load(am-app)
+qt_am_create_builtin_package(myapp
+    FILES
+        apps/myapp/info.yaml
+        apps/myapp/icon.png
+        apps/myapp/main.qml
+)
 \endcode
 
-\section3 Complex Applications
+See the \l {System UI Example: "Hello World!"}{Hello World!} example for a complete example.
 
-For complex applications, where you need to deploy a C++ based QML plugin in addition to your QML
-content, you must split your app into multiple folders and project files. One folder for the QML
-part, another one for the C++ plugin, and a \c SUBDIRS project to glue them together.
+\section2 Installable Packages
 
-The packaging integration is done in the \c SUBDIRS project and this process expects that the other
-project files provide install targets to a shared install location. In this case, the QML part
-installs its files in \c{/apps/com.example.application}, while the C++ plugin installs in
-\c{/apps/com.example.application/imports/com/example/application}.
+Installable packages are applications that can be installed into the System UI at runtime.
 
-In the \c SUBDIRS project you need to define the \c AM_MANIFEST variable and set it to the location
-of your \c info.yaml file. Then, define the shared install location as \c AM_PACKAGE_DIR:
+Similar to built-in packages, the \c{qt_am_create_installable_package} function is used to
+provide run targets in QtCreator, but it also adds additional targets to create installable packages
+which can be installed into the System UI at runtime.
+
+A simple installable application could look like this:
 
 \code
-AM_MANIFEST = $$PWD/app/info.yaml
-AM_PACKAGE_DIR = /apps/com.example.application
-
-load(am-app)
+qt_am_create_installable_package(myapp
+    OUTPUT_DIRECTORY apps/myapp
+    FILES
+        apps/myapp/info.yaml
+        apps/myapp/icon.png
+        apps/myapp/main.qml
+)
 \endcode
 
-\section3 Package Multiple Applications
+See the \l {Package Installation Example}} for a complete example.
 
-If your repository provides multiple applications, like the
-\l{http://code.qt.io/cgit/qt-apps/qt-auto-extra-apps.git/}{Qt Auto Extra Apps Repository}, you can
-use qmake's am-package feature to provide a repository-wide \c{package} step.
+\section2 Using the QML script compiler in Applications
 
-Add a \c{.qmake.conf} file with the following content to your repository, which is loaded
-automatically by qmake:
+The QML script compiler is a tool that compiles QML files into binary files and makes the code more
+efficient. It is used behind the scenes if you are using the \l{qt_add_qml_module} function to
+specify a QML module.
+Such a module can also be used in applications by doing the following modifications:
 
+Build the module using \l{qt_add_qml_module} and add it as dependency to the application:
 \code
-CONFIG += am-package
+qt_add_qml_module(mymodule
+    URI com.example.mymodule
+    VERSION 1.0
+    QML_FILES
+        MyItem.qml
+)
+qt_am_create_builtin_package(myapp
+    FILES
+        apps/myapp/info.yaml
+        apps/myapp/icon.png
+        apps/myapp/main.qml
+    DEPENDENCIES
+        mymodule
+)
+
+Load the module library file instead of the application's QML file in the info.yaml file:
+\code
+  runtimeParameters:
+    resources: [ "libmymodule.so" ]
 \endcode
 
+\note This works for installable packages in a similar fashion.
+
+See the \l {Application Features Example} for a complete example of a builtin package and
+the \l {Package Installation Example} for a complete example of an installable package.
 */

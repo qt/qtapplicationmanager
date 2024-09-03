@@ -6,7 +6,7 @@
 \ingroup cmake-macros-qtapplicationmanager
 
 \title qt_am_add_systemui_wrapper
-\target qt6_am_add_systemui_wrapper
+\keyword qt6_am_add_systemui_wrapper
 
 \brief Creates a basic wrapper script to run a System UI using the appman binary.
 
@@ -77,7 +77,7 @@ qt_am_add_systemui_wrapper(minidesk
 \ingroup cmake-macros-qtapplicationmanager
 
 \title qt_am_create_installable_package
-\target qt6_am_create_installable_package
+\keyword qt6_am_create_installable_package
 
 \brief Uses the appman-packager tool to package applications.
 
@@ -139,7 +139,7 @@ An installable package using a compiled QML module looks like this:
 \ingroup cmake-macros-qtapplicationmanager
 
 \title qt_am_create_builtin_package
-\target qt6_am_create_builtin_package
+\keyword qt6_am_create_builtin_package
 
 \brief Marks a directory containing a package as built-in.
 

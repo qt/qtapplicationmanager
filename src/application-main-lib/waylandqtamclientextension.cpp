@@ -68,14 +68,14 @@ void WaylandQtAMClientExtension::sendPropertyToServer(struct ::wl_surface *surfa
                                                       const QVariant &value)
 {
     if (int(qtam_extension::version()) != QWaylandClientExtension::version()) {
-        qCWarning(LogWaylandDebug) << "Unsupported qtam_extension version:" << qtam_extension::version();
+        qCWarning(LogWayland) << "Unsupported qtam_extension version:" << qtam_extension::version();
         return;
     }
     QByteArray data;
     QDataStream ds(&data, QDataStream::WriteOnly);
     ds << value;
 
-    qCDebug(LogWaylandDebug) << "window property: client send:" << surface << name << value;
+    qCDebug(LogWayland) << "window property: client send:" << surface << name << value;
     set_window_property(surface, name, data);
 }
 
@@ -116,7 +116,7 @@ void WaylandQtAMClientExtension::qtam_extension_window_property_changed(wl_surfa
                                                                         wl_array *value)
 {
     if (int(qtam_extension::version()) != QWaylandClientExtension::version()) {
-        qCWarning(LogWaylandDebug) << "Unsupported qtam_extension version:" << qtam_extension::version();
+        qCWarning(LogWayland) << "Unsupported qtam_extension version:" << qtam_extension::version();
         return;
     }
 
@@ -126,7 +126,7 @@ void WaylandQtAMClientExtension::qtam_extension_window_property_changed(wl_surfa
         QVariant variantValue;
         ds >> variantValue;
 
-        qCDebug(LogWaylandDebug) << "window property: client receive" << window << name << variantValue;
+        qCDebug(LogWayland) << "window property: client receive" << window << name << variantValue;
         setWindowPropertyHelper(window, name, variantValue);
     }
 }

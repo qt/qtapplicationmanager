@@ -38,8 +38,10 @@ WaylandWindow::WaylandWindow(Application *app, WindowSurface *surf)
 
         connect(surf, &QWaylandSurface::surfaceDestroyed, this, [this]() {
             m_surface = nullptr;
-            onContentStateChanged();
             emit waylandSurfaceChanged();
+            emit waylandXdgSurfaceChanged();
+            emit sizeChanged();
+            onContentStateChanged();
         });
 
         // Caching them so that Window::windowProperty and Window::windowProperties
@@ -112,7 +114,7 @@ QString WaylandWindow::applicationId() const
 
 QSize WaylandWindow::size() const
 {
-    return m_surface->bufferSize();
+    return m_surface ? m_surface->bufferSize() : QSize{};
 }
 
 void WaylandWindow::resize(const QSize &newSize)

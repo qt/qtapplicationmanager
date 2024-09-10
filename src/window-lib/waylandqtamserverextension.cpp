@@ -41,11 +41,11 @@ void WaylandQtAMServerExtension::setWindowProperty(QWaylandSurface *surface, con
                 data = QCborValue::fromVariant(value).toCbor();
                 break;
             default:
-                qCWarning(LogWaylandDebug) << "Unsupported qtam_extension version:" << target->version();
+                qCWarning(LogWayland) << "Unsupported qtam_extension version:" << target->version();
                 return;
             }
 
-            qCDebug(LogWaylandDebug) << "window property: server send" << surface << name << value;
+            qCDebug(LogWayland) << "window property: server send" << surface << name << value;
             send_window_property_changed(target->handle, surface->resource(), name, data);
         }
     }
@@ -85,10 +85,10 @@ void WaylandQtAMServerExtension::qtam_extension_set_window_property(QtWaylandSer
         variantValue = QCborValue::fromCbor(data).toVariant();
         break;
     default:
-        qCWarning(LogWaylandDebug) << "Unsupported qtam_extension version:" << resource->version();
+        qCWarning(LogWayland) << "Unsupported qtam_extension version:" << resource->version();
         return;
     }
-    qCDebug(LogWaylandDebug) << "window property: server receive" << surface << name << variantValue;
+    qCDebug(LogWayland) << "window property: server receive" << surface << name << variantValue;
     setWindowPropertyHelper(surface, name, variantValue);
 }
 

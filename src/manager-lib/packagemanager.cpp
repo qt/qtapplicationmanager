@@ -85,6 +85,10 @@ using namespace Qt::StringLiterals;
         \li string
         \li The name of the package. If possible, already translated to the current locale.
     \row
+        \li \c description
+        \li string
+        \li The description of the package. If possible, already translated to the current locale.
+    \row
         \li \c icon
         \li string
         \li The URL of the package's icon.

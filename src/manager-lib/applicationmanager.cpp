@@ -78,6 +78,14 @@ using namespace Qt::StringLiterals;
         \li \c name
         \li string
         \li The name of the application. If possible, already translated to the current locale.
+            If no name was defined for the application, the name of the corresponding package will
+            be returned.
+    \row
+        \li \c description
+        \li string
+        \li The description of the application. If possible, already translated to the current locale.
+            If no description was defined for the application, the description of the corresponding
+            package will be returned.
     \row
         \li \c icon
         \li string
@@ -299,6 +307,7 @@ enum AMRoles
 {
     Id = Qt::UserRole,
     Name,
+    Description,
     Icon,
 
     IsRunning,
@@ -331,6 +340,7 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
 
     roleNames.insert(AMRoles::Id, "applicationId");
     roleNames.insert(AMRoles::Name, "name");
+    roleNames.insert(AMRoles::Description, "description");
     roleNames.insert(AMRoles::Icon, "icon");
     roleNames.insert(AMRoles::IsRunning, "isRunning");
     roleNames.insert(AMRoles::IsStartingUp, "isStartingUp");
@@ -1277,6 +1287,8 @@ QVariant ApplicationManager::dataForRole(Application *app, int role) const
         return app->id();
     case AMRoles::Name:
         return app->name();
+    case AMRoles::Description:
+        return app->description();
     case AMRoles::Icon:
         return app->icon();
     case AMRoles::IsRunning:

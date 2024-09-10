@@ -174,6 +174,11 @@ wrapper, to debug imports and plugin loading in a QML application:
 appman-controller debug-application "QT_DEBUG_PLUGINS=1 QML_IMPORT_TRACE=1" io.qt.browser
 \endcode
 
+If any of your environment variables or command arguments contain spaces, you have to escape them:
+\badcode
+appman-controller debug-application -e 'QT_MESSAGE_PATTERN="%{time}\ %{message}" io.qt.browser
+\endcode
+
 When using complex debug wrappers on the command line often, it's advisable to create aliases or
 wrapper scripts.
 

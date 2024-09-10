@@ -336,17 +336,12 @@ QmlInProcRuntime *QmlInProcRuntime::determineRuntime(QObject *object)
 }
 
 QmlInProcRuntimeManager::QmlInProcRuntimeManager(QObject *parent)
-    : AbstractRuntimeManager(defaultIdentifier(), parent)
+    : QmlInProcRuntimeManager(u"qml-inprocess"_s, parent)
 { }
 
 QmlInProcRuntimeManager::QmlInProcRuntimeManager(const QString &id, QObject *parent)
     : AbstractRuntimeManager(id, parent)
 { }
-
-QString QmlInProcRuntimeManager::defaultIdentifier()
-{
-    return u"qml-inprocess"_s;
-}
 
 bool QmlInProcRuntimeManager::inProcess() const
 {

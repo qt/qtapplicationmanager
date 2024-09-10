@@ -24,7 +24,6 @@ public:
     explicit QmlInProcRuntimeManager(QObject *parent = nullptr);
     explicit QmlInProcRuntimeManager(const QString &id, QObject *parent = nullptr);
 
-    static QString defaultIdentifier();
     bool inProcess() const override;
 
     AbstractRuntime *create(AbstractContainer *container, Application *app) override;

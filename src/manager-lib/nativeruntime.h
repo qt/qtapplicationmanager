@@ -36,7 +36,6 @@ public:
     explicit NativeRuntimeManager(QObject *parent = nullptr);
     explicit NativeRuntimeManager(const QString &id, QObject *parent = nullptr);
 
-    static QString defaultIdentifier();
     bool supportsQuickLaunch() const override;
 
     AbstractRuntime *create(AbstractContainer *container, Application *app) override;

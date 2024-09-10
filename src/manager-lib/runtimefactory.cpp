@@ -43,12 +43,7 @@ QStringList RuntimeFactory::runtimeIds() const
 
 AbstractRuntimeManager *RuntimeFactory::manager(const QString &id)
 {
-    if (id.isEmpty())
-        return nullptr;
-    AbstractRuntimeManager *arm = m_runtimes.value(id);
-    if (!arm)
-        arm = m_runtimes.value(id + u"-inprocess"_s);
-    return arm;
+    return m_runtimes.value(id);
 }
 
 AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, Application *app)

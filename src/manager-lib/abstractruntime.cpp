@@ -144,11 +144,6 @@ AbstractRuntimeManager::AbstractRuntimeManager(const QString &id, QObject *paren
     , m_id(id)
 { }
 
-QString AbstractRuntimeManager::defaultIdentifier()
-{
-    return QString();
-}
-
 QString AbstractRuntimeManager::identifier() const
 {
     return m_id;

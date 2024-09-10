@@ -275,6 +275,7 @@ void tst_ControllerTool::applications()
             { u"lastExitCode"_s, 0 },
             { u"lastExitStatus"_s, 0 },
             { u"name"_s, u"Hello Green"_s },
+            { u"description"_s, u"Green description"_s },
             { u"runtimeName"_s, u"qml"_s },
             { u"runtimeParameters"_s, QVariantMap { } },
             { u"updateProgress"_s, 0 },

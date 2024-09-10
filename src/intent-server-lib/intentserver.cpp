@@ -73,6 +73,12 @@ QT_BEGIN_NAMESPACE_AM
             If no name was defined for the intent, the name of the corresponding package will be
             returned.
     \row
+        \li \c description
+        \li string
+        \li The description of the intent. If possible, already translated to the current locale.
+            If no description was defined for the intent, the description of the corresponding
+            package will be returned.
+    \row
         \li \c icon
         \li string
         \li The URL of the intent's icon.
@@ -113,6 +119,7 @@ enum Roles
     PackageId,
     ParameterMatch,
     Name,
+    Description,
     Icon,
     Categories,
     IntentItem,
@@ -169,6 +176,7 @@ IntentServer::IntentServer(IntentServerSystemInterface *systemInterface, QObject
         s_roleNames.insert(PackageId, "packageId");
         s_roleNames.insert(ParameterMatch, "parameterMatch");
         s_roleNames.insert(Name, "name");
+        s_roleNames.insert(Description, "description");
         s_roleNames.insert(Icon, "icon");
         s_roleNames.insert(Categories, "categories");
         s_roleNames.insert(IntentItem, "intent");
@@ -335,6 +343,8 @@ QVariant IntentServer::data(const QModelIndex &index, int role) const
         return intent->parameterMatch();
     case Name:
         return intent->name();
+    case Description:
+        return intent->description();
     case Icon:
         return intent->icon();
     case Categories:

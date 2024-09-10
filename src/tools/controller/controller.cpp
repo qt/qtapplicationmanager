@@ -630,7 +630,11 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
 
         // pass 0: normal stop / pass 1: force kill
         for (int pass = 0; !isStopped && (pass < 2); ++pass) {
-            stopApplication(appId, pass == 0 ? false : true);
+
+            auto stopReply = dbus()->manager()->stopApplication(appId, pass > 0 /*forceKill*/);
+            stopReply.waitForFinished();
+            if (stopReply.isError())
+                throw Exception(Error::IO, "failed to call stopApplication via DBus: %1").arg(stopReply.error().message());
 
             static const int checksPerSecond = 10;
 

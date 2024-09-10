@@ -596,6 +596,9 @@ int main(int argc, char *argv[])
             if (!appId.isEmpty() && isBroadcast)
                 throw Exception("You cannot use --application-id and --broadcast at the same time.");
 
+            if (clp.positionalArguments().size() < 2)
+                clp.showHelp(1);
+
             if (clp.positionalArguments().size() > 3)
                 clp.showHelp(1);
 

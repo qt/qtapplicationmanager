@@ -33,8 +33,6 @@ class AbstractRuntimeManager : public QObject
 public:
     AbstractRuntimeManager(const QString &id, QObject *parent = nullptr);
 
-    static QString defaultIdentifier();
-
     QString identifier() const;
     virtual bool inProcess() const;
     virtual bool supportsQuickLaunch() const;

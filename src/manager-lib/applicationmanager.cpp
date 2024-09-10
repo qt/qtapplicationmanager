@@ -817,8 +817,15 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
     else if (!app->documentUrl().isNull())
         runtime->openDocument(app->documentUrl(), documentMimeType);
 
-    qCDebug(LogSystem) << "Starting application" << app->id() << "in container" << containerId
-                       << "using runtime" << runtimeManager->identifier();
+    Q_ASSERT(inProcess == containerId.isEmpty());
+
+    const QString containerInfo = (containerId.isEmpty() && inProcess)
+                                      ? u"in-process"_s
+                                      : u"in container \""_s + containerId + u'"';
+
+    qCDebug(LogSystem).noquote().nospace()
+        << "Starting application \"" << app->id() << "\" " << containerInfo
+        << " using runtime \"" << runtimeManager->identifier() << '"';
     if (!documentUrl.isEmpty())
         qCDebug(LogSystem) << "  documentUrl:" << documentUrl;
 

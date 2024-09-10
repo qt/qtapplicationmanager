@@ -539,19 +539,13 @@ void NativeRuntime::setSlowAnimations(bool slow)
     }
 }
 
-
 NativeRuntimeManager::NativeRuntimeManager(QObject *parent)
-    : NativeRuntimeManager(defaultIdentifier(), parent)
+    : NativeRuntimeManager(u"native"_s, parent)
 { }
 
 NativeRuntimeManager::NativeRuntimeManager(const QString &id, QObject *parent)
     : AbstractRuntimeManager(id, parent)
 { }
-
-QString NativeRuntimeManager::defaultIdentifier()
-{
-    return u"native"_s;
-}
 
 bool NativeRuntimeManager::supportsQuickLaunch() const
 {

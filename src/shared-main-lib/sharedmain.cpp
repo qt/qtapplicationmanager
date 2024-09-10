@@ -160,9 +160,19 @@ void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
         u"qt.widgets.painting.info=false"_s,
     };
 
-    const QStringList rules = verbose ? verboseRules
-                                      : loggingRules.isEmpty() ? QStringList(u"*.debug=false"_s)
-                                                               : loggingRules;
+    QStringList rules = loggingRules;
+    if (verbose) {
+        rules = verboseRules;
+
+        // verbose should never log less, so we add all existing positive rules as well
+        for (const auto &loggingRule : loggingRules) {
+            if (loggingRule.endsWith(u"=true"))
+                rules.append(loggingRule);
+        }
+    } else if (rules.isEmpty()) {
+        rules = QStringList(u"*.debug=false"_s);
+    }
+
     Logging::setFilterRules(rules);
     Logging::setMessagePattern(messagePattern);
     Logging::setUseAMConsoleLogger(useAMConsoleLogger);

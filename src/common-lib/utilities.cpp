@@ -436,7 +436,7 @@ static QByteArray timeUnit(qint64 num, qint64 den)
 
 void putTimeUnit(QDebug &dbg, qint64 num, qint64 den)
 {
-    dbg << timeUnit(num, den);
+    dbg << timeUnit(num, den).constData();
 }
 
 QT_END_NAMESPACE

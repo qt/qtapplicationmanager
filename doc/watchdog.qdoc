@@ -5,7 +5,6 @@
 
 \page watchdog.html
 \ingroup qtappman
-\ingroup qtappman-highlights
 \title Watchdog
 \brief Describes configuration and mode of operation of the built-in watchdog mechanism.
 \section1 Introduction

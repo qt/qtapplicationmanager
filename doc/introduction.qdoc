@@ -7,8 +7,7 @@
 
 \page introduction.html
 \ingroup qtappman
-\ingroup qtappman-highlights
-\title The Qt Application Manager
+\title Introduction
 \brief Provides an introduction and overview of Qt Application Manager.
 
 The Qt Application Manager is a headless daemon that helps you to create embedded

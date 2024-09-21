@@ -7,7 +7,6 @@
 
 \page singlevsmultiprocess.html
 \ingroup qtappman
-\ingroup qtappman-highlights
 \title Single-Process vs. Multi-Process Mode
 \brief Discusses running the System UI and QML applications in two different modes.
 

@@ -7,7 +7,6 @@
 
 \page howto-apps.html
 \ingroup qtappman
-\ingroup qtappman-highlights
 \title Writing Applications
 \brief Discusses writing an application to run as a client within the application manager.
 

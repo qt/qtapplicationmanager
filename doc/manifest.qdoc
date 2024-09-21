@@ -5,7 +5,6 @@
 
 \page manifest.html
 \ingroup qtappman
-\ingroup qtappman-highlights
 \keyword info.yaml metadata manifest format
 \title Manifest Definition
 \brief Describes the current metadata format for packages.

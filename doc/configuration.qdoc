@@ -7,7 +7,6 @@
 
 \page configuration.html
 \ingroup qtappman
-\ingroup qtappman-highlights
 \title Configuration
 \brief Configure the application manager through configuration (config) files and the command line.
 \section1 Introduction

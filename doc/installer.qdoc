@@ -7,7 +7,6 @@
 
 \page installer.html
 \ingroup qtappman
-\ingroup qtappman-highlights
 \title Package Installation
 \brief Discusses the package installation infrastructure.
 \keyword Installer

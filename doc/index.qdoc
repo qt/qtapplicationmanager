@@ -18,8 +18,22 @@ compositing window manager using the APIs that are exported from the C++ side.
 For a high-level overview, see \l{The Qt Application Manager}{Introduction to the Qt Application Manager}.
 
 \section1 Important topics
-
-\annotatedlist qtappman-highlights
+\list
+    \li \l{Installation}
+    \li \l{Configuration}
+    \li \l{Troubleshooting}
+    \li \l{The System UI}
+    \li \l{Writing Applications}
+    \li \l{Manifest Definition}
+    \li \l{Package Installation}
+    \li \l{Logging and Debugging}
+    \li \l{Containers}
+    \li \l{Intents}
+    \li \l{Watchdog}
+    \li \l{Using Qt Resources}
+    \li \l{Single-Process vs. Multi-Process Mode}
+    \li \l{What's New}
+\endlist
 
 \section1 Tools
 \annotatedlist qtappman-tools

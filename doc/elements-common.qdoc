@@ -8,7 +8,6 @@
 \page qml-common.html
 \title QtApplicationManager QML module
 \ingroup qtappman
-\ingroup qtappman-highlights
 \brief Qt Application Manager module common to both System UI and applications.
 
 The QtApplicationManager QML module contains the components and types available to both System UI

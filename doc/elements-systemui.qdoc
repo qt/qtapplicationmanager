@@ -8,7 +8,6 @@
 \page qml-sysui.html
 \title QtApplicationManager.SystemUI QML module
 \ingroup qtappman
-\ingroup qtappman-highlights
 \brief Qt Application Manager module for use in a System UI.
 
 The QtApplicationManager.SystemUI QML module contains the components and types to use in a

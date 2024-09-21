@@ -9,7 +9,6 @@
 \title Installation
 \brief Discusses Qt Application Manager installation considerations, such as; support, prerequisites, code coverage data and system setup.
 \ingroup qtappman
-\ingroup qtappman-highlights
 \section1 Supported Platforms
 
 The application manager is tested regularly on multiple platforms.

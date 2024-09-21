@@ -8,7 +8,6 @@
 \title Using Qt Resources
 \brief Discusses compiling, loading and accesses resources in your program's executable.
 \ingroup qtappman
-\ingroup qtappman-highlights
 
 
 \l{The Qt Resource System} lets you store files in your program's executable. In some ways,

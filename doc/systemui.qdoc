@@ -7,7 +7,6 @@
 
 \page system-ui.html
 \ingroup qtappman
-\ingroup qtappman-highlights
 \title The System UI
 \brief Describes the part of a UI which starts and stops any application, on a device
 

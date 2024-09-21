@@ -8,7 +8,6 @@
 \page containers.html
 \title Containers
 \ingroup qtappman
-\ingroup qtappman-highlights
 \brief Describes an execution environment for an executable.
 
 In the application manager context, a \b container describes an execution environment for an

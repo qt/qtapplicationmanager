@@ -382,7 +382,7 @@ int main(int argc, char *argv[])
     // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
     try {
         auto cmd = command(clp);
-        if ((cmd != NoCommand) && (cmd != ListInstances))
+        if ((cmd != NoCommand) && (cmd != ListInstances) && !clp.isSet(u"help"_s))
             dbus()->setInstanceInfo(resolveInstanceInfo(clp.value(u"instance-id"_s)));
 
         switch (cmd) {

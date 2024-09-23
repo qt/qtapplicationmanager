@@ -11,7 +11,7 @@ target_link_libraries(widgets
         Qt::AppManApplicationMainPrivate
 )
 
-qt_am_create_builtin_package(Widgets
+qt_am_create_builtin_package(AppManWidgets
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     INSTALL_DIRECTORY "${INSTALL_EXAMPLEDIR}/apps/Widgets"
     FILES

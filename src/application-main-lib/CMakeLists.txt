@@ -11,10 +11,10 @@ qt_internal_add_module(AppManApplicationMainPrivate
         intentclientdbusimplementation.cpp intentclientdbusimplementation.h
         waylandapplicationmanagerwindowimpl.cpp waylandapplicationmanagerwindowimpl.h
     DBUS_INTERFACE_SOURCES
-        ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.applicationinterface.xml
-        ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.runtimeinterface.xml
-        ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.intentinterface.xml
-        ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/org.freedesktop.notifications.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.applicationinterface.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.runtimeinterface.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.intentinterface.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/org.freedesktop.notifications.xml
     LIBRARIES
         Qt::CorePrivate
         Qt::GuiPrivate

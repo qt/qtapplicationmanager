@@ -58,9 +58,9 @@ qt_internal_add_module(AppManManagerPrivate
 if (QT_FEATURE_am_multi_process)
     qtam_internal_add_dbus_adaptor(AppManManagerPrivate
         DBUS_ADAPTOR_SOURCES
-            ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.applicationinterface.xml
-            ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.runtimeinterface.xml
-            ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.intentinterface.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.applicationinterface.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.runtimeinterface.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.intentinterface.xml
         DBUS_ADAPTOR_FLAGS
             -i dbus-utilities.h
     )

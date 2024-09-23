@@ -16,11 +16,11 @@ set_target_properties(appman-controller PROPERTIES WIN32_EXECUTABLE FALSE)
 
 qt_internal_extend_target(appman-controller
     DBUS_INTERFACE_SOURCES
-        ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.packagemanager.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../dbus-interfaces/io.qt.packagemanager.xml
 )
 qt_internal_extend_target(appman-controller
     DBUS_INTERFACE_SOURCES
-        ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../dbus-interfaces/io.qt.applicationmanager.xml
     DBUS_INTERFACE_FLAGS
         -i dbus-utilities.h
 )

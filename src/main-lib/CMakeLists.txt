@@ -41,9 +41,9 @@ target_sources(AppManMainPrivate PRIVATE
 if (TARGET Qt::DBus AND QT_FEATURE_am_external_dbus_interfaces)
     qtam_internal_add_dbus_adaptor(AppManMainPrivate
         DBUS_ADAPTOR_SOURCES
-            ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.applicationmanager.xml
-            ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.windowmanager.xml
-            ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/org.freedesktop.notifications.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.windowmanager.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/org.freedesktop.notifications.xml
         DBUS_ADAPTOR_FLAGS
             -i dbus-utilities.h
     )
@@ -60,7 +60,7 @@ if (TARGET Qt::DBus AND QT_FEATURE_am_external_dbus_interfaces)
 
     qtam_internal_add_dbus_adaptor(AppManMainPrivate
         DBUS_ADAPTOR_SOURCES
-            ${CMAKE_SOURCE_DIR}/src/dbus-interfaces/io.qt.packagemanager.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.packagemanager.xml
         DBUS_ADAPTOR_FLAGS
             -i dbus-utilities.h
     )

@@ -35,6 +35,8 @@ containers:
       ro-bind-try:
         /lib64: '/lib64'
         /usr/lib64: '/usr/lib64'
+        /usr/local/lib: '/usr/local/lib'
+        /usr/local/lib64: '/usr/local/lib64'
         '/sys/devices/pci0000:00': '/sys/devices/pci0000:00'
         /usr/share/glvnd/egl_vendor.d: '/usr/share/glvnd/egl_vendor.d'
         /usr/share/ca-certificates: '/usr/share/ca-certificates'

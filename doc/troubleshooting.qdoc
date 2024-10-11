@@ -30,6 +30,8 @@ solve them.
         \li \l{How do I enable hardware acceleration?}
     \row
         \li \l{My applications are crashing immediately within the application manager. What are some possible solutions?}
+    \row
+        \li \l{Why does the appman-controller not see any of my appman instances?}
 \endtable
 
 \target ts-cmake-wayland
@@ -118,5 +120,33 @@ Make sure to enable hardware acceleration.
 You can also force software rendering by setting the environment variable \c $QT_QUICK_BACKEND to
 \c software, but only if your applications aren't using OpenGL features explicitly.
 For example, shaders.
+
+
+\section1 Why does the appman-controller not see any of my appman instances?
+
+Most likely your appman-controller and the appman instances are running under different Unix user
+accounts on your target device. If your shell user is \c root, but the appman is running under an
+unpriviledged account, you can use this setup: rename the \c appman-controller executable to
+\c appman-controller.bin and save the following script as \c appman-controller in place of the
+original executable. Don't forget to replace \c <your-appman-user> with the actual user name.
+
+\badcode
+#!/bin/sh
+
+APPMAN_USER="<your-appman-user>"
+APPMAN_CONTROLLER="`dirname $0`/appman-controller.bin"
+
+CURRENT_UID=`id -u`
+APPMAN_UID=`id -u $APPMAN_USER`
+
+if [ "$CURRENT_UID" = "$APPMAN_UID" ]; then
+  "$APPMAN_CONTROLLER" "$@"
+elif [ "$CURRENT_UID" = "0" ]; then
+  su "$APPMAN_USER" -s "$APPMAN_CONTROLLER" -- "$@"
+else
+  echo >&2 "The current user (`id -un`) is neither the appman user ($APPMAN_USER) nor root."
+  exit 2
+fi
+\endcode
 
 */

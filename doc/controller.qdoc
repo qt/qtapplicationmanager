@@ -24,6 +24,10 @@ between instances with the same id.
 
 A list of all currently running instances can be obtained with the \c list-instances command.
 
+\note The appman-controller has to be run under the same user id as the application manager.
+      Otherwise the D-Bus connection will fail. For a possible solution, see the
+      \l{Why does the appman-controller not see any of my appman instances?}{troubleshooting guide}.
+
 The \c --instance-id option lets you choose which of the running appman instances you want to
 address. This gives you 3 possibilities:
 \list

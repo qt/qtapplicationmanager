@@ -1,6 +1,7 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include "logging.h"
 #include "applicationmanagerwindow.h"
 #include "applicationmanagerwindowimpl.h"
 
@@ -582,11 +583,17 @@ void ApplicationManagerWindow::setVisibility(QWindow::Visibility newVisibility)
 ApplicationManagerWindowAttached::ApplicationManagerWindowAttached(QObject *attachee)
     : QObject(attachee)
 {
-    if (auto *attacheeItem = qobject_cast<QQuickItem*>(attachee)) {
+    if (auto *attacheeAMW = qobject_cast<ApplicationManagerWindow *>(attachee)) {
+        // weird to use the attached properties on an AMW object, but should still work
+        reconnect(attacheeAMW);
+    } else if (auto *attacheeItem = qobject_cast<QQuickItem *>(attachee)) {
         m_impl.reset(ApplicationManagerWindowAttachedImpl::create(this, attacheeItem));
 
         if (auto *amwindow = m_impl->findApplicationManagerWindow())
             reconnect(amwindow);
+    } else {
+        qCWarning(LogQml) << "The ApplicationManagerWindow attached type can only be used on "
+                             "visual Items (got" << attachee << ")";
     }
 }
 

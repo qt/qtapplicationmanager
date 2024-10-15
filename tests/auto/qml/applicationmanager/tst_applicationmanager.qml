@@ -3,42 +3,41 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-import QtQuick 2.3
-import QtQuick.Window 2.0
-import QtTest 1.0
-import QtApplicationManager.SystemUI 2.0
+import QtQuick
+import QtQuick.Window
+import QtTest
+import QtApplicationManager.SystemUI
 import QtApplicationManager.Test
 
 TestCase {
     id: testCase
     when: windowShown
     name: "ApplicationManager"
+    visible: true
+
+    width: 200
+    height: 200
 
     property ApplicationObject simpleApplication
     property ApplicationObject capsApplication
     // Either appman is build in single-process mode or it was started with --force-single-process
     property bool singleProcess : Qt.application.arguments.indexOf("--force-single-process") !== -1
                                   || !AmTest.buildConfig[0].QT_FEATURES.QT_FEATURE_am_multi_process
+
     property WindowObject lastWindowAdded: null
-    property QtObject windowHandler: QtObject {
-        function windowAddedHandler(window) {
-            // console.info("window " + window + " added");
-            lastWindowAdded = window
-        }
-
-
-        function windowContentStateChangedHandler(window) {
-            // console.info("window content state = " + window.contentState);
-        }
+    WindowItem {
+        id: lastWindowItem
+        focus: true
     }
 
     ListView {
         id: listView
-        width: 200
-        height: 200
+        focus: true
+        anchors.fill: parent
+        opacity: 0.1
         model: ApplicationManager
         delegate: Item {
-            property var modelData: model
+            required property var modelData
         }
     }
 
@@ -48,8 +47,14 @@ TestCase {
     }
 
     function initTestCase() {
-        WindowManager.windowAdded.connect(windowHandler.windowAddedHandler)
-        WindowManager.windowContentStateChanged.connect(windowHandler.windowContentStateChangedHandler)
+        WindowManager.windowAdded.connect(function(window) {
+            lastWindowAdded = window
+            lastWindowItem.window = window
+        })
+        WindowManager.windowAboutToBeRemoved.connect(function(window) {
+            if (window === lastWindowAdded)
+                lastWindowItem.window = null
+        })
 
         compare(ApplicationManager.count, 2)
         simpleApplication = ApplicationManager.application(0);
@@ -508,25 +513,70 @@ TestCase {
         verify(req)
         tryVerify(() => { return req.succeeded })
 
+        let r = req.result
         let qap = { }
 
         if (singleProcess) {
-            qap = {
-                "name": Application.name,
-                "domain": Application.domain,
-                "organization": Application.organization,
-                "version": Application.version
-            }
+            compare(r.name, Application.name)
+            compare(r.domain, Application.domain)
+            compare(r.organization, Application.organization)
+            compare(r.version, Application.version)
         } else {
-            qap = {
-                "name": "simple1",
-                "domain": "test.tld",
-                "organization": "test.tld",
-                "version": simpleApplication.version
-            }
+            compare(r.name, "simple1")
+            compare(r.domain, "test.tld")
+            compare(r.organization, "test.tld")
+            compare(r.version, simpleApplication.version)
         }
 
-        compare(req.result, qap)
+        // cleanup
+        compare(simpleApplication.runState, Am.Running)
+        ApplicationManager.stopApplication(simpleApplication.id)
+        tryVerify(() => { return simpleApplication.runState === Am.NotRunning })
+    }
+
+    function test_applicationManagerWindow()
+    {
+        if (testCase.Window.window.flags & Qt.WindowDoesNotAcceptFocus)
+            skip("Test can only be run without AM_BACKGROUND_TEST set, since it requires input focus");
+
+        // initialize focus
+        listView.forceActiveFocus()
+
+        verify(ApplicationManager.startApplication(simpleApplication.id))
+        tryCompare(WindowManager, "count", 1)
+
+        tryVerify(() => (lastWindowItem.window?.application?.id === simpleApplication.id))
+        lastWindowItem.forceActiveFocus()
+
+        let req = IntentClient.sendIntentRequest("applicationManagerWindow", simpleApplication.id, { "waitUntilActive": 1000 })
+        verify(req)
+        tryVerify(() => { return req.succeeded })
+
+        let r = req.result
+
+        compare(r.attachedItemOk, true)
+        compare(r.selfAttachedItemOk, true)
+        compare(r.attachedDataOk, true)
+        compare(r.singleProcess, singleProcess)
+        compare(r.backingObject, true)
+        compare(r.color, true)
+        compare(r.contentItem, true)
+        compare(r.title, "Test")
+        compare(r.x, 0)
+        compare(r.y, 0)
+        compare(r.width, 180)
+        compare(r.height, 180)
+        compare(r.minimumWidth, 0)
+        compare(r.minimumHeight, 0)
+        compare(r.maximumWidth, 16777215)
+        compare(r.maximumHeight, 16777215)
+        compare(r.visible, true)
+        compare(r.opacity, 1.0)
+        compare(r.active, true)
+        compare(r.activeFocusItem, true)
+
+        if (!ApplicationManager.singleProcess) // TODO: find out why this does not work here
+            compare(r.visibility, Window.Windowed)
 
         // cleanup
         compare(simpleApplication.runState, Am.Running)

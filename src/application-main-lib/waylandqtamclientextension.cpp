@@ -30,7 +30,7 @@ bool WaylandQtAMClientExtension::eventFilter(QObject *o, QEvent *e)
 {
     if (e->type() == QEvent::Expose) {
         if (!isActive()) {
-            qCWarning(LogGraphics) << "WaylandQtAMClientExtension is not active";
+            qCWarning(LogWayland) << "WaylandQtAMClientExtension is not active";
         } else {
             QWindow *window = qobject_cast<QWindow *>(o);
             Q_ASSERT(window);

@@ -208,6 +208,8 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched, const QPair<QStr
 
         connect(am, &ApplicationMain::startApplication,
                 this, &Controller::startApplication);
+
+        StartupTimer::instance()->checkpoint("after D-Bus connections");
     } else {
         QMetaObject::invokeMethod(this, [this, directLoad]() {
             PackageInfo *pi;
@@ -239,19 +241,21 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched, const QPair<QStr
         }, Qt::QueuedConnection);
     }
 
-    const QString quicklaunchQml = m_configuration.value((u"quicklaunchQml"_s)).toString();
-    if (!quicklaunchQml.isEmpty() && quickLaunched) {
-        QQmlComponent quicklaunchComp(&m_engine, filePathToUrl(quicklaunchQml, am->baseDir()));
-        if (!quicklaunchComp.isError()) {
-            std::unique_ptr<QObject> quicklaunchInstance(quicklaunchComp.create());
-        } else {
-            const QList<QQmlError> errors = quicklaunchComp.errors();
-            for (const QQmlError &error : errors)
-                qCCritical(LogQmlRuntime) << error;
+    if (quickLaunched) {
+        const QString quicklaunchQml = m_configuration.value((u"quicklaunchQml"_s)).toString();
+        if (!quicklaunchQml.isEmpty()) {
+            QQmlComponent quicklaunchComp(&m_engine, filePathToUrl(quicklaunchQml, am->baseDir()));
+            if (!quicklaunchComp.isError()) {
+                std::unique_ptr<QObject> quicklaunchInstance(quicklaunchComp.create());
+            } else {
+                const QList<QQmlError> errors = quicklaunchComp.errors();
+                for (const QQmlError &error : errors)
+                    qCCritical(LogQmlRuntime) << error;
+            }
+            StartupTimer::instance()->checkpoint("after quicklaunchQml instantiation");
         }
+        StartupTimer::instance()->createReport(u"[QML quicklauncher]"_s);
     }
-
-    StartupTimer::instance()->checkpoint("after application interface initialization");
 }
 
 void Controller::startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
@@ -268,6 +272,13 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         qCCritical(LogQmlRuntime) << "did not receive an application id";
         QCoreApplication::exit(2);
         return;
+    }
+
+    if (m_quickLaunched) {
+        StartupTimer::instance()->reset();
+        StartupTimer::instance()->checkpoint("quick-launching application");
+    } else {
+        StartupTimer::instance()->checkpoint("starting application");
     }
 
     const QStringList applicationIdParts = applicationId.split(u'.');
@@ -323,13 +334,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     auto *am = ApplicationMain::instance();
     am->setApplication(convertFromDBusVariant(application).toMap());
     am->setSystemProperties(convertFromDBusVariant(systemProperties).toMap());
-
-    if (m_quickLaunched) {
-        //StartupTimer::instance()->createReport(applicationId  + u" [process launch]"_s);
-        StartupTimer::instance()->reset();
-    } else {
-        StartupTimer::instance()->checkpoint("starting application");
-    }
 
     QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(u"runtimeParameters"_s));
 

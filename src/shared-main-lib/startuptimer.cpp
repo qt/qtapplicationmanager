@@ -365,13 +365,9 @@ void StartupTimer::checkFirstFrame()
 void StartupTimer::reset()
 {
     if (m_initialized) {
-        QByteArray timeString = formatMicroSecs(quint64(m_timer.nsecsElapsed() / 1000) + m_processCreation);
         m_timer.restart();
         m_checkpoints.clear();
         m_processCreation = 0;
-
-        const QByteArray text = "started " + timeString + " after process launch";
-        m_checkpoints.emplace_back(0, text);
     }
 }
 

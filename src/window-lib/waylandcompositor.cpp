@@ -101,7 +101,7 @@ void WindowSurface::close()
     } else if (m_popup) {
         m_popup->sendPopupDone();
     } else {
-        qCWarning(LogGraphics) << "The Wayland surface" << this << "is not using the XDG Shell extension. Unable to send close signal.";
+        qCWarning(LogWayland) << "The Wayland surface" << this << "is not using the XDG Shell extension. Unable to send close signal.";
     }
 }
 

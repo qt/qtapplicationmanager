@@ -18,6 +18,7 @@
 #include <QMetaObject>
 #include <QTimer>
 #include <QDebug>
+#include <QScopedValueRollback>
 
 #include <QQmlEngine>
 #include <QQmlInfo>
@@ -265,16 +266,23 @@ Intent *IntentServer::addIntent(const QString &id, const QString &packageId,
 void IntentServer::removeIntent(Intent *intent)
 {
     qsizetype index = m_intents.indexOf(intent);
-    if (index >= 0) {
-        emit intentAboutToBeRemoved(intent);
-        beginRemoveRows(QModelIndex(), int(index), int(index));
-        m_intents.removeAt(index);
-        endRemoveRows();
+    if (index < 0)
+        return;
 
-        emit countChanged();
-
-        delete intent;
+    if (m_aboutToBeRemoved) {
+        qCFatal(LogIntents) << "IntentServer::removeIntent was called recursively";
+        return;
     }
+    QScopedValueRollback<bool> rollback(m_aboutToBeRemoved, true);
+
+    emit intentAboutToBeRemoved(intent);
+    beginRemoveRows(QModelIndex(), int(index), int(index));
+    m_intents.removeAt(index);
+    endRemoveRows();
+
+    emit countChanged();
+
+    delete intent;
 }
 
 QVector<Intent *> IntentServer::filterByIntentId(const QVector<Intent *> &intents, const QString &intentId,

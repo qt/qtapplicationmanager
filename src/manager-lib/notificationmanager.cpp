@@ -7,6 +7,7 @@
 #include <QCoreApplication>
 #include <QTimer>
 #include <QMetaObject>
+#include <QScopedValueRollback>
 
 #include "global.h"
 #include "logging.h"
@@ -282,6 +283,7 @@ public:
     NotificationManager *q = nullptr;
     QHash<int, QByteArray> roleNames;
     QList<NotificationData *> notifications;
+    bool aboutToBeRemoved = false;
 };
 
 NotificationManager *NotificationManager::s_instance = nullptr;
@@ -677,19 +679,25 @@ void NotificationManagerPrivate::closeNotification(uint id, CloseReason reason)
     qCDebug(LogNotifications) << "Close id:" << id << "reason:" << reason;
 
     int i = findNotificationById(id);
+    if (i < 0)
+        return;
 
-    if (i >= 0) {
-        emit q->notificationAboutToBeRemoved(id);
-
-        q->beginRemoveRows(QModelIndex(), i, i);
-        auto n = notifications.takeAt(i);
-        q->endRemoveRows();
-
-        emit q->internalSignals.notificationClosed(id, uint(reason));
-
-        qCDebug(LogNotifications) << "Deleting notification with id:" << id;
-        delete n;
+    if (aboutToBeRemoved) {
+        qCFatal(LogNotifications) << "NotificationManager::closeNotification() was called recursively.";
+        return;
     }
+    QScopedValueRollback<bool> rollback(aboutToBeRemoved, true);
+
+    emit q->notificationAboutToBeRemoved(id);
+
+    q->beginRemoveRows(QModelIndex(), i, i);
+    auto n = notifications.takeAt(i);
+    q->endRemoveRows();
+
+    emit q->internalSignals.notificationClosed(id, uint(reason));
+
+    qCDebug(LogNotifications) << "Deleting notification with id:" << id;
+    delete n;
 }
 
 QT_END_NAMESPACE_AM

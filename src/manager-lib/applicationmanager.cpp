@@ -13,6 +13,7 @@
 #include <QUuid>
 #include <QThread>
 #include <QMimeDatabase>
+#include <QScopedValueRollback>
 #include <qplatformdefs.h>
 #if defined(QT_GUI_LIB)
 #  include <QDesktopServices>
@@ -1515,6 +1516,12 @@ void ApplicationManager::removeApplication(ApplicationInfo *appInfo, Package *pa
         return;
 
     Q_ASSERT(d->apps.at(index)->package() == package);
+
+    if (d->aboutToBeRemoved) {
+        qCFatal(LogSystem) << "ApplicationManager::removeApplication was called recursively";
+        return;
+    }
+    QScopedValueRollback<bool> rollback(d->aboutToBeRemoved, true);
 
     emit applicationAboutToBeRemoved(appInfo->id());
 

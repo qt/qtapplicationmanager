@@ -7,6 +7,7 @@
 #include <QQmlEngine>
 #include <QVersionNumber>
 #include <QCoreApplication>
+#include <QScopedValueRollback>
 #include "packagemanager.h"
 #include "packagedatabase.h"
 #include "packagemanager_p.h"
@@ -1480,6 +1481,12 @@ bool PackageManager::finishedPackageInstall(const QString &id)
         // remove the package from the model
         qsizetype row = d->packages.indexOf(package);
         if (row >= 0) {
+            if (d->aboutToBeRemoved) {
+                qCFatal(LogSystem) << "PackageManager was instructed to remove packages recursively";
+                return false;
+            }
+            QScopedValueRollback<bool> rollback(d->aboutToBeRemoved, true);
+
             emit packageAboutToBeRemoved(package->id());
             beginRemoveRows(QModelIndex(), int(row), int(row));
             d->packages.removeAt(row);
@@ -1514,6 +1521,12 @@ bool PackageManager::canceledPackageInstall(const QString &id)
         // remove the package from the model
         int row = int(d->packages.indexOf(package));
         if (row >= 0) {
+            if (d->aboutToBeRemoved) {
+                qCFatal(LogSystem) << "PackageManager was instructed to remove packages recursively";
+                return false;
+            }
+            QScopedValueRollback<bool> rollback(d->aboutToBeRemoved, true);
+
             emit packageAboutToBeRemoved(package->id());
             beginRemoveRows(QModelIndex(), row, row);
             d->packages.removeAt(row);

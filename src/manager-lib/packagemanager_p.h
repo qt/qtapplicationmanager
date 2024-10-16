@@ -26,6 +26,7 @@ class PackageManagerPrivate
 public:
     PackageDatabase *database = nullptr;
     QVector<Package *> packages;
+    bool aboutToBeRemoved = false;
 
     QMap<Package *, PackageInfo *> pendingPackageInfoUpdates;  // AXIVION Line Qt-QMapWithPointerKey: package is locked
 

@@ -178,7 +178,7 @@ void WaylandXdgWatchdog::onPongWarnTimeout()
             qCCritical(LogWatchdog).nospace().noquote()
                 << cd->m_description
                 << " still hasn't sent a pong reply to a ping request in over "
-                << elapsed << " (the warn threshold is" << m_warnTimeout << ")";
+                << elapsed << " (the warn threshold is " << m_warnTimeout << ")";
         }
     }
     if ((m_killTimeout <= 0ms) && (m_checkInterval > 0ms))

@@ -25,6 +25,7 @@ public:
     QVariantMap systemProperties;
 
     QVector<Application *> apps;
+    bool aboutToBeRemoved = false;
 
     QString currentLocale;
     QHash<int, QByteArray> roleNames;

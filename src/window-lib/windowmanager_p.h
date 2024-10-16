@@ -44,6 +44,7 @@ public:
     // Only windows whose content state is different than Window::NoSurface are
     // kept here.
     QVector<Window *> windowsInModel;
+    bool aboutToBeRemoved = false;
 
     bool shuttingDown = false;
     bool slowAnimations = false;

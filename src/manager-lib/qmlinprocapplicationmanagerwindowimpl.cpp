@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <QQuickWindow>
+#include <QScopedValueRollback>
 #include <QtQuick/private/qquickitem_p.h>
 #include <QtQuick/private/qquickevents_p_p.h>
 
@@ -115,6 +116,10 @@ QObject *QmlInProcApplicationManagerWindowImpl::backingObject() const
 
 void QmlInProcApplicationManagerWindowImpl::close()
 {
+    if (m_closing)
+        return;
+    QScopedValueRollback<bool> rollback(m_closing, true);
+
     for (const auto &child: std::as_const(m_childWindows))
         child->close();
 

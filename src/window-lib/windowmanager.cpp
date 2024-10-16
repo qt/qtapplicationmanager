@@ -646,8 +646,14 @@ void WindowManager::addWindow(Window *window)
 void WindowManager::removeWindow(Window *window)
 {
     qsizetype index = d->windowsInModel.indexOf(window);
-    if (index == -1)
+    if (index < 0)
         return;
+
+    if (d->aboutToBeRemoved) {
+        qCFatal(LogSystem) << "WindowManager::removeWindow was called recursively";
+        return;
+    }
+    QScopedValueRollback<bool> rollback(d->aboutToBeRemoved, true);
 
     emit windowAboutToBeRemoved(window);
 

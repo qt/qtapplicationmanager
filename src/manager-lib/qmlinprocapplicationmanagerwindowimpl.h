@@ -104,6 +104,7 @@ private:
     qreal m_opacity = 1;
     QQuickItem *m_activeFocusItem = nullptr;
     QWindow::Visibility m_visibility = QWindow::Hidden;
+    bool m_closing = false;
 
     friend class QmlInProcRuntime; // for setting the m_runtime member
 };

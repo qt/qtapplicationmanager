@@ -127,6 +127,7 @@ private:
     int m_sentToAppTimeout = 0;
 
     QVector<Intent *> m_intents;
+    bool m_aboutToBeRemoved = false;
 
     IntentServerSystemInterface *m_systemInterface;
     friend class IntentServerSystemInterface;

@@ -29,7 +29,7 @@ class ApplicationInterface : public QObject
     Q_PROPERTY(QString version READ version CONSTANT FINAL)
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT SCRIPTABLE true FINAL)
     Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true FINAL)
-    QML_ATTACHED(ApplicationInterface)
+    QML_ATTACHED(QtAM::ApplicationInterface)
 
 public:
     ~ApplicationInterface() override;

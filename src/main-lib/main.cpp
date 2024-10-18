@@ -141,9 +141,6 @@ Main::Main(int &argc, char **argv, InitFlags initFlags)
             false;
 #endif
 
-    // this might be needed later on by the native runtime to find a suitable qml runtime launcher
-    setProperty("_am_build_dir", QString::fromLatin1(AM_BUILD_DIR));
-
     static bool once = false;
     if (!once) {
         once = true;

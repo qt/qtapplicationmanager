@@ -440,7 +440,7 @@ void NativeRuntime::onProcessStarted()
 void NativeRuntime::onProcessError(Am::ProcessError error)
 {
     Q_UNUSED(error)
-    if (m_state != Am::Running && m_state != Am::ShuttingDown)
+    if (!m_isQuickLauncher && (m_state != Am::Running && m_state != Am::ShuttingDown))
         shutdown(-1, Am::CrashExit);
 }
 

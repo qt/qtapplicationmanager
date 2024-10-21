@@ -116,10 +116,14 @@ static void ProcessTitleInitialize(int argc, char *argv[], char *envp[])
         for (int i = 0; i < oldenvp.size(); ++i) {
             // split into key/value pairs for setenv()
             char *name = oldenvp[i];
+            if (!name || !*name)
+                continue;
             char *value = strchr(name, '=');
             if (!value) // entries without '=' should not exist
                 continue;
             *value++ = 0;
+            if (!*name)
+                continue;
             if (setenv(name, value, 1) != 0) {
                 fprintf(stderr, "ERROR: could not copy the environment: %s\n", strerror(errno));
                 _exit(1);

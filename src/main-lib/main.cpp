@@ -113,6 +113,8 @@ AM_QML_REGISTER_TYPES(QtApplicationManager_Application)
 
 QT_BEGIN_NAMESPACE_AM
 
+static bool unexpectedShutdown = true;
+
 // We need to do some things BEFORE the Q*Application constructor runs, so we're using this
 // old trick to do this hooking transparently for the user of the class.
 int &Main::preConstructor(int &argc, char **argv, InitFlags initFlags)
@@ -142,14 +144,23 @@ Main::Main(int &argc, char **argv, InitFlags initFlags)
     // this might be needed later on by the native runtime to find a suitable qml runtime launcher
     setProperty("_am_build_dir", QString::fromLatin1(AM_BUILD_DIR));
 
-    UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
-                                           { SIGINT, SIGTERM },
-                                           [](int sig) {
-        UnixSignalHandler::instance()->resetToDefault(sig);
-        if (sig == SIGINT)
-            fputs("\n*** received SIGINT / Ctrl+C ... exiting ***\n\n", stderr);
-        static_cast<Main *>(QCoreApplication::instance())->shutDown();
-    });
+    static bool once = false;
+    if (!once) {
+        once = true;
+
+        UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
+                                               { SIGINT, SIGTERM },
+                                               [](int sig) {
+            UnixSignalHandler::instance()->resetToDefault(sig);
+            static_cast<Main *>(QCoreApplication::instance())->shutDown((sig == SIGINT) ? "Ctrl+C" : "SIGTERM");
+        });
+
+        atexit([]() {
+            if (unexpectedShutdown)
+                fputs("ERROR: Some code outside the Qt ApplicationManager called exit()\n", stderr);
+            unexpectedShutdown = true;
+        });
+    }
     StartupTimer::instance()->checkpoint("after application constructor");
 }
 
@@ -253,7 +264,7 @@ bool Main::isRunningOnEmbedded() const
     return m_isRunningOnEmbedded;
 }
 
-void Main::shutDown(int exitCode)
+void Main::shutDown(const char *shutdownReason, int exitCode)
 {
     enum {
         ApplicationManagerDown = 0x01,
@@ -263,12 +274,20 @@ void Main::shutDown(int exitCode)
 
     static int down = 0;
     static int code = exitCode;
+    static const char *reason = shutdownReason;
+
+    static auto finalShutdown = []() {
+        unexpectedShutdown = false;
+        if (reason)
+            qCInfo(LogSystem) << "Shutting down due to" << reason;
+        QCoreApplication::exit(code);
+    };
 
     static auto checkShutDownFinished = [](int nextDown) {
         down |= nextDown;
         if (down == (ApplicationManagerDown | QuickLauncherDown | WindowManagerDown)) {
             down = 0;
-            QCoreApplication::exit(code);
+            finalShutdown();
         }
     };
 
@@ -300,7 +319,7 @@ void Main::shutDown(int exitCode)
             resources << u"windows"_s;
         qCCritical(LogSystem, "There are still resources in use (%s). Check your System UI implementation. "
                               "Exiting regardless.", resources.join(u", "_s).toLocal8Bit().constData());
-        QCoreApplication::exit(code);
+        finalShutdown();
     });
 }
 
@@ -623,8 +642,8 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     m_engine = new QQmlApplicationEngine(this);
     disconnect(m_engine, &QQmlEngine::quit, qApp, nullptr);
     disconnect(m_engine, &QQmlEngine::exit, qApp, nullptr);
-    connect(m_engine, &QQmlEngine::quit, this, [this]() { shutDown(); });
-    connect(m_engine, &QQmlEngine::exit, this, [this](int retCode) { shutDown(retCode); });
+    connect(m_engine, &QQmlEngine::quit, this, [this]() { shutDown("Qt.quit()"); });
+    connect(m_engine, &QQmlEngine::exit, this, [this](int retCode) { shutDown("Qt.exit()", retCode); });
     CrashHandler::setQmlEngine(m_engine);
     new QmlLogger(m_engine);
     m_engine->setOutputWarningsToStandardError(false);
@@ -844,7 +863,7 @@ void Main::showWindow(bool showFullscreen)
 void Main::showWindow()
 {
     setQuitOnLastWindowClosed(false);
-    connect(this, &QGuiApplication::lastWindowClosed, this, [this]() { shutDown(); });
+    connect(this, &QGuiApplication::lastWindowClosed, this, [this]() { shutDown("window closed"); });
 
     QQuickWindow *window = nullptr;
     QObject *rootObject = m_engine->rootObjects().constFirst();

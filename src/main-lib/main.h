@@ -79,7 +79,7 @@ public:
     void showWindow(bool showFullscreen);
     void showWindow();
 
-    Q_INVOKABLE void shutDown(int exitCode = 0);
+    Q_INVOKABLE void shutDown(const char *shutdownReason = nullptr, int exitCode = 0);
 
     QQmlApplicationEngine *qmlEngine() const;
 

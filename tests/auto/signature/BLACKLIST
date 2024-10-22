@@ -1,7 +1,9 @@
 [crossPlatform]
 # QTBUG-109756
+# QTQAINFRA-6106
 rhel-9.0
 rhel-9.2
+rhel-9.4
 
 [check]
 macos-15 # QTBUG-130554

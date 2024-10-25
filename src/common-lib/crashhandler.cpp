@@ -87,6 +87,12 @@ QT_BEGIN_NAMESPACE_AM
 
 struct CrashHandlerGlobal
 {
+    bool enabled =
+#if defined(Q_OS_ANDROID)
+        false;
+#else
+        true;
+#endif
     bool consoleInitialized = false; // dummy value to force instantiation in initBacktrace()
     bool printBacktrace = true;
     bool printQmlStack = true;
@@ -135,6 +141,15 @@ void CrashHandler::setCrashActionConfiguration(bool printBacktrace, bool printQm
         chg()->stackFramesToIgnoreOnCrash = stackFramesToIgnoreOnCrash;
     if (stackFramesToIgnoreOnException >= 0)
         chg()->stackFramesToIgnoreOnException = stackFramesToIgnoreOnException;
+
+    if (chg()->enabled) {
+#if defined(Q_OS_UNIX)
+        if (!dumpCore) {
+            const struct rlimit nocore = { 0, 0 };
+            setrlimit(RLIMIT_CORE, &nocore);
+        }
+#endif
+    }
 }
 
 void CrashHandler::setQmlEngine(QQmlEngine *engine)
@@ -192,10 +207,12 @@ static void initBacktrace()
     // uncaught std::exception derived exception (prints what())
     // throw std::logic_error("test output");
 
-    if (qEnvironmentVariableIntValue("AM_NO_CRASH_HANDLER") == 1)
-        return;
-
     chg()->consoleInitialized = Console::ensureInitialized(); // enforce instantiation of both
+
+    if (qEnvironmentVariableIntValue("AM_NO_CRASH_HANDLER") == 1) {
+        chg()->enabled = false;
+        return;
+    }
 
 #  if defined(Q_OS_UNIX)
     initBacktraceUnix();
@@ -331,6 +348,12 @@ static void initBacktraceUnix()
         char buffer[256];
         snprintf(buffer, sizeof(buffer), "uncaught signal %d (%s)", sig, UnixSignalHandler::signalName(sig));
         crashHandler(buffer, chg()->stackFramesToIgnoreOnCrash);
+
+        if (sig <= 0) // better safe than sorry
+            sig = SIGABRT;
+        logMsgF(Console, "\n > re-raising signal %d (%s)\n", sig, UnixSignalHandler::signalName(sig));
+        signal(sig, SIG_DFL);
+        raise(sig);  // raising the signal will kill the process, once we return from the signal handler
     });
 
     std::set_terminate([]() {
@@ -362,6 +385,9 @@ static void initBacktraceUnix()
         }
 
         crashHandler(buffer, chg()->stackFramesToIgnoreOnException);
+
+        logMsg(Console, "\n > the process will be aborted\n");
+        abort();
     });
 
     // create a new process group, so that we are able to kill all children with ::kill(0, ...)
@@ -608,17 +634,11 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
     // make sure to terminate our sub-process as well, but not ourselves
     signal(SIGTERM, SIG_IGN);
     kill(0, SIGTERM);
+    signal(SIGTERM, SIG_DFL);
 
 #if defined(QT_AM_COVERAGE)
     __gcov_dump();
 #endif
-
-    if (chg()->dumpCore) {
-        logMsg(Console, "\n > the process will be aborted (core dumped)\n");
-        abort();
-    }
-
-    _exit(-1);
 }
 
 #elif defined(Q_OS_WINDOWS)

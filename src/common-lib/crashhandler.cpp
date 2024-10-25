@@ -173,9 +173,29 @@ void CrashHandler::setQmlEngine(QQmlEngine *engine)
 #endif
 }
 
+
 #if defined(Q_OS_WINDOWS) || (defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID))
 
 #  if defined(Q_OS_UNIX) || (defined(Q_OS_WINDOWS) && defined(Q_CC_MINGW))
+
+static const char *demangleSymbol(const char *mangled)
+{
+    // bug in cxa_demangle as of g++ 14.2
+    if (mangled && (strlen(mangled) > 341))
+        return mangled;
+
+    int status = 0;
+    char *buffer = abi::__cxa_demangle(mangled, chg()->demangleBuffer,
+                                       &chg()->demangleBufferSize, &status);
+    if (status == 0) {
+        if (buffer)
+            chg()->demangleBuffer = buffer;
+        if (buffer && *buffer)
+            return buffer;
+    }
+    return mangled;
+}
+
 // this will make it run before all other static constructor functions
 static void initBacktrace() __attribute__((constructor(101)));
 
@@ -370,33 +390,30 @@ static void initBacktraceUnix()
 
     std::set_terminate([]() {
         char buffer [1024];
+        int ignoreFrames = chg()->stackFramesToIgnoreOnException;
 
-        auto type = abi::__cxa_current_exception_type();
-        if (!type)
-            crashHandler("terminate was called although no exception was thrown", 0);
+        if (auto type = abi::__cxa_current_exception_type()) {
+            const char *typeName = type->name();
+            if (typeName)
+                typeName = demangleSymbol(typeName);
 
-        const char *typeName = type->name();
-        if (typeName) {
-            int status = 1;
-            chg()->demangleBuffer = abi::__cxa_demangle(typeName, chg()->demangleBuffer,
-                                                        &chg()->demangleBufferSize, &status);
-            if (status == 0 && *chg()->demangleBuffer) {
-                typeName = chg()->demangleBuffer;
+            try {
+                throw;
+            } catch (const std::exception &exc) {
+                snprintf(buffer, sizeof(buffer), "uncaught exception of type %s (%s)", typeName, exc.what());
+            } catch (const std::exception *exc) { // AXIVION Line Qt-Generic-ThrowByValueCatchByReference: cope with anything
+                snprintf(buffer, sizeof(buffer), "uncaught exception of type %s (%s)", typeName, exc->what());
+            } catch (const char *exc) {           // AXIVION Line Qt-Generic-ThrowByValueCatchByReference: cope with anything
+                snprintf(buffer, sizeof(buffer), "uncaught exception of type 'const char *' (%s)", exc);
+            } catch (...) {
+                snprintf(buffer, sizeof(buffer), "uncaught exception of type %s", typeName);
             }
-        }
-        try {
-            throw;
-        } catch (const std::exception &exc) {
-            snprintf(buffer, sizeof(buffer), "uncaught exception of type %s (%s)", typeName, exc.what());
-        } catch (const std::exception *exc) { // AXIVION Line Qt-Generic-ThrowByValueCatchByReference: cope with anything
-            snprintf(buffer, sizeof(buffer), "uncaught exception of type %s (%s)", typeName, exc->what());
-        } catch (const char *exc) {           // AXIVION Line Qt-Generic-ThrowByValueCatchByReference: cope with anything
-            snprintf(buffer, sizeof(buffer), "uncaught exception of type 'const char *' (%s)", exc);
-        } catch (...) {
-            snprintf(buffer, sizeof(buffer), "uncaught exception of type %s", typeName);
+        } else {
+            strcpy(buffer, "terminate was called although no exception was thrown");
+            ignoreFrames = 0;
         }
 
-        crashHandler(buffer, chg()->stackFramesToIgnoreOnException);
+        crashHandler(buffer, ignoreFrames);
 
         logMsg(Console, "\n > the process will be aborted\n");
         abort();
@@ -480,15 +497,11 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
             Q_UNUSED(symsize)
 
             auto btdata = static_cast<btData *>(data);
-            const char *name = nullptr;
 
-            if (symname) {
-                int status = 1;
-                chg()->demangleBuffer = abi::__cxa_demangle(symname, chg()->demangleBuffer,
-                                                            &chg()->demangleBufferSize, &status);
-                name = (status == 0 && *chg()->demangleBuffer) ? chg()->demangleBuffer : symname;
-            }
-            logBacktraceLine(btdata->logTo, btdata->level, name, pc);
+            if (symname)
+                symname = demangleSymbol(symname);
+
+            logBacktraceLine(btdata->logTo, btdata->level, symname, pc);
         };
 
         static auto fullCallback = [](void *data, uintptr_t pc, const char *filename, int lineno,
@@ -496,14 +509,9 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
             auto btdata = static_cast<btData *>(data);
 
             if (function) {
-                int status = 1;
-                chg()->demangleBuffer = abi::__cxa_demangle(function, chg()->demangleBuffer,
-                                                            &chg()->demangleBufferSize, &status);
+                function = demangleSymbol(function);
 
-                logBacktraceLine(btdata->logTo, btdata->level,
-                                 (status == 0 && *chg()->demangleBuffer) ? chg()->demangleBuffer
-                                                                         : function,
-                                 pc, filename, lineno);
+                logBacktraceLine(btdata->logTo, btdata->level, function, pc, filename, lineno);
             } else {
                 backtrace_syminfo(btdata->state, pc, syminfoCallback, errorCallback, data);
             }
@@ -568,11 +576,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
                         *offset = 0;
                         *end = 0;
 
-                        int status;
-                        chg()->demangleBuffer = abi::__cxa_demangle(function, chg()->demangleBuffer,
-                                                                    &chg()->demangleBufferSize, &status);
-                        name = (status == 0 && *chg()->demangleBuffer) ? chg()->demangleBuffer
-                                                                       : function;
+                        name = demangleSymbol(function);
                     } else {
                         name = symbols[i];
                         if (function && (function == offset))
@@ -938,19 +942,11 @@ static void initBacktraceWindows()
     std::set_terminate([]() {
         char buffer [1024];
 
-        auto type = abi::__cxa_current_exception_type();
-        if (!type) {
-            strcpy(buffer, "terminate was called although no exception was thrown");
-        } else {
+        if (auto type = abi::__cxa_current_exception_type()) {
             const char *typeName = type->name();
-            if (typeName) {
-                int status;
-                chg()->demangleBuffer = abi::__cxa_demangle(typeName, chg()->demangleBuffer,
-                                                            &chg()->demangleBufferSize, &status);
-                if (status == 0 && *chg()->demangleBuffer) {
-                    typeName = chg()->demangleBuffer;
-                }
-            }
+            if (typeName)
+                typeName = demangleSymbol(typeName);
+
             try {
                 throw;
             } catch (const std::exception &exc) {
@@ -962,6 +958,8 @@ static void initBacktraceWindows()
             } catch (...) {
                 snprintf(buffer, sizeof(buffer), "uncaught exception of type %s", typeName);
             }
+        } else {
+            strcpy(buffer, "terminate was called although no exception was thrown");
         }
         ULONG_PTR args[1] = { reinterpret_cast<ULONG_PTR>(buffer) };
         RaiseException(EXCEPTION_MINGW_EXCEPTION, EXCEPTION_NONCONTINUABLE, 1, args);

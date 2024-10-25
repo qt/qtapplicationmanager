@@ -25,6 +25,7 @@
 #include "globalruntimeconfiguration.h"
 #include "qtyaml.h"
 #include "utilities.h"
+#include "unixsignalhandler.h"
 #include "notificationmanager.h"
 #include "dbus-utilities.h"
 #include "processtitle.h"
@@ -221,7 +222,7 @@ void NativeRuntime::shutdown(int exitCode, Am::ExitStatus status)
             break;
         case Am::CrashExit:
             cause = "received signal: " + QByteArray::number(exitCode) + " ("
-                    + QByteArray(::strsignal(exitCode)) + ")";
+                    + QByteArray(UnixSignalHandler::signalName(exitCode)) + ")";
             printWarning = true;
             break;
         default:

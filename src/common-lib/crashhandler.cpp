@@ -3,7 +3,6 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include <cinttypes>
 #include <cstdio>
 #include <typeinfo>
 
@@ -24,16 +23,54 @@
 #include "qtappman_common-config_p.h"
 
 #if defined(Q_OS_UNIX)
-#  include<unistd.h>
+#  include <csignal>
+#  include <cstdlib>
+#  include <csetjmp>
+#  if defined(Q_OS_MACOS) && defined(setjmp)
+#    undef setjmp // macOS defines this as a self-recursive macro in C++ mode
+#  endif
+#  include <cxxabi.h>
+#  include <pthread.h>
+#  include <unistd.h>
+#  include <sys/resource.h>
+#  if QT_CONFIG(am_libbacktrace)
+#    include <libbacktrace/backtrace.h>
+#    include <libbacktrace/backtrace-supported.h>
+#  endif
+#  if defined(Q_OS_LINUX)
+#    include <dlfcn.h>
+#  endif
+#  if defined(Q_OS_QNX)
+#    include <process.h>
+#    include <backtrace.h>
+#    include <QtCore/private/qcore_unix_p.h>
+#  else
+#    include <execinfo.h>
+#    include <sys/syscall.h>
+#  endif
 #  if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+#    include <mach-o/dyld.h>
 #    define AM_PTHREAD_T_FMT "%p"
 #  elif defined(Q_OS_QNX)
 #    define AM_PTHREAD_T_FMT "%x"
 #  else
 #    define AM_PTHREAD_T_FMT "%lx"
 #  endif
+#  if defined(QT_AM_COVERAGE)
+extern "C" {
+#    include <gcov.h>
+}
+#  endif
+#  include "processtitle.h"
+#  include "unixsignalhandler.h"
+#  define AM_UNIX_CRASH_SIGNALS  { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT, SIGQUIT, SIGSYS }
 #elif defined(Q_OS_WINDOWS)
 #  include <io.h>
+#  include <windows.h>
+#  include <dbghelp.h>
+#  if QT_CONFIG(am_stackwalker)
+#    include <stackwalker.h>
+#  endif
 #  if !defined(STDERR_FILENO)
 #    define STDERR_FILENO _fileno(stderr)
 #  endif
@@ -277,47 +314,7 @@ static void logQmlBacktrace(LogToDestination logTo)
 
 #endif // defined(Q_OS_WINDOWS) || (defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID))
 
-QT_END_NAMESPACE_AM
-
 #if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID)
-
-#  if defined(Q_OS_QNX)
-#    include <process.h>
-#    include <backtrace.h>
-#    include <QtCore/private/qcore_unix_p.h>
-#  else
-#    include <execinfo.h>
-#    include <sys/syscall.h>
-#  endif
-#  include <cxxabi.h>
-#  include <csetjmp>
-#  if defined(Q_OS_MACOS) && defined(setjmp)
-#    undef setjmp // macOS defines this as a self-recursive macro in C++ mode
-#  endif
-#  include <csignal>
-#  include <pthread.h>
-#  include <cstdio>
-#  include <cstdlib>
-
-#  if QT_CONFIG(am_libbacktrace)
-#    include <libbacktrace/backtrace.h>
-#    include <libbacktrace/backtrace-supported.h>
-#  endif
-#  if defined(Q_OS_LINUX)
-#    include <dlfcn.h>
-#  elif defined(Q_OS_MACOS)
-#    include <mach-o/dyld.h>
-#  endif
-#  if defined(QT_AM_COVERAGE)
-extern "C" {
-#    include <gcov.h>
-}
-#  endif
-
-#  include "unixsignalhandler.h"
-#  include "processtitle.h"
-
-QT_BEGIN_NAMESPACE_AM
 
 Q_NORETURN static void crashHandler(const char *why, int stackFramesToIgnore);
 
@@ -624,17 +621,7 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
     _exit(-1);
 }
 
-QT_END_NAMESPACE_AM
-
 #elif defined(Q_OS_WINDOWS)
-
-#  include <windows.h>
-#  include <dbghelp.h>
-#  if QT_CONFIG(am_stackwalker)
-#    include <stackwalker.h>
-#  endif
-
-QT_BEGIN_NAMESPACE_AM
 
 static DWORD mainThreadId = GetCurrentThreadId();
 
@@ -950,7 +937,7 @@ static void initBacktraceWindows()
 #  endif // defined(Q_CC_MINGW)
 }
 
-QT_END_NAMESPACE_AM
-
 #endif // defined(Q_OS_WINDOWS)
+
+QT_END_NAMESPACE_AM
 

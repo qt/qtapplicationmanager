@@ -149,6 +149,18 @@ void CrashHandler::setCrashActionConfiguration(bool printBacktrace, bool printQm
             setrlimit(RLIMIT_CORE, &nocore);
         }
 #endif
+#if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID)
+        // One example here is Squish: it will by default replace our handlers, but even if you
+        // disable the Squish crash handler, it will still disable ALL signal handling.
+        const auto sigs = UnixSignalHandler::instance()->reinstallIfNeeded(AM_UNIX_CRASH_SIGNALS);
+        if (!sigs.empty()) {
+            qCWarning(LogSystem) << "The crash handler was re-enabled, because these Unix signal handlers were set or reset:";
+            for (int sig : sigs) {
+                qCWarning(LogSystem).nospace() << " * " << UnixSignalHandler::signalName(sig)
+                                               << " (" << sig << ")";
+            }
+        }
+#endif
     }
 }
 
@@ -333,7 +345,7 @@ static void logQmlBacktrace(LogToDestination logTo)
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID)
 
-Q_NORETURN static void crashHandler(const char *why, int stackFramesToIgnore);
+static void crashHandler(const char *why, int stackFramesToIgnore);
 
 static void initBacktraceUnix()
 {
@@ -342,7 +354,7 @@ static void initBacktraceUnix()
 #  endif
 
     UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler,
-                                           { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT, SIGQUIT, SIGSYS },
+                                           AM_UNIX_CRASH_SIGNALS,
                                            [](int sig) {
         UnixSignalHandler::instance()->resetToDefault(sig);
         char buffer[256];
@@ -597,8 +609,8 @@ static void crashHandler(const char *why, int stackFramesToIgnore)
     //  1) avoid recursions
     //  2) SIGABRT to re-enable standard abort() handling
     //  3) SIGINT, so that you can Ctrl+C the app if the crash handler ends up freezing
-    UnixSignalHandler::instance()->resetToDefault({ SIGFPE, SIGSEGV, SIGILL, SIGBUS,
-                                                    SIGPIPE, SIGABRT, SIGINT, SIGQUIT, SIGSYS });
+    UnixSignalHandler::instance()->resetToDefault(AM_UNIX_CRASH_SIGNALS);
+    UnixSignalHandler::instance()->resetToDefault(SIGINT);
 
     logCrashInfo(Console, why, stackFramesToIgnore);
 

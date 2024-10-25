@@ -37,6 +37,8 @@ public:
     void resetToDefault(int sig);
     void resetToDefault(std::initializer_list<int> sigs);
 
+    std::vector<int> reinstallIfNeeded(std::initializer_list<int> sigs);
+
     enum Type {
         RawSignalHandler,
         ForwardedToEventLoopHandler
@@ -49,6 +51,8 @@ public:
 private:
     UnixSignalHandler();
     static UnixSignalHandler *s_instance;
+
+    static void signalHandler(int sig);
 
     struct SigHandler
     {

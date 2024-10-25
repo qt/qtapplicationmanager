@@ -28,11 +28,11 @@ TestCase {
     }
 
     function test_crash_data() {
-        return [ { tag: "gracefully" },
-                 { tag: "illegalMemory" },
-                 { tag: "illegalMemoryInThread" },
-                 { tag: "unhandledException" },
-                 { tag: "abort" } ];
+        return [ { tag: "gracefully", signal: 0 },
+                 { tag: "illegalMemory", signal: 11 },
+                 { tag: "illegalMemoryInThread", signal: 11 },
+                 { tag: "unhandledException", signal: 6 },
+                 { tag: "abort", signal: 6 } ];
                //{ tag: "stackOverflow" },
                //{ tag: "divideByZero" },
                //{ tag: "raise" } ];
@@ -54,6 +54,7 @@ TestCase {
             compare(app.lastExitCode, 5);
         } else {
             compare(app.lastExitStatus, ApplicationObject.CrashExit);
+            compare(app.lastExitCode, data.signal);
             console.info("================================");
             console.info("=== INTENDED CRASH (TESTING) ===");
             console.info("================================");

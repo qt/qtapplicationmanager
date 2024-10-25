@@ -746,8 +746,9 @@ The following conditions are handled:
     \row
         \li \c dumpCore
         \li bool
-        \li Ends the process via \c abort instead of \c _exit. Dumps a \c core file, depending on
-            your kernel configuration. (default: true)
+        \li Please note that the system's configuration determines if and where core dumps are
+            saved: see \c{man 5 core}. If set to \c false, Unix core dumps are completely disabled.
+            (default: true)
     \row
         \li \c waitForGdbAttach
         \li duration

@@ -15,8 +15,9 @@
 
 #include <qlogging.h>
 #include <QtTest/qtestsystem.h>
-#include <private/quicktest_p.h>
-#include <private/quicktestresult_p.h>
+#include <QtTest/private/qtestcrashhandler_p.h>
+#include <QtQuickTest/private/quicktest_p.h>
+#include <QtQuickTest/private/quicktestresult_p.h>
 #include "configuration.h"
 #include "amtest.h"
 
@@ -72,6 +73,11 @@ void TestRunner::setup(Configuration *cfg)
     // We would call QuickTestResult::parseArgs here, but that would include qml options in the help
     // which we don't support
     QTest::qtest_qParseArgs(argc, argv.data(), false /*no qml options*/);
+
+    std::optional<QTest::CrashHandler::FatalSignalHandler> handler;
+    QTest::CrashHandler::prepareStackTrace();
+    if (!QTest::Internal::noCrashHandler)
+        handler.emplace();
 
     qputenv("QT_QTESTLIB_RUNNING", "1");
 

@@ -74,11 +74,6 @@ void TestRunner::setup(Configuration *cfg)
     // which we don't support
     QTest::qtest_qParseArgs(argc, argv.data(), false /*no qml options*/);
 
-    std::optional<QTest::CrashHandler::FatalSignalHandler> handler;
-    QTest::CrashHandler::prepareStackTrace();
-    if (!QTest::Internal::noCrashHandler)
-        handler.emplace();
-
     qputenv("QT_QTESTLIB_RUNNING", "1");
 
     // Register the test object and application manager test add-on
@@ -104,6 +99,12 @@ int TestRunner::exec(QQmlEngine *qmlEngine)
         w->setFlag(Qt::WindowStaysOnBottomHint);
         w->setFlag(Qt::WindowDoesNotAcceptFocus);
     }
+
+    // install the QtTest crash handler
+    std::optional<QTest::CrashHandler::FatalSignalHandler> handler;
+    QTest::CrashHandler::prepareStackTrace();
+    if (!QTest::Internal::noCrashHandler)
+        handler.emplace();
 
     QEventLoop eventLoop;
 

@@ -105,7 +105,14 @@ int main(int argc, char *argv[])
         if (directLoadManifest.isEmpty())
             am->loadConfiguration();
 
-        //CrashHandler::setCrashActionConfiguration(am->runtimeConfiguration().value(u"crashAction"_s).toMap());
+        const QVariantMap ca = am->runtimeConfiguration().value(u"crashAction"_s).toMap();
+        const QVariantMap ca_sfti = ca.value(u"stackFramesToIgnore"_s).toMap();
+        CrashHandler::setCrashActionConfiguration(ca.value(u"printBacktrace"_s, true).toBool(),
+                                                  ca.value(u"printQmlStack"_s, true).toBool(),
+                                                  ca.value(u"waitForGdbAttach"_s, 0).toInt(),
+                                                  ca.value(u"dumpCore"_s, true).toBool(),
+                                                  ca_sfti.value(u"onCrash"_s, -1).toInt(),
+                                                  ca_sfti.value(u"onException"_s, -1).toInt());
         // the verbose flag has already been factored into the rules:
         am->setupLogging(false, am->loggingRules(), QString(), am->useAMConsoleLogger());
         am->setupQmlDebugging(clp.isSet(u"qml-debug"_s));

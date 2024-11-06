@@ -28,8 +28,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     std::unique_ptr<Configuration> cfg;
 
     try {
-        a = std::make_unique<Main>(argc, argv, Main::InitFlag::ForkSudoServer
-                                                   | Main::InitFlag::InitializeLogging);
+        a = std::make_unique<Main>(argc, argv, Main::InitFlag::ForkSudoServer | Main::InitFlag::InitializeLogging);
+
         cfg = std::make_unique<Configuration>();
         cfg->parseWithArguments(QCoreApplication::arguments());
 
@@ -39,7 +39,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     } catch (const std::exception &e) {
         qCritical() << "ERROR:" << e.what();
-        return 2;
+        _Exit(2);
     }
     return Main::exec();
 }

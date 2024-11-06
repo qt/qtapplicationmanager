@@ -66,7 +66,7 @@ implicitly for us (this is especially useful when dealing with DLT logging).
 
 Both parts could be initialized explicitly as well, but this is not needed in most cases.
 
-\printuntil return 2
+\printuntil _Exit
 \printline }
 
 The application manager needs a suitable configuration object. In this case, we use the

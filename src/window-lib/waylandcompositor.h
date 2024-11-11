@@ -79,11 +79,11 @@ private:
 private:
     QWaylandSurface *m_surface;
     WaylandCompositor *m_compositor;
-    QWaylandWlShellSurface *m_wlSurface = nullptr;
+    QPointer<QWaylandWlShellSurface> m_wlSurface = nullptr;
 
-    QWaylandXdgSurface *m_xdgSurface = nullptr;
-    QWaylandXdgToplevel *m_topLevel = nullptr;
-    QWaylandXdgPopup *m_popup = nullptr;
+    QPointer<QWaylandXdgSurface> m_xdgSurface;
+    QPointer<QWaylandXdgToplevel> m_topLevel;
+    QPointer<QWaylandXdgPopup> m_popup;
 
     friend class WaylandCompositor;
 };

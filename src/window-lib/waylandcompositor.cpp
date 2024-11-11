@@ -42,11 +42,11 @@ void WindowSurface::setShellSurface(QWaylandWlShellSurface *shellSurface)
 
 void WindowSurface::sendResizing(const QSize &size)
 {
-    if (m_topLevel)
+    if (m_topLevel && m_xdgSurface)
         m_topLevel->sendResizing(size);
-    else if (m_popup)
+    else if (m_popup && m_xdgSurface)
         ; // do nothing
-    else
+    else if (m_wlSurface)
         m_wlSurface->sendConfigure(size, QWaylandWlShellSurface::NoneEdge);
 }
 

@@ -59,39 +59,9 @@
     All checkpoints will also be logged to the \c am.startup logging category as \c debug messages,
     which helps to correlate the timings with log output from other components.
 
-    This is an example output, starting the \c Neptune UI on a console with ANSI color support:
+    This is an example output, starting the \c Minidesk example on a console with ANSI color support:
 
-    \raw HTML
-    <style type="text/css" id="colorstyles">
-        #color-green  { color: #18b218 }
-        #color-orange { color: #b26818 }
-        #color-blue   { background-color: #5454ff; color: #000000 }
-    </style>
-    <pre class="cpp plain">
-<span id="color-orange">== STARTUP TIMING REPORT: System UI ==</span>
-<span id="color-green">0'110.001</span> entered main                                <span id="color-blue">   </span>
-<span id="color-green">0'110.015</span> after basic initialization                  <span id="color-blue">   </span>
-<span id="color-green">0'110.311</span> after sudo server fork                      <span id="color-blue">   </span>
-<span id="color-green">0'148.911</span> after application constructor               <span id="color-blue">    </span>
-<span id="color-green">0'150.086</span> after command line parse                    <span id="color-blue">    </span>
-<span id="color-green">0'150.154</span> after logging setup                         <span id="color-blue">    </span>
-<span id="color-green">0'150.167</span> after startup-plugin load                   <span id="color-blue">    </span>
-<span id="color-green">0'151.714</span> after installer setup checks                <span id="color-blue">    </span>
-<span id="color-green">0'151.847</span> after runtime registration                  <span id="color-blue">    </span>
-<span id="color-green">0'156.278</span> after application database loading          <span id="color-blue">    </span>
-<span id="color-green">0'158.450</span> after ApplicationManager instantiation      <span id="color-blue">     </span>
-<span id="color-green">0'158.477</span> after NotificationManager instantiation     <span id="color-blue">     </span>
-<span id="color-green">0'158.534</span> after SystemMonitor instantiation           <span id="color-blue">     </span>
-<span id="color-green">0'158.572</span> after quick-launcher setup                  <span id="color-blue">     </span>
-<span id="color-green">0'159.130</span> after PackageManager instantiation          <span id="color-blue">     </span>
-<span id="color-green">0'159.192</span> after QML registrations                     <span id="color-blue">     </span>
-<span id="color-green">0'164.888</span> after QML engine instantiation              <span id="color-blue">     </span>
-<span id="color-green">0'189.619</span> after D-Bus registrations                   <span id="color-blue">     </span>
-<span id="color-green">2'167.233</span> after loading main QML file                 <span id="color-blue">                                                        </span>
-<span id="color-green">2'167.489</span> after WindowManager/QuickView instantiation <span id="color-blue">                                                        </span>
-<span id="color-green">2'170.423</span> after window show                           <span id="color-blue">                                                        </span>
-<span id="color-green">2'359.482</span> after first frame drawn                     <span id="color-blue">                                                             </span></pre>
-\endraw
+    \image startup-timer-example.png
 */
 
 /*!
@@ -400,31 +370,56 @@ void StartupTimer::createReport(const QString &title)
 {
     if (m_output && !m_checkpoints.isEmpty()) {
         bool ansiColorSupport = (m_output == stderr) ? Console::stderrSupportsAnsiColor() : false;
+        const char cellChar = ansiColorSupport ? ' ' : '#';
+
         ColorPrint cprt(m_output, ansiColorSupport);
 
         cprt << '\n' << ColorPrint::yellow << "== STARTUP TIMING REPORT: " << title << " =="
              << ColorPrint::reset << '\n';
 
-        static const int barCols = 60;
+        static const int barCols = 20;
 
-        quint64 delta = m_checkpoints.isEmpty() ? 0 : m_checkpoints.constLast().first;
-        quint64 usecPerCell = delta ? (delta / barCols) : 1;
+        quint64 usecLast = 0;
+        quint64 usecMax = m_checkpoints.isEmpty() ? 0 : m_checkpoints.constLast().first;
+        quint64 usecDeltaMax = 0;
+        qsizetype textLenMax = 0;
 
-        qsizetype maxTextLen = 0;
-        for (const auto &cp : std::as_const(m_checkpoints)) {
-            qsizetype textLen = cp.second.length();
-            if (textLen > maxTextLen)
-                maxTextLen = textLen;
+        for (const auto &[usecTotal, text] : std::as_const(m_checkpoints)) {
+            qsizetype textLen = text.length();
+            if (textLen > textLenMax)
+                textLenMax = textLen;
+            auto usecDelta = usecTotal - usecLast;
+            if (usecDelta > usecDeltaMax)
+                usecDeltaMax = usecDelta;
+            usecLast = usecTotal;
         }
 
+        quint64 usecPerCell = usecMax ? (usecMax / barCols) : 1;
+        quint64 usecDeltaPerCell = usecDeltaMax ? (usecDeltaMax / barCols) : 1;
+
+        cprt << ColorPrint::bcyan << "Abs.  [s'ms.us]   Rel. Checkpoint"
+             << ColorPrint::repeat(textLenMax - 9, ' ') << "> Abs. graph"
+             << ColorPrint::repeat(barCols * 2 - 21, ' ') << "Rel. graph <\n"
+             << ColorPrint::reset;
+
+        usecLast = 0;
         for (const auto &[usecTotal, text] : std::as_const(m_checkpoints)) {
             auto cells = qsizetype(usecTotal / usecPerCell);
             QByteArray timeString = formatMicroSecs(usecTotal);
+            auto usecDelta = usecTotal - usecLast;
+            auto deltaCells = qsizetype(usecDelta / usecDeltaPerCell);
+            QByteArray deltaTimeString = formatMicroSecs(usecDelta);
+            usecLast = usecTotal;
 
-            cprt << ColorPrint::bgreen << timeString << ColorPrint::reset << ' '
-                 << text << ColorPrint::repeat(maxTextLen - text.length() + 1, ' ')
-                 << ColorPrint::blue << ColorPrint::blueBg
-                 << ColorPrint::repeat(cells + 1, '=')
+            cprt << ColorPrint::bgreen << timeString << ColorPrint::reset
+                 << " (+" << ColorPrint::byellow << deltaTimeString << ColorPrint::reset << ") "
+                 << text << ColorPrint::repeat(textLenMax - text.length() + 1, ' ')
+                 << ColorPrint::greenBg << ColorPrint::green
+                 << ColorPrint::repeat(cells + 1, cellChar)
+                 << ColorPrint::reset
+                 << ColorPrint::repeat(barCols - cells + 1 + barCols - deltaCells, ' ')
+                 << ColorPrint::yellowBg << ColorPrint::yellow
+                 << ColorPrint::repeat(deltaCells + 1, cellChar)
                  << ColorPrint::reset << '\n';
         }
         m_checkpoints.clear();

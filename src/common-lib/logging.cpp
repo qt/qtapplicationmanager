@@ -133,6 +133,7 @@ QDLT_LOGGING_CATEGORY(LogIntents, "am.intent", "INTN", "Intents sub-system messa
 QDLT_LOGGING_CATEGORY(LogCache, "am.cache", "CACH", "Cache sub-system messages")
 QDLT_LOGGING_CATEGORY(LogDBus, "am.dbus", "DBUS", "D-Bus related messages")
 QDLT_LOGGING_CATEGORY(LogWatchdog, "am.wd", "WDOG", "Watchdog messages")
+QDLT_LOGGING_CATEGORY(LogStartupTimer, "am.startup", "STTI", "StartupTimer messages")
 QDLT_LOGGING_CATEGORY(LogGeneral, "general", "GEN", "Messages without dedicated context ID (fallback)")
 QDLT_FALLBACK_CATEGORY(LogGeneral)
 // AXIVION ENABLE Qt-NonPodGlobalStatic

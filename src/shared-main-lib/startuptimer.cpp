@@ -6,6 +6,7 @@
 #include "startuptimer.h"
 #include "console.h"
 #include "colorprint.h"
+#include "logging.h"
 
 #if defined(Q_OS_WIN)
 #  include <windows.h>
@@ -54,6 +55,9 @@
     own and will also call createReport themselves after all the C++ side setup has finished. You
     can however add arbitrary checkpoints yourself using the QML API: access to the StartupTimer
     object is possible through a the \c StartupTimer root-context property in the QML engine.
+
+    All checkpoints will also be logged to the \c am.startup logging category as \c debug messages,
+    which helps to correlate the timings with log output from other components.
 
     This is an example output, starting the \c Neptune UI on a console with ANSI color support:
 
@@ -341,6 +345,8 @@ void StartupTimer::checkpoint(const char *name)
     if (Q_LIKELY(m_initialized)) {
         qint64 delta = m_timer.nsecsElapsed();
         m_checkpoints << qMakePair(quint64(delta / 1000) + m_processCreation, name);
+
+        qCDebug(LogStartupTimer) << "Checkpoint:" << name;
     }
 }
 

@@ -57,7 +57,7 @@ Window {
                 id: listView
                 anchors.fill: parent
                 orientation: ListView.Horizontal
-                spacing: (fpsGraph.width / model.count) * 0.2
+                spacing: 0
                 clip: true
                 interactive: false
 
@@ -70,29 +70,37 @@ Window {
                     FrameTimer { window: sysuiWindow }
                 }
 
-                delegate: Rectangle {
-                    required property var model
-                    width: (fpsGraph.width / monitorModel.count) * 0.8
-                    height: (model.averageFps / 100) * fpsGraph.height
-                    y: fpsGraph.height - height
-                    color: "blue"
+                delegate: Item {
+                    required property real averageFps
+                    width: fpsGraph.width / monitorModel.count
+                    height: fpsGraph.height
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        height: (Math.round(parent.averageFps) / 120) * parent.height
+                        width: parent.width * .8
+                        color: "blue"
+                    }
                 }
             }
 
             Text {
                 anchors.top: parent.top
-                text: "100"
+                anchors.right: parent.left
+                text: "120"
                 font.pixelSize: 15
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "50"
+                anchors.right: parent.left
+                text: "60"
                 font.pixelSize: 15
             }
 
             Text {
                 anchors.bottom: parent.bottom
+                anchors.right: parent.left
                 text: "0"
                 font.pixelSize: 15
             }

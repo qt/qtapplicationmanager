@@ -15,11 +15,11 @@ using namespace Qt::StringLiterals;
     \ingroup common-instantiatable
     \brief Provides information on the CPU status.
 
-    As the name implies, CpuStatus provides information on the status of the CPU. Its property values
-    are updated whenever the method update() is called.
+    As the name implies, CpuStatus provides information on the status of the CPU. Its property
+    values are updated whenever the method update() is called.
 
-    You can use this component as a MonitorModel data source if you want to plot its
-    previous values over time.
+    You can use this component as a MonitorModel data source if you want to plot its previous
+    values over time.
 
     \qml
     import QtQuick
@@ -30,7 +30,8 @@ using namespace Qt::StringLiterals;
     }
     \endqml
 
-    You can also use it alongside a Timer for instance, when you're only interested in its current value.
+    You can also use it alongside a Timer for instance, when you're only interested in its current
+    value.
 
     \qml
     import QtQuick
@@ -64,9 +65,9 @@ CpuStatus::CpuStatus(QObject *parent)
     \readonly
 
     Holds the overall system's CPU utilization at the point when update() was last called, as a
-    value ranging from 0 (inclusive, completely idle) to 1 (inclusive, fully busy).
+    value ranging from \c 0 (inclusive, completely idle) to \c 1 (inclusive, fully busy).
 
-    \sa CpuStatus::update
+    \sa update
 */
 qreal CpuStatus::cpuLoad() const
 {
@@ -89,7 +90,7 @@ int CpuStatus::cpuCores() const
 
     Updates the cpuLoad property.
 
-    \sa CpuStatus::cpuLoad
+    \sa cpuLoad
 */
 void CpuStatus::update()
 {

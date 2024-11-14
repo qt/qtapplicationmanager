@@ -92,9 +92,9 @@ using namespace Qt::StringLiterals;
 /*!
     \qmlsignal ProcessStatus::memoryReportingChanged(var memoryVirtual, var memoryRss, var memoryPss)
 
-    This signal is emitted after \l{ProcessStatus::update()}{update()} has been called and the
-    memory usage values have been refreshed. Each of the arguments \a memoryVirtual, \a memoryRss
-    and \a memoryPss is an JavaScript object with the available properties listed in the table
+    This signal is emitted after \l update() has been called and the memory usage values have been
+    refreshed. Each of the arguments \a memoryVirtual, \a memoryRss and \a memoryPss is a
+    JavaScript object with the available properties listed in the table
     \l{supported-keys}{above}.
 */
 
@@ -237,10 +237,10 @@ qint64 ProcessStatus::processId() const
     \readonly
 
     This property holds the process' CPU utilization during the previous measurement interval, when
-    update() was last called. A value of 0 means the process was idle; a value of 1 means the process used
-    the equivalent of one core, which may be split across several cores.
+    update() was last called. A value of \c 0 means the process was idle; a value of \c 1 means the
+    process used the equivalent of one core, which may be split across several cores.
 
-    \sa ProcessStatus::update
+    \sa update
 */
 qreal ProcessStatus::cpuLoad()
 {
@@ -273,9 +273,9 @@ void ProcessStatus::fetchReadings()
     is provided through \c memoryVirtual.total. For more information, see the table of
     \l{supported-keys}{supported keys}.
 
-    Calling ProcessStatus::update() updates the value of this property.
+    Calling \l update() updates the value of this property.
 
-    \sa ProcessStatus::update()
+    \sa update()
 */
 QVariantMap ProcessStatus::memoryVirtual() const
 {
@@ -290,9 +290,9 @@ QVariantMap ProcessStatus::memoryVirtual() const
     is actually mapped to physical RAM. For more information, see the table of
     \l{supported-keys}{supported keys}.
 
-    Calling ProcessStatus::update() updates the value of this property.
+    Calling \l update() updates the value of this property.
 
-    \sa ProcessStatus::update()
+    \sa update()
 */
 QVariantMap ProcessStatus::memoryRss() const
 {
@@ -304,15 +304,15 @@ QVariantMap ProcessStatus::memoryRss() const
     \readonly
 
     A map of the process' Proportional Set Size (PSS) memory usage. This is the proportional share
-    of the RSS value in ProcessStatus::memoryRss. For instance, if two processes share 2 MB, then
-    the RSS value is 2 MB for each process; the PSS value is 1 MB for each process. As the name
-    implies, the code section of shared libraries is generally shared between processes. Memory
-    may also be shared by other means provided by the OS, for example, through \c mmap on Linux.
-    For more information, see the table of \l{supported-keys}{supported keys}.
+    of the RSS value in memoryRss. For instance, if two processes share 2 MB, then the RSS value is
+    2 MB for each process; the PSS value is 1 MB for each process. As the name implies, the code
+    section of shared libraries is generally shared between processes. Memory may also be shared by
+    other means provided by the OS, for example, through \c mmap on Linux. For more information,
+    see the table of \l{supported-keys}{supported keys}.
 
-    Calling ProcessStatus::update() updates the value of this property.
+    Calling update() updates the value of this property.
 
-    \sa ProcessStatus::update()
+    \sa update()
 */
 QVariantMap ProcessStatus::memoryPss() const
 {
@@ -323,10 +323,9 @@ QVariantMap ProcessStatus::memoryPss() const
     \qmlproperty bool ProcessStatus::memoryReportingEnabled
 
     A boolean value that determines whether the memory properties are refreshed each time
-    \l{ProcessStatus::update()}{update()} is called. The default value is \c true. In your System
-    UI, the process of determining memory consumption adds additional load to the CPU, affecting
-    the \c cpuLoad value. If \c cpuLoad needs to be kept accurate, consider disabling memory
-    reporting.
+    \l update() is called. The default value is \c true. In your System UI, the process of
+    determining memory consumption adds additional load to the CPU, affecting the \c cpuLoad value.
+    If \c cpuLoad needs to be kept accurate, consider disabling memory reporting.
 */
 
 bool ProcessStatus::isMemoryReportingEnabled() const

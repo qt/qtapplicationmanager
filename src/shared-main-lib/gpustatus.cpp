@@ -13,8 +13,8 @@ using namespace Qt::StringLiterals;
     \ingroup common-instantiatable
     \brief Provides information on the GPU status.
 
-    GpuStatus provides information on the status of the GPU. Its property values
-    are updated whenever the method update() is called.
+    GpuStatus provides information on the status of the GPU. Its property values are updated
+    whenever the method update() is called.
 
     You can use it alongside a Timer for instance to periodically query the status of the GPU:
 
@@ -35,8 +35,8 @@ using namespace Qt::StringLiterals;
     }
     \endqml
 
-    You can also use this component as a MonitorModel data source if you want to plot its
-    previous values over time:
+    You can also use this component as a MonitorModel data source if you want to plot its previous
+    values over time:
 
     \qml
     import QtQuick
@@ -46,7 +46,6 @@ using namespace Qt::StringLiterals;
         GpuStatus {}
     }
     \endqml
-
 */
 
 QT_USE_NAMESPACE_AM
@@ -68,8 +67,8 @@ GpuStatus::~GpuStatus()
     \qmlproperty real GpuStatus::gpuLoad
     \readonly
 
-    GPU utilization when update() was last called, as a value ranging from 0 (inclusive,
-    completely idle) to 1 (inclusive, fully busy).
+    GPU utilization when update() was last called, as a value ranging from \c 0 (inclusive,
+    completely idle) to \c 1 (inclusive, fully busy).
 
     \note This is dependent on tools from the graphics hardware vendor and might not work on
           every system.

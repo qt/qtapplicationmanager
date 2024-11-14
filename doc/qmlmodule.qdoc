@@ -5,7 +5,7 @@
 
 /*!
 
-    \qmlmodule QtApplicationManager.SystemUI 2.0
+    \qmlmodule QtApplicationManager.SystemUI
     \title Qt Application Manager System UI QML types
     \ingroup qmlmodules
     \ingroup qtappman
@@ -13,7 +13,7 @@
 
 /*!
 
-    \qmlmodule QtApplicationManager.Application 2.0
+    \qmlmodule QtApplicationManager.Application
     \title Qt Application Manager Application QML types
     \ingroup qmlmodules
     \ingroup qtappman
@@ -21,7 +21,7 @@
 
 /*!
 
-    \qmlmodule QtApplicationManager 2.0
+    \qmlmodule QtApplicationManager
     \title Qt Application Manager QML types common to System UI and applications
     \ingroup qmlmodules
     \ingroup qtappman

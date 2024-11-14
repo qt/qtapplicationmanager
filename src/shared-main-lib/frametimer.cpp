@@ -19,8 +19,8 @@ using namespace Qt::StringLiterals;
     \brief Provides frame-rate information about a given window.
 
     FrameTimer is used to get frame-rate information for a given window. The window can be either
-    a toplevel Window (from the QtQuick.Window module) or a WindowObject
-    (from the QtApplicationManager.SystemUI module).
+    a toplevel Window (from the \c QtQuick.Window module) or a WindowObject
+    (from the \c QtApplicationManager.SystemUI module).
 
     The following snippet shows how to use FrameTimer to display the frame-rate of a Window:
 
@@ -62,7 +62,7 @@ using namespace Qt::StringLiterals;
     \endqml
 
     Please note that when using FrameTimer as a MonitorModel data source there's no need to set it
-    to \l{FrameTimer::running}{running} as MonitorModel will already call update() as needed.
+    to \l running as MonitorModel will already call update() as needed.
 */
 
 QT_BEGIN_NAMESPACE_AM
@@ -88,7 +88,7 @@ FrameTimer::~FrameTimer()
     \readonly
 
     The average frame rate of the given \l window, in frames per second, since update()
-    was last called (either manually or automatically in case \l{FrameTimer::running}{running} is set to true).
+    was last called (either manually or automatically in case \l running is set to \c true).
 
     \sa window running update()
 */
@@ -102,7 +102,7 @@ qreal FrameTimer::averageFps() const
     \readonly
 
     The minimum frame rate of the given \l window, in frames per second, since update()
-    was last called (either manually or automatically in case \l{FrameTimer::running}{running} is set to true).
+    was last called (either manually or automatically in case \l running is set to \c true).
 
     \sa window running update()
 */
@@ -116,7 +116,7 @@ qreal FrameTimer::minimumFps() const
     \readonly
 
     The maximum frame rate of the given \l window, in frames per second, since update()
-    was last called (either manually or automatically in case \l{FrameTimer::running}{running} is set to true).
+    was last called (either manually or automatically in case \l running is set to \c true).
 
     \sa window running update()
 */
@@ -130,7 +130,7 @@ qreal FrameTimer::maximumFps() const
     \readonly
 
     The frame rate jitter of the given \l window, in frames per second, since update()
-    was last called (either manually or automatically in case \l{FrameTimer::running}{running} is set to true).
+    was last called (either manually or automatically in case \l running is set to \c true).
 
     \sa window running update()
 */
@@ -143,8 +143,8 @@ qreal FrameTimer::jitterFps() const
     \qmlproperty Object FrameTimer::window
 
     The window to be monitored, from which frame-rate information will be gathered.
-    It can be either a toplevel Window (from the QtQuick.Window module) or a WindowObject
-    (from the QtApplicationManager.SystemUI module).
+    It can be either a toplevel Window (from the \c QtQuick.Window module) or a WindowObject
+    (from the \c QtApplicationManager.SystemUI module).
 
     \sa WindowObject
 */
@@ -211,12 +211,11 @@ QStringList FrameTimer::roleNames() const
 /*!
     \qmlmethod FrameTimer::update
 
-    Updates the properties averageFps, minimumFps, maximumFps and jitterFps. Then resets internal
-    counters so that new numbers can be taken for the new time period starting from the moment
-    this method is called.
+    Updates the properties averageFps, minimumFps, maximumFps and jitterFps. Then resets the
+    internal counters for the new time period starting from the moment this method is called.
 
     Note that you normally don't have to call this method directly, as FrameTimer does it automatically
-    every \l interval milliseconds while \l{FrameTimer::running}{running} is set to true.
+    every \l interval milliseconds while \l running is set to \c true.
 
     \sa running
 */
@@ -264,7 +263,7 @@ void FrameTimer::setRunning(bool running)
 /*!
     \qmlproperty int FrameTimer::interval
 
-    The interval, in milliseconds, between update() calls while \l{FrameTimer::running}{running} is \c true.
+    The interval, in milliseconds, between update() calls while \l running is \c true.
 
     \sa update() running
 */

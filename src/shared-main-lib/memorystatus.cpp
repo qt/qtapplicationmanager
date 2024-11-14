@@ -16,8 +16,8 @@ using namespace Qt::StringLiterals;
     MemoryStatus provides information on the status of the system's RAM (random-access memory).
     Its property values are updated whenever the method update() is called.
 
-    You can use this component as a MonitorModel data source if you want to plot its
-    previous values over time.
+    You can use this component as a MonitorModel data source if you want to plot its previous
+    values over time.
 
     \qml
     import QtQuick
@@ -28,7 +28,8 @@ using namespace Qt::StringLiterals;
     }
     \endqml
 
-    You can also use it alongside a Timer for instance, when you're only interested in its current value.
+    You can also use it alongside a Timer for instance, when you're only interested in its current
+    value.
 
     \qml
     import QtQuick
@@ -62,7 +63,7 @@ MemoryStatus::MemoryStatus(QObject *parent)
 
     The total amount of physical memory (RAM) installed on the system in bytes.
 
-    \sa MemoryStatus::memoryUsed
+    \sa memoryUsed
 */
 quint64 MemoryStatus::totalMemory() const
 {
@@ -83,7 +84,7 @@ quint64 MemoryStatus::totalMemory() const
 
     The amount of physical memory (RAM) used in bytes.
 
-    The value of this property is updated when MemoryStatus::update is called.
+    The value of this property is updated when \l update is called.
 
     \sa totalMemory
 */

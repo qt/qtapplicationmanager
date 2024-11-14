@@ -57,18 +57,18 @@ using namespace Qt::StringLiterals;
     }
     \endqml
 
-    To add a data source to MonitorModel just declare it inside the model, as done in the example above with
-    the CpuStatus component. Alternatively (such as from imperative javscript code) you can add data sources
-    by assigning them to MonitorModel's dataSources property.
+    To add a data source to MonitorModel just declare it inside the model, as done in the example
+    above with the CpuStatus component. Alternatively (such as from imperative javscript code) you
+    can add data sources by assigning them to MonitorModel's dataSources property.
 
     A data source can be any QtObject with the following characteristics:
     \list
-    \li A \c roleNames property: it's a list of strings naming the roles that this data source provides. Those role
-        names will be available on each row created by MonitorModel.
-    \li Properties matching the names provided in the \c roleNames property: MonitorModel will query their values
-        when building each new model row.
-    \li An \c update() function: MonitorModel will call it before creating each new model row, so that the data source
-        can update the values of its properties.
+    \li A \c roleNames property: it's a list of strings naming the roles that this data source
+        provides. Those role names will be available on each row created by MonitorModel.
+    \li Properties matching the names provided in the \c roleNames property: MonitorModel will
+        query their values when building each new model row.
+    \li An \c update() function: MonitorModel will call it before creating each new model row, so
+        that the data source can update the values of its properties.
     \endlist
 
     The following snippet shows MonitorModel using a custom data source written in QML:
@@ -102,10 +102,11 @@ using namespace Qt::StringLiterals;
     }
     \endqml
 
-    Thus, in the MonitorModel above, every row will have two roles: \c foo and \c bar. If plotted, you would see
-    an ever incresing foo and an oscillating bar.
+    Thus, in the MonitorModel above, every row will have two roles: \c foo and \c bar. If plotted,
+    you would see an ever incresing \c foo and an oscillating \c bar.
 
-    QtApplicationManager comes with a number of components that are readily usable as data sources, namely:
+    QtApplicationManager comes with a number of components that are readily usable as data sources,
+    namely:
     \list
     \li CpuStatus
     \li FrameTimer
@@ -115,12 +116,11 @@ using namespace Qt::StringLiterals;
     \li ProcessStatus
     \endlist
 
-    While \l{MonitorModel::running}{running} is true, MonitorModel will probe its data sources every
-    \l{MonitorModel::interval}{interval} milliseconds, creating a new row every time up to
-    \l{MonitorModel::maximumCount}{maximumCount}. Once that value is reached the oldest row (the first one)
-    is discarded whenever a new row comes in, so that \l{MonitorModel::count}{count} doesn't exceed
-    \l{MonitorModel::maximumCount}{maximumCount}. New rows are always appended to the model, so rows are
-    ordered chronologically from oldest (index 0) to newest (index count-1).
+    While \l running is \c true, MonitorModel will probe its data sources every \l interval
+    milliseconds, creating a new row every time up to \l maximumCount. Once that value is reached,
+    the oldest row (the first one) is discarded whenever a new row comes in, so that \l count
+    doesn't exceed \l maximumCount. New rows are always appended to the model and are
+    ordered chronologically from oldest (index \c 0) to newest (index \c {count-1}).
 */
 
 QT_USE_NAMESPACE_AM
@@ -258,9 +258,9 @@ void MonitorModel::addRoleName(const QByteArray &roleName, DataSource *dataSourc
     \qmlproperty int MonitorModel::count
     \readonly
 
-    Number of rows in the model. It ranges from zero up to \l MonitorModel::maximumCount.
+    Number of rows in the model. It ranges from zero up to \l maximumCount.
 
-    \sa MonitorModel::maximumCount, MonitorModel::clear
+    \sa maximumCount, clear
 */
 int MonitorModel::count() const
 {
@@ -298,12 +298,12 @@ QHash<int, QByteArray> MonitorModel::roleNames() const
 /*!
     \qmlproperty bool MonitorModel::running
 
-    While true, MonitorModel will keep probing its data sources and adding new rows every
-    \l MonitorModel::interval milliseconds. The default value is \c false.
+    While \c true, MonitorModel will keep probing its data sources and adding new rows every
+    \l interval milliseconds. The default value is \c false.
 
-    Normally you have this property set to true only while the data is being displayed.
+    Normally you have this property set to \c true only while the data is being displayed.
 
-    \sa MonitorModel::interval
+    \sa interval
 */
 bool MonitorModel::running() const
 {
@@ -324,10 +324,9 @@ void MonitorModel::setRunning(bool value)
 /*!
     \qmlproperty int MonitorModel::interval
 
-    Interval, in milliseconds, between model updates (while \l MonitorModel::running). The default
-    value is 1000.
+    Interval in milliseconds between model updates (while \l running). The default value is \c 1000.
 
-    \sa MonitorModel::running
+    \sa running
 */
 int MonitorModel::interval() const
 {
@@ -400,10 +399,10 @@ void MonitorModel::readDataSource(DataSource *dataSource, DataRow *dataRow)
 /*!
     \qmlproperty int MonitorModel::maximumCount
 
-    The maximum number of rows that the MonitorModel will keep. After this limit is reached the oldest rows
-    start to get discarded to make room for the new ones coming in.
+    The maximum number of rows that the MonitorModel will keep. After this limit is reached the
+    oldest rows start to get discarded to make room for the new ones coming in.
 
-    \sa MonitorModel::count, MonitorModel::clear
+    \sa count, clear
 */
 int MonitorModel::maximumCount() const
 {
@@ -439,7 +438,7 @@ void MonitorModel::trimHistory()
 
     Empties the model, removing all exising rows.
 
-    \sa MonitorModel::count
+    \sa count
 */
 void MonitorModel::clear()
 {

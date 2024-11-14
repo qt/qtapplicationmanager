@@ -12,6 +12,7 @@ qt_internal_add_module(AppManSharedMainPrivate
         applicationmanagerwindow.h applicationmanagerwindow.cpp
         applicationmanagerwindowimpl.h applicationmanagerwindowimpl.cpp
         cpustatus.cpp cpustatus.h
+        framecontenttracker.h framecontenttracker.cpp
         frametimer.cpp frametimer.h
         frametimerimpl.cpp frametimerimpl.h
         gpustatus.cpp gpustatus.h

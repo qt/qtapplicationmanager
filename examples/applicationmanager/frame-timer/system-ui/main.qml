@@ -68,10 +68,14 @@ Window {
                     // There's no need to set its running property as the MonitorModel will take care of asking
                     // it to update itself when appropriate.
                     FrameTimer { window: sysuiWindow }
+                    FrameContentTracker { id: contentTracker; window: sysuiWindow }
                 }
 
                 delegate: Item {
+                    required property int index
                     required property real averageFps
+                    required property int duplicateFrames
+
                     width: fpsGraph.width / monitorModel.count
                     height: fpsGraph.height
                     Rectangle {
@@ -79,9 +83,17 @@ Window {
                         anchors.horizontalCenter: parent.horizontalCenter
                         height: (Math.round(parent.averageFps) / 120) * parent.height
                         width: parent.width * .8
-                        color: "blue"
+                        property real duplicateRatio: parent.averageFps ? (parent.duplicateFrames / parent.averageFps)
+                                                                        : 0
+                        color: Qt.rgba(duplicateRatio, 0, 1 - duplicateRatio  , 1)
                     }
                 }
+            }
+            Text {
+                anchors.top: listView.top
+                anchors.right: listView.right
+                text: "Duplicate frames: " + contentTracker.duplicateFrames
+                font.pixelSize: 15
             }
 
             Text {

@@ -110,6 +110,7 @@ using namespace Qt::StringLiterals;
     \list
     \li CpuStatus
     \li FrameTimer
+    \li FrameContentTracker
     \li GpuStatus
     \li IoStatus
     \li MemoryStatus

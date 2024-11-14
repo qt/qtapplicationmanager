@@ -22,11 +22,17 @@ The System UI comprises of a column of application icons on the left and a graph
 right, displaying the average frame rate for the System UI itself. To be more precise, this is the
 System UI's top-level Window. If there are no applications running, the System UI's frame rate
 typically stays at 1 Frame per Second (FPS). This is because a Qt QML application window is only
-redrawn= when necessary. If nothing has changed in this window, it isn't redrawn. System UI's frame
-rate is then 0 FPS. The only reason the System UI stays around 1 FPS when there are no applications
-running is because of the FPS graph itself, which is updated once every second and thus causes a
-redraw of the System UI. This is commonly referred to as the
+redrawn when something changed. In this idle state the System UI's frame rate would normally be 0
+FPS. The only reason the System UI stays at around 1 FPS in idle in this example is because of the
+FPS graph itself updating once per second. This is commonly referred to as the
 \l{https://en.wikipedia.org/wiki/Observer_effect_(information_technology)}{Observer effect}.
+
+Starting with 6.9 this example will in addition use the FrameContentTracker component which can
+help you to find out if the system is redrawing too often, although nothing is changing on screen.
+This information is displayed in the top right corner as a \e{Duplicate frames} counter. A nice way
+to see this in action is to run either of the applications and then move their window off-screen to
+the left, until only the static, non-animated part of their window is visible anymore. Please read
+the part about performance implications in the FrameContentTracker documentation!
 
 The Fish application animates, and therefore redraws, at a rate of 25 FPS. So running it will
 instantly raise the frame-rate of System UI to 25 FPS as well.

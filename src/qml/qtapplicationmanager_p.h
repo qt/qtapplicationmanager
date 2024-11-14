@@ -9,6 +9,7 @@
 #include <QtAppManIntentClient/intentclientrequest.h>
 #include <QtAppManSharedMain/notification.h>
 #include <QtAppManSharedMain/cpustatus.h>
+#include <QtAppManSharedMain/framecontenttracker.h>
 #include <QtAppManSharedMain/frametimer.h>
 #include <QtAppManSharedMain/gpustatus.h>
 #include <QtAppManSharedMain/iostatus.h>
@@ -80,6 +81,14 @@ class ForeignFrameTimer
     QML_FOREIGN(QtAM::FrameTimer)
     QML_NAMED_ELEMENT(FrameTimer)
     QML_ADDED_IN_VERSION(2, 0)
+};
+
+class ForeignFrameContentTracker
+{
+    Q_GADGET
+    QML_FOREIGN(QtAM::FrameContentTracker)
+    QML_NAMED_ELEMENT(FrameContentTracker)
+    QML_ADDED_IN_VERSION(2, 9)
 };
 
 class ForeignGpuStatus

@@ -10,11 +10,12 @@ name:
 
 applications:
 - id: 'Glitches'
-  code: 'glitchesapp.qml'
+  code: ':/qt/qml/Glitches/glitchesapp.qml'
   runtime: qml
   name:
     en: 'Glitches'
   runtimeParameters:
+    resources: [ "Glitches_module" ]
     importPaths: [ "." ]
   watchdog:
     quickwindow:

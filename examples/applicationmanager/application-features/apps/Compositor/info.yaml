@@ -7,7 +7,7 @@ name:
   en: 'Nested Compositor'
 applications:
 - id:      'Compositor'
-  code:    ':/qt/qml/Compositor/compositor.qml'
+  code:    ':/qt/qml/Compositor/main.qml'
   runtime: 'qml'
   runtimeParameters:
     resources: [ "Compositor_module" ]

@@ -5,14 +5,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtApplicationManager.Application
 import QtWayland.Compositor
 import QtWayland.Compositor.XdgShell
 import QtWayland.Compositor.WlShell
 
-ApplicationManagerWindow {
+Item {
     id: root
-    color: "lightgrey"
 
     property ListModel shellSurfaces: ListModel {}
 
@@ -32,7 +30,7 @@ ApplicationManagerWindow {
         socketName: "qtam-wayland-nested"
 
         WaylandOutput {
-            window: root.backingObject
+            window: Window.window
             sizeFollowsWindow: true
         }
 

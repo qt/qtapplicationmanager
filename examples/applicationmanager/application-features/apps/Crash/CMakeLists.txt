@@ -7,6 +7,10 @@ qt_add_qml_module(
     QML_FILES crashapp.qml
 )
 
+if (WIN32)
+  set_target_properties(Crash_module PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
+
 qt_am_create_builtin_package(Crash
     INSTALL_DIRECTORY "${INSTALL_EXAMPLEDIR}/apps/Crash"
     FILES

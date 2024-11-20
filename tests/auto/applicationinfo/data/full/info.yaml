@@ -18,7 +18,6 @@ applications:
     code: 'app1.qml'
     runtime: 'qml'
     runtimeParameters:
-      loadDummyDate: true
       importPaths: [ a, b ]
       resources: [ c, d ]
       pluginPaths: [ e, f ]

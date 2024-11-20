@@ -248,7 +248,6 @@ void Main::setup(const Configuration *cfg) noexcept(false)
     createInstanceInfoFile(cfg->yaml.instanceId);
 
     m_showFullscreen = cfg->yaml.ui.fullscreen;
-    m_loadDummyData = cfg->yaml.ui.loadDummyData;
 }
 
 bool Main::isSingleProcessMode() const
@@ -813,12 +812,6 @@ void Main::createInstanceInfoFile(const QString &instanceId) noexcept(false)
     infof->close();
 }
 
-void Main::loadQml(bool loadDummyData) noexcept(false)
-{
-    m_loadDummyData = loadDummyData;
-    loadQml();
-}
-
 void Main::loadQml() noexcept(false)
 {
     for (auto iface : std::as_const(m_startupPlugins))
@@ -829,17 +822,6 @@ void Main::loadQml() noexcept(false)
     qmlProtectModule("QtApplicationManager.SystemUI", 1);
     qmlProtectModule("QtApplicationManager", 2);
     qmlProtectModule("QtApplicationManager.SystemUI", 2);
-
-    if (Q_UNLIKELY(m_loadDummyData)) { //TODO: remove in 6.9
-        qCWarning(LogDeployment) << "Loading dummy data is deprecated and will be removed soon";
-
-        if (m_mainQmlLocalFile.isEmpty()) {
-            qCDebug(LogQml) << "Not loading QML dummy data on non-local URL" << m_mainQml;
-        } else {
-            loadQmlDummyDataFiles(m_engine, QFileInfo(m_mainQmlLocalFile).path());
-            StartupTimer::instance()->checkpoint("after loading dummy-data");
-        }
-    }
 
     m_engine->load(m_mainQml);
     if (Q_UNLIKELY(m_engine->rootObjects().isEmpty()))

@@ -284,15 +284,23 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     d->clp.addOption({ u"qml-debug"_s,            u"Enables QML debugging and profiling."_s });
     d->clp.addOption({ u"instance-id"_s,          u"Use this id to distinguish between multiple instances."_s, u"id"_s });
 
-    d->clp.addOption({ { u"r"_s, u"recreate-database"_s }, u"Deprecated (mapped to --clear-cache."_s });
-    d->clp.addOption({ u"installed-apps-manifest-dir"_s, u"Deprecated (ignored)."_s, u"dir"_s });
-    d->clp.addOption({ u"app-image-mount-dir"_s,  u"Deprecated (ignored)."_s, u"dir"_s });
-    d->clp.addOption({ u"disable-installer"_s,    u"Deprecated (ignored)."_s });
-    d->clp.addOption({ u"disable-intents"_s,      u"Deprecated (ignored)."_s });
-    d->clp.addOption({ u"database"_s,             u"Deprecated (ignored)."_s, u"file"_s });
-    d->clp.addOption({ u"enable-touch-emulation"_s, u"Deprecated (ignored)."_s });
-    d->clp.addOption({ u"load-dummydata"_s,       u"Deprecated (loads QML dummy-data)."_s });
-    d->clp.addOption({ u"no-ui-watchdog"_s,       u"Deprecated (ignored)."_s });
+    d->deprecatedOptions = {
+        { { u"r"_s, u"recreate-database"_s }, { } },
+        { u"installed-apps-manifest-dir"_s, { }, u"dir"_s },
+        { u"app-image-mount-dir"_s, { }, u"dir"_s },
+        { u"disable-installer"_s, { } },
+        { u"disable-intents"_s, { } },
+        { u"database"_s, { }, u"file"_s },
+        { u"enable-touch-emulation"_s, { } },
+        { u"load-dummydata"_s, { } },
+        { u"no-ui-watchdog"_s, { } },
+    };
+
+    for (auto &opt : d->deprecatedOptions) {
+        opt.setDescription(u"Deprecated (ignored)."_s);
+        opt.setFlags(QCommandLineOption::HiddenFromHelp);
+        d->clp.addOption(opt);
+    }
 
     { // qmltestrunner specific, necessary for CI blacklisting
         QCommandLineOption qtrsf { u"qmltestrunner-source-file"_s, u"appman-qmltestrunner only: set the source file path of the test."_s, u"file"_s };
@@ -326,6 +334,16 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 
     if (d->clp.isSet(u"help"_s))
         d->clp.showHelp();
+
+    for (const auto &opt : d->deprecatedOptions) {
+        if (d->clp.isSet(opt)) {
+            auto names = opt.names();
+            for (auto &name : names)
+                name.prepend((name.length() == 1) ? u"-" : u"--");
+            qCWarning(LogDeployment).noquote() << "Command-line option" << names.join(u'/')
+                                               << "is set:" << opt.description();
+        }
+    }
 
     if (!d->buildConfigFilePath.isEmpty() && d->clp.isSet(u"build-config"_s)) {
         QFile f(d->buildConfigFilePath);
@@ -420,7 +438,6 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         configIfSet(u"builtin-apps-manifest-dir"_s, clcd.applications.builtinAppsManifestDir);
         configIfSet(u"installation-dir"_s,     clcd.applications.installationDir);
         configIfSet(u"document-dir"_s,         clcd.applications.documentDir);
-        configIfSet(u"load-dummydata"_s,       clcd.ui.loadDummyData);
         configIfSet(u"no-security"_s,          clcd.flags.noSecurity);
         configIfSet(u"development-mode"_s,     clcd.flags.developmentMode);
         configIfSet(u"force-single-process"_s, clcd.flags.forceSingleProcess);
@@ -472,7 +489,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 18;
+    return 19;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -515,7 +532,6 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.ui.importPaths
         & cd.ui.pluginPaths
         & cd.ui.iconThemeName
-        & cd.ui.loadDummyData
         & cd.ui.iconThemeSearchPaths
         & cd.ui.opengl.desktopProfile
         & cd.ui.opengl.esMajorVersion
@@ -600,7 +616,6 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(ui.importPaths);
     MERGE_FIELD(ui.pluginPaths);
     MERGE_FIELD(ui.iconThemeName);
-    MERGE_FIELD(ui.loadDummyData);
     MERGE_FIELD(ui.iconThemeSearchPaths);
     MERGE_FIELD(ui.opengl.desktopProfile);
     MERGE_FIELD(ui.opengl.esMajorVersion);
@@ -834,7 +849,8 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                      { "style", false, YamlParser::Scalar, [&]() {
                           cd.ui.style = yp.parseString(); } },
                      { "loadDummyData", false, YamlParser::Scalar, [&]() {
-                          cd.ui.loadDummyData = yp.parseBool(); } },
+                          qCDebug(LogDeployment) << "ignoring 'ui/loadDummyData'";
+                          (void) yp.parseScalar(); } },
                      { "importPaths", false, YamlParser::Scalar | YamlParser::List, [&]() {
                           cd.ui.importPaths = yp.parseStringOrStringList(); } },
                      { "pluginPaths", false, YamlParser::Scalar | YamlParser::List, [&]() {

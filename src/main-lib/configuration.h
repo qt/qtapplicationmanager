@@ -81,7 +81,6 @@ struct ConfigurationData
         QStringList iconThemeSearchPaths;
         QString iconThemeName;
         QString style;
-        bool loadDummyData = false;
         QStringList importPaths;
         QStringList pluginPaths;
         QString windowIcon;

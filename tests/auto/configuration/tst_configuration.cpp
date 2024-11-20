@@ -82,7 +82,6 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.yaml.ui.windowIcon, u""_s);
     QCOMPARE(c.yaml.ui.importPaths, {});
     QCOMPARE(c.yaml.ui.pluginPaths, {});
-    QCOMPARE(c.yaml.ui.loadDummyData, false);
     QCOMPARE(c.yaml.flags.noSecurity, false);
     QCOMPARE(c.yaml.flags.developmentMode, false);
     QCOMPARE(c.yaml.flags.allowUnsignedPackages, false);
@@ -173,7 +172,6 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.yaml.ui.windowIcon, u"icon.png"_s);
     QCOMPARE(c.yaml.ui.importPaths, QStringList({ pwd.absoluteFilePath(u"ip1"_s), pwd.absoluteFilePath(u"ip2"_s) }));
     QCOMPARE(c.yaml.ui.pluginPaths, QStringList({ u"pp1"_s, u"pp2"_s }));
-    QCOMPARE(c.yaml.ui.loadDummyData, true);
     QCOMPARE(c.yaml.flags.noSecurity, true);
     QCOMPARE(c.yaml.flags.developmentMode, true);
     QCOMPARE(c.yaml.flags.allowUnsignedPackages, true);
@@ -299,7 +297,6 @@ void tst_Configuration::mergedConfig()
                 pwd.absoluteFilePath(u"ip2"_s),
                 pwd.absoluteFilePath(u"ip3"_s) }));
     QCOMPARE(c.yaml.ui.pluginPaths, QStringList({ u"pp1"_s, u"pp2"_s, u"pp3"_s }));
-    QCOMPARE(c.yaml.ui.loadDummyData, true);
     QCOMPARE(c.yaml.flags.noSecurity, true);
     QCOMPARE(c.yaml.flags.developmentMode, true);
     QCOMPARE(c.yaml.flags.allowUnsignedPackages, true);
@@ -436,7 +433,6 @@ void tst_Configuration::commandLineConfig()
                 << "-I" << "ip-cl2"
                 << "-v"
                 << "--slow-animations"
-                << "--load-dummydata"
                 << "--no-security"
                 << "--development-mode"
                 << "--no-ui-watchdog"
@@ -485,7 +481,6 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.yaml.ui.importPaths, QStringList({ pwd.absoluteFilePath(u"ip-cl1"_s),
                                             pwd.absoluteFilePath(u"ip-cl2"_s) }));
     QCOMPARE(c.yaml.ui.pluginPaths, {});
-    QCOMPARE(c.yaml.ui.loadDummyData, true);
     QCOMPARE(c.yaml.flags.noSecurity, true);
     QCOMPARE(c.yaml.flags.developmentMode, true);
     QCOMPARE(c.yaml.flags.forceSingleProcess, true);

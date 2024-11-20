@@ -34,6 +34,7 @@ public:
     QStringList defaultConfigFilePaths;
     QString buildConfigFilePath;
     QCommandLineParser clp;
+    QList<QCommandLineOption> deprecatedOptions;
     ConfigurationData data;
     bool onlyOnePositionalArgument = false;
     bool forceVerbose = false;

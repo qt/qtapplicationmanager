@@ -81,12 +81,6 @@ bool QmlInProcRuntime::start()
     loadResources(variantToStringList(configuration().value(u"resources"_s)), currentDir);
     loadResources(variantToStringList(m_app->runtimeParameters().value(u"resources"_s)), codeDir);
 
-    if (m_app->runtimeParameters().value(u"loadDummyData"_s).toBool()) {
-        qCWarning(LogDeployment) << "Loading dummy data is deprecated and will be removed soon";
-        qCDebug(LogSystem) << "Loading dummy-data";
-        loadQmlDummyDataFiles(m_inProcessQmlEngine, QFileInfo(m_app->info()->absoluteCodeFilePath()).path());
-    }
-
     const QStringList configPluginPaths = variantToStringList(configuration().value(u"pluginPaths"_s));
     const QStringList runtimePluginPaths = variantToStringList(m_app->runtimeParameters().value(u"pluginPaths"_s));
     if (!configPluginPaths.isEmpty() || !runtimePluginPaths.isEmpty()) {

@@ -143,7 +143,7 @@ void tst_ApplicationInfo::full()
     QCOMPARE(ai->categories(), app1cats);
     QCOMPARE(QFileInfo(ai->codeFilePath()).fileName(), u"app1.qml"_s);
     QCOMPARE(ai->runtimeName(), u"qml"_s);
-    QCOMPARE(ai->runtimeParameters().size(), 5);
+    QCOMPARE(ai->runtimeParameters().size(), 4);
     QCOMPARE(ai->supportsApplicationInterface(), true);
     QCOMPARE(ai->capabilities(), QStringList { u"app1.cap"_s });
     OpenGLConfiguration app1ogl { u"core"_s, 3, 2 };

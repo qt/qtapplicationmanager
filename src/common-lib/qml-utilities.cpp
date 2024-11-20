@@ -19,30 +19,6 @@ using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-// copied straight from Qt 5.1.0 qmlscene/main.cpp for now - needs to be revised
-void loadQmlDummyDataFiles(QQmlEngine *engine, const QString &directory)
-{
-    QDir dir(directory + u"/dummydata"_s, u"*.qml"_s);
-    QStringList list = dir.entryList();
-    for (int i = 0; i < list.size(); ++i) {
-        QString qml = list.at(i);
-        QQmlComponent comp(engine, dir.filePath(qml));
-        QObject *dummyData = comp.create();
-
-        if (comp.isError()) {
-            const QList<QQmlError> errors = comp.errors();
-            for (const QQmlError &error : errors)
-                qCWarning(LogQml) << "Loading dummy data:" << error;
-        }
-
-        if (dummyData) {
-            qml.truncate(qml.length() - 4);
-            engine->rootContext()->setContextProperty(qml, dummyData);
-            dummyData->setParent(engine);
-        }
-    }
-}
-
 QVariant convertFromJSVariant(const QVariant &variant)
 {
     int type = variant.userType();

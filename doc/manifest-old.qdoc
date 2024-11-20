@@ -245,8 +245,7 @@ that specifies which runtime a configuration option applies to:
     \li \c loadDummyData
     \li qml, qml-in-process
     \li bool
-    \li Deprecated. Automatically load dummy data for the application, using the same algorithm as
-        Qt's \c qmlscene and \c qml tools. By default no dummy data is loaded.
+    \li Deprecated and ignored.
 \row
     \li \c importPaths
     \li qml, qml-in-process

@@ -351,8 +351,7 @@ void WatchdogPrivate::eventNotify(EventLoopData *eld, bool begin)
 
         if (m_warnEventLoopTime.count() && (elapsed > m_warnEventLoopTime)) {
             QMetaObject::invokeMethod(m_eventLoopCheck,
-                //[this, eld](std::chrono::milliseconds elapsed) { // TODO: modernize in 6.9
-                [this, eld, elapsed]() {
+                [this, eld](std::chrono::milliseconds elapsed) {
                     // we're on the wd thread
                     Q_ASSERT(QThread::currentThread() == m_wdThread);
 
@@ -366,7 +365,7 @@ void WatchdogPrivate::eventNotify(EventLoopData *eld, bool begin)
                         << ", but then continued (the warn threshold is "
                         << m_warnEventLoopTime << ")";
 
-                }, Qt::QueuedConnection /*, elapsed*/); // TODO: modernize in 6.9
+                }, Qt::QueuedConnection, elapsed);
         }
     }
 }
@@ -559,8 +558,7 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
         if (fromState != Idle) { // being stuck in the 'Idle' state is not an issue
             if (m_warnQuickWindowTime.count() && (elapsed > m_warnQuickWindowTime)) {
                 QMetaObject::invokeMethod(m_quickWindowCheck,
-                    //[this, qwd](std::chrono::milliseconds elapsed, RenderState fromState) { // TODO: modernize in 6.9
-                    [this, qwd, elapsed, fromState] {
+                    [this, qwd](std::chrono::milliseconds elapsed, RenderState fromState) {
                         // we're on the wd thread
                         Q_ASSERT(QThread::currentThread() == m_wdThread);
                         if (fromState == Sync)
@@ -581,7 +579,7 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
                             << ", but then continued (the warn threshold is "
                             << m_warnQuickWindowTime << ")";
 
-                    }, Qt::QueuedConnection /*, elapsed, fromState*/); // TODO: modernize in 6.9
+                    }, Qt::QueuedConnection, elapsed, fromState);
             }
         }
         qwd->m_renderState = char(toState);

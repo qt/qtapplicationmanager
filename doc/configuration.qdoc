@@ -168,20 +168,6 @@ ui:
             \l{Controller}{appman-controller tool}. A unique number is appended to this id to make
             it possible to disambiguate between instances with the same id. (default: appman)
     \row
-        \li \b --database
-            \br [\c applications/database]
-        \li string
-        \li Deprecated and ignored. The application database will transparently be cached - see also
-            the \c --clear-cache and \c --no-cache options.
-    \row
-        \li \b --recreate-database or \b -r
-        \li bool
-        \li Deprecated. These options were necessary for the application manager to react on changes
-            to the application manifest files, but this is not needed anymore. For backward
-            compatibility these options do map to the \c --clear-cache option, which will clear both
-            the configuration and application database cache.
-            (default: false)
-    \row
         \li \b --builtin-apps-manifest-dir
             \br [\c applications/builtinAppsManifestDir]
         \li string
@@ -313,11 +299,6 @@ ui:
         \li \b --slow-animations
         \li bool
         \li Runs all animations in slow motion. (default: false)
-    \row
-        \li \b --load-dummydata
-            \br [\c ui/loadDummyData]
-        \li bool
-        \li Deprecated. Loads QML dummy data into the System UI, similar to \c qmlscene and \c qml.
     \row
         \li \b --no-security
             \br [\c flags/noSecurity]
@@ -507,12 +488,6 @@ ui:
             its extended privileges to apply the optional \c permissions, \c userId and \c groupId
             settings.
     \row
-        \li \b --disable-installer
-            \br [\c installer/disable]
-        \li bool
-        \li Deprecated and ignored. If you do not want to have any installer functionality then
-            \l{config disable installer}{disable it at configure time}.
-    \row
         \li [\c installer/caCertificates]
         \li list<string>
         \target ca certificates
@@ -681,12 +656,6 @@ an additional column specifying which runtime a configuration option applies to:
             again. For the same reason, visual items should not be created. Always keep in mind
             that everything included in this file is loaded into \b all applications that use the
             QML runtime.
-    \row
-        \li \c loadDummyData
-        \li qml
-        \li bool
-        \li Deprecated. Loads QML dummy-data into the app, just like \c qmlscene and \c qml would.
-            (default: false)
     \row
         \li \c quitTime
         \li qml

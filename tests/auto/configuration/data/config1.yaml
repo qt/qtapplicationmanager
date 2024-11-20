@@ -54,7 +54,6 @@ ui:
   iconThemeSearchPaths: [ itsp1, itsp2 ]
   iconThemeName: mytheme
   style: mystyle
-  loadDummyData: true
   importPaths: [ ip1, ip2 ]
   pluginPaths: [ pp1, pp2 ]
   windowIcon: 'icon.png'

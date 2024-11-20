@@ -42,7 +42,7 @@ class ApplicationManager : public QAbstractListModel
     Q_PROPERTY(bool singleProcess READ isSingleProcess CONSTANT FINAL)
     Q_PROPERTY(bool shuttingDown READ isShuttingDown NOTIFY shuttingDownChanged SCRIPTABLE false FINAL)
     Q_PROPERTY(bool securityChecksEnabled READ securityChecksEnabled CONSTANT FINAL)
-    Q_PROPERTY(bool dummy READ isDummy CONSTANT FINAL)  // set to false here and true in the dummydata imports
+    Q_PROPERTY(bool dummy READ isDummy CONSTANT FINAL)  // only kept for backwards compatibility
     Q_PROPERTY(bool windowManagerCompositorReady READ isWindowManagerCompositorReady NOTIFY windowManagerCompositorReadyChanged FINAL)
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT FINAL)
     Q_PROPERTY(QJSValue containerSelectionFunction READ containerSelectionFunction WRITE setContainerSelectionFunction NOTIFY containerSelectionFunctionChanged FINAL)

@@ -72,8 +72,6 @@ public:
     bool isRunningOnEmbedded() const;
 
     void setup(const Configuration *cfg) noexcept(false);
-    QT_DEPRECATED_X("Replaced by loadQml() in 6.7 - will be removed in 6.9")
-    void loadQml(bool loadDummyData) noexcept(false);
     void loadQml() noexcept(false);
     QT_DEPRECATED_X("Replaced by showWindow() in 6.8 - will be removed in 6.10")
     void showWindow(bool showFullscreen);
@@ -127,7 +125,6 @@ private:
     QUrl m_mainQml;
     QString m_mainQmlLocalFile;
     bool m_showFullscreen = false;
-    bool m_loadDummyData = false; //TODO: remove in 6.9
 
     QQmlApplicationEngine *m_engine = nullptr;
     QQuickView *m_view = nullptr; // only set if we allocate the window ourselves

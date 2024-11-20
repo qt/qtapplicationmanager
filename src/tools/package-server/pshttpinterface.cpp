@@ -52,17 +52,8 @@ void PSHttpInterface::listen()
 
     auto port = quint16(d->cfg->listenUrl.port(0));
 
-    auto bindHttp = [this](QTcpServer *tcpPtr) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 8, 0)
-        d->server->bind(tcpPtr);
-        return true;
-#else
-        return d->server->bind(tcpPtr);
-#endif
-    };
-
     auto tcp = std::make_unique<QTcpServer>();
-    if (!tcp->listen(host, port) || !bindHttp(tcp.get()))
+    if (!tcp->listen(host, port) || !d->server->bind(tcp.get()))
         throw Exception("failed to listen on %1:%2").arg(host.toString()).arg(port);
 
     d->listenAddress = host.toString() + u':' + QString::number(tcp->serverPort());

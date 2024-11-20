@@ -404,15 +404,6 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     for (StartupInterface *iface : std::as_const(startupPlugins))
         iface->initialize(am->systemProperties());
 
-    bool loadDummyData = runtimeParameters.value(u"loadDummyData"_s).toBool()
-            || m_configuration.value(u"loadDummydata"_s).toBool();
-
-    if (loadDummyData) {
-        qCWarning(LogDeployment) << "Loading dummy data is deprecated and will be removed soon";
-        qCDebug(LogQmlRuntime) << "loading dummy-data";
-        loadQmlDummyDataFiles(&m_engine, QFileInfo(qmlFileStr).path());
-    }
-
     QVariant pluginPaths = runtimeParameters.value(u"pluginPaths"_s);
     const QVariantList ppvl = (pluginPaths.metaType() == QMetaType::fromType<QString>())
             ? QVariantList{pluginPaths}

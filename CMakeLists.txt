@@ -1,7 +1,7 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-set(MIN_QT_VERSION 6.5.0)
+set(MIN_QT_VERSION 6.8.0)
 
 include(.cmake.conf)
 project(QtApplicationManager # special case

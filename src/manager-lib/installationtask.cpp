@@ -262,10 +262,11 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
         if (m_package->id() != m_extractor->installationReport().packageId())
             throw Exception(Error::Package, "the package identifiers in --PACKAGE-HEADER--' and info.yaml do not match");
 
-        m_iconFileName = m_package->icon(); // store it separately as we will give away ApplicationInfo later on
-
+        m_iconFileName = m_package->icon(); // store it separately as we will transfer m_package ownership later
         if (m_iconFileName.isEmpty())
-            throw Exception(Error::Package, "the 'icon' field in info.yaml cannot be empty or absent.");
+            m_foundIcon = true;
+        else if (QFileInfo(m_iconFileName).path() != u'.')
+            throw Exception(Error::Package, "the icon must be located in the package's root directory");
 
         m_mutex.lock();
         m_packageId = m_package->id();
@@ -277,6 +278,7 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
 
         Q_ASSERT(m_foundInfo);
         Q_ASSERT(!m_foundIcon);
+        Q_ASSERT(!m_iconFileName.isEmpty());
 
         if (file != m_iconFileName)
             throw Exception(Error::Package,
@@ -284,9 +286,8 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
                     " Expected '%1', got '%2'").arg(m_iconFileName, file);
 
         QFile icon(m_extractor->destinationDirectory().absoluteFilePath(file));
-
-        if (icon.size() > 256*1024)
-            throw Exception(Error::Package, "the size of %1 is too large (max. 256KB)").arg(file);
+        if (icon.size() > 1024*1024)
+            throw Exception(Error::Package, "the size of %1 is too large (max. 1MB)").arg(file);
 
         m_foundIcon = true;
     } else {
@@ -309,7 +310,8 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
         startInstallation();
 
         QFile::copy(oldDestinationDirectory.filePath(u"info.yaml"_s), m_extractionDir.filePath(u"info.yaml"_s));
-        QFile::copy(oldDestinationDirectory.filePath(m_iconFileName), m_extractionDir.filePath(m_iconFileName));
+        if (!m_iconFileName.isEmpty())
+            QFile::copy(oldDestinationDirectory.filePath(m_iconFileName), m_extractionDir.filePath(m_iconFileName));
 
         {
             QMutexLocker locker(&m_mutex);

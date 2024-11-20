@@ -401,6 +401,15 @@ void tst_PackageManager::packageInstallation_data()
     QTest::newRow("invalid-footer-signature") \
             << "test-invalid-footer-signature.appkg" << ""
             << true << false << false << false << nomd << "could not verify the package's developer signature";
+    QTest::newRow("no-icon") \
+            << "test-no-icon.ampkg" << ""
+            << false << false << true << false << nomd << "";
+    QTest::newRow("icon-in-subdir") \
+            << "test-icon-in-subdir.ampkg" << ""
+            << false << false << false << false << nomd << "the icon must be located in the package's root directory";
+    QTest::newRow("non-existent-icon") \
+            << "test-non-existent-icon.ampkg" << ""
+            << false << false << false << false << nomd << "~.*must be the second file in the package.*";
 }
 
 // this test function is a bit of a kitchen sink, but the basic boiler plate
@@ -479,8 +488,13 @@ void tst_PackageManager::packageInstallation()
 #endif
             files.sort();
 
-            QVERIFY2(files == QStringList({ u"icon.png"_s, u"info.yaml"_s, u"test"_s, QString::fromUtf8("t\xc3\xa4st") }),
-                     qPrintable(files.join(u", "_s)));
+            QStringList expectedFiles = { u"icon.png"_s, u"info.yaml"_s, u"test"_s,
+                                         QString::fromUtf8("t\xc3\xa4st") };
+            if (QByteArray(QTest::currentDataTag()).contains("no-icon"))
+                expectedFiles.removeOne(u"icon.png"_s);
+
+            QVERIFY2(files == expectedFiles,
+                     qPrintable(files.join(u", "_s) + u" != " + expectedFiles.join(u", "_s)));
 
             QFile f(fileCheckPath + u"/test"_s);
             QVERIFY(f.open(QFile::ReadOnly));

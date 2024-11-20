@@ -102,8 +102,8 @@ The fields within the \c info.yaml manifest data (second YAML document) are as f
 \row
     \li \c icon
     \li string
-    \li \e Required. The icon's file name. The file must be located in the same directory as
-        \c info.yaml and can be in any image format that Qt supports.
+    \li The icon's file name. The file must be located in the same directory as \c info.yaml and
+        can be in any image format that Qt supports. The file size cannot exceed \c 1MB.
 \row
     \li \c name
     \li object
@@ -261,6 +261,8 @@ The fields used for each item within the \c applications list are as follows:
     \li string
     \li The icon of the application. It will default to the \c icon field in the global package
         section, but it can be overwritten for each application by specifying this field.
+        Contrary to the package's icon, there are no restrictions regarding file location, type or
+        size.
 \row
     \li \c description
     \li object
@@ -340,6 +342,8 @@ The fields used for each item within the \c intents list are as follows:
     \li string
     \li The icon of the intent. It will default to the \c icon field in the global package section,
         but it can be overwritten for each intent by specifying this field.
+        Contrary to the package's icon, there are no restrictions regarding file location, type or
+        size.
 \row
     \li \c description
     \li object

@@ -45,8 +45,8 @@ private:
         return QDir(m_workDir.path()).absoluteFilePath(QString::fromLatin1(file));
     }
 
-    bool createInfoYaml(QTemporaryDir &tmp, const QString &changeField = QString(), const QVariant &toValue = QVariant());
-    bool createIconPng(QTemporaryDir &tmp);
+    bool createInfoYaml(QTemporaryDir &tmp, const std::function<void(QVariantMap &)> &manipulate = { });
+    bool createIconPng(QTemporaryDir &tmp, const QString &prefix = { });
     bool createCode(QTemporaryDir &tmp);
     void createDummyFile(QTemporaryDir &tmp, const QString &fileName, const char *data);
 
@@ -163,12 +163,26 @@ void tst_PackagerTool::test()
     // add an icon
     createIconPng(tmp);
 
+    // missing intent icon
+    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString));
+    QVERIFY2(errorString.contains(u"missing the file referenced by the 'icon' field for intent 'test-intent'"), qPrintable(errorString));
+
+    // add an icon for the intent
+    createIconPng(tmp, u"intent-"_s);
+
     // no valid code
     QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), errorString));
     QVERIFY2(errorString.contains(u"missing the file referenced by the 'code' field"), qPrintable(errorString));
 
     // add a code file
     createCode(tmp);
+
+    // missing app icon
+    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString));
+    QVERIFY2(errorString.contains(u"missing the file referenced by the 'icon' field for application 'test-app'"), qPrintable(errorString));
+
+    // add an icon for the app
+    createIconPng(tmp, u"app-"_s);
 
     // invalid destination
     QVERIFY(!packagerCheck(PackagingJob::create(tmp.path(), tmp.path()), errorString));
@@ -254,17 +268,21 @@ void tst_PackagerTool::test()
 
 void tst_PackagerTool::brokenMetadata_data()
 {
+    QTest::addColumn<QString>("yamlList");
     QTest::addColumn<QString>("yamlField");
     QTest::addColumn<QVariant>("yamlValue");
     QTest::addColumn<QString>("errorString");
 
-    QTest::newRow("missing-runtime")    << "runtime" << QVariant() << "~.*Required fields are missing: runtime";
-    QTest::newRow("missing-identifier") << "id"      << QVariant() << "~.*Required fields are missing: id";
-    QTest::newRow("missing-code")       << "code"    << QVariant() << "~.*Required fields are missing: code";
+    QTest::newRow("missing-pkg-id")      << ""             << "id"      << QVariant() << "~.*Required fields are missing: id";
+    QTest::newRow("missing-app-id")      << "applications" << "id"      << QVariant() << "~.*Required fields are missing: id";
+    QTest::newRow("missing-app-runtime") << "applications" << "runtime" << QVariant() << "~.*Required fields are missing: runtime";
+    QTest::newRow("missing-app-code")    << "applications" << "code"    << QVariant() << "~.*Required fields are missing: code";
+    QTest::newRow("missing-intent-id")   << "intents"      << "id"      << QVariant() << "~.*Required fields are missing: id";
 }
 
 void tst_PackagerTool::brokenMetadata()
 {
+    QFETCH(QString, yamlList);
     QFETCH(QString, yamlField);
     QFETCH(QVariant, yamlValue);
     QFETCH(QString, errorString);
@@ -273,7 +291,16 @@ void tst_PackagerTool::brokenMetadata()
 
     createCode(tmp);
     createIconPng(tmp);
-    createInfoYaml(tmp, yamlField, yamlValue);
+    createIconPng(tmp, u"app-"_s);
+    createIconPng(tmp, u"intent-"_s);
+    createInfoYaml(tmp, [=](QVariantMap &m) {
+        auto &mref = yamlList.isEmpty() ? m : get<QVariantMap>(get<QVariantList>(m[yamlList])[0]);
+
+        if (!yamlValue.isValid())
+            mref.remove(yamlField);
+        else
+            mref[yamlField] = yamlValue;
+    });
 
     // check if packaging actually fails with the expected error
 
@@ -291,8 +318,10 @@ void tst_PackagerTool::iconFileName()
     QTemporaryDir tmp;
     QString errorString;
 
-    createInfoYaml(tmp, u"icon"_s, u"foo.bar"_s);
+    createInfoYaml(tmp, [](QVariantMap &m) { m[u"icon"_s] = u"foo.bar"_s; });
     createCode(tmp);
+    createIconPng(tmp, u"app-"_s);
+    createIconPng(tmp, u"intent-"_s);
     createDummyFile(tmp, u"foo.bar"_s, "this-is-a-dummy-icon-file");
 
     QVERIFY2(packagerCheck(PackagingJob::create(pathTo("test-foobar-icon.appkg"), tmp.path()), errorString),
@@ -318,19 +347,25 @@ void tst_PackagerTool::iconFileName()
 }
 
 
-bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const QString &changeField, const QVariant &toValue)
+bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const std::function<void(QVariantMap &)> &manipulate)
 {
     QByteArray yaml =
+            "formatType: am-package\n"
             "formatVersion: 1\n"
-            "formatType: am-application\n"
             "---\n"
             "id: com.pelagicore.test\n"
             "name: { en_US: 'test' }\n"
             "icon: icon.png\n"
-            "code: test.qml\n"
-            "runtime: qml\n";
+            "applications:\n"
+            "- id: test-app\n"
+            "  icon: app-icon.png\n"
+            "  runtime: qml\n"
+            "  code: test.qml\n"
+            "intents:\n"
+            "- id: test-intent\n"
+            "  icon: intent-icon.png\n";
 
-    if (!changeField.isEmpty()) {
+    if (manipulate) {
         QVector<QVariant> docs;
         try {
             docs = YamlParser::parseAllDocuments(yaml);
@@ -338,10 +373,7 @@ bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const QString &changeF
         }
 
         QVariantMap map = docs.at(1).toMap();
-        if (!toValue.isValid())
-            map.remove(changeField);
-        else
-            map[changeField] = toValue;
+        manipulate(map);
         yaml = QtYaml::yamlFromVariantDocuments({ docs.at(0), map });
     }
 
@@ -349,9 +381,9 @@ bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const QString &changeF
     return infoYaml.open(QFile::WriteOnly) && infoYaml.write(yaml) == yaml.size();
 }
 
-bool tst_PackagerTool::createIconPng(QTemporaryDir &tmp)
+bool tst_PackagerTool::createIconPng(QTemporaryDir &tmp, const QString &prefix)
 {
-    QFile iconPng(QDir(tmp.path()).absoluteFilePath(u"icon.png"_s));
+    QFile iconPng(QDir(tmp.path()).absoluteFilePath(prefix + u"icon.png"_s));
     return iconPng.open(QFile::WriteOnly) && iconPng.write("\x89PNG") == 4;
 }
 

@@ -146,8 +146,6 @@ qt_internal_add_docs(Documentation
     ${DOC_CONF}
 )
 
-file(GLOB licenses "LICENSE.*[^~]")
-
 add_custom_target("Other-Files" SOURCES
     .cmake.conf
     qt_cmdline.cmake
@@ -163,7 +161,11 @@ add_custom_target("Other-Files" SOURCES
     cmake/QtAppManVersionDefines.cmake
     dependencies.yaml
     sync.profile
-    ${licenses}
+    LICENSES/BSD-3-Clause.txt
+    LICENSES/GFDL-1.3-no-invariants-only.txt
+    LICENSES/GPL-3.0-only.txt
+    LICENSES/LicenseRef-Qt-Commercial.txt
+    LICENSES/Qt-GPL-exception-1.0.txt
     util/bash/appman-prompt
     util/bash/README
 )

@@ -3,12 +3,13 @@
 formatType: 'am-installation-report'
 formatVersion: 3
 ---
-packageId: 'hello-world.red'
+packageId: 'test-pkg'
 digest: '45ca0f9dfbddca129687900ae3260fe4a35ca09efd189581e196c0a75da47a0f'
 diskSpaceUsed: 575488
 files:
 - 'info.yaml'
 - 'icon.png'
-- 'main.qml'
+- 'test'
+- 'täst'
 ---
-hmac: '48fce75b29a2b621f1a1462b434e6de0cac78837fe733bc12ab8e727363c5226'
+hmac: '831598e1f896d402c5550269578e92747d1e4d262fc679fa2cf0638b234ecc74'

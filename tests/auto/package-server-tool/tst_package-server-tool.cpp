@@ -77,8 +77,8 @@ void tst_PackageServerTool::initTestCase()
 
     QVERIFY(m_tmpDir.isValid());
     QVERIFY(QDir(m_tmpDir.path()).mkpath(u".packages"_s));
-    QVERIFY(QFile::copy(QString::fromLatin1(AM_TESTDATA_DIR "/packages/test.appkg"),
-                        m_tmpDir.path() + u"/.packages/com.pelagicore.test_all.ampkg"_s));
+    QVERIFY(QFile::copy(QString::fromLatin1(AM_TESTDATA_DIR "/packages/test.ampkg"),
+                        m_tmpDir.path() + u"/.packages/test-pkg_all.ampkg"_s));
 
     m_psProcess.setProgram(psTool);
     QStringList args = { u"--dd"_s, m_tmpDir.path() };
@@ -110,7 +110,7 @@ void tst_PackageServerTool::initTestCase()
         u"> Verify developer signature on upload: no"_s,
         u"> Add store signature on download: no"_s,
         u"> Scanning .packages"_s,
-        u" + adding   com.pelagicore.test [all]"_s,
+        u" + adding   test-pkg [all]"_s,
         u"> HTTP server listening on: "_s // + <ip>:<port>
     };
 
@@ -147,7 +147,7 @@ void tst_PackageServerTool::httpInterface()
     }
 
     if (testAmpkg.isEmpty()) {
-        QFile f(QString::fromLatin1(AM_TESTDATA_DIR "/packages/test.appkg"));
+        QFile f(QString::fromLatin1(AM_TESTDATA_DIR "/packages/test.ampkg"));
         QVERIFY(f.open(QIODevice::ReadOnly));
         testAmpkg = f.readAll();
         QVERIFY(!testAmpkg.isEmpty());
@@ -171,9 +171,9 @@ void tst_PackageServerTool::httpInterface()
         { "packages", "/package/list", QUrlQuery(), Get, 200,
          QJsonArray { QJsonObject {
              { u"architecture"_s, u""_s },
-             { u"id"_s, u"com.pelagicore.test"_s },
+             { u"id"_s, u"test-pkg"_s },
              { u"categories"_s, QJsonArray { u"test-category"_s } },
-             { u"iconUrl"_s, u"package/icon?id=com.pelagicore.test&architecture=all"_s },
+             { u"iconUrl"_s, u"package/icon?id=test-pkg&architecture=all"_s },
              { u"names"_s, QJsonObject { { u"de"_s, u"Hallo"_s }, { u"en"_s, u"Hello"_s } } },
              { u"descriptions"_s, QJsonObject { } },
              { u"version"_s, u"1.0"_s },
@@ -182,19 +182,19 @@ void tst_PackageServerTool::httpInterface()
         { "no-icon", "/package/icon", QUrlQuery(), Get, 404,
          QByteArray { } },
 
-        { "icon", "/package/icon", QUrlQuery { { u"id"_s, u"com.pelagicore.test"_s} }, Get, 200,
+        { "icon", "/package/icon", QUrlQuery { { u"id"_s, u"test-pkg"_s} }, Get, 200,
          iconPng },
 
         { "no-download", "/package/download", QUrlQuery(), Get, 404,
          QByteArray { } },
 
-        { "download", "/package/download", QUrlQuery { { u"id"_s, u"com.pelagicore.test"_s} }, Get, 200,
+        { "download", "/package/download", QUrlQuery { { u"id"_s, u"test-pkg"_s} }, Get, 200,
          testAmpkg },
 
-        { "remove-non-existent", "/package/remove", QUrlQuery({ { u"id"_s, u"com.pelagicore.test"_s }, { u"architecture"_s, u"x86_64"_s } }), Post, 200,
+        { "remove-non-existent", "/package/remove", QUrlQuery({ { u"id"_s, u"test-pkg"_s }, { u"architecture"_s, u"x86_64"_s } }), Post, 200,
          QJsonObject { { u"status"_s, u"fail"_s }, { u"removed"_s, 0 } } },
 
-        { "remove", "/package/remove", QUrlQuery({ { u"id"_s, u"com.pelagicore.test"_s } }), Post, 200,
+        { "remove", "/package/remove", QUrlQuery({ { u"id"_s, u"test-pkg"_s } }), Post, 200,
          QJsonObject { { u"status"_s, u"ok"_s }, { u"removed"_s, 1 } } },
 
         { "no-categories", "/category/list", QUrlQuery(), Get, 200,
@@ -207,7 +207,7 @@ void tst_PackageServerTool::httpInterface()
          QJsonObject {
              { u"status"_s, u"ok"_s },
              { u"result"_s, u"added"_s },
-             { u"id"_s, u"com.pelagicore.test"_s },
+             { u"id"_s, u"test-pkg"_s },
              { u"architecture"_s, u"all"_s },
         } },
 
@@ -215,7 +215,7 @@ void tst_PackageServerTool::httpInterface()
          QJsonObject {
              { u"status"_s, u"ok"_s },
              { u"result"_s, u"no changes"_s },
-             { u"id"_s, u"com.pelagicore.test"_s },
+             { u"id"_s, u"test-pkg"_s },
              { u"architecture"_s, u"all"_s },
         } },
 

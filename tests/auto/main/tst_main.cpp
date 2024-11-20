@@ -216,7 +216,7 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
     QVERIFY(intent1);
     QCOMPARE(intent1->intentId(), u"red.intent1"_s);
     QCOMPARE(intent1->applicationId(), u"red1"_s);
-    QCOMPARE(intent1->packageId(), u"hello-world.red"_s);
+    QCOMPARE(intent1->packageId(), u"test-pkg"_s);
     QVERIFY(intent1->categories().contains(u"one"_s));
     QVERIFY(intent1->categories().contains(u"launcher"_s));
 
@@ -224,11 +224,11 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
     QVERIFY(intent2);
     QCOMPARE(intent2->intentId(), u"red.intent2"_s);
     QCOMPARE(intent2->applicationId(), u"red2"_s);
-    QCOMPARE(intent2->packageId(), u"hello-world.red"_s);
+    QCOMPARE(intent2->packageId(), u"test-pkg"_s);
     QVERIFY(intent2->categories().contains(u"two"_s));
     QVERIFY(intent2->categories().contains(u"launcher"_s));
 
-    installPackage(QString::fromLatin1(AM_TESTDATA_DIR "packages/hello-world.red.appkg"));
+    installPackage(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-update.ampkg"));
 
     QCOMPARE(appMan->count(), 1);
     QCOMPARE(intents->count(), 0);
@@ -238,11 +238,11 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
     app1 = appMan->application(0);
 
     // but with different contents
-    QCOMPARE(app1->names().value(u"en"_s), u"Hello Updated Red"_s);
+    QCOMPARE(app1->names().value(u"en"_s), u"Hello"_s);
     intent1 = intents->applicationIntent(u"red.intent1"_s, u"red1"_s);
     QVERIFY(!intent1);
 
-    removePackage(u"hello-world.red"_s);
+    removePackage(u"test-pkg"_s);
 
     // After removal of the updated version all data in Application should be as before the
     // installation took place.
@@ -278,7 +278,7 @@ void tst_Main::updateForBuiltInAlreadyInstalled()
     QCOMPARE(appMan->count(), 1);
 
     auto app = appMan->application(0);
-    QCOMPARE(app->names().value(u"en"_s), u"Hello Updated Red"_s);
+    QCOMPARE(app->names().value(u"en"_s), u"Hello"_s);
 }
 
 /*
@@ -290,7 +290,7 @@ void tst_Main::updateForBuiltInAlreadyInstalled()
 void tst_Main::loadDatabaseWithUpdatedBuiltInApp()
 {
     initMain();
-    installPackage(QString::fromLatin1(AM_TESTDATA_DIR "packages/hello-world.red.appkg"));
+    installPackage(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-update.ampkg"));
     destroyMain();
 
     initMain();
@@ -299,7 +299,7 @@ void tst_Main::loadDatabaseWithUpdatedBuiltInApp()
     QCOMPARE(appMan->count(), 1);
 
     auto app = appMan->application(0);
-    QCOMPARE(app->names().value(u"en"_s), u"Hello Updated Red"_s);
+    QCOMPARE(app->names().value(u"en"_s), u"Hello"_s);
 }
 
 void tst_Main::mainQmlFile_data()

@@ -70,7 +70,7 @@ TestCase {
     function init() {
         // Remove previous installations
 
-        for (var pkg of [ "hello-world.red", "com.pelagicore.test" ]) {
+        for (var pkg of [ "other-test-pkg", "test-pkg" ]) {
             var po = PackageManager.package(pkg)
             if (!po || (po.builtIn && !po.builtInHasRemovableUpdate))
                 continue
@@ -95,7 +95,7 @@ TestCase {
         })
 
         taskStateChangedSpy.clear();
-        var id = PackageManager.startPackageInstallation("file:" + packageDir + "test-dev-signed.appkg")
+        var id = PackageManager.startPackageInstallation("file:" + packageDir + "test-dev-signed.ampkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -104,9 +104,9 @@ TestCase {
         // acknowledgePackageInstallation below
         var pkg = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1]
         var pkgId = pkg.id
-        compare(pkgId, "com.pelagicore.test")
+        compare(pkgId, "test-pkg")
         compare(pkg.applications.length, 1)
-        compare(pkg.applications[0].id, "com.pelagicore.test")
+        compare(pkg.applications[0].id, "test-app")
         compare(pkg.applications[0].runtimeName, "native")
 
         taskRequestingInstallationAcknowledgeSpy.clear();
@@ -124,7 +124,7 @@ TestCase {
 
         compare(PackageManager.package(pkgId).version, "1.0");
 
-        id = PackageManager.startPackageInstallation("file:" + packageDir + "test-update-dev-signed.appkg")
+        id = PackageManager.startPackageInstallation("file:" + packageDir + "test-update-dev-signed.ampkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -170,12 +170,12 @@ TestCase {
     function test_2cancel_update() {
         checkSkip()
 
-        var id = PackageManager.startPackageInstallation("file:" + packageDir + "test-dev-signed.appkg")
+        var id = PackageManager.startPackageInstallation("file:" + packageDir + "test-dev-signed.ampkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
         var pkgId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
-        compare(pkgId, "com.pelagicore.test");
+        compare(pkgId, "test-pkg");
         taskRequestingInstallationAcknowledgeSpy.clear();
         PackageManager.acknowledgePackageInstallation(id);
 
@@ -185,10 +185,10 @@ TestCase {
         var pkg = PackageManager.package(pkgId);
         compare(pkg.version, "1.0");
 
-        id = PackageManager.startPackageInstallation("file:" + packageDir + "test-update-dev-signed.appkg")
+        id = PackageManager.startPackageInstallation("file:" + packageDir + "test-update-dev-signed.ampkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         pkgId = taskRequestingInstallationAcknowledgeSpy.signalArguments[0][1].id
-        compare(pkgId, "com.pelagicore.test");
+        compare(pkgId, "test-pkg");
         taskRequestingInstallationAcknowledgeSpy.clear();
         PackageManager.cancelTask(id);
 
@@ -202,12 +202,12 @@ TestCase {
         checkSkip()
 
         taskStateChangedSpy.clear()
-        var pkg = PackageManager.package("hello-world.red");
+        var pkg = PackageManager.package("other-test-pkg");
         verify(pkg.builtIn);
-        compare(pkg.icon.toString().slice(-9), "icon1.png")
         compare(pkg.version, "v1");
+        compare(pkg.icon.toString().slice(-9), "icon1.png")
 
-        var id = PackageManager.startPackageInstallation("file:" + packageDir + "hello-world.red.appkg")
+        var id = PackageManager.startPackageInstallation("file:" + packageDir + "other-test.ampkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -227,7 +227,7 @@ TestCase {
 
         taskStateChangedSpy.clear()
 
-        var id = PackageManager.startPackageInstallation("file:" + packageDir + "hello-world.red.appkg")
+        var id = PackageManager.startPackageInstallation("file:" + packageDir + "other-test.ampkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
         compare(taskRequestingInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -235,21 +235,21 @@ TestCase {
         PackageManager.acknowledgePackageInstallation(id);
 
         taskFinishedSpy.wait(spyTimeout);
-        var pkg = PackageManager.package("hello-world.red")
-        compare(pkg.version, "red");
+        var pkg = PackageManager.package("other-test-pkg")
+        compare(pkg.version, "other");
         taskFinishedSpy.clear();
         applicationChangedSpy.clear();
 
         // remvove is a downgrade
         verify(pkg.builtIn)
         verify(pkg.builtInHasRemovableUpdate)
-        verify(PackageManager.removePackage("hello-world.red", false, true));
+        verify(PackageManager.removePackage("other-test-pkg", false, true));
         taskFinishedSpy.wait(spyTimeout);
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 
         compare(applicationChangedSpy.count, 3);
-        compare(applicationChangedSpy.signalArguments[0][0], "hello-world.red");
+        compare(applicationChangedSpy.signalArguments[0][0], "other-test-app");
         compare(applicationChangedSpy.signalArguments[0][1], ["isBlocked"]);
         compare(applicationChangedSpy.signalArguments[2][1], []);
 
@@ -265,22 +265,22 @@ TestCase {
         applicationRunStateChangedSpy.clear()
 
         // start the app
-        var app = ApplicationManager.application("hello-world.red")
+        var app = ApplicationManager.application("other-test-app")
         verify(app)
         verify(app.start())
         applicationRunStateChangedSpy.wait(spyTimeout);
         compare(applicationRunStateChangedSpy.count, 1);
-        compare(applicationRunStateChangedSpy.signalArguments[0][0], "hello-world.red")
+        compare(applicationRunStateChangedSpy.signalArguments[0][0], "other-test-app")
         compare(applicationRunStateChangedSpy.signalArguments[0][1], Am.StartingUp)
         applicationRunStateChangedSpy.clear()
         applicationRunStateChangedSpy.wait(spyTimeout);
         compare(applicationRunStateChangedSpy.count, 1);
-        compare(applicationRunStateChangedSpy.signalArguments[0][0], "hello-world.red")
+        compare(applicationRunStateChangedSpy.signalArguments[0][0], "other-test-app")
         compare(applicationRunStateChangedSpy.signalArguments[0][1], Am.Running)
         applicationRunStateChangedSpy.clear()
 
         // now install the update
-        var id = PackageManager.startPackageInstallation("file:" + packageDir + "hello-world.red.appkg")
+        var id = PackageManager.startPackageInstallation("file:" + packageDir + "other-test.ampkg")
         taskBlockingUntilInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskBlockingUntilInstallationAcknowledgeSpy.count, 1);
         compare(taskBlockingUntilInstallationAcknowledgeSpy.signalArguments[0][0], id);
@@ -288,17 +288,17 @@ TestCase {
 
         // make sure the app gets shut down during the update
         compare(applicationRunStateChangedSpy.count, 2);
-        compare(applicationRunStateChangedSpy.signalArguments[0][0], "hello-world.red")
+        compare(applicationRunStateChangedSpy.signalArguments[0][0], "other-test-app")
         compare(applicationRunStateChangedSpy.signalArguments[0][1], Am.ShuttingDown)
-        compare(applicationRunStateChangedSpy.signalArguments[1][0], "hello-world.red")
+        compare(applicationRunStateChangedSpy.signalArguments[1][0], "other-test-app")
         compare(applicationRunStateChangedSpy.signalArguments[1][1], Am.NotRunning)
         applicationRunStateChangedSpy.clear()
 
         PackageManager.acknowledgePackageInstallation(id);
 
         taskFinishedSpy.wait(spyTimeout);
-        var pkg = PackageManager.package("hello-world.red")
-        compare(pkg.version, "red");
+        var pkg = PackageManager.package("other-test-pkg")
+        compare(pkg.version, "other");
         taskFinishedSpy.clear();
         applicationChangedSpy.clear();
     }

@@ -7,7 +7,7 @@ name: {
     "en" : "Hello",
     "de" : "Hallo"
 }
-version: "1.0"
+version: "2.0"
 categories: [ "test-category" ]
 
 applications:

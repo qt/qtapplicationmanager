@@ -86,7 +86,7 @@ void tst_PackageExtractor::extractAndVerify_data()
     QMap<QString, QByteArray> noContent;
     QMap<QString, qint64> noSizes;
 
-    QTest::newRow("normal") << "packages/test.appkg"
+    QTest::newRow("normal") << "packages/test.ampkg"
                             << true << ""
                             << QStringList {
                                    u"info.yaml"_s,
@@ -96,36 +96,22 @@ void tst_PackageExtractor::extractAndVerify_data()
                             << QMap<QString, QByteArray> {
                                    { u"test"_s, "test\n" },
                                    { m_taest, "test with umlaut\n" } }
-                            << noSizes;
+                            << QMap<QString, qint64> {
+                                   // { "info.yaml", 213 }, // this is different on Windows: \n vs. \r\n
+                                   { u"icon.png"_s, 1157 },
+                                   { u"test"_s, 5 },
+                                   { m_taest, 17 } };
 
-    QTest::newRow("big") << "packages/bigtest.appkg"
-                         << true << ""
-                         << QStringList {
-                                u"info.yaml"_s,
-                                u"icon.png"_s,
-                                u"test"_s,
-                                m_taest,
-                                u"bigtest"_s }
-                         << QMap<QString, QByteArray> {
-                                { u"test"_s, "test\n" },
-                                { m_taest, "test with umlaut\n" } }
-                         << QMap<QString, qint64> {
-                                // { "info.yaml", 213 }, // this is different on Windows: \n vs. \r\n
-                                { u"icon.png"_s, 1157 },
-                                { u"bigtest"_s, 5*1024*1024 },
-                                { u"test"_s, 5 },
-                                { m_taest, 17 } };
-
-    QTest::newRow("invalid-url")    << "packages/no-such-file.appkg"
+    QTest::newRow("invalid-url")    << "packages/no-such-file.ampkg"
                                     << false << "~Error opening .*: (No such file or directory|The system cannot find the file specified\\.)"
                                     << noEntries << noContent << noSizes;
-    QTest::newRow("invalid-format") << "packages/test-invalid-format.appkg"
+    QTest::newRow("invalid-format") << "packages/test-invalid-format.ampkg"
                                     << false << "~.* could not open archive: Unrecognized archive format"
                                     << noEntries << noContent << noSizes;
-    QTest::newRow("invalid-digest") << "packages/test-invalid-footer-digest.appkg"
+    QTest::newRow("invalid-digest") << "packages/test-invalid-footer-digest.ampkg"
                                     << false << "~package digest mismatch.*"
                                     << noEntries << noContent << noSizes;
-    QTest::newRow("invalid-path")   << "packages/test-invalid-path.appkg"
+    QTest::newRow("invalid-path")   << "packages/test-invalid-path.ampkg"
                                     << false << "~invalid archive entry .*: pointing outside of extraction directory"
                                     << noEntries << noContent << noSizes;
 }
@@ -196,7 +182,7 @@ void tst_PackageExtractor::extractAndVerify()
 void tst_PackageExtractor::cancelExtraction()
 {
     {
-        PackageExtractor extractor(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test.appkg")), m_extractDir->path());
+        PackageExtractor extractor(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test.ampkg")), m_extractDir->path());
         extractor.cancel();
         QVERIFY(!extractor.extract());
         QVERIFY(extractor.wasCanceled());
@@ -204,7 +190,7 @@ void tst_PackageExtractor::cancelExtraction()
         QVERIFY(extractor.hasFailed());
     }
     {
-        PackageExtractor extractor(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test.appkg")), m_extractDir->path());
+        PackageExtractor extractor(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test.ampkg")), m_extractDir->path());
         connect(&extractor, &PackageExtractor::progress, this, [&extractor](qreal p) {
             if (p >= 0.1)
                 extractor.cancel();
@@ -273,7 +259,7 @@ void tst_PackageExtractor::extractFromFifo()
     QSKIP("No FIFO support on this platform");
 #endif
 
-    FifoSource fifo(QString::fromLatin1(AM_TESTDATA_DIR "packages/test.appkg"));
+    FifoSource fifo(QString::fromLatin1(AM_TESTDATA_DIR "packages/test.ampkg"));
     fifo.start();
 
     PackageExtractor extractor(QUrl::fromLocalFile(fifo.path()), m_extractDir->path());

@@ -104,7 +104,7 @@ void tst_Runtime::factory()
             "formatVersion: 1\n"
             "formatType: am-application\n"
             "---\n"
-            "id: com.pelagicore.test\n"
+            "id: test-pkg\n"
             "name: { en_US: 'Test' }\n"
             "icon: icon.png\n"
             "code: test.foo\n"

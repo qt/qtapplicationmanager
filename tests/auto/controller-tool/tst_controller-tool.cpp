@@ -251,21 +251,21 @@ void tst_ControllerTool::applications()
     {
         ControllerTool ctrl({ u"list-applications"_s });
         QVERIFY2(ctrl.call(), ctrl.failure);
-        QCOMPARE(ctrl.stdOutList, QStringList({ u"green1"_s, u"green2"_s }));
+        QCOMPARE(ctrl.stdOutList, QStringList({ u"controller-app1"_s, u"controller-app2"_s }));
     }
     {
-        ControllerTool ctrl({ u"show-application"_s, u"green1"_s });
+        ControllerTool ctrl({ u"show-application"_s, u"controller-app1"_s });
         QVERIFY2(ctrl.call(), ctrl.failure);
         const auto docs = YamlParser::parseAllDocuments(ctrl.stdOut);
         QCOMPARE(docs.size(), 1);
         const auto vm = docs[0].toMap();
 
         QVariantMap expected({
-            { u"applicationId"_s, u"green1"_s },
+            { u"applicationId"_s, u"controller-app1"_s },
             { u"capabilities"_s, QVariantList { } },
             { u"categories"_s, QVariantList { } },
-            { u"codeFilePath"_s, QFINDTESTDATA("builtin-apps/hello-world.green/main.qml") },
-            { u"icon"_s, QUrl::fromLocalFile(QFINDTESTDATA("builtin-apps/hello-world.green/icon.png")).toString() },
+            { u"codeFilePath"_s, QFINDTESTDATA("builtin-apps/controller-pkg/main.qml") },
+            { u"icon"_s, QUrl::fromLocalFile(QFINDTESTDATA("builtin-apps/controller-pkg/icon.png")).toString() },
             { u"isBlocked"_s, false },
             { u"isRemovable"_s, false },
             { u"isRunning"_s, false },
@@ -274,8 +274,8 @@ void tst_ControllerTool::applications()
             { u"isUpdating"_s, false },
             { u"lastExitCode"_s, 0 },
             { u"lastExitStatus"_s, 0 },
-            { u"name"_s, u"Hello Green"_s },
-            { u"description"_s, u"Green description"_s },
+            { u"name"_s, u"Hello Controller"_s },
+            { u"description"_s, u"Controller description"_s },
             { u"runtimeName"_s, u"qml"_s },
             { u"runtimeParameters"_s, QVariantMap { } },
             { u"updateProgress"_s, 0 },
@@ -290,23 +290,23 @@ void tst_ControllerTool::packages()
     {
         ControllerTool ctrl({ u"list-packages"_s });
         QVERIFY2(ctrl.call(), ctrl.failure);
-        QCOMPARE(ctrl.stdOutList, QStringList({ u"hello-world.green"_s }));
+        QCOMPARE(ctrl.stdOutList, QStringList({ u"controller-pkg"_s }));
     }
     {
-        ControllerTool ctrl({ u"show-package"_s, u"hello-world.green"_s });
+        ControllerTool ctrl({ u"show-package"_s, u"controller-pkg"_s });
         QVERIFY2(ctrl.call(), ctrl.failure);
         const auto docs = YamlParser::parseAllDocuments(ctrl.stdOut);
         QCOMPARE(docs.size(), 1);
         const auto vm = docs[0].toMap();
 
         QVariantMap expected({
-            { u"description"_s, u"Green description"_s },
-            { u"icon"_s, QUrl::fromLocalFile(QFINDTESTDATA("builtin-apps/hello-world.green/icon.png")).toString() },
+            { u"description"_s, u"Controller description"_s },
+            { u"icon"_s, QUrl::fromLocalFile(QFINDTESTDATA("builtin-apps/controller-pkg/icon.png")).toString() },
             { u"isBlocked"_s, false },
             { u"isRemovable"_s, false },
             { u"isUpdating"_s, false },
-            { u"name"_s, u"Hello Green"_s },
-            { u"packageId"_s, u"hello-world.green"_s },
+            { u"name"_s, u"Hello Controller"_s },
+            { u"packageId"_s, u"controller-pkg"_s },
             { u"updateProgress"_s, 0 },
             { u"version"_s, u"1.2.3"_s },
         });
@@ -334,10 +334,10 @@ void tst_ControllerTool::installationLocation()
 void tst_ControllerTool::installCancel()
 {
     ControllerTool install({ u"install-package"_s,
-                            QString::fromLatin1(AM_TESTDATA_DIR "packages/hello-world.red.appkg") });
+                            QString::fromLatin1(AM_TESTDATA_DIR "packages/test.ampkg") });
     QVERIFY2(install.start(), install.failure);
 
-    QTRY_VERIFY(PackageManager::instance()->isPackageInstallationActive(u"hello-world.red"_s));
+    QTRY_VERIFY(PackageManager::instance()->isPackageInstallationActive(u"test-pkg"_s));
     QString taskId;
 
     {
@@ -366,18 +366,18 @@ void tst_ControllerTool::installRemove()
 {
     {
         ControllerTool ctrl({ u"install-package"_s, u"-a"_s,
-                             QString::fromLatin1(AM_TESTDATA_DIR "packages/hello-world.red.appkg") });
+                             QString::fromLatin1(AM_TESTDATA_DIR "packages/test.ampkg") });
         QVERIFY2(ctrl.call(), ctrl.failure);
     }
     {
-        ControllerTool ctrl({ u"remove-package"_s, u"hello-world.red"_s });
+        ControllerTool ctrl({ u"remove-package"_s, u"test-pkg"_s });
         QVERIFY2(ctrl.call(), ctrl.failure);
     }
 }
 
 void tst_ControllerTool::startStop()
 {
-    const auto app = ApplicationManager::instance()->application(u"green1"_s);
+    const auto app = ApplicationManager::instance()->application(u"controller-app1"_s);
     QVERIFY(app);
     {
         ControllerTool ctrl({ u"start-application"_s, app->id() });

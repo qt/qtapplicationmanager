@@ -1,0 +1,16 @@
+formatVersion: 1
+formatType: am-package
+---
+id: 'other-test-pkg'
+icon: 'icon.png'
+name:
+  en: "Other Test"
+  de: "Anderer Test"
+categories:
+- "other test category"
+version: "other"
+
+applications:
+- id: 'other-test-app'
+  runtime: 'native'
+  code: 'other'

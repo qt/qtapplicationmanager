@@ -81,7 +81,7 @@ void tst_PackageCreator::createAndVerify()
     QTemporaryFile output;
     QVERIFY(output.open());
 
-    InstallationReport report(u"com.pelagicore.test"_s);
+    InstallationReport report(u"test-pkg"_s);
     report.addFiles(files);
 
     PackageCreator creator(m_baseDir, &output, report);

@@ -351,55 +351,55 @@ void tst_PackageManager::packageInstallation_data()
     };
 
     QTest::newRow("normal") \
-            << "test.appkg" << "test-update.appkg"
+            << "test.ampkg" << "test-update.ampkg"
             << false << false << true << true << nomd<< "";
     QTest::newRow("no-dev-signed") \
-            << "test.appkg" << ""
+            << "test.ampkg" << ""
             << true << false << false << false << nomd << "cannot install unsigned packages";
     QTest::newRow("dev-signed") \
-            << "test-dev-signed.appkg" << "test-update-dev-signed.appkg"
+            << "test-dev-signed.ampkg" << "test-update-dev-signed.ampkg"
             << true << false << true << true << nomd << "";
     QTest::newRow("no-store-signed") \
-            << "test.appkg" << ""
+            << "test.ampkg" << ""
             << false << true << false << false << nomd << "cannot install unsigned packages";
     QTest::newRow("no-store-but-dev-signed") \
-            << "test-dev-signed.appkg" << ""
+            << "test-dev-signed.ampkg" << ""
             << false << true << false << false << nomd << "cannot install development packages on consumer devices";
     QTest::newRow("store-signed") \
-            << "test-store-signed.appkg" << ""
+            << "test-store-signed.ampkg" << ""
             << false << true << true << false << nomd << "";
     QTest::newRow("extra-metadata") \
-            << "test-extra.appkg" << ""
+            << "test-extra.ampkg" << ""
             << false << false << true << false << extramd << "";
     QTest::newRow("extra-metadata-dev-signed") \
-            << "test-extra-dev-signed.appkg" << ""
+            << "test-extra-dev-signed.ampkg" << ""
             << true << false << true << false << extramd << "";
     QTest::newRow("invalid-file-order") \
-            << "test-invalid-file-order.appkg" << ""
+            << "test-invalid-file-order.ampkg" << ""
             << false << false << false << false << nomd << "The package icon (as stated in info.yaml) must be the second file in the package. Expected 'icon.png', got 'test'";
     QTest::newRow("invalid-header-format") \
-            << "test-invalid-header-formatversion.appkg" << ""
+            << "test-invalid-header-formatversion.ampkg" << ""
             << false << false << false << false << nomd << "metadata has an invalid format specification: wrong header: expected type 'am-package-header', version '2' or type 'am-package-header', version '1', but instead got type 'am-package-header', version '0'";
     QTest::newRow("invalid-header-diskspaceused") \
-            << "test-invalid-header-diskspaceused.appkg" << ""
+            << "test-invalid-header-diskspaceused.ampkg" << ""
             << false << false << false << false << nomd << "metadata has an invalid diskSpaceUsed field (0)";
     QTest::newRow("invalid-header-id") \
-            << "test-invalid-header-id.appkg" << ""
+            << "test-invalid-header-id.ampkg" << ""
             << false << false << false << false << nomd << "metadata has an invalid packageId field (:invalid)";
     QTest::newRow("non-matching-header-id") \
-            << "test-non-matching-header-id.appkg" << ""
+            << "test-non-matching-header-id.ampkg" << ""
             << false << false << false << false << nomd << "the package identifiers in --PACKAGE-HEADER--' and info.yaml do not match";
     QTest::newRow("tampered-extra-signed-header") \
-            << "test-tampered-extra-signed-header.appkg" << ""
+            << "test-tampered-extra-signed-header.ampkg" << ""
             << false << false << false << false << nomd << "~package digest mismatch.*";
     QTest::newRow("invalid-info.yaml") \
-            << "test-invalid-info.appkg" << ""
+            << "test-invalid-info.ampkg" << ""
             << false << false << false << false << nomd << "~.*did not find expected key.*";
     QTest::newRow("invalid-info.yaml-id") \
-            << "test-invalid-info-id.appkg" << ""
+            << "test-invalid-info-id.ampkg" << ""
             << false << false << false << false << nomd << "~.*the identifier \\(:invalid\\) is not a valid package-id: must consist of printable ASCII characters only, except any of .*";
     QTest::newRow("invalid-footer-signature") \
-            << "test-invalid-footer-signature.appkg" << ""
+            << "test-invalid-footer-signature.ampkg" << ""
             << true << false << false << false << nomd << "could not verify the package's developer signature";
     QTest::newRow("no-icon") \
             << "test-no-icon.ampkg" << ""
@@ -471,10 +471,10 @@ void tst_PackageManager::packageInstallation()
             //QDirIterator it(m_workDir.path(), QDirIterator::Subdirectories);
             //while (it.hasNext()) { qDebug() << it.next(); }
 
-            QVERIFY(QFile::exists(installationDir + u"/com.pelagicore.test/.installation-report.yaml"_s));
-            QVERIFY(QDir(documentDir + u"/com.pelagicore.test"_s).exists());
+            QVERIFY(QFile::exists(installationDir + u"/test-pkg/.installation-report.yaml"_s));
+            QVERIFY(QDir(documentDir + u"/test-pkg"_s).exists());
 
-            QString fileCheckPath = installationDir + u"/com.pelagicore.test"_s;
+            QString fileCheckPath = installationDir + u"/test-pkg"_s;
 
             // now check the installed files
 
@@ -517,16 +517,16 @@ void tst_PackageManager::packageInstallation()
             }
 
             // check if the meta-data was saved to the installation report correctly
-            QVERIFY2(m_pm->installedPackageExtraMetaData(u"com.pelagicore.test"_s) == extra,
+            QVERIFY2(m_pm->installedPackageExtraMetaData(u"test-pkg"_s) == extra,
                      "Extra meta-data was not correctly saved to installation report");
-            QVERIFY2(m_pm->installedPackageExtraSignedMetaData(u"com.pelagicore.test"_s) == extraSigned,
+            QVERIFY2(m_pm->installedPackageExtraSignedMetaData(u"test-pkg"_s) == extraSigned,
                      "Extra signed meta-data was not correctly saved to installation report");
         }
         if (pass == lastPass && expectedSuccess) {
             // remove package again
 
             clearSignalSpies();
-            taskId = m_pm->removePackage(u"com.pelagicore.test"_s, false);
+            taskId = m_pm->removePackage(u"test-pkg"_s, false);
             QVERIFY(!taskId.isEmpty());
 
             // check signals
@@ -538,7 +538,7 @@ void tst_PackageManager::packageInstallation()
     // check that all files are gone
 
     for (PathLocation pl: { Internal0, Documents0 }) {
-        QStringList entries = QDir(pathTo(pl)).entryList({ u"com.pelagicore.test*"_s });
+        QStringList entries = QDir(pathTo(pl)).entryList({ u"test-pkg*"_s });
         QVERIFY2(entries.isEmpty(), qPrintable(pathTo(pl) + u": "_s + entries.join(u", "_s)));
     }
 }
@@ -582,7 +582,7 @@ void tst_PackageManager::simulateErrorConditions()
     if (testUpdate) {
         // the check will run when updating a package, so we need to install it first
 
-        taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+        taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
         QVERIFY(!taskId.isEmpty());
         m_pm->acknowledgePackageInstallation(taskId);
         QVERIFY(m_finishedSpy->wait(spyTimeout));
@@ -594,7 +594,7 @@ void tst_PackageManager::simulateErrorConditions()
     for (const auto &f : beforeStart)
         QVERIFY(f());
 
-    taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+    taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
 
     const auto afterStart = functions.values("after-start");
     for (const auto &f : afterStart)
@@ -612,7 +612,7 @@ void tst_PackageManager::simulateErrorConditions()
         QVERIFY(f());
 
     if (testUpdate) {
-        taskId = m_pm->removePackage(u"com.pelagicore.test"_s, false);
+        taskId = m_pm->removePackage(u"test-pkg"_s, false);
 
         QVERIFY(m_finishedSpy->wait(spyTimeout));
         QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
@@ -636,7 +636,7 @@ void tst_PackageManager::cancelPackageInstallation()
 {
     QFETCH(bool, expectedResult);
 
-    QString taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+    QString taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
     QVERIFY(!taskId.isEmpty());
 
     if (isDataTag("before-started-signal")) {
@@ -665,7 +665,7 @@ void tst_PackageManager::cancelPackageInstallation()
     } else {
         clearSignalSpies();
 
-        taskId = m_pm->removePackage(u"com.pelagicore.test"_s, false);
+        taskId = m_pm->removePackage(u"test-pkg"_s, false);
         QVERIFY(!taskId.isEmpty());
         QVERIFY(m_finishedSpy->wait(spyTimeout));
         QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
@@ -675,12 +675,12 @@ void tst_PackageManager::cancelPackageInstallation()
 
 void tst_PackageManager::parallelPackageInstallation()
 {
-    QString task1Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+    QString task1Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
     QVERIFY(!task1Id.isEmpty());
     QVERIFY(m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout));
     QCOMPARE(m_blockingUntilInstallationAcknowledgeSpy->first()[0].toString(), task1Id);
 
-    QString task2Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/bigtest-dev-signed.appkg")));
+    QString task2Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/other-test-dev-signed.ampkg")));
     QVERIFY(!task2Id.isEmpty());
     m_pm->acknowledgePackageInstallation(task2Id);
     QVERIFY(m_finishedSpy->wait(spyTimeout));
@@ -696,17 +696,17 @@ void tst_PackageManager::parallelPackageInstallation()
 
 void tst_PackageManager::doublePackageInstallation()
 {
-    QString task1Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+    QString task1Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
     QVERIFY(!task1Id.isEmpty());
     QVERIFY(m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout));
     QCOMPARE(m_blockingUntilInstallationAcknowledgeSpy->first()[0].toString(), task1Id);
 
-    QString task2Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.appkg")));
+    QString task2Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
     QVERIFY(!task2Id.isEmpty());
     m_pm->acknowledgePackageInstallation(task2Id);
     QVERIFY(m_failedSpy->wait(spyTimeout));
     QCOMPARE(m_failedSpy->first()[0].toString(), task2Id);
-    QCOMPARE(m_failedSpy->first()[2].toString(), u"Cannot install the same package com.pelagicore.test multiple times in parallel");
+    QCOMPARE(m_failedSpy->first()[2].toString(), u"Cannot install the same package test-pkg multiple times in parallel");
 
     clearSignalSpies();
     m_pm->cancelTask(task1Id);
@@ -741,7 +741,7 @@ void tst_PackageManager::validateDnsName_data()
     QTest::newRow("invalid-char3") << "com.pelagi$core.test" << 3 << false;
     QTest::newRow("invalid-char4") << "com.pelagi@core.test" << 3 << false;
     QTest::newRow("unicode-char") << QString::fromUtf8("c\xc3\xb6m.pelagicore.test") << 3 << false;
-    QTest::newRow("upper-case") << "com.Pelagicore.test" << 3 << false;
+    QTest::newRow("upper-case") << "test-pkg" << 3 << false;
     QTest::newRow("dash-at-start") << "com.-pelagicore.test" << 3 << false;
     QTest::newRow("dash-at-end") << "com.pelagicore-.test" << 3 << false;
     QTest::newRow("part-too-long") << "com.x012345678901234567890123456789012345678901234567890123456789012.test" << 3 << false;

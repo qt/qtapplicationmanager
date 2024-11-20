@@ -84,22 +84,22 @@ else
 fi
 
 info "Create package"
-packager create-package "$dst/test.appkg" "$src"
+packager create-package "$dst/test.ampkg" "$src"
 
 info "Dev-sign package"
-packager dev-sign-package "$dst/test.appkg" "$dst/test-dev-signed.appkg" certificates/dev1.p12 password
+packager dev-sign-package "$dst/test.ampkg" "$dst/test-dev-signed.ampkg" certificates/dev1.p12 password
 
 info "Dev-verify package"
-packager dev-verify-package "$dst/test-dev-signed.appkg" certificates/devca.crt certificates/ca.crt
+packager dev-verify-package "$dst/test-dev-signed.ampkg" certificates/devca.crt certificates/ca.crt
 
 info "Store-sign package"
-packager store-sign-package "$dst/test.appkg" "$dst/test-store-signed.appkg" certificates/store.p12 password "foobar"
+packager store-sign-package "$dst/test.ampkg" "$dst/test-store-signed.ampkg" certificates/store.p12 password "foobar"
 
 info "Store-verify package"
-packager store-verify-package "$dst/test-store-signed.appkg" certificates/ca.crt "foobar"
+packager store-verify-package "$dst/test-store-signed.ampkg" certificates/ca.crt "foobar"
 
 info "Store-sign dev package"
-packager store-sign-package "$dst/test-dev-signed.appkg" "$dst/test-store-dev-signed.appkg" certificates/store.p12 password "foobar"
+packager store-sign-package "$dst/test-dev-signed.ampkg" "$dst/test-store-dev-signed.ampkg" certificates/store.p12 password "foobar"
 
 info "Create package with extra meta-data"
 cat >"$tmp/exmd" <<EOT
@@ -119,15 +119,12 @@ cat >"$tmp/exmds2" <<EOT
 signed-key: signed-value
 EOT
 
-packager create-package "$dst/test-extra.appkg" "$src" \
+packager create-package "$dst/test-extra.ampkg" "$src" \
   -m '{ "foo": "bar" }' -m '{ "foo2": "bar2" }' -M "$src/../exmd"  -M "$src/../exmd2" \
   -s '{ "sfoo": "sbar" }' -s '{ "sfoo2": "sbar2" }' -S "$src/../exmds" -S "$src/../exmds2"
 
 info "Dev-sign package with extra meta-data"
-packager dev-sign-package "$dst/test-extra.appkg" "$dst/test-extra-dev-signed.appkg" certificates/dev1.p12 password
-
-info "Create a hello-world.red update package"
-packager create-package "$dst/hello-world.red.appkg" hello-world.red
+packager dev-sign-package "$dst/test-extra.ampkg" "$dst/test-extra-dev-signed.ampkg" certificates/dev1.p12 password
 
 ### v2 packages for testing updates
 
@@ -135,27 +132,29 @@ echo "test update" >"$src/test"
 sed <info.yaml >"$src/info.yaml" 's/version: "1.0"/version: "2.0"/'
 
 info "Create update package"
-packager create-package "$dst/test-update.appkg" "$src"
+packager create-package "$dst/test-update.ampkg" "$src"
 
 info "Dev-sign update package"
-packager dev-sign-package "$dst/test-update.appkg" "$dst/test-update-dev-signed.appkg" certificates/dev2.p12 password
+packager dev-sign-package "$dst/test-update.ampkg" "$dst/test-update-dev-signed.ampkg" certificates/dev2.p12 password
 
 echo "test" >"$src/test"
 cp "info.yaml" "$src"
 
-###  big packages
+### "other" packages
 
-cp info-big.yaml "$src/info.yaml"
-dd if=/dev/zero of="$src/bigtest" bs=1048576 count=5 >/dev/null 2>&1
+cp "info-other.yaml" "$src/info.yaml"
+rm "$src/test"
+echo "other" >"$src/other"
 
-info "Create big package"
-packager create-package "$dst/bigtest.appkg" "$src"
+info "Create other package"
+packager create-package "$dst/other-test.ampkg" "$src"
 
-info "Dev-sign big package"
-packager dev-sign-package "$dst/bigtest.appkg" "$dst/bigtest-dev-signed.appkg" certificates/dev1.p12 password
+info "Dev-sign other package"
+packager dev-sign-package "$dst/other-test.ampkg" "$dst/other-test-dev-signed.ampkg" certificates/dev1.p12 password
 
-cp info.yaml "$src"
-rm "$src/bigtest"
+rm "$src/other"
+echo "test" >"$src/test"
+cp "info.yaml" "$src"
 
 ### no-icon package
 
@@ -170,68 +169,69 @@ cp "info.yaml" "$src"
 
 ### create invalid packages
 
-tar -C "$src" -xof "$dst/test.appkg" -- --PACKAGE-HEADER-- --PACKAGE-FOOTER--
+tar -C "$src" -xof "$dst/test.ampkg" -- --PACKAGE-HEADER-- --PACKAGE-FOOTER--
 
 info "Create a package with invalid format"
-echo "invalid" >"$dst/test-invalid-format.appkg"
+echo "invalid" >"$dst/test-invalid-format.ampkg"
 
 info "Create a package with an invalid formatVersion header field"
 mv "$src"/--PACKAGE-HEADER--{,.orig}
 sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" 's/formatVersion: 2/formatVersion: X/'
-tar -C "$src" -cf "$dst/test-invalid-header-formatversion.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
+tar -C "$src" -cf "$dst/test-invalid-header-formatversion.ampkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 
 info "Create a package with a 0 diskSpaceUsed header field"
 mv "$src"/--PACKAGE-HEADER--{,.orig}
 sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" 's/diskSpaceUsed: [0-9]*/diskSpaceUsed: 0/'
-tar -C "$src" -cf "$dst/test-invalid-header-diskspaceused.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
+tar -C "$src" -cf "$dst/test-invalid-header-diskspaceused.ampkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 
 info "Create a package with an invalid id header field"
 mv "$src"/--PACKAGE-HEADER--{,.orig}
 sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" "s/packageId: '[a-z0-9.-]*'/packageId: ':invalid'/"
-tar -C "$src" -cf "$dst/test-invalid-header-id.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
+tar -C "$src" -cf "$dst/test-invalid-header-id.ampkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 
 info "Create a package with a non-matching id header field"
 mv "$src"/--PACKAGE-HEADER--{,.orig}
 sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" "s/packageId: '[a-z0-9.-]*'/packageId: 'non-matching'/"
-tar -C "$src" -cf "$dst/test-non-matching-header-id.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
+tar -C "$src" -cf "$dst/test-non-matching-header-id.ampkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 
 info "Create a package with a tampered extraSigned header field"
 mv "$src"/--PACKAGE-HEADER--{,.orig}
 ( cat "$src/--PACKAGE-HEADER--.orig" ; echo "extraSigned: { foo: bar }") >"$src/--PACKAGE-HEADER--"
-tar -C "$src" -cf "$dst/test-tampered-extra-signed-header.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
+tar -C "$src" -cf "$dst/test-tampered-extra-signed-header.ampkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 
 info "Create a package with an invalid info.yaml id"
 mv "$src"/info.yaml{,.orig}
 sed <"$src/info.yaml.orig" >"$src/info.yaml" 's/id: "[a-z0-9.-]*"/id: ":invalid"/'
-tar -C "$src" -cf "$dst/test-invalid-info-id.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
+tar -C "$src" -cf "$dst/test-invalid-info-id.ampkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/info.yaml{.orig,}
 
 info "Create a package with an invalid info.yaml file"
 mv "$src"/info.yaml{,.orig}
 sed <"$src/info.yaml.orig" >"$src/info.yaml" 's/code: "test"/: "test"/'
-tar -C "$src" -cf "$dst/test-invalid-info.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
+tar -C "$src" -cf "$dst/test-invalid-info.ampkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/info.yaml{.orig,}
 
 info "Create a package with an invalid file order"
-tar -C "$src" -cf "$dst/test-invalid-file-order.appkg" -- --PACKAGE-HEADER-- info.yaml test icon.png --PACKAGE-FOOTER--
+tar -C "$src" -cf "$dst/test-invalid-file-order.ampkg" -- --PACKAGE-HEADER-- info.yaml test icon.png --PACKAGE-FOOTER--
 
 info "Create a package with an invalid digest"
 mv "$src"/--PACKAGE-FOOTER--{,.orig}
 tr <"$src/--PACKAGE-FOOTER--.orig" >"$src/--PACKAGE-FOOTER--" 3 0
-tar -C "$src" -cf "$dst/test-invalid-footer-digest.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
+tar -C "$src" -cf "$dst/test-invalid-footer-digest.ampkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-FOOTER--{.orig,}
 
 info "Create a package with an invalid signature"
-packager dev-sign-package "$dst/test.appkg" "$dst/test-invalid-footer-signature.appkg" certificates/other.p12 password
+packager dev-sign-package "$dst/test.ampkg" "$dst/test-invalid-footer-signature.ampkg" certificates/other.p12 password
 
 info "Create a package with an invalid entry path"
 touch "$src/../invalid-path"
-tar -C "$src" -P -cf "$dst/test-invalid-path.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png ../invalid-path test --PACKAGE-FOOTER--
+tar -C "$src" -P -cf "$dst/test-invalid-path.ampkg" -- --PACKAGE-HEADER-- info.yaml icon.png ../invalid-path test --PACKAGE-FOOTER--
+rm "$src/../invalid-path"
 
 info "Create a package with a non-existent icon"
 mv "$src"/info.yaml{,.orig}

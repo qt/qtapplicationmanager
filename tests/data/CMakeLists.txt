@@ -6,18 +6,25 @@ if (NOT QT_FEATURE_am_installer)
     return()
 endif()
 
-file(GLOB_RECURSE TEST_DATA_FILES
-    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    certificates/*
-    hello-world.red/*
-    manifests/*
+set(TEST_DATA_FILES
+    binaries/README.md
+    binaries/android-elf.so.zz
+    binaries/macos-macho.zz
+    binaries/macos-universal.zz
+    binaries/windows-pe.exe.zz
+    certificates/create-test-certificates.sh
+    certificates/openssl-ca.cnf
+    certificates/openssl-dev1.cnf
+    certificates/openssl-dev2.cnf
+    certificates/openssl-devca.cnf
+    certificates/openssl-other-ca.cnf
+    certificates/openssl-store.cnf
     create-test-packages.sh
     icon.png
-    info-big.yaml
     info.yaml
+    info-other.yaml
     testfile
     utilities.sh
-    binaries/*.zz
 )
 
 add_custom_target(Test-Data-Files SOURCES
@@ -26,7 +33,7 @@ add_custom_target(Test-Data-Files SOURCES
 
 foreach(file ${TEST_DATA_FILES})
     if (NOT ${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
-        add_custom_command(OUTPUT ${file}
+        add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${file}
                            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${CMAKE_CURRENT_BINARY_DIR}/${file}
                            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${file}
                            COMMENT "Copying file: ${file}")

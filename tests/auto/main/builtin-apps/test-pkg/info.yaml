@@ -1,7 +1,7 @@
 formatVersion: 1
 formatType: am-package
 ---
-id:      'hello-world.red'
+id:      'test-pkg'
 icon:    'icon.png'
 name:
   en: 'Hello Red'

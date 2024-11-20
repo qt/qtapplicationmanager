@@ -1,19 +1,19 @@
 formatVersion: 1
 formatType: am-package
 ---
-id:      'hello-world.green'
+id:      'controller-pkg'
 icon:    'icon.png'
 name:
-  en: 'Hello Green'
+  en: 'Hello Controller'
 description:
-  en: "Green description"
+  en: "Controller description"
 version: '1.2.3'
 
 applications:
-- id: green1
+- id: controller-app1
   runtime: 'qml'
   code:    'main.qml'
 
-- id: green2
+- id: controller-app2
   runtime: 'qml'
   code:    'main2.qml'

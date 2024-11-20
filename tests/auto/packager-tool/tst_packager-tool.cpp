@@ -146,18 +146,18 @@ void tst_PackagerTool::test()
     QString errorString;
 
     // no valid destination
-    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), pathTo("test.appkg")), errorString));
+    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), pathTo("test.ampkg")), errorString));
     QVERIFY2(errorString.contains(u"is not a directory"), qPrintable(errorString));
 
     // no valid info.yaml
-    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), errorString));
+    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString));
     QVERIFY2(errorString.contains(u"Cannot open for reading"), qPrintable(errorString));
 
     // add an info.yaml file
     createInfoYaml(tmp);
 
     // no icon
-    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), errorString));
+    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString));
     QVERIFY2(errorString.contains(u"missing the file referenced by the 'icon' field"), qPrintable(errorString));
 
     // add an icon
@@ -171,7 +171,7 @@ void tst_PackagerTool::test()
     createIconPng(tmp, u"intent-"_s);
 
     // no valid code
-    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), errorString));
+    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString));
     QVERIFY2(errorString.contains(u"missing the file referenced by the 'code' field"), qPrintable(errorString));
 
     // add a code file
@@ -189,19 +189,19 @@ void tst_PackagerTool::test()
     QVERIFY2(errorString.contains(u"could not create package file"), qPrintable(errorString));
 
     // now everything is correct - try again
-    QVERIFY2(packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), errorString), qPrintable(errorString));
+    QVERIFY2(packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString), qPrintable(errorString));
 
     // invalid source package
     QVERIFY(!packagerCheck(PackagingJob::developerSign(
                                pathTo("no-such-file"),
-                               pathTo("test.dev-signed.appkg"),
+                               pathTo("test.dev-signed.ampkg"),
                                m_devCertificate,
                                m_devPassword), errorString));
     QVERIFY2(errorString.contains(u"does not exist"), qPrintable(errorString));
 
     // invalid destination package
     QVERIFY(!packagerCheck(PackagingJob::developerSign(
-                               pathTo("test.appkg"),
+                               pathTo("test.ampkg"),
                                pathTo("."),
                                m_devCertificate,
                                m_devPassword), errorString));
@@ -210,16 +210,16 @@ void tst_PackagerTool::test()
 
     // invalid dev key
     QVERIFY(!packagerCheck(PackagingJob::developerSign(
-                               pathTo("test.appkg"),
-                               pathTo("test.dev-signed.appkg"),
+                               pathTo("test.ampkg"),
+                               pathTo("test.dev-signed.ampkg"),
                                m_devCertificate,
                                u"wrong-password"_s), errorString));
     QVERIFY2(errorString.contains(u"could not create signature"), qPrintable(errorString));
 
     // invalid store key
     QVERIFY(!packagerCheck(PackagingJob::storeSign(
-                               pathTo("test.appkg"),
-                               pathTo("test.store-signed.appkg"),
+                               pathTo("test.ampkg"),
+                               pathTo("test.store-signed.ampkg"),
                                m_storeCertificate,
                                u"wrong-password"_s,
                                m_hardwareId), errorString));
@@ -227,34 +227,34 @@ void tst_PackagerTool::test()
 
     // sign
     QVERIFY2(packagerCheck(PackagingJob::developerSign(
-                               pathTo("test.appkg"),
-                               pathTo("test.dev-signed.appkg"),
+                               pathTo("test.ampkg"),
+                               pathTo("test.dev-signed.ampkg"),
                                m_devCertificate,
                                m_devPassword), errorString), qPrintable(errorString));
 
     QVERIFY2(packagerCheck(PackagingJob::storeSign(
-                               pathTo("test.appkg"),
-                               pathTo("test.store-signed.appkg"),
+                               pathTo("test.ampkg"),
+                               pathTo("test.store-signed.ampkg"),
                                m_storeCertificate,
                                m_storePassword,
                                m_hardwareId), errorString), qPrintable(errorString));
 
     // verify
     QVERIFY2(packagerCheck(PackagingJob::developerVerify(
-                               pathTo("test.dev-signed.appkg"),
+                               pathTo("test.dev-signed.ampkg"),
                                m_caFiles), errorString), qPrintable(errorString));
 
     QVERIFY2(packagerCheck(PackagingJob::storeVerify(
-                               pathTo("test.store-signed.appkg"),
+                               pathTo("test.store-signed.ampkg"),
                                m_caFiles,
                                m_hardwareId), errorString), qPrintable(errorString));
 
     // now that we have it, see if the package actually installs correctly
 
-    installPackage(pathTo("test.dev-signed.appkg"));
+    installPackage(pathTo("test.dev-signed.ampkg"));
 
     QDir checkDir(pathTo("internal-0"));
-    QVERIFY(checkDir.cd(u"com.pelagicore.test"_s));
+    QVERIFY(checkDir.cd(u"test-pkg"_s));
 
     for (const QString &file : { u"info.yaml"_s, u"icon.png"_s, u"test.qml"_s }) {
         QVERIFY(checkDir.exists(file));
@@ -305,7 +305,7 @@ void tst_PackagerTool::brokenMetadata()
     // check if packaging actually fails with the expected error
 
     QString error;
-    QVERIFY2(!packagerCheck(PackagingJob::create(pathTo("test.appkg"), tmp.path()), error), qPrintable(error));
+    QVERIFY2(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), error), qPrintable(error));
     QT_AM_CHECK_ERRORSTRING(error, errorString);
 }
 
@@ -324,17 +324,17 @@ void tst_PackagerTool::iconFileName()
     createIconPng(tmp, u"intent-"_s);
     createDummyFile(tmp, u"foo.bar"_s, "this-is-a-dummy-icon-file");
 
-    QVERIFY2(packagerCheck(PackagingJob::create(pathTo("test-foobar-icon.appkg"), tmp.path()), errorString),
+    QVERIFY2(packagerCheck(PackagingJob::create(pathTo("test-foobar-icon.ampkg"), tmp.path()), errorString),
             qPrintable(errorString));
 
     // see if the package installs correctly
 
     m_pm->setAllowInstallationOfUnsignedPackages(true);
-    installPackage(pathTo("test-foobar-icon.appkg"));
+    installPackage(pathTo("test-foobar-icon.ampkg"));
     m_pm->setAllowInstallationOfUnsignedPackages(false);
 
     QDir checkDir(pathTo("internal-0"));
-    QVERIFY(checkDir.cd(u"com.pelagicore.test"_s));
+    QVERIFY(checkDir.cd(u"test-pkg"_s));
 
     for (const QString &file : { u"info.yaml"_s, u"foo.bar"_s, u"test.qml"_s }) {
         QVERIFY(checkDir.exists(file));
@@ -353,7 +353,7 @@ bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const std::function<vo
             "formatType: am-package\n"
             "formatVersion: 1\n"
             "---\n"
-            "id: com.pelagicore.test\n"
+            "id: test-pkg\n"
             "name: { en_US: 'test' }\n"
             "icon: icon.png\n"
             "applications:\n"

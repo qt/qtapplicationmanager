@@ -454,7 +454,7 @@ int main(int argc, char *argv[])
                                  clp.positionalArguments().at(2),
                                  stdRedirections,
                                  restart,
-                                 args == 3 ? clp.positionalArguments().at(2) : QString()));
+                                 args == 4 ? clp.positionalArguments().at(3) : QString()));
             break;
         }
         case StopAllApplications:

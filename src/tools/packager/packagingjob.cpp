@@ -153,31 +153,43 @@ void PackagingJob::execute() noexcept(false)
         InstallationReport report(package->id());
         report.addFile(infoName);
 
-        // check icon
-        if (!QFile::exists(source.absoluteFilePath(package->icon())))
-            throw Exception(Error::Package, "missing the file referenced by the 'icon' field");
-        report.addFile(package->icon());
+        // check the package icon
+        if (auto icon = package->icon(); !icon.isEmpty()) {
+            if (!QFile::exists(source.absoluteFilePath(icon))) {
+                throw Exception(Error::Package, "missing the file referenced by the 'icon' field (%1)")
+                    .arg(icon);
+            }
+            if (QFileInfo(icon).path() != u'.')
+                throw Exception(Error::Package, "the icon must be located in the package's root directory");
+            report.addFile(icon);
+        }
 
-        // check intent icons
+        // check intents
         auto intents = package->intents();
-        for (const auto intent : intents) {
-            if (!QFile::exists(source.absoluteFilePath(intent->icon()))) {
-                throw Exception(Error::Package, "missing the file referenced by the 'icon' field for intent '%1'")
-                    .arg(intent->id());
+        for (const auto *intent : intents) {
+            const auto icon = intent->icon();
+            if (!icon.isEmpty() && !QFile::exists(source.absoluteFilePath(icon))) {
+                throw Exception(Error::Package, "missing the file referenced by the 'icon' field for intent '%1' (%2)")
+                    .arg(intent->id()).arg(icon);
             }
         }
 
-        // check executables
+        // check applications
         auto applications = package->applications();
         if (applications.isEmpty())
             throw Exception(Error::Package, "no applications defined in package");
-        for (const auto application : applications) {
+        for (const auto *application : applications) {
             const auto code = application->codeFilePath();
-            if (code.startsWith(u":/"_s)) // we just have to accept resource paths as is
-                continue;
-            if (!QFile::exists(source.absoluteFilePath(code))) {
-                throw Exception(Error::Package, "missing the file referenced by the 'code' field for application '%1'")
-                    .arg(application->id());
+            if (!code.startsWith(u":/"_s)) { // we just have to accept resource paths as is
+                if (!QFile::exists(source.absoluteFilePath(code))) {
+                    throw Exception(Error::Package, "missing the file referenced by the 'code' field for application '%1'")
+                        .arg(application->id());
+                }
+            }
+            const auto icon = application->icon();
+            if (!icon.isEmpty() && !QFile::exists(source.absoluteFilePath(icon))) {
+                throw Exception(Error::Package, "missing the file referenced by the 'icon' field for application '%1' (%2)")
+                    .arg(application->id()).arg(icon);
             }
         }
 

@@ -157,6 +157,17 @@ packager dev-sign-package "$dst/bigtest.appkg" "$dst/bigtest-dev-signed.appkg" c
 cp info.yaml "$src"
 rm "$src/bigtest"
 
+### no-icon package
+
+info "Create a package without an icon"
+mv "$src"/info.yaml{,.orig}
+sed <"$src/info.yaml.orig" >"$src/info.yaml" 's/icon: "icon.png"//'
+rm "$src"/info.yaml.orig
+rm "$src"/icon.png
+packager create-package "$dst/test-no-icon.ampkg" "$src"
+cp "icon.png" "$src"
+cp "info.yaml" "$src"
+
 ### create invalid packages
 
 tar -C "$src" -xof "$dst/test.appkg" -- --PACKAGE-HEADER-- --PACKAGE-FOOTER--
@@ -221,6 +232,21 @@ packager dev-sign-package "$dst/test.appkg" "$dst/test-invalid-footer-signature.
 info "Create a package with an invalid entry path"
 touch "$src/../invalid-path"
 tar -C "$src" -P -cf "$dst/test-invalid-path.appkg" -- --PACKAGE-HEADER-- info.yaml icon.png ../invalid-path test --PACKAGE-FOOTER--
+
+info "Create a package with a non-existent icon"
+mv "$src"/info.yaml{,.orig}
+sed <"$src/info.yaml.orig" >"$src/info.yaml" 's/icon: "icon.png"/icon: "png.icon"/'
+tar -C "$src" -cf "$dst/test-non-existent-icon.ampkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
+mv "$src"/info.yaml{.orig,}
+
+info "Create a package with an icon in a sub-directory"
+mv "$src"/info.yaml{,.orig}
+sed <"$src/info.yaml.orig" >"$src/info.yaml" 's,icon: "icon.png",icon: "sub/icon.png",'
+mkdir "$src"/sub
+cp "$src"/{,sub/}icon.png
+tar -C "$src" -cf "$dst/test-icon-in-subdir.ampkg" -- --PACKAGE-HEADER-- info.yaml sub/icon.png test --PACKAGE-FOOTER--
+rm -rf "$src"/sub
+mv "$src"/info.yaml{.orig,}
 
 echo -e "$G All test packages have been created successfully$W"
 echo

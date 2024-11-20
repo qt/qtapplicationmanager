@@ -37,13 +37,15 @@ These are the important files in a package:
 \row
   \li \c info.yaml
   \li The manifest of the application. The packaging tool needs to make sure that this file is
-      within the first 10 entries of the tar archive. See \l{Manifest Definition} for the
+      the first non-meta-data entry of the tar archive. See \l{Manifest Definition} for the
       documentation of the file format.
 \row
-  \li \c icon.png
-  \li The icon of the application that is used in the app-store. Can also be used as the app's icon
-      in the launcher menu on the device: see info.yaml. The packaging tool needs to make sure that
-      this file is within the first 10 entries of the tar archive.
+  \li \e{an icon}
+  \li The icon of the application that can be used in an app-store. Can also be used as the app's
+      icon in a launcher menu on the device. This is optional, but if \l{Manifest Definition}
+      {info.yaml} specifies an \c icon, then the packaging tool needs to make sure that this icon
+      file is the second non-meta-data entry of the tar archive. It can be in any image format that
+      Qt supports. The file size cannot exceed \c 1MB.
 \row
   \li \span {style="white-space: nowrap"} {\c --PACKAGE-FOOTER--}
   \li One or more YAML document(s) that need to be the last file(s) in the package - see below for
@@ -151,7 +153,7 @@ This is an example of a minimal QML application package. The actual package can 
 tar'ing all these files up with
 
 \badcode
-tar cvzf qmlapp.appkg ./--PACKAGE-HEADER-- info.yaml icon.png main.qml ./--PACKAGE-FOOTER--
+tar cvzf qmlapp.ampkg ./--PACKAGE-HEADER-- info.yaml icon.png main.qml ./--PACKAGE-FOOTER--
 \endcode
 \table
 \header

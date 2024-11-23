@@ -116,12 +116,6 @@ QVector<T *> loadPlugins(const char *type, const QStringList &files) noexcept(fa
 // Load a Qt resource, either in the form of a resource file or a plugin
 void loadResource(const QString &resource) noexcept(false);
 
-// Qt6 removed v_cast, but the "replacement" QVariant::Private::get is const only
-template <typename T> T *qt6_v_cast(QVariant::Private *vp)
-{
-    return static_cast<T *>(const_cast<void *>(vp->storage()));
-}
-
 // close all valid file descriptors and then clear the (non-const) vector
 void closeAndClearFileDescriptors(QVector<int> &fdList);
 

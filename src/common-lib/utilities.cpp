@@ -247,24 +247,24 @@ QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files
 void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from)
 {
     // no auto allowed, since this is a recursive lambda
-    std::function<void(QVariantMap *, const QVariantMap &)> recursiveMergeMap =
-            [&recursiveMergeMap](QVariantMap *innerInto, const QVariantMap &innerFrom) {
+    std::function<void(QVariantMap &, const QVariantMap &)> recursiveMergeMap =
+            [&recursiveMergeMap](QVariantMap &innerInto, const QVariantMap &innerFrom) {
         for (auto it = innerFrom.constBegin(); it != innerFrom.constEnd(); ++it) {
             QVariant fromValue = it.value();
-            QVariant &toValue = (*innerInto)[it.key()];
+            QVariant &toValue = innerInto[it.key()];
 
             bool needsMerge = (toValue.metaType() == fromValue.metaType());
 
-            // we're trying not to detach, so we're using v_cast to avoid copies
+            // we're trying not to detach, so we're using get<> to avoid copies
             if (needsMerge && (toValue.metaType() == QMetaType::fromType<QVariantMap>()))
-                recursiveMergeMap(qt6_v_cast<QVariantMap>(&toValue.data_ptr()), fromValue.toMap());
+                recursiveMergeMap(get<QVariantMap>(toValue), fromValue.toMap());
             else if (needsMerge && (toValue.metaType() == QMetaType::fromType<QVariantList>()))
-                innerInto->insert(it.key(), toValue.toList() + fromValue.toList());
+                innerInto.insert(it.key(), toValue.toList() + fromValue.toList());
             else
-                innerInto->insert(it.key(), fromValue);
+                innerInto.insert(it.key(), fromValue);
         }
     };
-    recursiveMergeMap(&into, from);
+    recursiveMergeMap(into, from);
 }
 
 QString translateFromMap(const QMap<QString, QString> &languageToName, const QString &defaultName)

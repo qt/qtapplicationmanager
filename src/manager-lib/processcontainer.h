@@ -76,6 +76,7 @@ public:
     bool setControlGroup(const QString &groupName) override;
 
     bool isReady() override;
+    bool hasDebugWrapper() const override;
 
     AbstractContainerProcess *start(const QStringList &arguments,
                                     const QMap<QString, QString> &runtimeEnvironment,

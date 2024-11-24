@@ -65,6 +65,7 @@ class AbstractContainer : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString controlGroup READ controlGroup WRITE setControlGroup NOTIFY controlGroupChanged FINAL)
+    Q_PROPERTY(bool hasDebugWrapper READ hasDebugWrapper CONSTANT FINAL)
 
 public:
     ~AbstractContainer() override;
@@ -76,6 +77,7 @@ public:
     virtual void setBaseDirectory(const QString &baseDirectory);
 
     virtual bool isReady() = 0;
+    virtual bool hasDebugWrapper() const = 0;
 
     virtual QString mapContainerPathToHost(const QString &containerPath) const;
     virtual QString mapHostPathToContainer(const QString &hostPath) const;

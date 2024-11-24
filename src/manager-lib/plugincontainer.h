@@ -81,6 +81,7 @@ public:
     void setBaseDirectory(const QString &baseDirectory) override;
 
     bool isReady() override;
+    bool hasDebugWrapper() const override;
 
     QString mapContainerPathToHost(const QString &containerPath) const override;
     QString mapHostPathToContainer(const QString &hostPath) const override;
@@ -89,9 +90,11 @@ public:
                                     const QVariantMap &amConfig) override;
 
 protected:
-    explicit PluginContainer(AbstractContainerManager *manager, Application *app, ContainerInterface *containerInterface);
+    explicit PluginContainer(AbstractContainerManager *manager, Application *app,
+                             ContainerInterface *containerInterface, bool hasDebugWrapper);
     std::unique_ptr<ContainerInterface> m_interface;
     bool m_startCalled = false;
+    bool m_hasDebugWrapper = false;
 
     friend class PluginContainerProcess;
     friend class PluginContainerManager;

@@ -5,6 +5,8 @@
 #include <QWaylandSurface>
 #include <QWaylandXdgShell>
 
+#include "abstractruntime.h"
+#include "abstractcontainer.h"
 #include "application.h"
 #include "applicationmanager.h"
 #include "logging.h"
@@ -84,9 +86,15 @@ void WaylandXdgWatchdog::setTimeouts(std::chrono::milliseconds checkInterval,
 
 void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
 {
+    // Please note, that a 'client' is normally one app, but this function is called for every
+    // window that app opens. When using container solutions, there is a possibility that multiple
+    // app containers are mapped to one host process-id, resulting in a single 'client' object
+    // representing multiple apps.
+
     auto updateClientData = [](ClientData *cd) {
         auto pid = cd->m_client->processId();
         cd->m_apps = ApplicationManager::instance()->fromProcessId(pid);
+        cd->m_hasDebugWrapper = false;
 
         QString desc = u"Wayland client "_s;
         if (!cd->m_apps.isEmpty()) {
@@ -97,6 +105,10 @@ void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
                 else
                     desc.append(u',');
                 desc.append(app->id());
+                if (app->currentRuntime() && app->currentRuntime()->container() &&
+                    app->currentRuntime()->container()->hasDebugWrapper()) {
+                    cd->m_hasDebugWrapper = true;
+                }
             }
             desc.append(u" / ");
         }
@@ -110,9 +122,28 @@ void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
     if (!isClientWatchingEnabled())
         return;
 
+    auto activatePing = [this](ClientData *cd) {
+        if (cd->m_hasDebugWrapper) {
+            m_pingTimer.stop();
+
+            qCInfo(LogWatchdog).nospace().noquote()
+                << cd->m_description << " is not being watched, because it has a debug wrapper attached";
+        } else {
+            if (!m_pingTimer.isActive())
+                m_pingTimer.start();
+
+            qCInfo(LogWatchdog).nospace().noquote()
+                << cd->m_description << " is being watched now (check every " << m_checkInterval
+                << ", warn/kill after " << m_warnTimeout << "/" << m_killTimeout << ")";
+        }
+    };
+
     for (auto *cd : std::as_const(m_clients)) {
         if (cd->m_client == client) {
+            bool hadDebugWrapper = cd->m_hasDebugWrapper;
             updateClientData(cd);
+            if (hadDebugWrapper != cd->m_hasDebugWrapper)
+                activatePing(cd);
             return;
         }
     }
@@ -122,12 +153,7 @@ void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
     updateClientData(cd);
     m_clients << cd;
 
-    if (!m_pingTimer.isActive())
-        m_pingTimer.start();
-
-    qCInfo(LogWatchdog).nospace().noquote()
-        << cd->m_description << " is being watched now (check every " << m_checkInterval
-        << ", warn/kill after " << m_warnTimeout << "/" << m_killTimeout << ")";
+    activatePing(cd);
 
     connect(client, &QObject::destroyed, this, [this, cd](QObject *) {
         qCInfo(LogWatchdog).noquote()

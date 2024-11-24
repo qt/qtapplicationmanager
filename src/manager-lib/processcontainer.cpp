@@ -210,6 +210,11 @@ bool ProcessContainer::isReady()
     return true;
 }
 
+bool ProcessContainer::hasDebugWrapper() const
+{
+    return !m_debugWrapperCommand.isEmpty();
+}
+
 AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments,
                                                   const QMap<QString, QString> &runtimeEnvironment,
                                                   const QVariantMap &amConfig)

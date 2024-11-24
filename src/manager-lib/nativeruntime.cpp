@@ -312,7 +312,7 @@ bool NativeRuntime::start()
         { u"dbus"_s, dbusConfig }
     };
 
-    if (!grc.watchdogDisabled) {
+    if (!grc.watchdogDisabled && !m_container->hasDebugWrapper()) {
         WatchdogConfiguration watchdogConfig = grc.watchdogConfiguration;
         if (m_app)
             watchdogConfig.merge(m_app->info()->watchdogConfiguration());

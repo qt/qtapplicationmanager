@@ -52,7 +52,7 @@ AbstractContainer *PluginContainerManager::create(Application *app, QVector<int>
         closeAndClearFileDescriptors(stdioRedirections);
         return nullptr;
     }
-    return new PluginContainer(this, app, containerInterface);
+    return new PluginContainer(this, app, containerInterface, !debugWrapperCommand.isEmpty());
 }
 
 void PluginContainerManager::setConfiguration(const QVariantMap &configuration)
@@ -93,6 +93,11 @@ bool PluginContainer::isReady()
     return m_interface->isReady();
 }
 
+bool PluginContainer::hasDebugWrapper() const
+{
+    return m_hasDebugWrapper;
+}
+
 QString PluginContainer::mapContainerPathToHost(const QString &containerPath) const
 {
     return m_interface->mapContainerPathToHost(containerPath);
@@ -116,9 +121,11 @@ AbstractContainerProcess *PluginContainer::start(const QStringList &arguments, c
     return nullptr;
 }
 
-PluginContainer::PluginContainer(AbstractContainerManager *manager, Application *app, ContainerInterface *containerInterface)
+PluginContainer::PluginContainer(AbstractContainerManager *manager, Application *app,
+                                 ContainerInterface *containerInterface, bool hasDebugWrapper)
     : AbstractContainer(manager, app)
     , m_interface(containerInterface)
+    , m_hasDebugWrapper(hasDebugWrapper)
 {
     m_process = new PluginContainerProcess(this);
     m_process->setParent(this);

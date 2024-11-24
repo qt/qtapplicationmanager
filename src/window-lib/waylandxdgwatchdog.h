@@ -53,6 +53,7 @@ private:
         uint m_pingSerial = 0;
         QString m_description;
         QList<Application *> m_apps;
+        bool m_hasDebugWrapper = false;
     };
     QList<ClientData *> m_clients;
 };

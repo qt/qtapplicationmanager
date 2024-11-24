@@ -436,7 +436,7 @@ std::chrono::microseconds YamlParser::parseDurationAsUSec(QStringView defaultUni
 {
     QString s = parseString().trimmed();
     if (s == u"off")
-        return { };
+        return std::chrono::milliseconds::zero();
 
     // YAML allows _ as a grouping separator
     if (s.contains(u'_'))

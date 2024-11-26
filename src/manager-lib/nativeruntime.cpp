@@ -414,16 +414,20 @@ void NativeRuntime::stop(bool forceKill)
 
     if (forceKill) {
         m_process->kill();
-    } else if (!m_connectedToApplicationInterface) {
-        //The launcher didn't connected to the ApplicationInterface yet, so it won't get the quit signal
-        m_process->terminate();
     } else {
+        if (!m_connectedToApplicationInterface) {
+            // Either the app is not using the ApplicationInterface or a launcher hasn't connected
+            // yet: in either case, we're sending SIGTERM to give the app a chance to react
+            m_process->terminate();
+        }
+
+        // Start a timer to kill the process if it hasn't exited voluntarily after a certain time
         bool ok;
         int qt = configuration().value(u"quitTime"_s).toInt(&ok);
         if (!ok || qt < 0)
             qt = 250;
         QTimer::singleShot(qt, this, [this]() {
-            m_process->terminate();
+            m_process->kill();
         });
     }
 }

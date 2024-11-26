@@ -20,6 +20,7 @@ TestCase {
 
     property ApplicationObject simpleApplication
     property ApplicationObject capsApplication
+    property ApplicationObject autoTermApplication
     // Either appman is build in single-process mode or it was started with --force-single-process
     property bool singleProcess : Qt.application.arguments.indexOf("--force-single-process") !== -1
                                   || !AmTest.buildConfig[0].QT_FEATURES.QT_FEATURE_am_multi_process
@@ -56,9 +57,10 @@ TestCase {
                 lastWindowItem.window = null
         })
 
-        compare(ApplicationManager.count, 2)
-        simpleApplication = ApplicationManager.application(0);
-        capsApplication = ApplicationManager.application(1);
+        compare(ApplicationManager.count, 3)
+        simpleApplication = ApplicationManager.application("tld.test.simple1");
+        capsApplication = ApplicationManager.application("tld.test.simple2");
+        autoTermApplication = ApplicationManager.application("tld.test.simple3");
     }
 
     function test_properties() {
@@ -95,7 +97,7 @@ TestCase {
     }
 
     function test_package() {
-        compare(PackageManager.count, 2)
+        compare(PackageManager.count, 3)
         verify(simpleApplication.package !== capsApplication.package)
         compare(simpleApplication.package, PackageManager.package("tld.test.simple1"))
         compare(simpleApplication.package.id, "tld.test.simple1")
@@ -174,18 +176,13 @@ TestCase {
         compare(listView.currentItem.modelData.version, "1.0")
     }
 
-    SignalSpy {
-        id: appModelCountSpy
-        target: appModel
-        signalName: "countChanged"
-    }
-
     function test_applicationModel() {
-        compare(appModel.count, 2);
-        compare(appModel.indexOfApplication(capsApplication.id), 0);
-        compare(appModel.indexOfApplication(simpleApplication.id), 1);
-        compare(appModel.mapToSource(0), ApplicationManager.indexOfApplication(capsApplication.id));
-        compare(appModel.mapFromSource(ApplicationManager.indexOfApplication(simpleApplication.id)), 1);
+        compare(appModel.count, 3);
+        compare(appModel.indexOfApplication(autoTermApplication.id), 0);
+        compare(appModel.indexOfApplication(capsApplication.id), 1);
+        compare(appModel.indexOfApplication(simpleApplication.id), 2);
+        compare(appModel.mapToSource(1), ApplicationManager.indexOfApplication(capsApplication.id));
+        compare(appModel.mapFromSource(ApplicationManager.indexOfApplication(simpleApplication.id)), 2);
 
         appModel.sortFunction = undefined;
         compare(appModel.indexOfApplication(simpleApplication.id),
@@ -193,11 +190,8 @@ TestCase {
         compare(appModel.indexOfApplication(capsApplication.id),
                 ApplicationManager.indexOfApplication(capsApplication.id));
 
-        appModelCountSpy.clear();
         appModel.filterFunction = function(app) { return app.capabilities.indexOf("cameraAccess") >= 0; };
-        appModelCountSpy.wait(1000 * AmTest.timeoutFactor);
-        compare(appModelCountSpy.count, 1);
-        compare(appModel.count, 1);
+        tryVerify(function() { return appModel.count === 1 }, 1000 * AmTest.timeoutFactor);
         compare(appModel.indexOfApplication(capsApplication.id), 0);
         compare(appModel.indexOfApplication(simpleApplication.id), -1);
 
@@ -210,7 +204,7 @@ TestCase {
         compare(appModel.count, 0);
 
         appModel.filterFunction = undefined;
-        compare(appModel.count, 2);
+        compare(appModel.count, 3);
     }
 
     function test_get_data() {
@@ -277,8 +271,10 @@ TestCase {
                         exitCode: 0, exitStatus: Am.NormalExit },
                     {tag: "ForceKill", appId: "tld.test.simple2", index: 1, forceKill: true,
                         exitCode: 9, exitStatus: Am.ForcedExit },
-                    {tag: "AutoTerminate", appId: "tld.test.simple2", index: 1, forceKill: false,
-                        exitCode: 15, exitStatus: Am.ForcedExit }
+                    {tag: "TimeoutKill", appId: "tld.test.simple2", index: 1, forceKill: false,
+                        exitCode: 9, exitStatus: Am.ForcedExit },
+                    {tag: "AutoTerminate", appId: "tld.test.simple3", index: 2, forceKill: false,
+                        exitCode: 0, exitStatus: Am.NormalExit }
                 ];
     }
 

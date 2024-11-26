@@ -176,7 +176,7 @@ void QmlInProcRuntime::stop(bool forceKill)
         qt = 250;
     QTimer::singleShot(qt, this, [this]() {
         if (state() != Am::NotRunning)
-            finish(15 /* POSIX SIGTERM */, Am::ForcedExit);
+            finish(9 /* POSIX SIGKILL */, Am::ForcedExit);
     });
 }
 

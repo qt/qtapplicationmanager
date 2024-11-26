@@ -658,13 +658,16 @@ an additional column specifying which runtime a configuration option applies to:
             QML runtime.
     \row
         \li \c quitTime
-        \li qml
+        \li native, qml
         \li int
         \target qml quitTime
         \li Defines the grace period in milliseconds, that an application is given for shutting
-            down. This is the time limit between receiving the
+            down. For QML applications, this is the time limit between receiving the
             \l{ApplicationInterface::quit()}{quit()} signal and responding with
-            \l{ApplicationInterface::acknowledgeQuit()}{acknowledgeQuit()}. (default: 250)
+            \l{ApplicationInterface::acknowledgeQuit()}{acknowledgeQuit()}.
+            For native applications, this is the time between receiving \c SIGTERM and exiting.
+            After this grace period, the app process is forcefully shutdown via \c SIGKILL.
+            (default: 250)
     \row
         \li \c crashAction
         \li qml

@@ -1,0 +1,12 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'tld.test.simple3'
+icon:    'icon.png'
+name:
+  en: 'Simple3'
+applications:
+- id:      'tld.test.simple3'
+  code:    'app.qml'
+  runtime: 'qml'
+

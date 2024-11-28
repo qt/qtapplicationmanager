@@ -504,10 +504,18 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
     const auto className = quickWindow->metaObject()->className();
     const auto objectName = quickWindow->objectName();
     const auto title = quickWindow->title();
-    if (className && qstrcmp(className, "QQuickWindowQmlImpl"))
-        info = info + u" / class: " + QString::fromLatin1(className);
-    if (qwd->m_threadedRenderLoop)
-        info = info + u" / threaded rendering";
+    if (className) {
+        QString classNameString;
+        if (!qstrcmp(className, "QQuickWindowQmlImpl"))
+            classNameString = u"Window"_s;
+        else if (!qstrcmp(className, "QtAM::AMQuickWindowQmlImpl"))
+            classNameString = u"ApplicationManagerWindow"_s;
+        else
+            classNameString = QString::fromLatin1(className);
+        info = info + u" / class: " + classNameString;
+    }
+    info = info + (qwd->m_threadedRenderLoop ? u" / threaded renderloop"
+                                             : u" / basic renderloop");
     if (!objectName.isEmpty())
         info = info + u" / name: \"" + objectName + u'"';
     if (!title.isEmpty())
@@ -596,7 +604,7 @@ void WatchdogPrivate::watchQuickWindow(QQuickWindow *quickWindow)
     connect(quickWindow, &QQuickWindow::afterRendering, this, [=]() {
             changeState(qwd, Render, Swap);
         }, Qt::DirectConnection);
-    connect(quickWindow, &QQuickWindow::frameSwapped, this, [=]() {
+    connect(quickWindow, &QQuickWindow::afterFrameEnd, this, [=]() {
             changeState(qwd, Swap, Idle);
         }, Qt::DirectConnection);
     connect(quickWindow, &QQuickWindow::sceneGraphAboutToStop, this, [=]() {

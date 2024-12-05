@@ -1,2 +1,2 @@
 
-# add_subdirectory(monitormodel)
+add_subdirectory(monitormodel)

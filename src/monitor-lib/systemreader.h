@@ -85,6 +85,7 @@ private:
 #if defined(Q_OS_LINUX)
     std::unique_ptr<SysFsReader> m_sysFs;
     const QString m_groupPath;
+    static bool s_hasCGroupV1;
 #elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
     static int s_pageSize;
 #endif

@@ -29,7 +29,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[]) \
         a->showWindow(); \
     } catch (const std::exception &e) { \
         qCritical() << "ERROR:" << e.what(); \
-        _Exit(2); \
+        QtAM::Main::errorExit(); \
     } \
 \
     return QtAM::Main::exec(); \

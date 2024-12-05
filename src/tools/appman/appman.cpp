@@ -64,7 +64,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         a->showWindow();
     } catch (const Exception &e) {
         qCCritical(LogSystem).noquote() << "ERROR:" << e.errorString();
-        _Exit(2);
+        Main::errorExit();
     }
 
     // we want the exec() outside of the try/catch block, so stray user exceptions trigger the

@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include <qglobal.h>
+#include <QDir>
 
 #include "systemreader.h"
 #include "global.h"
@@ -15,6 +16,7 @@ QT_BEGIN_NAMESPACE_AM
 
 #if defined(Q_OS_LINUX)
 QString g_systemRootDir(u"/"_s);
+bool MemoryReader::s_hasCGroupV1 = false;
 #endif
 
 quint64 MemoryReader::s_totalValue = 0;
@@ -292,8 +294,19 @@ MemoryReader::MemoryReader() : MemoryReader(QString())
 MemoryReader::MemoryReader(const QString &groupPath)
     : m_groupPath(groupPath)
 {
-    const QString path = g_systemRootDir + QString::fromLatin1(cGroupsMemoryBaseDir)
-                         + m_groupPath + u"/memory.stat"_s;
+    static bool once = false;
+    if (!once) {
+        once = true;
+#if defined(Q_OS_LINUX)
+        s_hasCGroupV1 = QDir(g_systemRootDir + u"/sys/fs/cgroup"_s).exists()
+                        && !QFile::exists(g_systemRootDir + u"/sys/fs/cgroup/cgroup.controllers"_s);
+#endif
+    }
+
+    QString path = g_systemRootDir + QString::fromLatin1(cGroupsMemoryBaseDir)
+                   + m_groupPath + u"/memory.stat"_s;
+    if (!s_hasCGroupV1)
+        path = g_systemRootDir + u"/proc/meminfo"_s;
 
     m_sysFs.reset(new SysFsReader(path.toLocal8Bit(), 1500));
     if (!m_sysFs->isOpen()) {
@@ -317,7 +330,10 @@ MemoryReader::MemoryReader(const QString &groupPath)
 
 quint64 MemoryReader::groupLimit()
 {
-    QString path = g_systemRootDir + QString::fromLatin1(cGroupsMemoryBaseDir)
+    if (!s_hasCGroupV1)
+        return 0ULL;
+
+    const QString path = g_systemRootDir + QString::fromLatin1(cGroupsMemoryBaseDir)
                    + m_groupPath + u"/memory.limit_in_bytes"_s;
     QByteArray ba = SysFsReader(path.toLocal8Bit(), 41).readValue();
     return ::strtoull(ba, nullptr, 10);
@@ -325,12 +341,19 @@ quint64 MemoryReader::groupLimit()
 
 quint64 MemoryReader::readUsedValue() const
 {
-    QByteArray buffer = m_sysFs->readValue();
+    const QByteArray buffer = m_sysFs->readValue();
 
-    qsizetype i = buffer.indexOf("total_rss ");
-    if (i == -1)
-        return 0;
-    return ::strtoull(buffer.data() + i + sizeof("total_rss ") - 1, nullptr, 10);
+    if (s_hasCGroupV1) {
+        qsizetype i = buffer.indexOf("total_rss ");
+        if (i == -1)
+            return 0;
+        return ::strtoull(buffer.data() + i + sizeof("total_rss ") - 1, nullptr, 10);
+    } else {
+        qsizetype i = buffer.indexOf("MemAvailable: ");
+        if (i == -1)
+            return 0;
+        return s_totalValue - 1024 * ::strtoull(buffer.data() + i + sizeof("MemAvailable: ") - 1, nullptr, 10);
+    }
 }
 
 

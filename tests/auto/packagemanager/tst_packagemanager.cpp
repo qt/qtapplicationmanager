@@ -494,7 +494,7 @@ void tst_PackageManager::packageInstallation()
                 expectedFiles.removeOne(u"icon.png"_s);
 
             QVERIFY2(files == expectedFiles,
-                     qPrintable(files.join(u", "_s) + u" != " + expectedFiles.join(u", "_s)));
+                     qPrintable(files.join(u", "_s) + u" != "_s + expectedFiles.join(u", "_s)));
 
             QFile f(fileCheckPath + u"/test"_s);
             QVERIFY(f.open(QFile::ReadOnly));

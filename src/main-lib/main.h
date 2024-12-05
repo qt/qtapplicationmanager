@@ -52,7 +52,7 @@ class Configuration;
 class DBusContextAdaptor;
 
 
-class Main : public MainBase, protected SharedMain
+class Main : public MainBase, public SharedMain
 {
     Q_OBJECT
     Q_PROPERTY(bool singleProcessMode READ isSingleProcessMode CONSTANT FINAL)

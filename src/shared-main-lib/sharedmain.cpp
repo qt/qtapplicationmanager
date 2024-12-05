@@ -292,4 +292,11 @@ void SharedMain::checkOpenGLFormat(const char *what, const QSurfaceFormat &forma
 #endif
 }
 
+void SharedMain::errorExit(int result)
+{
+    if (Logging::hasDeferredMessages())
+        Logging::completeSetup();
+    _Exit(result);
+}
+
 QT_END_NAMESPACE_AM

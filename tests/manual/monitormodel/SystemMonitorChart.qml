@@ -3,8 +3,10 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-import QtQuick 2.11
-import QtQuick.Controls 2.4
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Controls
 
 Frame {
     id: root
@@ -24,17 +26,23 @@ Frame {
 
         property real maxValue: 0
 
-        delegate: Rectangle {
+        delegate: Item {
             width: (root.width / root.sourceModel.count) * 0.8
-            height: scaledValue * root.height
-            property real scaledValue: listView.maxValue > 0 ? value / listView.maxValue : 0
-            readonly property real value: model[root.role]
-            onValueChanged: {
-                if (value > listView.maxValue)
-                    listView.maxValue = value * 1.3;
+            height: root.height
+            required property var model
+
+            Rectangle {
+                height: scaledValue * parent.height
+                width: parent.width
+                property real scaledValue: listView.maxValue > 0 ? value / listView.maxValue : 0
+                readonly property real value: parent.model[root.role]
+                onValueChanged: {
+                    if (value > listView.maxValue)
+                        listView.maxValue = value * 1.3;
+                }
+                y: parent.height - height
+                color: root.palette.highlight
             }
-            y: root.height - height
-            color: root.palette.highlight
         }
     }
 

@@ -146,12 +146,12 @@ int main(int argc, char *argv[])
         }
     } catch (const std::exception &e) {
         qCCritical(LogQmlRuntime) << "ERROR:" << e.what();
-        return 2;
+        ApplicationMain::errorExit();
     }
 
     // we want the exec() outside of the try/catch block, so stray user exceptions trigger the
     // CrashHandler's set_terminate callback.
-    return ApplicationMainBase::exec();
+    return ApplicationMain::exec();
 }
 
 Controller::Controller(ApplicationMain *am, bool quickLaunched)

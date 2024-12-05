@@ -35,6 +35,8 @@ public:
     void setupOpenGL(const OpenGLConfiguration &openGLConfiguration);
     void checkOpenGLFormat(const char *what, const QSurfaceFormat &format) const;
 
+    [[noreturn]] static void errorExit(int result = 2);
+
     class EventNotifyWatcher
     {
         // The implementation is inline below to reduce the function-call overhead.

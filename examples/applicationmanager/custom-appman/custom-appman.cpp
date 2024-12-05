@@ -39,7 +39,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     } catch (const std::exception &e) {
         qCritical() << "ERROR:" << e.what();
-        _Exit(2);
+        Main::errorExit();
     }
     return Main::exec();
 }

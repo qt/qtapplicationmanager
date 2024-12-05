@@ -234,22 +234,23 @@ The \c process container accepts the following configuration settings:
     \li \c controlGroups
     \li object
     \target control group mapping
-    \li A two-stage mapping object to allow for more readable code when dealing with \c cgroups
+    \li A two-stage mapping object to allow for more readable code when dealing with \b v1 cgroups
         from the System UI via Container::controlGroup. The top-level \c keys are readable group names
         that are used to interface with Container::controlGroup. The values themselves are \c maps
         between multiple low-level \c cgroup sub-system names and the actual \c cgroup names within
         those sub-systems, such as:
 
-    \badcode
-    controlGroups:
-      foreGround:
-        memory: mem1
-        cpu: cpu_full
-      backGround:
-        memory: mem2
-        cpu: cpu_minimal
-    \endcode
+        \badcode
+        controlGroups:
+          foreGround:
+            memory: mem1
+            cpu: cpu_full
+          backGround:
+            memory: mem2
+            cpu: cpu_minimal
+        \endcode
 
+        \note This mapping is unnecessary and ignored if your system is using \b v2 cgroups.
   \row
     \li \c defaultControlGroup
     \li string

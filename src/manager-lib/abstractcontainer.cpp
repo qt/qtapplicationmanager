@@ -27,9 +27,14 @@
     \qmlproperty string Container::controlGroup
 
     This property lets you get and set which control group the application's container will be in.
-    The control group name handled by this property is not the low-level name used by the operating
-    system, but an abstraction. See the \l{control group mapping}{container documentation} for more
-    details on how to setup this mapping.
+
+    If you are using cgroups \b v1, then the control group name handled by this property is \b not
+    the low-level name used by the operating system, but an abstraction. See the
+    \l{control group mapping}{container documentation} for more details on how to setup this mapping.
+
+    Starting with release 6.8.3 of the application manager, cgroups \b v2 are supported as well. In
+    this case, the control group name is the low-level cgroup name (or path in \c{/sys/fs/cgroup})
+    used by the operating system, without any mappings.
 
     \note Control groups are only supported on Linux through the kernel's \c cgroup system in the
           built-in \c process container. Custom container plugins might not implement the necessary

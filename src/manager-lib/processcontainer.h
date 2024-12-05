@@ -88,6 +88,8 @@ private:
     QMap<QString, QString> m_debugWrapperEnvironment;
     QStringList m_debugWrapperCommand;
     MemoryWatcher *m_memWatcher = nullptr;
+    static bool s_hasCGroupV1;
+    static bool s_hasCGroupV2;
 };
 
 QT_END_NAMESPACE_AM

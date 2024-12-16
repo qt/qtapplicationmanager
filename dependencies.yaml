@@ -6,8 +6,8 @@ dependencies:
     ref: 3d6ea255dba81dd08532d56d4af6a56cb71940aa
     required: true
   ../tqtc-qttools:
-    ref: f65cc254cb995ebeb2c0fa3ce0173b4ae5fd24a3
+    ref: 3818cdf1a1e511aa2bb9fab9347af7b7d9829d90
     required: false
   ../tqtc-qtwayland:
-    ref: dcbe4f38d9b3849b13159501e93e7f087508d6b6
+    ref: e3062d8cbf0a9bbe494cb71832bf15738d8497b4
     required: false

@@ -73,7 +73,7 @@ public:
 
     void setup(const Configuration *cfg) noexcept(false);
     void loadQml() noexcept(false);
-    QT_DEPRECATED_X("Replaced by showWindow() in 6.8 - will be removed in 6.10")
+    QT_DEPRECATED_X("Replaced by showWindow(<no arguments>) in 6.8 - will be removed in 6.10")
     void showWindow(bool showFullscreen);
     void showWindow();
 

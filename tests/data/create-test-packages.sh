@@ -66,6 +66,10 @@ packager()
   fi
 }
 
+echo "Packager check:"
+info "Using: $PACKAGER"
+echo
+
 echo "Generating test packages:"
 
 ### normal packages

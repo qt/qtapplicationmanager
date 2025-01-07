@@ -155,6 +155,13 @@ bool PackageCreatorPrivate::create()
             throw ArchiveException(ar, "could not set the archive format to USTAR");
         if (archive_write_set_options(ar, "hdrcharset=UTF-8") != ARCHIVE_OK)
             throw ArchiveException(ar, "could not set the HDRCHARSET option");
+
+        // set block sizes the same way bsdtar does: 10240 bytes per block, except the last one
+        if (archive_write_set_bytes_per_block(ar, 20*512) != ARCHIVE_OK)
+            throw ArchiveException(ar, "could not set the bytes in last block");
+        if (archive_write_set_bytes_in_last_block(ar, 1) != ARCHIVE_OK)
+            throw ArchiveException(ar, "could not set the bytes in last block");
+
         if (archive_write_add_filter_gzip(ar) != ARCHIVE_OK)
             throw ArchiveException(ar, "could not enable GZIP compression");
 // disabled for now -- see libarchive.pro
@@ -324,9 +331,9 @@ bool PackageCreatorPrivate::create()
             m_metaData.insert(footerStoreSig);
         }
 
-        if (archive_write_free(ar) != ARCHIVE_OK)
+        if (archive_write_close(ar) != ARCHIVE_OK)
             throw ArchiveException(ar, "could not close archive");
-
+        archive_write_free(ar);
 
         emit q->progress(1);
 
@@ -335,12 +342,12 @@ bool PackageCreatorPrivate::create()
     } catch (const Exception &e) {
         if (!q->wasCanceled())
             setError(e.errorCode(), e.errorString());
+
+        if (ar)
+            archive_write_free(ar);
+
+        return false;
     }
-
-    if (ar)
-        archive_write_free(ar);
-
-    return false;
 }
 
 bool PackageCreatorPrivate::addVirtualFile(struct archive *ar, const QString &file, const QByteArray &data)

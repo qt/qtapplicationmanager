@@ -137,7 +137,8 @@ void PackagingJob::execute() noexcept(false)
         // warn the user that old-style manifests are going to be deprecated in the future
         try {
             QFile f(package->manifestPath());
-            f.open(QFile::ReadOnly);
+            if (!f.open(QFile::ReadOnly))
+                throw Exception(f, "Cannot open manifest");
             YamlParser p(f.readAll());
 
             auto header = p.parseHeader();

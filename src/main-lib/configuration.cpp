@@ -399,7 +399,8 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         QByteArray yaml("formatVersion: 1\nformatType: am-configuration\n---\n");
         yaml.append(option.toUtf8());
         QBuffer buffer(&yaml);
-        buffer.open(QIODevice::ReadOnly);
+        if (Q_UNLIKELY(!buffer.open(QIODevice::ReadOnly)))
+            throw Exception(buffer.errorString());
         try {
             ConfigurationData *cd = ConfigCacheAdaptor<ConfigurationData>::loadFromSource(&buffer, u"command line"_s);
             if (cd) {

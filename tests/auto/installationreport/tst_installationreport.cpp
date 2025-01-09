@@ -53,7 +53,7 @@ void tst_InstallationReport::test()
     QCOMPARE(ir.storeSignature().constData(), "$$store-sig$$");
 
     QBuffer buffer;
-    buffer.open(QIODevice::ReadWrite);
+    QVERIFY(buffer.open(QIODevice::ReadWrite));
     QVERIFY(ir.serialize(&buffer));
     buffer.seek(0);
 

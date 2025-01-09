@@ -1431,8 +1431,9 @@ bool PackageManager::finishedPackageInstall(const QString &id)
         if (!isDowngrade) {
             QFile irfile(newPackageInfo->baseDir().absoluteFilePath(u".installation-report.yaml"_s));
             auto ir = std::make_unique<InstallationReport>(package->id());
-            irfile.open(QFile::ReadOnly);
             try {
+                if (Q_UNLIKELY(!irfile.open(QFile::ReadOnly)))
+                    throw Exception(irfile.errorString());
                 ir->deserialize(&irfile);
             } catch (const Exception &e) {
                 qCCritical(LogInstaller) << "Could not read the new installation-report for package"

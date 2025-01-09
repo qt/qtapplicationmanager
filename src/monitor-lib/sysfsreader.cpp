@@ -13,7 +13,10 @@ SysFsReader::SysFsReader(const QByteArray &path, int maxRead)
 {
     m_buffer.resize(maxRead);
     m_fd.setFileName(QString::fromLocal8Bit(path));
-    m_fd.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+    if (!m_fd.open(QIODevice::ReadOnly | QIODevice::Unbuffered)) {
+        qCritical("Couldn't open file for reading: %s (%s)",
+                 qPrintable(m_fd.fileName()), qPrintable(m_fd.errorString()));
+    }
 }
 
 SysFsReader::~SysFsReader()

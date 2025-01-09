@@ -145,7 +145,8 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
             if (!d->cfg->storeSignCertificate.isEmpty()) {
                 try {
                     QBuffer buffer;
-                    buffer.open(QIODevice::WriteOnly);
+                    if (Q_UNLIKELY(!buffer.open(QIODevice::WriteOnly)))
+                        throw Exception(buffer.errorString());
                     packages->storeSign(sp, hardwareId, &buffer);
 
                     return QHttpServerResponse("application/octet-stream", buffer.data());

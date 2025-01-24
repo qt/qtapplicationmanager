@@ -183,9 +183,16 @@ void ApplicationModel::setFilterFunction(const QJSValue &callback)
                             "callable, or undefined/null to clear it.";
     }
     if (!callback.equals(d->m_filterFunction)) {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 10, 0))
+        beginFilterChange();
+#endif
         d->m_filterFunction = callback;
         emit filterFunctionChanged();
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 10, 0))
+        endFilterChange();
+#else
         invalidateFilter();
+#endif
     }
 }
 

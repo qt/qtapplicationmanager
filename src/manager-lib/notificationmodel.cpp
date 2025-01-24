@@ -180,9 +180,16 @@ void NotificationModel::setFilterFunction(const QJSValue &callback)
     }
 
     if (!callback.equals(d->m_filterFunction)) {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 10, 0))
+        beginFilterChange();
+#endif
         d->m_filterFunction = callback;
         emit filterFunctionChanged();
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 10, 0))
+        endFilterChange();
+#else
         invalidateFilter();
+#endif
     }
 }
 

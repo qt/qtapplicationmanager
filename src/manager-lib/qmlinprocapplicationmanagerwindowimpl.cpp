@@ -101,7 +101,7 @@ void QmlInProcApplicationManagerWindowImpl::connectActiveFocusItem()
 
 QmlInProcApplicationManagerWindowImpl::~QmlInProcApplicationManagerWindowImpl()
 {
-    QmlInProcApplicationManagerWindowImpl::setVisible(false);
+    m_surfaceItem->setDeadClientSide();
 }
 
 bool QmlInProcApplicationManagerWindowImpl::isSingleProcess() const
@@ -127,10 +127,11 @@ void QmlInProcApplicationManagerWindowImpl::close()
     emit amWindow()->closing(ce.get());
 
     if (ce->isAccepted()) {
-        amWindow()->setVisible(false);
+        setVisible(false);
+        m_surfaceItem->setClosed(true);
         if (m_runtime) {
             // Queued because the runtime might end up deleting this object
-            QMetaObject::invokeMethod(m_runtime, &QmlInProcRuntime::stopIfNoVisibleSurfaces, Qt::QueuedConnection);
+            QMetaObject::invokeMethod(m_runtime, &QmlInProcRuntime::stopIfLastWindowClosed, Qt::QueuedConnection);
         }
     }
 }

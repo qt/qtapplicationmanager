@@ -130,19 +130,17 @@ TestCase {
 
         var app = ApplicationManager.application("test.winmap.loader");
 
-        app.start("show-sub");
+        app.start("create-sub");
         tryCompare(WindowManager, "count", 2, spyTimeout);
 
-        app.start("hide-sub");
+        app.start("destroy-sub");
         tryCompare(WindowManager, "count", 1, spyTimeout);
 
-        app.start("show-sub");
+        app.start("create-sub");
         tryCompare(WindowManager, "count", 2, spyTimeout);
     }
 
-    function test_amwin_peculiarities() {
-        skip("Currently broken - Windows don't die on hide() anymore")
-
+    function test_amwin_close() {
         var app = ApplicationManager.application("test.winmap.amwin2");
 
         tryCompare(WindowManager, "count", 0, spyTimeout);
@@ -150,40 +148,21 @@ TestCase {
         app.start("show-main");
         tryCompare(WindowManager, "count", 1, spyTimeout);
 
+        topChrome.window.close()
+        tryCompare(WindowManager, "count", 0, spyTimeout);
+
+        // last window closed -> exit
+        tryCompare(app, "runState", Am.NotRunning, spyTimeout);
+
+        app.start("show-main");
+        tryCompare(WindowManager, "count", 1, spyTimeout);
+
         app.start("show-sub");
         tryCompare(WindowManager, "count", 2, spyTimeout);
 
-        // Single- vs. multiprocess difference:
-        app.start("show-sub2");
-        var expectedWindowCount;
-        // A Window's effective visible state solely depends on Window hierarchy.
-        expectedWindowCount = 3;
-        tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
-
-        app.start("hide-sub");
-        expectedWindowCount -= 1;
-        tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
-
-        // Make child (sub) window visible again, parent (main) window is still visible
-        app.start("show-sub");
-        expectedWindowCount += 1;
-        tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
-
-        // This is weird Window behavior: a child window becomes only visible, when the parent
-        // window is visible, but when you change the parent window back to invisible, the child
-        // will NOT become invisible.
-        app.start("hide-main");
-        expectedWindowCount -= 1;
-        tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
-
-        app.start("hide-sub");
-        expectedWindowCount -= 1;
-        if ((PackageManager.compareVersions(AmTest.qtVersion, "6.7.0") < 0)
-                && !ApplicationManager.singleProcess) {
-            // old pre-6.7, broken QWindow behavior
-            expectedWindowCount += 1;
-        }
-        tryCompare(WindowManager, "count", expectedWindowCount, spyTimeout);
+        subChrome.window.close();
+        AmTest.aboutToBlock();
+        tryCompare(WindowManager, "count", 1, spyTimeout);
     }
 
     function test_quitOnLastClosed() {
@@ -254,9 +233,6 @@ TestCase {
     }
 
     function test_mapping(data) {
-        skip("Currently broken - Windows don't die on hide() anymore")
-
-
         if (ApplicationManager.singleProcess && data.tag === "Window")
             skip("Window root element is not properly supported in single process mode.");
 
@@ -271,7 +247,13 @@ TestCase {
         tryCompare(WindowManager, "count", 2, spyTimeout);
 
         app.start("hide-sub");
-        tryCompare(WindowManager, "count", 1, spyTimeout);
+        tryCompare(WindowManager, "count", 2, spyTimeout);
+
+        app.start("show-sub");
+        tryCompare(WindowManager, "count", 2, spyTimeout);
+
+        app.start("hide-sub");
+        tryCompare(WindowManager, "count", 2, spyTimeout);
 
         app.stop();
         tryCompare(WindowManager, "count", 0, spyTimeout);
@@ -321,11 +303,8 @@ TestCase {
         compare(allProps.objectName, 42);
     }
 
-    // Checks that window properties survive show/hide cycles
-    // Regression test for https://bugreports.qt.io/browse/AUTOSUITE-447
-    function test_window_properties_survive_show_hide() {
-        skip("Currently broken - Windows don't die on hide() anymore")
-
+    // Starting with Qt 6.9, hide() does not delete the Wayland surface anymore
+    function test_window_show_hide() {
         var app = ApplicationManager.application("test.winmap.amwin");
 
         app.start("show-main");
@@ -334,7 +313,7 @@ TestCase {
         compare(lastWindowAdded.windowProperty("objectName"), 42);
 
         app.start("hide-main");
-        tryCompare(WindowManager, "count", 0, spyTimeout);
+        tryCompare(WindowManager, "count", 1, spyTimeout);
         app.start("show-main");
         tryCompare(WindowManager, "count", 1, spyTimeout);
 

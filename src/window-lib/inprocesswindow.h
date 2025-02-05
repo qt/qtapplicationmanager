@@ -44,9 +44,6 @@ public:
     // So we let it be set at will (likely by WindowManager)
     void setContentState(ContentState);
 
-private Q_SLOTS:
-    void onVisibleClientSideChanged();
-
 private:
     ContentState m_contentState = SurfaceWithContent;
     QSharedPointer<InProcessSurfaceItem> m_surfaceItem;

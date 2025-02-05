@@ -772,6 +772,7 @@ void WindowManager::setupWindow(Window *window)
     connect(window, &Window::isBeingDisplayedChanged, this, [this, guardedWindow]() {
         if (!guardedWindow.isNull() && guardedWindow->contentState() == Window::NoSurface
             && !guardedWindow->isBeingDisplayed()) {
+            qCDebug(LogGraphics) << "Removing window with no surface and not being displayed";
             removeWindow(guardedWindow);
             releaseWindow(guardedWindow);
         }

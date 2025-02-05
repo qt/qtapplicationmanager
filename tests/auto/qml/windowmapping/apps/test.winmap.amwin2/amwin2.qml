@@ -38,6 +38,7 @@ ApplicationManagerWindow {
             case "hide-main": root.visible = false; break;
             case "show-sub": sub.visible = true; break;
             case "hide-sub": sub.visible = false; break;
+            case "close-sub": sub.close(); break;
             case "show-sub2": sub2.visible = true; break;
             case "hide-sub2": sub2.visible = false; break;
             }

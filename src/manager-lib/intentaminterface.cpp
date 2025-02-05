@@ -150,46 +150,46 @@ void IntentServerAMImplementation::initialize(IntentServer *server)
     connect(AbstractRuntime::signaler(), &RuntimeSignaler::aboutToStart,
             intentServer(), [this](AbstractRuntime *runtime) {
 #if QT_CONFIG(am_multi_process)
-        if (NativeRuntime *nativeRuntime = qobject_cast<NativeRuntime *>(runtime)) {
-            connect(nativeRuntime, &NativeRuntime::applicationConnectedToPeerDBus,
-                    intentServer(), [this](const QDBusConnection &connection, Application *application) {
-                qCDebug(LogIntents) << "IntentServer: applicationConnectedToPeerDBus"
-                                    << (application ? application->id() : u"<launcher>"_s);
+                if (NativeRuntime *nativeRuntime = qobject_cast<NativeRuntime *>(runtime)) {
+                    connect(nativeRuntime, &NativeRuntime::applicationConnectedToPeerDBus,
+                            intentServer(), [this](const QDBusConnection &connection, Application *application) {
+                                qCDebug(LogIntents) << "IntentServer: applicationConnectedToPeerDBus"
+                                                    << (application ? application->id() : u"<launcher>"_s);
 
-                IntentServerDBusIpcConnection::create(connection, application, this);
-            });
+                                IntentServerDBusIpcConnection::create(connection, application, this);
+                            });
 
-            connect(nativeRuntime, &NativeRuntime::applicationReadyOnPeerDBus,
-                    intentServer(), [](const QDBusConnection &connection, Application *application) {
-                auto peer = IntentServerDBusIpcConnection::find(connection);
+                    connect(nativeRuntime, &NativeRuntime::applicationReadyOnPeerDBus,
+                            intentServer(), [](const QDBusConnection &connection, Application *application) {
+                                auto peer = IntentServerDBusIpcConnection::find(connection);
 
-                if (!peer) {
-                    qCWarning(LogIntents) << "IntentServer: applicationReadyOnPeerDBus() was emitted, "
-                                             "but no previous applicationConnectedToPeerDBus() was seen";
-                    return;
-                }
-                peer->setReady(application);
-            });
+                                if (!peer) {
+                                    qCWarning(LogIntents) << "IntentServer: applicationReadyOnPeerDBus() was emitted, "
+                                                             "but no previous applicationConnectedToPeerDBus() was seen";
+                                    return;
+                                }
+                                peer->setReady(application);
+                            });
 
-            connect(nativeRuntime, &NativeRuntime::applicationDisconnectedFromPeerDBus,
-                    intentServer(), [](const QDBusConnection &connection, Application *) {
-                delete IntentServerDBusIpcConnection::find(connection);
-            });
-        } else
+                    connect(nativeRuntime, &NativeRuntime::applicationDisconnectedFromPeerDBus,
+                            intentServer(), [](const QDBusConnection &connection, Application *) {
+                                delete IntentServerDBusIpcConnection::find(connection);
+                            });
+                } else
 #endif // defined(AM_MULTI_PROCESS)
-            if (QmlInProcRuntime *qmlRuntime = qobject_cast<QmlInProcRuntime *>(runtime)) {
-                connect(qmlRuntime, &QmlInProcRuntime::stateChanged,
-                    intentServer(), [this, qmlRuntime](Am::RunState newState) {
-                if (!qmlRuntime->application())
-                    return;
+                if (QmlInProcRuntime *qmlRuntime = qobject_cast<QmlInProcRuntime *>(runtime)) {
+                    connect(qmlRuntime, &QmlInProcRuntime::stateChanged,
+                            intentServer(), [this, qmlRuntime](Am::RunState newState) {
+                                if (!qmlRuntime->application())
+                                    return;
 
-                if (newState == Am::Running)
-                    IntentServerInProcessIpcConnection::create(qmlRuntime->application(), this);
-                else if (newState == Am::NotRunning)
-                    delete IntentServerIpcConnection::find(qmlRuntime->application()->id());
+                                if (newState == Am::Running)
+                                    IntentServerInProcessIpcConnection::create(qmlRuntime->application(), this);
+                                else if (newState == Am::NotRunning)
+                                    delete IntentServerIpcConnection::find(qmlRuntime->application()->id());
+                            });
+                }
             });
-        }
-    });
 }
 
 bool IntentServerAMImplementation::checkApplicationCapabilities(const QString &applicationId,

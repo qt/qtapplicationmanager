@@ -20,8 +20,8 @@ ApplicationManagerWindow {
         target: ApplicationInterface
         function onOpenDocument(documentUrl) {
             switch (documentUrl) {
-            case "show-sub": ldr.active = true; break;
-            case "hide-sub": ldr.active = false; break;
+            case "create-sub": ldr.active = true; break;
+            case "destroy-sub": ldr.active = false; break;
             }
         }
     }

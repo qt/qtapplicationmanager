@@ -144,10 +144,13 @@ void InProcessSurfaceItem::delayedForceActiveFocus()
         }, Qt::QueuedConnection);
 }
 
-void InProcessSurfaceItem::setVisibleClientSide(bool value)
+void InProcessSurfaceItem::setVisibleClientSide(bool visible)
 {
-    if (value != m_visibleClientSide) {
-        m_visibleClientSide = value;
+    if (visible)
+        m_closed = false;
+
+    if (visible != m_visibleClientSide) {
+        m_visibleClientSide = visible;
         emit visibleClientSideChanged();
     }
 }
@@ -155,6 +158,19 @@ void InProcessSurfaceItem::setVisibleClientSide(bool value)
 bool InProcessSurfaceItem::visibleClientSide() const
 {
     return m_visibleClientSide;
+}
+
+void InProcessSurfaceItem::setDeadClientSide()
+{
+    if (!m_deadClientSide) {
+        m_deadClientSide = true;
+        emit deadClientSideChanged();
+    }
+}
+
+bool InProcessSurfaceItem::isDeadClientSide() const
+{
+    return m_deadClientSide;
 }
 
 QSGNode *InProcessSurfaceItem::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
@@ -188,6 +204,19 @@ void InProcessSurfaceItem::setColor(const QColor &c)
 void InProcessSurfaceItem::close()
 {
     emit closeRequested();
+}
+
+void InProcessSurfaceItem::setClosed(bool closed)
+{
+    if (m_closed != closed) {
+        m_closed = closed;
+        emit closedChanged();
+    }
+}
+
+bool InProcessSurfaceItem::isClosed() const
+{
+    return m_closed;
 }
 
 ApplicationManagerWindow *InProcessSurfaceItem::applicationManagerWindow()

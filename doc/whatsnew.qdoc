@@ -8,6 +8,37 @@
 \title What's New
 \brief Important changes in Qt Application Manager
 
+\section1 Qt ApplicationManager 6.9
+
+Due to a behavior change in the QtWaylandCompositor module, the "not visible" state on windows does
+not lead to a loss of the backing surface anymore. Before 6.9, hiding a visible window
+(setting ApplicationManagerWindow::visible to \c false) would lead to WindowObject::contentState
+being set to \c NoSurface. From 6.9 onwards, hiding a window sets the
+\l{WindowObject::}{contentState} to \c SurfaceNoContent instead.
+This also affects the WindowManager model, as hidden windows are \b not removed from the model
+anymore. You can still \l{WindowObject::}{close} windows or simply destroy the client-side
+ApplicationManagerWindow instance to force a \c NoSurface state.
+
+Because we cannot emulate this behavior change in neither a forward nor backward compatible way,
+Qt Application Manager 6.9 cannot be built against Qt < 6.9 and Qt Application Manager 6.8 cannot
+be built against Qt > 6.8.
+
+This change makes a lot of sense though and it brings the Qt implementation in line with other
+Wayland toolkits as well as all the other platform plugins in Qt itself.
+
+Historical note: QtWaylandCompositor versions before 5.8 behaved exactly like 6.9 is now, but the
+implementation was changed in 5.8 due to the \e xdg_shell specification at that time not allowing
+this kind of hide mechanism.
+
+Other noteworthy changes in this release:
+\list
+    \li The StartupTimer reports have been improved to show both absolute and relative time
+        durations.
+    \li A new monitoring component (FrameContentTracker) was added to help with tracking down
+        invisible animations that lead to performance issues due to constant rendering.
+\endlist
+
+
 \section1 Qt ApplicationManager 6.8
 
 Continuing the theme of the last release, this version improves on the QML tooling support:

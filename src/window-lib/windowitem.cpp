@@ -321,6 +321,8 @@ void WindowItem::componentComplete()
 {
     ensureCurrentContextIsSystemUI(this);
     QQuickFocusScope::componentComplete();
+    if (m_impl)
+        m_impl->componentComplete();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -494,6 +496,14 @@ QQuickItem *WindowItem::WaylandImpl::backingItem()
     return m_waylandItem;
 }
 
+void WindowItem::WaylandImpl::componentComplete()
+{
+    m_complete = true;
+    QSizeF s { q->width(), q->height() };
+    if (s.isValid())
+        updateSize(s);
+}
+
 void WindowItem::WaylandImpl::tearDown()
 {
     m_waylandItem->setSurface(nullptr);
@@ -504,7 +514,7 @@ void WindowItem::WaylandImpl::updateSize(const QSizeF &newSize)
 {
     m_waylandItem->setSize(newSize);
 
-    if (q->primary() && q->m_objectFollowsItemSize)
+    if (q->primary() && q->m_objectFollowsItemSize && m_complete)
         m_waylandWindow->resize(newSize.toSize());
 }
 

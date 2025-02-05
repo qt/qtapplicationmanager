@@ -97,6 +97,7 @@ private:
         virtual bool focusOnClick() const = 0;
         virtual void setFocusOnClick(bool focusOnClick) = 0;
         virtual QQuickItem *backingItem() = 0;
+        virtual void componentComplete() {};
         WindowItem *q;
 
         Q_DISABLE_COPY_MOVE(Impl)
@@ -138,9 +139,11 @@ private:
         bool focusOnClick() const override;
         void setFocusOnClick(bool focusOnClick) override;
         QQuickItem *backingItem() override;
+        void componentComplete() override;
 
         WaylandWindow *m_waylandWindow{nullptr};
         WaylandQuickIgnoreKeyItem *m_waylandItem{nullptr};
+        bool m_complete = false;
     };
 #endif // QT_CONFIG(am_multi_process)
 

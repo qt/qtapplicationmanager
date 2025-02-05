@@ -158,7 +158,7 @@ void QmlInProcRuntime::stop(bool forceKill)
         emit aboutToStop();
 
     for (auto i = m_surfaces.size(); i; --i)
-        m_surfaces.at(i-1)->setVisibleClientSide(false);
+        m_surfaces.at(i-1)->setDeadClientSide();
 
     if (m_surfaces.isEmpty()) {
         delete m_rootObject;
@@ -217,21 +217,18 @@ void QmlInProcRuntime::finish(int exitCode, Am::ExitStatus status)
     }, Qt::QueuedConnection);
 }
 
-void QmlInProcRuntime::stopIfNoVisibleSurfaces()
+void QmlInProcRuntime::stopIfLastWindowClosed()
 {
-    if (!hasVisibleSurfaces())
-        stop();
-    else
-        m_stopIfNoVisibleSurfaces = true;
-}
-
-bool QmlInProcRuntime::hasVisibleSurfaces() const
-{
-    for (int i = 0; i < m_surfaces.count(); ++i) {
-        if (m_surfaces[i]->visibleClientSide())
-            return true;
+    bool allClosed = true;
+    for (const auto &s : std::as_const(m_surfaces)) {
+        if (s->visibleClientSide() || !s->isClosed()) {
+            allClosed = false;
+            break;
+        }
     }
-    return false;
+
+    if (allClosed)
+        stop();
 }
 
 void QmlInProcRuntime::onSurfaceItemReleased(InProcessSurfaceItem *surface)
@@ -286,16 +283,11 @@ void QmlInProcRuntime::addSurfaceItem(const QSharedPointer<InProcessSurfaceItem>
     // Below check is only needed if the root element is a QtObject.
     // It should be possible to remove this, once proper visible handling is in place.
     if (state() != Am::NotRunning && state() != Am::ShuttingDown) {
-        m_stopIfNoVisibleSurfaces = false; // the appearance of a new surface disarms that death trigger
         if (!m_surfaces.contains(surface)) {
             m_surfaces.append(surface);
             InProcessSurfaceItem *surfacePtr = surface.data();
             connect(surfacePtr, &InProcessSurfaceItem::released, this, [this, surfacePtr]() {
                 onSurfaceItemReleased(surfacePtr);
-            });
-            connect(surfacePtr, &InProcessSurfaceItem::visibleClientSideChanged, this, [this]() {
-                if (m_stopIfNoVisibleSurfaces && !hasVisibleSurfaces())
-                    stop();
             });
         }
         emit signaler()->inProcessSurfaceItemReady(this, surface);

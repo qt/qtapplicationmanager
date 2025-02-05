@@ -39,13 +39,21 @@ public:
     // remove it from user's view.
     // That's why a client shouldn't have control over the actual visible property
     // of its surface item.
-    void setVisibleClientSide(bool);
+    void setVisibleClientSide(bool visible);
     bool visibleClientSide() const;
+
+    // Since Qt 6.9, qtwayland now distinguished again between hidden and destroyed, so we need to
+    // track this state separately. This is used by the WindowManager to determine if the window
+    // should be removed from its list of windows.
+    void setDeadClientSide();
+    bool isDeadClientSide() const;
 
     QColor color() const;
     void setColor(const QColor &c);
 
     void close();
+    void setClosed(bool closed);
+    bool isClosed() const;
 
     bool focusOnClick() const;
     void setFocusOnClick(bool newFocusOnClick);
@@ -56,6 +64,8 @@ public:
 
 Q_SIGNALS:
     void visibleClientSideChanged();
+    void deadClientSideChanged();
+    void closedChanged();
     void windowPropertyChanged(const QString &name, const QVariant &value);
     void closeRequested();
 
@@ -75,6 +85,8 @@ private:
 
     QObject m_windowProperties;
     bool m_visibleClientSide = true;
+    bool m_deadClientSide = false;
+    bool m_closed = false;
     bool m_focusOnClick = false;
     QColor m_color;
     QPointer<ApplicationManagerWindow> m_amWindow;

@@ -46,7 +46,7 @@ public:
 public Q_SLOTS:
     bool start() override;
     void stop(bool forceKill = false) override;
-    void stopIfNoVisibleSurfaces();
+    void stopIfLastWindowClosed();
 
 Q_SIGNALS:
     void aboutToStop(); // used for the ApplicationInterface
@@ -61,16 +61,12 @@ private:
     QString m_document;
     std::unique_ptr<ApplicationInterfaceImpl> m_applicationInterfaceImpl;
 
-    bool m_stopIfNoVisibleSurfaces = false;
-
     void loadResources(const QStringList &resources, const QString &baseDir);
     void addPluginPaths(const QStringList &pluginPaths, const QString &baseDir);
     void addImportPaths(const QStringList &importPaths, const QString &baseDir);
 
     // used by QmlInProcApplicationManagerWindowImpl to register surfaceItems
     void addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface);
-
-    bool hasVisibleSurfaces() const;
 
     QObject *m_rootObject = nullptr;
     QList<QSharedPointer<InProcessSurfaceItem>> m_surfaces;

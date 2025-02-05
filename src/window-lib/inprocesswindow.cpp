@@ -21,8 +21,20 @@ InProcessWindow::InProcessWindow(Application *app, const QSharedPointer<InProces
 
     // queued to emulate the behavior of the out-of-process counterpart
     connect(m_surfaceItem.data(), &InProcessSurfaceItem::visibleClientSideChanged,
-            this, &InProcessWindow::onVisibleClientSideChanged,
-            Qt::QueuedConnection);
+            this, [this]() {
+                setContentState(m_surfaceItem->visibleClientSide()
+                                ? Window::SurfaceWithContent : Window::SurfaceNoContent);
+            }, Qt::QueuedConnection);
+    connect(m_surfaceItem.data(), &InProcessSurfaceItem::deadClientSideChanged,
+            this, [this]() {
+                if (m_surfaceItem->isDeadClientSide())
+                    setContentState(Window::NoSurface);
+            }, Qt::QueuedConnection);
+    connect(m_surfaceItem.data(), &InProcessSurfaceItem::closedChanged,
+            this, [this]() {
+                if (m_surfaceItem->isClosed())
+                    setContentState(Window::NoSurface);
+            }, Qt::QueuedConnection);
 }
 
 InProcessWindow::~InProcessWindow()
@@ -44,14 +56,6 @@ QVariant InProcessWindow::windowProperty(const QString &name) const
 QVariantMap InProcessWindow::windowProperties() const
 {
     return m_surfaceItem->windowPropertiesAsVariantMap();
-}
-
-void InProcessWindow::onVisibleClientSideChanged()
-{
-    if (!m_surfaceItem->visibleClientSide()) {
-        setContentState(Window::SurfaceNoContent);
-        setContentState(Window::NoSurface);
-    }
 }
 
 void InProcessWindow::setContentState(ContentState newState)

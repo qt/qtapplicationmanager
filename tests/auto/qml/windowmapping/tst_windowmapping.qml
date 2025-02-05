@@ -13,13 +13,15 @@ TestCase {
     when: windowShown
     name: "WindowMapping"
     visible: true
+    width: 300
+    height: 100
 
     property int spyTimeout: 5000 * AmTest.timeoutFactor
     property var lastWindowAdded
 
     component WindowChrome: WindowItem {
         id: chrome
-        anchors.fill: parent
+        width: 100; height: 100
 
         Connections {
             target: chrome.window
@@ -32,14 +34,14 @@ TestCase {
 
     WindowChrome {
         id: topChrome
-
-        WindowChrome {
-            id: subChrome
-
-            WindowChrome {
-                id: sub2Chrome
-            }
-        }
+    }
+    WindowChrome {
+        id: subChrome
+        x: 100
+    }
+    WindowChrome {
+        id: sub2Chrome
+        x: 200
     }
 
     Connections {

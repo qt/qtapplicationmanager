@@ -11,7 +11,9 @@ ApplicationManagerWindow {
     width: 320
     height: 240
 
-    Component.onCompleted: {
-        IntentClient.sendIntentRequest("quicklaunch-ready", { })
+    Timer {
+        interval: 100
+        running: true
+        onTriggered: IntentClient.sendIntentRequest("quicklaunch-ready", { })
     }
 }

@@ -34,7 +34,7 @@ TestCase {
         visibility: IntentObject.Public
 
         onRequestReceived: function(request) {
-            acknowledged = true
+            testCase.acknowledged = true
             request.sendReply({ })
         }
     }

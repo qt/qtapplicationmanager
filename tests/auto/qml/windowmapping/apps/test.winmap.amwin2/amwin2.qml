@@ -11,11 +11,15 @@ ApplicationManagerWindow {
     visible: false
     objectName: "root"
 
+    Rectangle { anchors.fill: parent; color: "green" }
+
     ApplicationManagerWindow {
         id: sub
         visible: false
         objectName: "sub"
         Component.onCompleted: setWindowProperty("type", "sub");
+
+        Rectangle { anchors.fill: parent; color: "red" }
     }
 
     Rectangle {
@@ -27,6 +31,8 @@ ApplicationManagerWindow {
             visible: false
             objectName: "sub2"
             Component.onCompleted: setWindowProperty("type", "sub2");
+
+            Rectangle { anchors.fill: parent; color: "yellow" }
         }
     }
 

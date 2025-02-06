@@ -75,6 +75,10 @@ bool QmlInProcRuntime::start()
         return false;
     }
 
+    qCDebug(LogQmlRuntime) << "Loading" << m_app->id() << "from" << m_app->info()->absoluteCodeFilePath();
+    if (!m_document.isEmpty())
+        qCDebug(LogQmlRuntime) << " * document:" << m_document;
+
     const QString currentDir = QDir::currentPath() + QDir::separator();
     const QString codeDir = m_app->codeDir() + QDir::separator();
 
@@ -86,16 +90,16 @@ bool QmlInProcRuntime::start()
     if (!configPluginPaths.isEmpty() || !runtimePluginPaths.isEmpty()) {
         addPluginPaths(configPluginPaths, currentDir);
         addPluginPaths(runtimePluginPaths, codeDir);
-        qCDebug(LogSystem) << "Updated plugin paths:" << qApp->libraryPaths();
     }
+    qCDebug(LogQmlRuntime) << " * plugin paths:" << qApp->libraryPaths();
 
     const QStringList configImportPaths = variantToStringList(configuration().value(u"importPaths"_s));
     const QStringList runtimeImportPaths = variantToStringList(m_app->runtimeParameters().value(u"importPaths"_s));
     if (!configImportPaths.isEmpty() || !runtimeImportPaths.isEmpty()) {
         addImportPaths(configImportPaths, currentDir);
         addImportPaths(runtimeImportPaths, codeDir);
-        qCDebug(LogSystem) << "Updated Qml import paths:" << m_inProcessQmlEngine->importPathList();
     }
+    qCDebug(LogQmlRuntime) << " * Qml import paths:" << m_inProcessQmlEngine->importPathList();
 
     const QUrl qmlFileUrl = filePathToUrl(m_app->info()->absoluteCodeFilePath(), codeDir);
     QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, qmlFileUrl);

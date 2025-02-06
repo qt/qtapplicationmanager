@@ -344,9 +344,11 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(u"runtimeParameters"_s));
 
-    qCDebug(LogQmlRuntime) << "loading" << applicationId << "- main:" << qmlFile << "- document:" << document
-                           << "- mimeType:" << mimeType << "- parameters:" << runtimeParameters
-                           << "- baseDir:" << baseDir;
+    qCDebug(LogQmlRuntime) << "Loading" << applicationId << "from" << qmlFile;
+    if (!document.isEmpty())
+        qCDebug(LogQmlRuntime) << " * document:" << document;
+    if (!runtimeParameters.isEmpty())
+        qCDebug(LogQmlRuntime) << " * parameters:" << runtimeParameters;
 
     if (!QDir::setCurrent(baseDir)) {
         qCCritical(LogQmlRuntime) << "could not set the current directory to" << baseDir;
@@ -416,7 +418,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         else
             qCWarning(LogQmlRuntime) << "Omitting absolute plugin path in info file for safety reasons:" << path;
     }
-    qCDebug(LogQmlRuntime) << "Plugin paths:" << qApp->libraryPaths();
+    qCDebug(LogQmlRuntime) << " * plugin paths:" << qApp->libraryPaths();
 
     QVariant imports = runtimeParameters.value(u"importPaths"_s);
     const QVariantList ipvl = (imports.metaType() == QMetaType::fromType<QString>())
@@ -431,7 +433,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         else
             qCWarning(LogQmlRuntime) << "Omitting absolute import path in info file for safety reasons:" << path;
     }
-    qCDebug(LogQmlRuntime) << "Qml import paths:" << m_engine.importPathList();
+    qCDebug(LogQmlRuntime) << " * Qml import paths:" << m_engine.importPathList();
 
     for (StartupInterface *iface : std::as_const(startupPlugins))
         iface->beforeQmlEngineLoad(&m_engine);
@@ -484,7 +486,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     for (StartupInterface *iface : std::as_const(startupPlugins))
         iface->beforeWindowShow(m_window);
 
-    qCDebug(LogQmlRuntime) << "component loading and creating complete.";
+    qCDebug(LogQmlRuntime) << " * component loading and creating complete.";
 
     StartupTimer::instance()->checkpoint("component loading and creating complete.");
 

@@ -27,11 +27,11 @@ containers:
     # set to yes, if you build against a system or Installer Qt and the launcher cannot be found
     bindMountHome: yes
     configuration:
-      symlink:
+    - symlink:
         usr/lib: '/lib'
         usr/lib64: '/lib64'
         usr/bin: [ '/bin', '/sbin' ]
-      ro-bind:
+    - ro-bind:
         /usr/bin: '/usr/bin'
         /usr/lib: '/usr/lib'
         /etc: '/etc'
@@ -40,16 +40,16 @@ containers:
         /usr/share/ca-certificates: '/usr/share/ca-certificates'
         /sys/dev/char: '/sys/dev/char'
         ${EXECUTABLE_DIR}/imports: '${EXECUTABLE_DIR}/imports'
-      ro-bind-try:
+    - ro-bind-try:
         /usr/lib64: '/usr/lib64'
         '/sys/devices/pci0000:00': '/sys/devices/pci0000:00'
         /usr/share/glvnd/egl_vendor.d: '/usr/share/glvnd/egl_vendor.d'
         /usr/share/X11/xkb: '/usr/share/X11/xkb'
         /run/resolvconf: '/run/resolvconf'
-      dev: '/dev'
-      dev-bind:
+    - dev: '/dev'
+    - dev-bind:
         /dev/dri: '/dev/dri'
-      proc:
+    - proc:
         /proc
 
   selection:

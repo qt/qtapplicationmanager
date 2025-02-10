@@ -280,11 +280,11 @@ containers:
     sharedNamespaces: [ '-all', '+net' ]
     bindMountHome: yes
     configuration:
-      symlink:
+    - symlink:
         usr/lib: '/lib'
         usr/lib64: '/lib64'
         usr/bin: [ '/bin', '/sbin' ]
-      ro-bind:
+    - ro-bind:
         /usr/bin: '/usr/bin'
         /usr/lib: '/usr/lib'
         /etc: '/etc'
@@ -293,18 +293,18 @@ containers:
         /usr/share/ca-certificates: '/usr/share/ca-certificates'
         /sys/dev/char: '/sys/dev/char'
         ${CONFIG_DIR}/imports: '${CONFIG_DIR}/imports'
-      ro-bind-try:
+    - ro-bind-try:
         /usr/lib64: '/usr/lib64'
         '/sys/devices/pci0000:00': '/sys/devices/pci0000:00'
         /usr/share/glvnd/egl_vendor.d: '/usr/share/glvnd/egl_vendor.d'
         /usr/share/X11/xkb: '/usr/share/X11/xkb'
         /run/resolvconf: '/run/resolvconf'
-      dev: '/dev'
-      dev-bind:
+    - dev: '/dev'
+    - dev-bind:
         /dev/dri: '/dev/dri'
-      tmpfs:
+    - tmpfs:
         /tmp
-      proc:
+    - proc:
         /proc
 \endcode
 
@@ -324,21 +324,27 @@ The \c bubblewrap container accepts the following configuration settings:
   \row
     \li \c configuration
     \li object
-    \li A two-stage mapping object to configure the sandboxing of the plugin. The top-level \c keys
-        are translated into options passed to the bubblewrap binary. The values themselves are used
-        as arguments for those options. Here is an example configuration:
+    \li A two-stage mapping object to configure the sandboxing of the plugin. The top-level list of
+        \c keys is translated into options passed to the bubblewrap binary. If the key refers to a
+        a map or list, then these values themselves are used as arguments for the option.
+        Here is an example configuration:
 
     \badcode
     configuration:
-      symlink:
+    - symlink:
         usr/lib: '/lib'
         usr/lib64: '/lib64'
         usr/bin: [ '/bin', '/sbin' ]
-      ro-bind:
-        /usr/bin: '/usr/bin'
-        /usr/lib: '/usr/lib'
-        /usr/lib64: '/usr/lib64'
+    - unsetenv:
+      - ENV_VAR1
+      - ENV_VAR2
+    - level-prefix
     \endcode
+
+        \note The top-level keys under \c configuration used to be a plain YAML map, but because
+        some \c bwrap options are position dependent in relation to other options, this had to be
+        converted into an ordered map, which is why the top-level keys are now a list.
+        The old syntax is still supported, but it is recommended to use the new one.
 
   \row
     \li \c bindMountHome

@@ -169,42 +169,55 @@ void BubblewrapContainerManager::setConfiguration(const QVariantMap &configurati
             m_bwrapArguments += { u"--ro-bind"_s, lip, lip };
     }
 
-    const QVariantMap config = m_configuration.value(u"configuration"_s).toMap();
-    for (auto it = config.constBegin(); it != config.constEnd(); ++it ) {
-        if (it.value().isNull()) {
-            m_bwrapArguments += u"--"_s + it.key();
-            continue;
-        }
+    QVariant config = m_configuration.value(u"configuration"_s);
+    if (config.metaType() == QMetaType::fromType<QVariantMap>()) {
+        qCWarning(lcBwrap) << "Using a unordered map for the bwrap configuration is deprecated. Please convert to a list of key-value pairs.";
+        QVariantList to;
+        QVariantMap from = config.toMap();
+        for (auto it = from.cbegin(); it != from.cend(); ++it)
+            to.append(QVariantMap { { it.key(), it.value() } });
+        config = to;
+    }
+    const QVariantList configList = config.toList();
+    for (const QVariant &entry : configList) {
+        if (entry.metaType() == QMetaType::fromType<QString>()) {
+            m_bwrapArguments += u"--"_s + entry.toString();
+        } else if (entry.metaType() == QMetaType(QMetaType::QVariantMap)) {
+            QVariantMap entryMap = entry.toMap();
 
-        if (it.value().metaType() == QMetaType(QMetaType::QVariantMap)) {
-            QVariantMap valueMap = it.value().toMap();
-            for (auto vit = valueMap.constBegin(); vit != valueMap.constEnd(); ++vit ) {
-                const auto valueList = variantToStringList(vit.value());
-                for (const QString &value : valueList) {
-                    m_bwrapArguments += u"--"_s + it.key();
-                    m_bwrapArguments += vit.key();
-                    m_bwrapArguments += value;
-                }
+            if (entryMap.size() != 1) {
+                qCWarning(lcBwrap) << "The bwrap configuration list entries need to be single key-value pairs.";
+                continue;
             }
-            continue;
-        }
 
-        if (it.value().metaType() == QMetaType(QMetaType::QVariantList)) {
-            QVariantList valueList = it.value().toList();
-            for (auto vit = valueList.constBegin(); vit != valueList.constEnd(); ++vit ) {
-                const auto valueList = variantToStringList(*vit);
-                for (const QString &value : valueList) {
-                    m_bwrapArguments += u"--"_s + it.key();
-                    m_bwrapArguments += value;
+            const QString entryKey = entryMap.firstKey();
+            const QVariant entryValue = entryMap.first();
+
+            if (entryValue.metaType() == QMetaType(QMetaType::QVariantMap)) {
+                const QVariantMap valueMap = entryValue.toMap();
+                for (auto vit = valueMap.constBegin(); vit != valueMap.constEnd(); ++vit ) {
+                    const auto valueList = variantToStringList(vit.value());
+                    for (const QString &value : valueList) {
+                        m_bwrapArguments += u"--"_s + entryKey;
+                        m_bwrapArguments += vit.key();
+                        m_bwrapArguments += value;
+                    }
                 }
+            } else if (entryValue.metaType() == QMetaType(QMetaType::QVariantList)) {
+                QVariantList valueList = entryValue.toList();
+                for (auto vit = valueList.constBegin(); vit != valueList.constEnd(); ++vit ) {
+                    const auto valueList = variantToStringList(*vit);
+                    for (const QString &value : valueList) {
+                        m_bwrapArguments += u"--"_s + entryKey;
+                        m_bwrapArguments += value;
+                    }
+                }
+            } else if (entryValue.canConvert<QString>()) {
+                m_bwrapArguments += u"--"_s + entryKey;
+                m_bwrapArguments += entryValue.toString();
             }
-            continue;
-        }
-
-        if (it.value().canConvert<QString>()) {
-            m_bwrapArguments += u"--"_s + it.key();
-            m_bwrapArguments += it.value().toString();
-            continue;
+        } else {
+            qCWarning(lcBwrap) << "The bwrap configuration needs to be a list of strings and/or single key-value pairs.";
         }
     }
 }

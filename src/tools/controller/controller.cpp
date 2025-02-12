@@ -716,7 +716,8 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
     if (stdRedirections.isEmpty() || !isStarted) {
         qApp->exit(isStarted ? 0 : 2);
     } else {
-        InterruptHandler::install([appId](int) {
+        InterruptHandler::install([appId](int sig) {
+            fprintf(stdout, "Stopping application due to signal %s.\n", UnixSignalHandler::signalName(sig));
             auto stopReply = dbus()->manager()->stopApplication(appId, true);
             stopReply.waitForFinished();
             qApp->exit(1);
@@ -892,8 +893,8 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
 
     // cancel the job on Ctrl+C
 
-    InterruptHandler::install([](int) {
-        fprintf(stdout, "Cancelling package installation.\n");
+    InterruptHandler::install([](int sig) {
+        fprintf(stdout, "Cancelling package installation due to signal %s.\n", UnixSignalHandler::signalName(sig));
         auto cancelReply = dbus()->packager()->cancelTask(installationId);
         cancelReply.waitForFinished();
         qApp->exit(1);

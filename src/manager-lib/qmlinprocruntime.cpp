@@ -6,13 +6,13 @@
 #include <QQmlEngine>
 #include <QQmlContext>
 #include <QQmlComponent>
+#include <QQmlIncubator>
 #include <QCoreApplication>
 #include <QTimer>
 #include <QMetaObject>
 #include <private/qv4engine_p.h>
 #include <private/qqmlcontext_p.h>
 #include <private/qqmlcontextdata_p.h>
-#include <QQuickView>
 
 #include "applicationmanagerwindow.h"
 #include "inprocesssurfaceitem.h"
@@ -48,7 +48,7 @@ QmlInProcRuntime::QmlInProcRuntime(Application *app, QmlInProcRuntimeManager *ma
             if (rt)
                 impl = rt->m_applicationInterfaceImpl.get();
             else
-                qCCritical(LogRuntime) << "Cannot determine Runtime to setup a ApplicationInterface object";
+                qCCritical(LogQmlRuntime) << "Cannot determine Runtime to setup a ApplicationInterface object";
             Q_ASSERT(rt);
             return impl;
         });
@@ -57,6 +57,8 @@ QmlInProcRuntime::QmlInProcRuntime(Application *app, QmlInProcRuntimeManager *ma
 
 QmlInProcRuntime::~QmlInProcRuntime()
 {
+    stop(true);
+
     // if there is still a window present at this point, fire the 'closing' signal (probably) again,
     // because it's still the duty of WindowManager together with qml-ui to free and delete this item!!
     for (auto i = m_surfaces.size(); i; --i)
@@ -66,12 +68,13 @@ QmlInProcRuntime::~QmlInProcRuntime()
 bool QmlInProcRuntime::start()
 {
     Q_ASSERT(!m_rootObject);
+    Q_ASSERT(state() == Am::NotRunning);
 
     if (!m_inProcessQmlEngine)
         return false;
 
     if (!m_app) {
-        qCCritical(LogSystem) << "tried to start without an app object";
+        qCCritical(LogQmlRuntime) << "tried to start without an app object";
         return false;
     }
 
@@ -81,81 +84,175 @@ bool QmlInProcRuntime::start()
 
     const QString currentDir = QDir::currentPath() + QDir::separator();
     const QString codeDir = m_app->codeDir() + QDir::separator();
-
-    loadResources(variantToStringList(configuration().value(u"resources"_s)), currentDir);
-    loadResources(variantToStringList(m_app->runtimeParameters().value(u"resources"_s)), codeDir);
-
-    const QStringList configPluginPaths = variantToStringList(configuration().value(u"pluginPaths"_s));
-    const QStringList runtimePluginPaths = variantToStringList(m_app->runtimeParameters().value(u"pluginPaths"_s));
-    if (!configPluginPaths.isEmpty() || !runtimePluginPaths.isEmpty()) {
-        addPluginPaths(configPluginPaths, currentDir);
-        addPluginPaths(runtimePluginPaths, codeDir);
-    }
-    qCDebug(LogQmlRuntime) << " * plugin paths:" << qApp->libraryPaths();
-
-    const QStringList configImportPaths = variantToStringList(configuration().value(u"importPaths"_s));
-    const QStringList runtimeImportPaths = variantToStringList(m_app->runtimeParameters().value(u"importPaths"_s));
-    if (!configImportPaths.isEmpty() || !runtimeImportPaths.isEmpty()) {
-        addImportPaths(configImportPaths, currentDir);
-        addImportPaths(runtimeImportPaths, codeDir);
-    }
-    qCDebug(LogQmlRuntime) << " * Qml import paths:" << m_inProcessQmlEngine->importPathList();
-
     const QUrl qmlFileUrl = filePathToUrl(m_app->info()->absoluteCodeFilePath(), codeDir);
-    QQmlComponent *component = new QQmlComponent(m_inProcessQmlEngine, qmlFileUrl);
 
-    if (!component->isReady()) {
-        qCCritical(LogSystem).noquote().nospace() << "Failed to load component "
-                                                  << m_app->info()->absoluteCodeFilePath()
-                                                  << ":\n" << component->errorString();
-        return false;
+    if (!m_component) {
+        m_component = new QQmlComponent(m_inProcessQmlEngine, this);
+        connect(m_component, &QQmlComponent::statusChanged,
+                this, [this](QQmlComponent::Status status) {
+            if (status == QQmlComponent::Loading) {
+                // ignore
+            } else if (status == QQmlComponent::Error) {
+                m_componentErrorString = m_component->errorString();
+                qCCritical(LogQmlRuntime).noquote().nospace() << "Failed to load component "
+                                                              << m_app->info()->absoluteCodeFilePath()
+                                                              << ":\n" << m_componentErrorString;
+                finish(3, Am::NormalExit);
+            } else if (status == QQmlComponent::Ready) {
+                incubate();
+            }
+        });
     }
 
-    emit signaler()->aboutToStart(this);
+    switch (m_component->status()) {
+    case QQmlComponent::Loading:
+        Q_ASSERT(false);
+        return false;
 
-    setState(Am::StartingUp);
+    case QQmlComponent::Error: // we tried before and failed
+        qCCritical(LogQmlRuntime).noquote().nospace() << "Failed to load component "
+                                                      << m_app->info()->absoluteCodeFilePath()
+                                                      << "earlier:\n" << m_componentErrorString;
+        return false;
 
+    case QQmlComponent::Null: { // first time - load the component
+        const QStringList configPluginPaths = variantToStringList(configuration().value(u"pluginPaths"_s));
+        const QStringList runtimePluginPaths = variantToStringList(m_app->runtimeParameters().value(u"pluginPaths"_s));
+        if (!configPluginPaths.isEmpty() || !runtimePluginPaths.isEmpty()) {
+            addPluginPaths(configPluginPaths, currentDir);
+            addPluginPaths(runtimePluginPaths, codeDir);
+        }
+        qCDebug(LogQmlRuntime) << " * plugin paths:" << qApp->libraryPaths();
+
+        const QStringList configImportPaths = variantToStringList(configuration().value(u"importPaths"_s));
+        const QStringList runtimeImportPaths = variantToStringList(m_app->runtimeParameters().value(u"importPaths"_s));
+        if (!configImportPaths.isEmpty() || !runtimeImportPaths.isEmpty()) {
+            addImportPaths(configImportPaths, currentDir);
+            addImportPaths(runtimeImportPaths, codeDir);
+        }
+        qCDebug(LogQmlRuntime) << " * Qml import paths:" << m_inProcessQmlEngine->importPathList();
+
+        loadResources(variantToStringList(configuration().value(u"resources"_s)), currentDir);
+        loadResources(variantToStringList(m_app->runtimeParameters().value(u"resources"_s)), codeDir);
+
+        m_component->loadUrl(qmlFileUrl, QQmlComponent::Asynchronous);
+
+        if (m_component->isError()) { // undocumented, but this can happen without a statusChange signal
+            qCCritical(LogQmlRuntime).noquote().nospace() << "Failed to load component "
+                                                          << m_app->info()->absoluteCodeFilePath()
+                                                          << ":\n" << m_component->errorString();
+            return false;
+        }
+
+        emit signaler()->aboutToStart(this);
+        setState(Am::StartingUp);
+        return true;
+    }
+    case QQmlComponent::Ready: // already loaded and ready to go
+        emit signaler()->aboutToStart(this);
+        setState(Am::StartingUp);
+
+        incubate();
+        return true;
+    }
+    Q_ASSERT(false);
+    return false;
+}
+
+void QmlInProcRuntime::incubate()
+{
     // We are running each application in its own, separate Qml context.
     // This way, we can export a unique runtime-tag to this context to then later
     // determine at runtime which application is currently active.
     auto appContext = new QQmlContext(m_inProcessQmlEngine->rootContext(), this);
-    if (!tagQmlContext(appContext, QVariant::fromValue(this)))
-        qCritical() << "Could not tag the application QML context";
+    if (!tagQmlContext(appContext, QVariant::fromValue(this))) {
+        qCCritical(LogQmlRuntime) << "Could not tag the application QML context";
+        finish(4, Am::NormalExit);
+        return;
+    }
 
-    QObject *obj = component->beginCreate(appContext);
+    m_component->create(m_incubator, appContext, nullptr);
 
-    QMetaObject::invokeMethod(this, [component, obj, this]() {
-        component->completeCreate();
-        delete component;
-        if (!obj) {
-            qCCritical(LogSystem) << "could not load" << m_app->info()->absoluteCodeFilePath() << ": no root object";
-            finish(3, Am::NormalExit);
-        } else {
-            if (state() == Am::ShuttingDown) {
-                delete obj;
-                return;
-            }
+    // QQmlIncubator has no signal for when it's done, so we have to poll via a timer
+    if (!m_incubationTimer) {
+        m_incubationTimer = new QTimer(this);
+        m_incubationTimer->setInterval(1000/60);
 
-            if (!qobject_cast<ApplicationManagerWindow*>(obj)) {
-                QQuickItem *item = qobject_cast<QQuickItem*>(obj);
-                if (item) {
-                    auto surfaceItem = new InProcessSurfaceItem;
-                    item->setParentItem(surfaceItem);
-                    addSurfaceItem(QSharedPointer<InProcessSurfaceItem>(surfaceItem));
+        connect(m_incubationTimer, &QTimer::timeout, this, [this]() {
+            if (m_incubator.isError()) {
+                const auto errors = m_incubator.errors();
+                QStringList strErrors;
+                for (const auto &e : errors)
+                    strErrors << e.toString();
+                qCCritical(LogQmlRuntime) << "Failed to load component:" << m_app->info()->absoluteCodeFilePath()
+                                          << ":\n *" << strErrors.join(u"\n *");
+                finish(3, Am::NormalExit);
+            } else if (m_incubator.isReady()) {
+                auto *obj = m_incubator.object();
+                Q_ASSERT(obj);
+
+                if (state() == Am::ShuttingDown) {
+                    delete obj;
+                } else {
+                    if (!qobject_cast<ApplicationManagerWindow *>(obj)) {
+                        QQuickItem *item = qobject_cast<QQuickItem *>(obj);
+                        if (item) {
+                            auto surfaceItem = new InProcessSurfaceItem;
+                            item->setParentItem(surfaceItem);
+                            addSurfaceItem(QSharedPointer<InProcessSurfaceItem>(surfaceItem));
+                        }
+                    }
+                    m_rootObject = obj;
+                    setState(Am::Running);
+
+                    if (!m_document.isEmpty())
+                        openDocument(m_document, QString());
                 }
+            } else {
+                return; // wait for the next timer tick
             }
-            m_rootObject = obj;
-            setState(Am::Running);
-
-            if (!m_document.isEmpty())
-                openDocument(m_document, QString());
-        }
-    }, Qt::QueuedConnection);
-    return true;
+            // cleanup regardless if we succeeded or failed
+            m_incubator.clear();
+            m_incubationTimer->stop();
+            m_incubationTimer->deleteLater();
+            m_incubationTimer = nullptr;
+        });
+    }
+    m_incubationTimer->start();
 }
 
 void QmlInProcRuntime::stop(bool forceKill)
 {
+    switch (state()) {
+    case Am::NotRunning:
+    case Am::ShuttingDown:
+        return;
+
+    case Am::StartingUp:
+        setState(Am::ShuttingDown);
+        if (m_component && m_component->isLoading()) {
+            // QML can deal with a loading component being deleted
+            delete m_component;
+            m_component = nullptr;
+        } else {
+            // the incubation finished, but the incubationTimer didn't fire yet
+            if (m_incubator.isReady() && m_incubator.object())
+                delete m_incubator.object();
+            // cancel any active incubations
+            m_incubator.clear();
+            if (m_incubationTimer)
+                m_incubationTimer->stop();
+        }
+        if (forceKill)
+            finish(9 /* POSIX SIGKILL */, Am::ForcedExit);
+        else
+            finish(0, Am::NormalExit);
+        return;
+
+    case Am::Running:
+        break;
+    }
+
     setState(Am::ShuttingDown);
 
     if (!forceKill)
@@ -203,10 +300,10 @@ void QmlInProcRuntime::finish(int exitCode, Am::ExitStatus status)
         }
 
         if (printWarning) {
-            qCWarning(LogSystem, "In-process runtime for application '%s' %s",
+            qCWarning(LogQmlRuntime, "In-process runtime for application '%s' %s",
                       (m_app ? qPrintable(m_app->id()) : "<null>"), cause.constData());
         } else {
-            qCDebug(LogSystem, "In-process runtime for application '%s' %s",
+            qCDebug(LogQmlRuntime, "In-process runtime for application '%s' %s",
                     (m_app ? qPrintable(m_app->id()) : "<null>"), cause.constData());
         }
 

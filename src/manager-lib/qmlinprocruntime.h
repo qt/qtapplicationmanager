@@ -9,8 +9,11 @@
 #include <QtAppManManager/abstractruntime.h>
 
 #include <QtCore/QSharedPointer>
+#include <QtQml/QQmlIncubator>
 
 QT_FORWARD_DECLARE_CLASS(QQmlContext)
+QT_FORWARD_DECLARE_CLASS(QQmlComponent)
+QT_FORWARD_DECLARE_CLASS(QTimer)
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -65,11 +68,17 @@ private:
     void addPluginPaths(const QStringList &pluginPaths, const QString &baseDir);
     void addImportPaths(const QStringList &importPaths, const QString &baseDir);
 
+    void incubate();
+
     // used by QmlInProcApplicationManagerWindowImpl to register surfaceItems
     void addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface);
 
     QObject *m_rootObject = nullptr;
     QList<QSharedPointer<InProcessSurfaceItem>> m_surfaces;
+    QQmlComponent *m_component = nullptr;
+    QString m_componentErrorString;
+    QQmlIncubator m_incubator;
+    QTimer *m_incubationTimer = nullptr;
 
     friend class QmlInProcApplicationManagerWindowImpl; // for emitting signals on behalf of this class in onComplete
     friend class QmlInProcApplicationInterfaceImpl; // for handling the quit() signal

@@ -382,6 +382,7 @@ Item {
 
             app = ApplicationManager.application("test.windowitem.multiwin");
             app.start();
+            tryCompare(app, "runState", Am.Running);
 
             tryCompare(windowItemsModel, "count", 2, spyTimeout);
             tryCompare(WindowManager, "count", 2, spyTimeout);
@@ -389,7 +390,6 @@ Item {
             var firstWindow = windowItemsModel.get(0).window;
             var secondWindow = windowItemsModel.get(1).window;
 
-            compare(app.runState, Am.Running);
             compare(firstWindow.contentState, WindowObject.SurfaceWithContent);
 
             firstWindow.close();

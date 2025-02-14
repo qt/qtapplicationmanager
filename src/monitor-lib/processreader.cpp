@@ -146,7 +146,7 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
     ok = false;
     int blockLen = 0;
     while (fgets(line, lineLen, sf.file) != nullptr && !ok) {
-        if (!(line[0] < '0' || line[0] > '9') && (line[0] < 'a' || line[0] > 'f'))
+        if ((line[0] >= '0' && line[0] <= '9') || (line[0] >= 'a' && line[0] <= 'f'))
             ok = true;
         ++blockLen;
     }

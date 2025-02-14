@@ -16,13 +16,15 @@
 #include "applicationinfo.h"
 #include "exception.h"
 #include "packagemanager.h"
-#include "sudo.h"
 #include "utilities.h"
 #include "signature.h"
 #include "sudo.h"
 #include "installationtask.h"
 
 #include <memory>
+#ifdef Q_OS_UNIX
+#  include <unistd.h>
+#endif
 
 /*
   Overview of what happens on an installation of an app with <id> to <location>:
@@ -262,7 +264,9 @@ void InstallationTask::checkExtractedFile(const QString &file) Q_DECL_NOEXCEPT_E
         if (m_iconFileName.isEmpty())
             throw Exception(Error::Package, "the 'icon' field in info.yaml cannot be empty or absent.");
 
+        m_mutex.lock();
         m_packageId = m_package->id();
+        m_mutex.unlock();
 
         m_foundInfo = true;
     } else if (m_extractedFileCount == 2) {

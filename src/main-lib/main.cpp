@@ -13,7 +13,9 @@
 #  include "dbusdaemon.h"
 #  include "dbuspolicy.h"
 #  include "applicationmanagerdbuscontextadaptor.h"
-#  include "packagemanagerdbuscontextadaptor.h"
+#  if !defined(AM_DISABLE_INSTALLER)
+#    include "packagemanagerdbuscontextadaptor.h"
+#  endif
 #  include "notificationmanagerdbuscontextadaptor.h"
 #endif
 

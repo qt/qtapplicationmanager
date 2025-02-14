@@ -30,7 +30,7 @@ private:
     QString m_documentPath;
     bool m_keepDocuments;
     bool m_canBeCanceled = true;
-    bool m_canceled = false;
+    QAtomicInteger<bool> m_canceled = false; // atomic for easy access in "busy" wait loop
 };
 
 QT_END_NAMESPACE_AM

@@ -537,7 +537,7 @@ void IntentServer::processRequestQueue()
         if (!handlerIPC) {
             qCDebug(LogIntents) << "Intent handler" << isr->selectedIntent()->applicationId() << "is not running";
 
-            if (isr->potentialIntents().constFirst()->handleOnlyWhenRunning()) {
+            if (isr->selectedIntent()->handleOnlyWhenRunning()) {
                 qCDebug(LogIntents) << " * skipping, because 'handleOnlyWhenRunning' is set";
                 isr->setRequestFailed(qSL("Skipping delivery due to handleOnlyWhenRunning"));
             } else {
@@ -601,8 +601,7 @@ void IntentServer::processRequestQueue()
                 m_systemInterface->replyFromSystem(clientIPC, isr);
             }
         }
-        QMetaObject::invokeMethod(this, [isr]() { delete isr; }, Qt::QueuedConnection); // aka deleteLater for non-QObject
-        isr = nullptr;
+        isr->deleteLater();
     }
 
     triggerRequestQueue();

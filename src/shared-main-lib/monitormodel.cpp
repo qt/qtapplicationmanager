@@ -131,7 +131,9 @@ MonitorModel::MonitorModel(QObject *parent)
 
 MonitorModel::~MonitorModel()
 {
+    // avoid calling clear, as this would emit signals
     qDeleteAll(m_rows);
+    qDeleteAll(m_dataSources);
 }
 
 /*!

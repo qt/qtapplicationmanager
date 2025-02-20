@@ -89,7 +89,7 @@
 */
 
 /*!
-    \qmlproperty QSize WindowObject::size
+    \qmlproperty size WindowObject::size
     \readonly
 
     The size of the window surface, in pixels

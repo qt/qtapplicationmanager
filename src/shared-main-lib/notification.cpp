@@ -248,7 +248,7 @@ bool Notification::isShowingProgress() const
 }
 
 /*!
-    \qmlproperty qreal Notification::progress
+    \qmlproperty real Notification::progress
 
     Holds a floating-point value between \c{[0.0 ... 1.0]} which can be used to show a progress-bar on
     the notification. The special value \c -1 can be used to request a busy indicator.

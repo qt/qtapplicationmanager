@@ -844,7 +844,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
     // Using a state-machine would be one option, but then we would need that state-machine
     // object plus the per-app state. Relying on 2 lambdas is the easier choice for now.
 
-    auto doStartInContainer = [this, app, attachRuntime, runtime, containerId]() -> bool {
+    auto doStartInContainer = [this, app, attachRuntime, runtime, containerInfo]() -> bool {
         bool successfullyStarted = false;
         if (app) {
             successfullyStarted = attachRuntime ? runtime->attachApplicationToQuickLauncher(app)
@@ -853,8 +853,9 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
         if (successfullyStarted) {
             emitActivated(app);
         } else {
-            qCWarning(LogSystem) << "Failed to start application" << app->id() << "in container"
-                                 << containerId << "using runtime" << runtime->manager()->identifier();
+            qCWarning(LogSystem).noquote().nospace()
+                << "Failed to start application \"" << app->id() << "\" " << containerInfo
+                << " using runtime \"" << runtime->manager()->identifier() << '"';
             delete runtime; // ~Runtime() will clean up app->m_runtime
         }
         return successfullyStarted;

@@ -492,7 +492,7 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
     namespace.
 
     \note This function needs root privileges.
-    \note This functions will throw \c std::exceptions on error and will simply return on
+    \note This functions will throw a \c std::exception on error and will simply return on
           successful completion.
 */
 
@@ -503,4 +503,23 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
     manager. If applicable, use this when the application manager requests
     \l{ContainerInterface::stop}{stop} with \l{ContainerInterface::WatchdogExit}{WatchdogExit}
     via ContainerInterface.
+*/
+
+/*! \fn QString ContainerHelperFunctions::checkDBusSocketPath(const QString &dbusAddress, const QByteArray &typeHint)
+    \since 6.10
+
+    This function parses the given \a dbusAddress to check if the referenced D-Bus socket exists.
+    If it does, this function returns the absolute path to that socket.
+    If the socket does not exist, it throws a \c std::exception.
+
+    The \a typeHint is used to provide context for the exception's error message (e.g.
+    \c "session" or \c "p2p").
+*/
+
+/*! \fn QString ContainerHelperFunctions::checkWaylandSocketPath(const QString &xdgRuntimeDir, const QString &waylandDisplay)
+    \since 6.10
+
+    Checks if a Wayland socket exists in the given \a xdgRuntimeDir named \a waylandDisplay.
+    If it does, this function returns the absolute path to that socket.
+    If the socket does not exist, it throws a \c std::exception.
 */

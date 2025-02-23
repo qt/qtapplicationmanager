@@ -24,6 +24,9 @@ public:
                              quint64 namespacePid) override;
 
     int watchdogSignal() override;
+
+    QString checkDBusSocketPath(const QString &dbusAddress, const QByteArray &typeHint) override;
+    QString checkWaylandSocketPath(const QString &xdgRuntimeDir, const QString &waylandDisplay) override;
 };
 
 class PluginContainerManager : public AbstractContainerManager

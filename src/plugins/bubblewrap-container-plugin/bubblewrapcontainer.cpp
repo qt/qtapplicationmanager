@@ -501,43 +501,31 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
     // Pass the write end of the pipe to bwrap
     bwrapCommand += { u"--json-status-fd"_s, QString::number(m_statusPipeFd[1]) };
 
-    // parse the actual socket file name from the DBus specification
-    // This could be moved into a helper class
-    QString dbusP2PSocket = amConfig.value(u"dbus"_s).toMap().value(u"p2p"_s).toString();
-    dbusP2PSocket = dbusP2PSocket.mid(dbusP2PSocket.indexOf(u'=') + 1);
-    dbusP2PSocket = dbusP2PSocket.left(dbusP2PSocket.indexOf(u','));
-    QFileInfo dbusP2PInfo(dbusP2PSocket);
-    if (!dbusP2PInfo.exists()) {
-        qCWarning(lcBwrap) << "p2p dbus socket doesn't exist: " << dbusP2PInfo.absoluteFilePath();
+    try {
+        // export all additional sockets
+        auto *h = manager()->helpers();
+
+        const QString dbusP2PSocket = h->checkDBusSocketPath(
+            amConfig.value(u"dbus"_s).toMap().value(u"p2p"_s).toString(), "P2P");
+        bwrapCommand += { u"--ro-bind"_s, dbusP2PSocket, dbusP2PSocket };
+
+        const QString dbusSessionBusAddress = qEnvironmentVariable("DBUS_SESSION_BUS_ADDRESS");
+        const QString sessionBusSocket = h->checkDBusSocketPath(dbusSessionBusAddress, "Session");
+        bwrapCommand += { u"--ro-bind"_s, sessionBusSocket, sessionBusSocket };
+        bwrapCommand += { u"--setenv"_s, u"DBUS_SESSION_BUS_ADDRESS"_s, dbusSessionBusAddress };
+
+        const QString xdgRuntimeDir = qEnvironmentVariable("XDG_RUNTIME_DIR");
+        const QString waylandDisplay = qEnvironmentVariable("WAYLAND_DISPLAY");
+        const QString waylandSocket = h->checkWaylandSocketPath(xdgRuntimeDir, waylandDisplay);
+
+        bwrapCommand += { u"--ro-bind"_s, waylandSocket, waylandSocket };
+        bwrapCommand += { u"--setenv"_s, u"XDG_RUNTIME_DIR"_s, xdgRuntimeDir };
+        bwrapCommand += { u"--setenv"_s, u"WAYLAND_DISPLAY"_s, waylandDisplay };
+
+    } catch (const std::exception &e) {
+        qCWarning(lcBwrap) << e.what();
         return false;
     }
-
-    // parse the actual socket file name from the DBus specification
-    // This could be moved into a helper class
-    QByteArray dbusSessionBusAddress = qgetenv("DBUS_SESSION_BUS_ADDRESS");
-    QString sessionBusSocket = QString::fromLocal8Bit(dbusSessionBusAddress);
-    sessionBusSocket = sessionBusSocket.mid(sessionBusSocket.indexOf(u'=') + 1);
-    sessionBusSocket = sessionBusSocket.left(sessionBusSocket.indexOf(u','));
-    QFileInfo sessionBusInfo(sessionBusSocket);
-    if (!sessionBusInfo.exists()) {
-        qCWarning(lcBwrap) << "session dbus socket doesn't exist: " << sessionBusInfo.absoluteFilePath();
-        return false;
-    }
-
-    // parse the wayland socket name from wayland env variables
-    // This could be moved into a helper class
-    QByteArray waylandDisplayName = qgetenv("WAYLAND_DISPLAY");
-    QByteArray xdgRuntimeDir = qgetenv("XDG_RUNTIME_DIR");
-    QFileInfo waylandDisplayInfo(QString::fromLocal8Bit(xdgRuntimeDir) + u"/"_s + QString::fromLocal8Bit(waylandDisplayName));
-    if (!waylandDisplayInfo.exists()) {
-        qCWarning(lcBwrap) << "wayland socket doesn't exist: " << waylandDisplayInfo.absoluteFilePath();
-        return false;
-    }
-
-    // export all additional sockets and the actual appliaction
-    bwrapCommand += { u"--ro-bind"_s, dbusP2PInfo.absoluteFilePath(), dbusP2PInfo.absoluteFilePath() };
-    bwrapCommand += { u"--ro-bind"_s, sessionBusInfo.absoluteFilePath(), sessionBusInfo.absoluteFilePath() };
-    bwrapCommand += { u"--ro-bind"_s, waylandDisplayInfo.absoluteFilePath(), waylandDisplayInfo.absoluteFilePath() };
 
     // If the hostPath exists we can mount it directly.
     // Otherwise we are quick launching a container and have to make sure the container path exists
@@ -548,10 +536,6 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
         bwrapCommand += { u"--dir"_s, m_containerPath };
 
     // Add all needed env variables
-    bwrapCommand += { u"--setenv"_s, u"XDG_RUNTIME_DIR"_s, QString::fromLocal8Bit(xdgRuntimeDir) };
-    bwrapCommand += { u"--setenv"_s, u"WAYLAND_DISPLAY"_s, QString::fromLocal8Bit(waylandDisplayName) };
-    bwrapCommand += { u"--setenv"_s, u"DBUS_SESSION_BUS_ADDRESS"_s, QString::fromLocal8Bit(dbusSessionBusAddress) };
-
     const auto allEnvKeys = QProcessEnvironment::systemEnvironment().keys();
     for (const auto &key : allEnvKeys) {
         if (key.startsWith(u"LC_"_s) || key == u"LANG")

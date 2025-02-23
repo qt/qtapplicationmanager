@@ -207,13 +207,15 @@ bool NativeRuntime::initialize()
 void NativeRuntime::shutdown(int exitCode, Am::ExitStatus status)
 {
     // see NativeRuntime::stop() below
-    if ((status == Am::CrashExit) && (exitCode == SIGTERM || exitCode == SIGKILL))
-        status = Am::ForcedExit;
 
     if (!m_isQuickLauncher || m_connectedToApplicationInterface) {
         QByteArray cause = "exited";
         bool printWarning = false;
         switch (status) {
+        case Am::WatchdogExit:
+            cause = "was killed by the watchdog";
+            printWarning = true;
+            break;
         case Am::ForcedExit:
             cause = "was force exited (" + QByteArray(exitCode == SIGTERM ? "terminated" : "killed") + ")";
             printWarning = true;
@@ -404,7 +406,7 @@ bool NativeRuntime::start()
     return true;
 }
 
-void NativeRuntime::stop(bool forceKill)
+void NativeRuntime::stop(Am::ExitStatus exitStatus)
 {
     if (!m_process)
         return;
@@ -412,24 +414,29 @@ void NativeRuntime::stop(bool forceKill)
     setState(Am::ShuttingDown);
     emit aboutToStop();
 
-    if (forceKill) {
-        m_process->kill();
-    } else {
-        if (!m_connectedToApplicationInterface) {
-            // Either the app is not using the ApplicationInterface or a launcher hasn't connected
-            // yet: in either case, we're sending SIGTERM to give the app a chance to react
-            m_process->terminate();
+    switch (exitStatus) {
+    case Am::NormalExit:
+        if (m_connectedToApplicationInterface) {
+            // Start a timer to kill the process if it hasn't exited voluntarily after a certain time
+            bool ok;
+            int qt = configuration().value(u"quitTime"_s).toInt(&ok);
+            if (!ok || qt < 0)
+                qt = 250;
+            qt *= timeoutFactor();
+            QTimer::singleShot(qt, this, [this]() {
+                m_process->stop(Am::ForcedExit);
+            });
+            break;
         }
+        // Either the app is not using the ApplicationInterface or a launcher hasn't connected
+        // yet: in either case, we're sending SIGTERM to give the app a chance to react
+        [[fallthrough]];
 
-        // Start a timer to kill the process if it hasn't exited voluntarily after a certain time
-        bool ok;
-        int qt = configuration().value(u"quitTime"_s).toInt(&ok);
-        if (!ok || qt < 0)
-            qt = 250;
-        qt *= timeoutFactor();
-        QTimer::singleShot(qt, this, [this]() {
-            m_process->kill();
-        });
+    case Am::ForcedExit:
+    case Am::WatchdogExit:
+    case Am::CrashExit:
+        m_process->stop(exitStatus);
+        break;
     }
 }
 

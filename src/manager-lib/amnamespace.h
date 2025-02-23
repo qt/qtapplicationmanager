@@ -24,7 +24,8 @@ public:
     enum ExitStatus {
         NormalExit,
         CrashExit,
-        ForcedExit
+        ForcedExit,
+        WatchdogExit, // added in 6.10
     };
     Q_ENUM(ExitStatus)
 

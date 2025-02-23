@@ -77,7 +77,7 @@ public:
                                   const QString &documentMimeType = QString(),
                                   const QString &debugWrapperSpecification = QString(),
                                   QVector<int> &&stdioRedirections = QVector<int>()) noexcept(false);
-    void stopApplicationInternal(Application *app, bool forceKill = false);
+    void stopApplicationInternal(Application *app, Am::ExitStatus exitStatus = Am::NormalExit);
 
     // only use these two functions for development!
     bool securityChecksEnabled() const;

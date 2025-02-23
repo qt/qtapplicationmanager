@@ -75,6 +75,19 @@ const char *UnixSignalHandler::signalName(int sig)
 #endif
 }
 
+int UnixSignalHandler::watchdogSignal()
+{
+#if defined(SIGSTKFLT) // available and unused on Linux x86 and arm
+    return SIGSTKFLT;
+#elif defined(SIGEMT)  // available and unused on Linux mips, BSD and QNX
+    return SIGEMT;
+#elif defined(SIGUSR1) // Unix safe fallback
+    return SIGUSR1;
+#else                  // Windows
+    return 0;
+#endif
+}
+
 void UnixSignalHandler::resetToDefault(int sig)
 {
     auto sigs = { sig };

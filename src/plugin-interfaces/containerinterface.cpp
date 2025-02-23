@@ -33,6 +33,8 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
     \value CrashExit  The application crashed.
     \value ForcedExit The application was killed by the application manager, since it ignored the
                       quit request originating from a call to ApplicationManager::stopApplication.
+    \value WatchdogExit The application was killed by the application manager's watchdog.
+                        (since Qt 6.10)
 
     \sa ApplicationObject::lastExitStatus, QProcess::ExitStatus
 */
@@ -296,26 +298,42 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
     \sa stateChanged(), errorOccured(), QProcess::state()
 */
 
+/*! \fn void ContainerInterface::stop(ExitStatus exitStatus)
+    \since 6.10
+
+    Called by the application manager, if it wants to stop the current process within the
+    container.
+
+    The \a exitStatus argument tells the container implementation how to stop the process:
+    \table
+    \header
+      \li Exit status
+      \li Description
+    \row
+      \li NormalExit
+      \li On Unix, the equivalent would be sending a \c SIGTERM signal. The process may not exit
+          as a result of calling this function.
+    \row
+      \li ForcedExit
+      \li On Unix, the equivalent would be sending a \c SIGKILL signal. The process should exit
+          immediately.
+    \row
+      \li WatchdogExit
+      \li On Unix, the equivalent would be sending the signal returned by
+          ContainerHelperFunctions::watchdogSignal(). The process should exit immediately.
+    \row
+      \li CrashExit
+      \li Not used in this context.
+    \endtable
+*/
+
 /*! \fn void ContainerInterface::kill()
-
-    Called by the application manager, if it wants to kill the current process within the
-    container, causing it to exit immediately.
-
-    On Unix, the equivalent would be sending a \c SIGKILL signal.
-
-    \sa terminate()
+    \deprecated [6.10] Implement stop() and handle ForcedExit instead.
 */
 
 /*! \fn void ContainerInterface::terminate()
-
-    Called by the application manager, when attempting to terminate the process within the container.
-
-    The process may not exit as a result of calling this function.
-    On Unix, the equivalent would be sending a \c SIGTERM signal.
-
-    \sa kill()
+    \deprecated [6.10] Implement stop() and handle NormalExit instead.
 */
-
 
 /*! \fn void ContainerInterface::ready()
 

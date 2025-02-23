@@ -15,6 +15,7 @@
 #include "processcontainer.h"
 #include "systemreader.h"
 #include "debugwrapper.h"
+#include "unixsignalhandler.h"
 
 #if defined(Q_OS_UNIX)
 #  include <csignal>
@@ -69,9 +70,18 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
     connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
         emit errorOccured(static_cast<Am::ProcessError>(error));
     });
-    connect(m_process, static_cast<void (QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished),
+    connect(m_process, &QProcess::finished,
             this, [this](int exitCode, QProcess::ExitStatus exitStatus) {
-        emit finished(exitCode, static_cast<Am::ExitStatus>(exitStatus));
+        Am::ExitStatus status = Am::NormalExit;
+        if (exitStatus == QProcess::CrashExit) {
+            if ((exitCode == SIGTERM || exitCode == SIGKILL))
+                status = Am::ForcedExit;
+            else if (exitCode == UnixSignalHandler::watchdogSignal())
+                status = Am::WatchdogExit;
+            else
+                status = Am::CrashExit;
+        }
+        emit finished(exitCode, status);
     });
     connect(m_process, &QProcess::stateChanged,
             this, [this](QProcess::ProcessState newState) {
@@ -95,14 +105,26 @@ void HostProcess::setProcessEnvironment(const QProcessEnvironment &environment)
     m_process->setProcessEnvironment(environment);
 }
 
-void HostProcess::kill()
+void HostProcess::stop(Am::ExitStatus exitStatus)
 {
-    m_process->kill();
-}
-
-void HostProcess::terminate()
-{
-    m_process->terminate();
+    switch (exitStatus) {
+    case Am::NormalExit:
+        m_process->terminate();
+        break;
+    case Am::ForcedExit:
+        m_process->kill();
+        break;
+    case Am::CrashExit:
+        if (auto pid = m_process->processId())
+            ::kill((pid_t) pid, SIGSEGV);
+        break;
+    case Am::WatchdogExit:
+        if (auto pid = m_process->processId()) {
+            if (int sig = UnixSignalHandler::watchdogSignal())
+                ::kill((pid_t) pid, sig);
+        }
+        break;
+    }
 }
 
 qint64 HostProcess::processId() const

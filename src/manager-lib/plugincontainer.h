@@ -21,7 +21,9 @@ public:
     bool hasRootPrivileges() override;
 
     void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
-                         quint64 namespacePid) override;
+                             quint64 namespacePid) override;
+
+    int watchdogSignal() override;
 };
 
 class PluginContainerManager : public AbstractContainerManager
@@ -60,8 +62,7 @@ public:
     Am::RunState state() const override;
 
 public Q_SLOTS:
-    void kill() override;
-    void terminate() override;
+    void stop(Am::ExitStatus exitStatus) override;
 
 private:
     PluginContainer *m_container;

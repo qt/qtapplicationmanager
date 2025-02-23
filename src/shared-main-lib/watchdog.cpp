@@ -8,6 +8,7 @@
 
 #include "logging.h"
 #include "utilities.h"
+#include "unixsignalhandler.h"
 #include "watchdog.h"
 #include "watchdog_p.h"
 #include "qtappman_common-config_p.h"
@@ -89,9 +90,9 @@ static void killThread(quintptr threadHandle)
     }
 
 #if defined(Q_OS_DARWIN)
-    ::pthread_kill(reinterpret_cast<pthread_t>(threadHandle), SIGABRT);
+    ::pthread_kill(reinterpret_cast<pthread_t>(threadHandle), UnixSignalHandler::watchdogSignal());
 #elif defined(Q_OS_UNIX)
-    ::pthread_kill(static_cast<pthread_t>(threadHandle), SIGABRT);
+    ::pthread_kill(static_cast<pthread_t>(threadHandle), UnixSignalHandler::watchdogSignal());
 #elif defined(Q_OS_WINDOWS)
     auto winId = static_cast<DWORD>(threadHandle);
 

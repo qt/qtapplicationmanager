@@ -90,7 +90,7 @@ public:
     QVariantMap systemProperties() const;
 
     virtual bool start() = 0;
-    virtual void stop(bool forceKill = false) = 0;
+    virtual void stop(Am::ExitStatus exitStatus) = 0;
 
     static RuntimeSignaler* signaler();
 

@@ -46,15 +46,15 @@ public:
 
     static QmlInProcRuntime *determineRuntime(QObject *object);
 
-public Q_SLOTS:
     bool start() override;
-    void stop(bool forceKill = false) override;
+    void stop(Am::ExitStatus exitStatus) override;
     void stopIfLastWindowClosed();
 
 Q_SIGNALS:
     void aboutToStop(); // used for the ApplicationInterface
 
-private Q_SLOTS:
+private:
+    void finish(QtAM::Am::ExitStatus status);
     void finish(int exitCode, QtAM::Am::ExitStatus status);
     void onSurfaceItemReleased(QtAM::InProcessSurfaceItem *surface);
 

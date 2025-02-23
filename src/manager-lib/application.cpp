@@ -107,6 +107,8 @@
     \li Am.ForcedExit - The application was killed by the application manager, since it
                         ignored the quit request originating from a call to
                         ApplicationManager::stopApplication.
+    \li Am.WatchdogExit - The application was killed by the application manager's watchdog.
+                          (since Qt 6.10)
     \endlist
 
     \sa ApplicationInterface::quit, ApplicationInterface::acknowledgeQuit

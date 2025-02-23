@@ -57,7 +57,7 @@ QmlInProcRuntime::QmlInProcRuntime(Application *app, QmlInProcRuntimeManager *ma
 
 QmlInProcRuntime::~QmlInProcRuntime()
 {
-    stop(true);
+    stop(Am::ForcedExit);
 
     // if there is still a window present at this point, fire the 'closing' signal (probably) again,
     // because it's still the duty of WindowManager together with qml-ui to free and delete this item!!
@@ -221,7 +221,7 @@ void QmlInProcRuntime::incubate()
     m_incubationTimer->start();
 }
 
-void QmlInProcRuntime::stop(bool forceKill)
+void QmlInProcRuntime::stop(Am::ExitStatus exitStatus)
 {
     switch (state()) {
     case Am::NotRunning:
@@ -243,10 +243,7 @@ void QmlInProcRuntime::stop(bool forceKill)
             if (m_incubationTimer)
                 m_incubationTimer->stop();
         }
-        if (forceKill)
-            finish(9 /* POSIX SIGKILL */, Am::ForcedExit);
-        else
-            finish(0, Am::NormalExit);
+        finish(exitStatus);
         return;
 
     case Am::Running:
@@ -255,7 +252,7 @@ void QmlInProcRuntime::stop(bool forceKill)
 
     setState(Am::ShuttingDown);
 
-    if (!forceKill)
+    if (exitStatus == Am::NormalExit)
         emit aboutToStop();
 
     for (auto i = m_surfaces.size(); i; --i)
@@ -266,19 +263,33 @@ void QmlInProcRuntime::stop(bool forceKill)
         m_rootObject = nullptr;
     }
 
-    if (forceKill) {
-        finish(9 /* POSIX SIGKILL */, Am::ForcedExit);
-        return;
+    if (exitStatus == Am::NormalExit) {
+        bool ok;
+        int qt = configuration().value(u"quitTime"_s).toInt(&ok);
+        if (!ok || qt < 0)
+            qt = 250;
+        QTimer::singleShot(qt, this, [this]() {
+            if (state() != Am::NotRunning)
+                finish(Am::ForcedExit);
+        });
+    } else {
+        finish(exitStatus);
     }
+}
 
-    bool ok;
-    int qt = configuration().value(u"quitTime"_s).toInt(&ok);
-    if (!ok || qt < 0)
-        qt = 250;
-    QTimer::singleShot(qt, this, [this]() {
-        if (state() != Am::NotRunning)
-            finish(9 /* POSIX SIGKILL */, Am::ForcedExit);
-    });
+void QmlInProcRuntime::finish(Am::ExitStatus status)
+{
+    int exitCode = [=] {
+        switch (status) {
+        case Am::NormalExit:   return 0;
+        case Am::CrashExit:    return 11; // POSIX SIGSEGV
+        case Am::ForcedExit:   return 9;  // POSIX SIGKILL
+        case Am::WatchdogExit: return 16; // POSIX SIGSTKFLT
+        }
+        Q_UNREACHABLE_RETURN(-1);
+    }();
+
+    finish(exitCode, status);
 }
 
 void QmlInProcRuntime::finish(int exitCode, Am::ExitStatus status)
@@ -287,8 +298,12 @@ void QmlInProcRuntime::finish(int exitCode, Am::ExitStatus status)
         QByteArray cause = "exited";
         bool printWarning = false;
         switch (status) {
+        case Am::WatchdogExit:
+            cause = "was killed by the watchdog";
+            printWarning = true;
+            break;
         case Am::ForcedExit:
-            cause = "was force exited (" + QByteArray(exitCode == 15 /* POSIX SIGTERM */ ? "terminated" : "killed") + ")";
+            cause = "was force exited";
             printWarning = true;
             break;
         default:
@@ -329,7 +344,7 @@ void QmlInProcRuntime::stopIfLastWindowClosed()
     }
 
     if (allClosed)
-        stop();
+        stop(Am::NormalExit);
 }
 
 void QmlInProcRuntime::onSurfaceItemReleased(InProcessSurfaceItem *surface)

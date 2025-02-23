@@ -9,6 +9,7 @@
 #include "plugincontainer.h"
 #include "debugwrapper.h"
 #include "sudo.h"
+#include "unixsignalhandler.h"
 
 using namespace Qt::StringLiterals;
 
@@ -166,14 +167,9 @@ Am::RunState PluginContainerProcess::state() const
     return static_cast<Am::RunState>(m_container->m_interface->state());
 }
 
-void PluginContainerProcess::kill()
+void PluginContainerProcess::stop(Am::ExitStatus exitStatus)
 {
-    m_container->m_interface->kill();
-}
-
-void PluginContainerProcess::terminate()
-{
-    m_container->m_interface->terminate();
+    m_container->m_interface->stop(static_cast<ContainerInterface::ExitStatus>(exitStatus));
 }
 
 void PluginContainerHelperFunctions::closeAndClearFileDescriptors(QVector<int> &fdList)
@@ -203,6 +199,11 @@ void PluginContainerHelperFunctions::bindMountFileSystem(const QString &from, co
     } else {
         throw std::runtime_error("Cannot call bindMountFileSystem: root privileges are required. Run appman via 'sudo' or 'chmod +s'.");
     }
+}
+
+int PluginContainerHelperFunctions::watchdogSignal()
+{
+    return UnixSignalHandler::watchdogSignal();
 }
 
 QT_END_NAMESPACE_AM

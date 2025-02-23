@@ -188,7 +188,7 @@ void QuickLauncher::rebuild()
             if (container->process()) {
                 connect(container->process(), &AbstractContainerProcess::finished,
                         this, [this, container, runtime](int exitCode, Am::ExitStatus status) {
-                    if ((status == Am::CrashExit) || ((status == Am::NormalExit) && exitCode)) {
+                    if ((status != Am::NormalExit) || exitCode) {
                         for (auto e = m_quickLaunchPool.begin(); e != m_quickLaunchPool.end(); ++e) {
                             for (int i = 0; i < e->m_containersAndRuntimes.size(); ++i) {
                                 auto car = e->m_containersAndRuntimes.at(i);
@@ -321,7 +321,7 @@ void QuickLauncher::shutDown()
     for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
         for (const auto &car : std::as_const(entry->m_containersAndRuntimes)) {
             if (car.second)
-                car.second->stop();
+                car.second->stop(Am::NormalExit);
             else if (car.first)
                 car.first->deleteLater();
 

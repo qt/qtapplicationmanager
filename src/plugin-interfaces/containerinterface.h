@@ -24,7 +24,8 @@ public:
     enum ExitStatus {
         NormalExit,
         CrashExit,
-        ForcedExit
+        ForcedExit,
+        WatchdogExit  // added in 6.10
     };
     Q_ENUM(ExitStatus)
 
@@ -68,9 +69,11 @@ public:
     virtual qint64 processId() const = 0;
     virtual RunState state() const = 0;
 
+#ifdef Q_QDOC
     virtual void kill() = 0;
     virtual void terminate() = 0;
-
+#endif
+    virtual void stop(ContainerInterface::ExitStatus exitStatus) = 0; // added in 6.10
 Q_SIGNALS:
     void ready();
     void started();
@@ -98,6 +101,9 @@ public:
     // this function needs root privileges and throws std::execptions on error:
     virtual void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
                                      quint64 namespacePid) = 0;
+
+    // added in 6.10:
+    virtual int watchdogSignal() = 0;
 };
 
 class ContainerManagerInterface
@@ -119,7 +125,7 @@ public:
                                        const QStringList &debugWrapperCommand) = 0;
 };
 
-#define AM_ContainerManagerInterface_iid "io.qt.ApplicationManager.ContainerManagerInterface"
+#define AM_ContainerManagerInterface_iid "io.qt.ApplicationManager.ContainerManagerInterface2"
 
 QT_BEGIN_NAMESPACE
 Q_DECLARE_INTERFACE(ContainerManagerInterface, AM_ContainerManagerInterface_iid)

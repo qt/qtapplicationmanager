@@ -241,7 +241,7 @@ void WaylandXdgWatchdog::onPongKillTimeout()
                     if ((pid > 0) && isDebuggerAttached(pid))
                         qCCritical(LogWatchdog).noquote() << "Debugger is attached to the app, not killing" << app->id();
                     else
-                        ApplicationManager::instance()->stopApplicationInternal(app, true);
+                        ApplicationManager::instance()->stopApplicationInternal(app, Am::WatchdogExit);
                 }
             }
         }

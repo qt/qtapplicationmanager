@@ -63,7 +63,8 @@ extern "C" {
 #  endif
 #  include "processtitle.h"
 #  include "unixsignalhandler.h"
-#  define AM_UNIX_CRASH_SIGNALS  { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT, SIGQUIT, SIGSYS }
+#  define AM_UNIX_CRASH_SIGNALS  { SIGFPE, SIGSEGV, SIGILL, SIGBUS, SIGPIPE, SIGABRT, SIGQUIT, SIGSYS, \
+                                   UnixSignalHandler::watchdogSignal() }
 #elif defined(Q_OS_WINDOWS)
 #  include <io.h>
 #  include <windows.h>
@@ -378,7 +379,11 @@ static void initBacktraceUnix()
                                            [](int sig) {
         UnixSignalHandler::instance()->resetToDefault(sig);
         char buffer[256];
-        snprintf(buffer, sizeof(buffer), "uncaught signal %d (%s)", sig, UnixSignalHandler::signalName(sig));
+        if (sig == UnixSignalHandler::watchdogSignal())
+            snprintf(buffer, sizeof(buffer), "killed by watchdog (signal %d)", sig);
+        else
+            snprintf(buffer, sizeof(buffer), "uncaught signal %d (%s)", sig, UnixSignalHandler::signalName(sig));
+
         crashHandler(buffer, chg()->stackFramesToIgnoreOnCrash);
 
         if (sig <= 0) // better safe than sorry

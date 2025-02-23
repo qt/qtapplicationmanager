@@ -886,13 +886,15 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
     }
 }
 
-void ApplicationManager::stopApplicationInternal(Application *app, bool forceKill)
+void ApplicationManager::stopApplicationInternal(Application *app, Am::ExitStatus exitStatus)
 {
+    Q_ASSERT(exitStatus != Am::CrashExit);
+
     if (!app)
         return;
     AbstractRuntime *rt = app->currentRuntime();
     if (rt)
-        rt->stop(forceKill);
+        rt->stop(exitStatus);
 }
 
 /*!
@@ -961,7 +963,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 */
 void ApplicationManager::stopApplication(const QString &id, bool forceKill)
 {
-    stopApplicationInternal(fromId(id), forceKill);
+    stopApplicationInternal(fromId(id), forceKill ? Am::ForcedExit : Am::NormalExit);
 }
 
 /*!
@@ -979,7 +981,7 @@ void ApplicationManager::stopAllApplications(bool forceKill)
     for (Application *app : std::as_const(d->apps)) {
         AbstractRuntime *rt = app->currentRuntime();
         if (rt)
-            rt->stop(forceKill);
+            rt->stop(forceKill ? Am::ForcedExit : Am::NormalExit);
     }
 }
 
@@ -1226,7 +1228,7 @@ void ApplicationManager::shutDown()
         if (rt) {
             connect(rt, &AbstractRuntime::destroyed,
                     this, shutdownHelper);
-            rt->stop();
+            rt->stop(Am::NormalExit);
         }
     }
     shutdownHelper();

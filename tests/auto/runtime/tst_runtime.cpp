@@ -54,9 +54,9 @@ public Q_SLOTS:
         return true;
     }
 
-    void stop(bool forceKill) override
+    void stop(Am::ExitStatus exitStatus) override
     {
-        Q_UNUSED(forceKill)
+        Q_UNUSED(exitStatus)
         m_state = Am::NotRunning;
     }
 };
@@ -144,7 +144,7 @@ void tst_Runtime::factory()
     QVERIFY(r->start());
     QVERIFY(r->state() == Am::Running);
     QVERIFY(r->applicationProcessId() == 1);
-    r->stop();
+    r->stop(Am::NormalExit);
     QVERIFY(r->state() == Am::NotRunning);
     QVERIFY(!r->securityToken().isEmpty());
 }

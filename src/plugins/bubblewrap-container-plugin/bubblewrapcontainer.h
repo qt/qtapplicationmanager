@@ -46,8 +46,7 @@ public:
     qint64 processId() const override;
     RunState state() const override;
 
-    void kill() override;
-    void terminate() override;
+    void stop(ContainerInterface::ExitStatus exitStatus) override;
 
 private:
     void containerExited(int exitCode, QProcess::ExitStatus exitStatus);

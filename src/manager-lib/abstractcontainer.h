@@ -51,8 +51,7 @@ public:
     virtual Am::RunState state() const = 0;
 
 public Q_SLOTS:
-    virtual void kill() = 0;
-    virtual void terminate() = 0;
+    virtual void stop(QtAM::Am::ExitStatus exitStatus) = 0;
 
 Q_SIGNALS:
     void started();

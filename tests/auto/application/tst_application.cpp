@@ -40,9 +40,9 @@ public Q_SLOTS:
         return true;
     }
 
-    void stop(bool forceKill) override
+    void stop(Am::ExitStatus exitStatus) override
     {
-        Q_UNUSED(forceKill)
+        Q_UNUSED(exitStatus)
         m_state = Am::NotRunning;
     }
 };

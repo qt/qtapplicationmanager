@@ -483,7 +483,7 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
                 }
                 if (!success) {
                     qCWarning(lcBwrap) << "Network setup" << what << "failed!";
-                    QMetaObject::invokeMethod(this, &BubblewrapContainer::kill, Qt::QueuedConnection);
+                    QMetaObject::invokeMethod(this, [this] { stop(ForcedExit); }, Qt::QueuedConnection);
                 }
 
             }
@@ -614,21 +614,34 @@ qint64 BubblewrapContainer::processId() const
     return m_pid;
 }
 
+void BubblewrapContainer::stop(ExitStatus exitStatus)
+{
+    if (!m_process)
+        return;
+
+    switch (exitStatus) {
+    case NormalExit:
+        m_process->terminate();
+        break;
+    case ForcedExit:
+        m_process->kill();
+        break;
+    case CrashExit:
+        if (auto pid = m_process->processId())
+            ::kill((pid_t) pid, SIGSEGV);
+        break;
+    case WatchdogExit:
+        if (auto pid = m_process->processId()) {
+            if (int sig = manager()->helpers()->watchdogSignal())
+                ::kill((pid_t) pid, sig);
+        }
+        break;
+    }
+}
+
 BubblewrapContainer::RunState BubblewrapContainer::state() const
 {
     return m_state;
-}
-
-void BubblewrapContainer::kill()
-{
-    if (m_process)
-        m_process->kill();
-}
-
-void BubblewrapContainer::terminate()
-{
-    if (m_process)
-        m_process->terminate();
 }
 
 void BubblewrapContainer::containerExited(int exitCode, QProcess::ExitStatus exitStatus)
@@ -637,10 +650,21 @@ void BubblewrapContainer::containerExited(int exitCode, QProcess::ExitStatus exi
         exitCode = m_exitCode;
         exitStatus = QProcess::NormalExit;
     }
+
+    ExitStatus status = NormalExit;
+
+    if (exitStatus == QProcess::CrashExit) {
+        if ((exitCode == SIGTERM || exitCode == SIGKILL))
+            status = ForcedExit;
+        else if (exitCode == manager()->helpers()->watchdogSignal())
+            status = WatchdogExit;
+        else
+            status = CrashExit;
+    }
+
     m_state = NotRunning;
     emit stateChanged(m_state);
-    emit finished(exitCode, (exitStatus == QProcess::NormalExit) ? ContainerInterface::NormalExit
-                                                                 : ContainerInterface::CrashExit);
+    emit finished(exitCode, status);
 
     if (!runNetworkSetupScript(NetworkScriptEvent::Stop))
         qCWarning(lcBwrap) << "Network setup (stop) failed!";

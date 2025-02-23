@@ -48,8 +48,7 @@ public:
     void setProcessEnvironment(const QProcessEnvironment &environment);
 
 public Q_SLOTS:
-    void kill() override;
-    void terminate() override;
+    void stop(QtAM::Am::ExitStatus exitStatus) override;
 
     void start(const QString &program, const QStringList &arguments);
     void setStopBeforeExec(bool stopBeforeExec);

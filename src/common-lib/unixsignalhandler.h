@@ -34,6 +34,8 @@ public:
 
     static const char *signalName(int sig);
 
+    static int watchdogSignal();
+
     void resetToDefault(int sig);
     void resetToDefault(std::initializer_list<int> sigs);
 

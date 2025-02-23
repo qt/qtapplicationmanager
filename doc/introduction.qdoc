@@ -71,8 +71,7 @@ In addition to the runtime abstraction, the application manager is also able to 
 inside a \e container instead of just an external Unix process. Support for these container-based
 solutions must be provided by the customer and could range from full container solutions like
 KVM or XEN to LXC or even down to mandatory access control frameworks like AppArmor or SELinux.
-The application manager includes an example integration of Pelagicore's SoftwareContainers, which
-are based on Linux Containers (LXC).
+The application manager includes an integration with \l{Bubblewrap Container}{bubblewrap containers}.
 
 \target input management
 \section1 User Input Management

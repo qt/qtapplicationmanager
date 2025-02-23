@@ -367,8 +367,8 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
     This is the interface that you have to implement, if you want to get your own custom container
     solution into the application manager.
 
-    For an example, please see \c{examples/software-container}. This example shows the integration
-    of Pelagicore's SoftwareContainers (which are essentially nice-to-use LXC wrappers).
+    For an example, please see \c{src/plugins/bubblewrap-container-plugin/}. This is a plugin, that
+    integrates with \c bubblewrap containers.
 */
 
 /*! \fn void ContainerManagerInterface::initialize(ContainerHelperFunctions *helpers)

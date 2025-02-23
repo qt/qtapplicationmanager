@@ -39,7 +39,7 @@ add its full path to the list of plugins to load in the application manager's co
 
 \badcode
 plugins:
-  container: [ "/full/path/to/softwarecontainers.so", "/another/plugin.so" ]
+  container: [ "/full/path/to/mycontainers.so", "/another/plugin.so" ]
 \endcode
 
 Plugins installed into Qt's plugin directory into the \c appman_container folder are picked
@@ -72,7 +72,7 @@ control which container integration is used:
       selection:
       - com.pelagicore.*: "process"
       - com.navigation: "special-container"
-      - '*': "softwarecontainers"  # a single asterisk needs to be quoted
+      - '*': "mycontainers"  # a single asterisk needs to be quoted
     \endcode
 
   \li Afterwards, if the System UI did set the ApplicationManager::containerSelectionFunction
@@ -98,9 +98,8 @@ Custom container solutions can be added via plugins. These plugins need not to b
 of the application manager, but they need to be built against a private Qt module to get the
 interface definition.
 
-The \l{SoftwareContainer Plugin Example} can be used as a blueprint to either create a
-customer-specific production version of a SoftwareContainer plugin, or to integrate another
-container solution.
+The \l{Bubblewrap Container} plugin can be used as a blueprint to integrate another container
+solution.
 
 Following a brief introduction what steps needs to be done to build your own plugin. First you
 need to configure your build system.
@@ -132,12 +131,12 @@ and from \l ContainerManagerInterface respectively:
 \code
 #include <QtAppManPluginInterfaces/containerinterface.h>
 
-class SoftwareContainer : public ContainerInterface
+class MyContainer : public ContainerInterface
 {
     // ...
 };
 
-class SoftwareContainerManager : public QObject, public ContainerManagerInterface
+class MyContainerManager : public QObject, public ContainerManagerInterface
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID AM_ContainerManagerInterface_iid)

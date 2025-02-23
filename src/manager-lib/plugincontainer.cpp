@@ -206,6 +206,32 @@ int PluginContainerHelperFunctions::watchdogSignal()
     return UnixSignalHandler::watchdogSignal();
 }
 
+QString PluginContainerHelperFunctions::checkDBusSocketPath(const QString &dbusAddress, const QByteArray &typeHint)
+{
+    // parse the actual socket file name from the DBus address specification
+    QString socketPath = dbusAddress;
+    socketPath = socketPath.mid(socketPath.indexOf(u'=') + 1);
+    socketPath = socketPath.left(socketPath.indexOf(u','));
+    QFileInfo socketInfo(socketPath);
+    if (!socketInfo.exists()) {
+        QByteArray err = typeHint + " DBus socket doesn't exist: " + socketPath.toLocal8Bit();
+        throw std::runtime_error(err);
+    }
+    return socketInfo.absoluteFilePath();
+}
+
+QString PluginContainerHelperFunctions::checkWaylandSocketPath(const QString &xdgRuntimeDir, const QString &waylandDisplay)
+{
+    // parse the wayland socket name from wayland env variables
+    QString socketPath = xdgRuntimeDir + u'/' + waylandDisplay;
+    QFileInfo socketInfo(socketPath);
+    if (!socketInfo.exists()) {
+        QByteArray err = "Wayland socket doesn't exist: " + socketPath.toLocal8Bit();
+        throw std::runtime_error(err);
+    }
+    return socketInfo.absoluteFilePath();
+}
+
 QT_END_NAMESPACE_AM
 
 #include "moc_plugincontainer.cpp"

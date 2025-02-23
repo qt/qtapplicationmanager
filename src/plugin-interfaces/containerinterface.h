@@ -104,6 +104,10 @@ public:
 
     // added in 6.10:
     virtual int watchdogSignal() = 0;
+
+    // these two will throw std::exceptions on error:
+    virtual QString checkDBusSocketPath(const QString &dbusAddress, const QByteArray &typeHint) = 0;
+    virtual QString checkWaylandSocketPath(const QString &xdgRuntimeDir, const QString &waylandDisplay) = 0;
 };
 
 class ContainerManagerInterface

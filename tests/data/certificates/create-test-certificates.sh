@@ -35,7 +35,7 @@ elif [ -n "$OPENSSL_HOME" ]; then
   SSL_BIN_PATH="$OPENSSL_HOME/bin/"
 fi
 
-echo " * using openssl at ${SSL_BIN_PATH:-`which openssl`}"
+echo " * Using openssl at ${SSL_BIN_PATH:-`which openssl`}"
 
 # try to execute and extract the major version number
 SSL_VERSION=$(${SSL_BIN_PATH}openssl version 2>/dev/null || true)
@@ -45,7 +45,7 @@ if [ -z "$SSL_VERSION" ] || [ -z "$SSL_MAJOR" ] || ! [ "$SSL_MAJOR" -eq "$SSL_MA
   exit 1
 fi
 
-echo " * version $SSL_MAJOR (${SSL_VERSION})"
+echo " * Version ${SSL_MAJOR}: ${SSL_VERSION}"
 echo
 
 SSL_PKCS12_EXTRA=''

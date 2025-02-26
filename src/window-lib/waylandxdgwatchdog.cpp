@@ -224,11 +224,25 @@ void WaylandXdgWatchdog::onPongKillTimeout()
                 << " is getting killed, because it failed to send a pong reply to a ping request within "
                 << m_killTimeout;
 
+            if (isDebuggerAttached()) {
+                qCCritical(LogWatchdog).noquote() << "Debugger is attached to the system ui, not killing client";
+                continue;
+            }
+
             if (cd->m_apps.isEmpty()) {
-                cd->m_client->kill(SIGKILL);
+                qint64 pid = cd->m_client->processId();
+                if ((pid > 0) && isDebuggerAttached(pid))
+                    qCCritical(LogWatchdog).noquote() << "Debugger is attached to the client, not killing client";
+                else
+                    cd->m_client->kill(SIGKILL);
             } else {
-                for (auto *app : std::as_const(cd->m_apps))
-                    ApplicationManager::instance()->stopApplicationInternal(app, true);
+                for (auto *app : std::as_const(cd->m_apps)) {
+                    qint64 pid = app->currentRuntime() ? app->currentRuntime()->applicationProcessId() : 0;
+                    if ((pid > 0) && isDebuggerAttached(pid))
+                        qCCritical(LogWatchdog).noquote() << "Debugger is attached to the app, not killing" << app->id();
+                    else
+                        ApplicationManager::instance()->stopApplicationInternal(app, true);
+                }
             }
         }
     }

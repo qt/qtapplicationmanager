@@ -350,6 +350,40 @@ void validateIdForFilesystemUsage(const QString &id)  noexcept(false)
         throw Exception(Error::Parse, "must not consist of only white-space characters");
 }
 
+bool isDebuggerAttached(qint64 pid)
+{
+    bool debuggerAttached = false;
+
+#if defined(Q_OS_LINUX)
+    const QString procStatus = u"/proc/"_s + QString::number(pid ? pid : getpid()) + u"/status"_s;
+    QFile f(procStatus);
+    if (f.open(QIODevice::ReadOnly)) {
+        const QByteArray data = f.readAll();
+        auto pos = data.indexOf("TracerPid:\t");
+        if ((pos > 0) && (data.mid(pos + 11, 2) != "0\n"))
+            debuggerAttached = true;
+    }
+
+#elif defined(Q_OS_WINDOWS)
+    if (pid == 0)
+        debuggerAttached = IsDebuggerPresent();
+
+#elif defined(Q_OS_MACOS)
+    // Apple QA1361
+    std::array<int, 4> mib { CTL_KERN, KERN_PROC, KERN_PROC_PID, pid ? int(pid) : getpid() };
+    struct kinfo_proc procInfo;
+    size_t procInfoSize = sizeof(procInfo);
+
+    procInfo.kp_proc.p_flag = 0;
+    if (sysctl(mib.data(), mib.size(), &procInfo, &procInfoSize, nullptr, 0) == 0)
+        debuggerAttached = (procInfo.kp_proc.p_flag & P_TRACED);
+#else
+    Q_UNUSED(pid)
+#endif
+
+    return debuggerAttached;
+}
+
 QT_END_NAMESPACE_AM
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 6, 0)

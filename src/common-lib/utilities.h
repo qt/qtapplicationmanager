@@ -128,6 +128,9 @@ void closeAndClearFileDescriptors(QVector<int> &fdList);
 // make sure that the given id can be used as a filename
 void validateIdForFilesystemUsage(const QString &id) noexcept(false);
 
+// returns true if the specified process is being debugged (pid == 0 denotes the current process)
+bool isDebuggerAttached(qint64 pid = 0);
+
 QT_END_NAMESPACE_AM
 
 

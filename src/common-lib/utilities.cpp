@@ -138,16 +138,12 @@ qint64 getParentPid(qint64 pid)
     }
 
 #elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
-    int mibNames[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, (pid_t) pid };
-    size_t procInfoSize;
+    std::array<int, 4> mib { CTL_KERN, KERN_PROC, KERN_PROC_PID, (pid_t) pid };
+    kinfo_proc procInfo;
+    size_t procInfoSize = sizeof(procInfo);
 
-    if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), nullptr, &procInfoSize, nullptr, 0) == 0) {
-        kinfo_proc *procInfo = (kinfo_proc *) malloc(procInfoSize);
-
-        if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), procInfo, &procInfoSize, nullptr, 0) == 0)
-            ppid = procInfo->kp_eproc.e_ppid;
-        free(procInfo);
-    }
+    if (sysctl(mib.data(), mib.size(), &procInfo, &procInfoSize, nullptr, 0) == 0)
+        ppid = procInfo.kp_eproc.e_ppid;
 
 #elif defined(Q_OS_WIN)
     PROCESSENTRY32 pe32;

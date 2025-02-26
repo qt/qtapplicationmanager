@@ -657,7 +657,7 @@ qreal CpuReader::readLoadValue()
 
     if (host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &cpuCount,
                             reinterpret_cast<processor_info_array_t *>(&cpuLoadInfo),
-                            &cpuLoadInfoCount) == KERN_SUCCESS) {
+                            &cpuLoadInfoCount) == 0) {
         qint64 idle = 0, total = 0;
 
         for (natural_t i = 0; i < cpuCount; ++i) {
@@ -685,18 +685,18 @@ int MemoryReader::s_pageSize = 0;
 MemoryReader::MemoryReader()
 {
     if (!s_totalValue) {
-        int mib[2] = { CTL_HW, HW_MEMSIZE };
+        std::array<int, 2> mib { CTL_HW, HW_MEMSIZE };
         int64_t hwMem;
         size_t hwMemSize = sizeof(hwMem);
 
-        if (sysctl(mib, sizeof(mib) / sizeof(*mib), &hwMem, &hwMemSize, nullptr, 0) == KERN_SUCCESS)
+        if (sysctl(mib.data(), mib.size(), &hwMem, &hwMemSize, nullptr, 0) == 0)
             s_totalValue = quint64(hwMem);
 
         mib[1] = HW_PAGESIZE;
         int hwPageSize;
         size_t hwPageSizeSize = sizeof(hwPageSize);
 
-        if (sysctl(mib, sizeof(mib) / sizeof(*mib), &hwPageSize, &hwPageSizeSize, nullptr, 0) == KERN_SUCCESS)
+        if (sysctl(mib.data(), mib.size(), &hwPageSize, &hwPageSizeSize, nullptr, 0) == 0)
             s_pageSize = hwPageSize;
     }
 }
@@ -707,7 +707,7 @@ quint64 MemoryReader::readUsedValue() const
     mach_msg_type_number_t vmStatCount = HOST_VM_INFO64_COUNT;
 
     if (host_statistics64(mach_host_self(), HOST_VM_INFO64,
-                          reinterpret_cast<host_info64_t>(&vmStat), &vmStatCount) == KERN_SUCCESS) {
+                          reinterpret_cast<host_info64_t>(&vmStat), &vmStatCount) == 0) {
         quint64 app = vmStat.internal_page_count;
         quint64 compressed = vmStat.compressor_page_count;
         quint64 wired = vmStat.wire_count;

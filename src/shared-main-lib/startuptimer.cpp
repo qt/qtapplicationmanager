@@ -251,37 +251,31 @@ StartupTimer::StartupTimer()
     }
 
 #elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
-    int mibNames[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
-    size_t procInfoSize;
+    std::array<int, 4> mib { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
+    kinfo_proc procInfo;
+    size_t procInfoSize = sizeof(procInfo);
 
-    if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), nullptr, &procInfoSize, nullptr, 0) == 0) {
-        kinfo_proc *procInfo = static_cast<kinfo_proc *>(malloc(procInfoSize));
+    if (sysctl(mib.data(), mib.size(), &procInfo, &procInfoSize, nullptr, 0) == 0) {
+        struct timeval now;
 
-        if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), procInfo, &procInfoSize, nullptr, 0) == 0) {
-            struct timeval now;
-
-            if (gettimeofday(&now, nullptr) == 0) {
-                m_processCreation = (quint64(now.tv_sec) * 1000000 + quint64(now.tv_usec))
-                        - (quint64(procInfo->kp_proc.p_un.__p_starttime.tv_sec) * 1000000
-                           + quint64(procInfo->kp_proc.p_un.__p_starttime.tv_usec));
-                m_initialized = true;
-            }
-        } else {
-            qWarning("StartupTimer: could not get kinfo_proc from kernel");
+        if (gettimeofday(&now, nullptr) == 0) {
+            m_processCreation = (quint64(now.tv_sec) * 1000000 + quint64(now.tv_usec))
+                                - (quint64(procInfo.kp_proc.p_un.__p_starttime.tv_sec) * 1000000
+                                   + quint64(procInfo.kp_proc.p_un.__p_starttime.tv_usec));
+            m_initialized = true;
         }
-        free(procInfo);
-    } else {
-        qWarning("StartupTimer: could not get size of kinfo_proc buffer");
     }
 
     // Get system up time
-    if (m_initialized) {
+    if (!m_initialized) {
+        qWarning("StartupTimer: could not get kinfo_proc from kernel");
+    } else {
+        std::array<int, 2> mib { CTL_KERN, KERN_BOOTTIME };
         struct timeval bootTime;
-        size_t bootTimeLen = sizeof(bootTime);
-        int mibNames[2] = { CTL_KERN, KERN_BOOTTIME };
-        if (sysctl(mibNames, sizeof(mibNames) / sizeof(mibNames[0]), &bootTime, &bootTimeLen, nullptr, 0) == 0 ) {
+        size_t bootTimeSize = sizeof(bootTime);
+
+        if (sysctl(mib.data(), mib.size(), &bootTime, &bootTimeSize, nullptr, 0) == 0)
             m_systemUpTime = quint64(time(nullptr) - bootTime.tv_sec) * 1000; // we don't need more precision on macOS
-        }
     }
 
 #else

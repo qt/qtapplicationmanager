@@ -33,11 +33,24 @@
 #include "applicationmanager_interface.h"
 #include "packagemanager_interface.h"
 
-#include "interrupthandler.h"
+#include "unixsignalhandler.h"
 
 using namespace Qt::StringLiterals;
 
 QT_USE_NAMESPACE_AM
+
+static void installInterruptHandler(const std::function<void (int)> &handler)
+{
+#if defined(Q_OS_UNIX)
+#  define AM_SIGNALS  { SIGTERM, SIGINT, SIGPIPE, SIGHUP }
+#else
+#  define AM_SIGNALS  { SIGTERM, SIGINT }
+#endif
+    // on Ctrl+C or SIGTERM -> stop the application
+    UnixSignalHandler::instance()->resetToDefault(AM_SIGNALS);
+    UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
+                                           AM_SIGNALS, handler);
+}
 
 class DBus : public QObject
 {
@@ -716,7 +729,8 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
     if (stdRedirections.isEmpty() || !isStarted) {
         qApp->exit(isStarted ? 0 : 2);
     } else {
-        InterruptHandler::install([appId](int) {
+        installInterruptHandler([appId](int sig) {
+            fprintf(stdout, "Stopping application due to signal %s.\n", UnixSignalHandler::signalName(sig));
             auto stopReply = dbus()->manager()->stopApplication(appId, true);
             stopReply.waitForFinished();
             qApp->exit(1);
@@ -892,8 +906,8 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
 
     // cancel the job on Ctrl+C
 
-    InterruptHandler::install([](int) {
-        fprintf(stdout, "Cancelling package installation.\n");
+    installInterruptHandler([](int sig) {
+        fprintf(stdout, "Cancelling package installation due to signal %s.\n", UnixSignalHandler::signalName(sig));
         auto cancelReply = dbus()->packager()->cancelTask(installationId);
         cancelReply.waitForFinished();
         qApp->exit(1);

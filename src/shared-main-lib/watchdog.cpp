@@ -83,6 +83,11 @@ static quintptr currentThreadHandle()
 
 static void killThread(quintptr threadHandle)
 {
+    if (isDebuggerAttached()) {
+        qCCritical(LogWatchdog) << "Debugger is attached, not killing thread";
+        return;
+    }
+
 #if defined(Q_OS_DARWIN)
     ::pthread_kill(reinterpret_cast<pthread_t>(threadHandle), SIGABRT);
 #elif defined(Q_OS_UNIX)

@@ -426,6 +426,7 @@ void NativeRuntime::stop(bool forceKill)
         int qt = configuration().value(u"quitTime"_s).toInt(&ok);
         if (!ok || qt < 0)
             qt = 250;
+        qt *= timeoutFactor();
         QTimer::singleShot(qt, this, [this]() {
             m_process->kill();
         });

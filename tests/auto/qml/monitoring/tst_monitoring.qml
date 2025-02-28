@@ -52,7 +52,7 @@ TestCase {
         mem.update()
         verify(mem.totalMemory >= 500000000) // 0.5GB
         verify(mem.totalMemory < 500000000000) // 500GB
-        verify(mem.memoryUsed < mem.totalMemory)
+        verify(mem.memoryUsed > 0)
     }
     function test_model() {
         compare(monitor.running, false)

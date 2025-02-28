@@ -544,7 +544,7 @@ TestCase {
         tryVerify(() => (lastWindowItem.window?.application?.id === simpleApplication.id))
         lastWindowItem.forceActiveFocus()
 
-        let req = IntentClient.sendIntentRequest("applicationManagerWindow", simpleApplication.id, { "waitUntilActive": 1000 })
+        let req = IntentClient.sendIntentRequest("applicationManagerWindow", simpleApplication.id, { "waitUntilActive": 1000 * AmTest.timeoutFactor})
         verify(req)
         tryVerify(() => { return req.succeeded })
 

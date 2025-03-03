@@ -469,9 +469,9 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 
 #if QT_CONFIG(am_installer)
     if (d->data.applications.installationDir.isEmpty()) {
-        qCWarning(LogDeployment) << "No --installation-dir command line parameter or applications/installationDir "
-                                    "configuration key specified. It won't be possible to install, remove or "
-                                    "access installable packages.";
+        qCInfo(LogDeployment) << "No --installation-dir command line parameter or applications/installationDir "
+                                 "configuration key specified. It won't be possible to install, remove or "
+                                 "access installable packages.";
     }
 #endif
 }

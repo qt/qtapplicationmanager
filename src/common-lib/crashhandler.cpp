@@ -154,10 +154,10 @@ void CrashHandler::setCrashActionConfiguration(bool printBacktrace, bool printQm
         // disable the Squish crash handler, it will still disable ALL signal handling.
         const auto sigs = UnixSignalHandler::instance()->reinstallIfNeeded(AM_UNIX_CRASH_SIGNALS);
         if (!sigs.empty()) {
-            qCWarning(LogSystem) << "The crash handler was re-enabled, because these Unix signal handlers were set or reset:";
+            qCInfo(LogSystem) << "The crash handler was re-enabled, because these Unix signal handlers were set or reset:";
             for (int sig : sigs) {
-                qCWarning(LogSystem).nospace() << " * " << UnixSignalHandler::signalName(sig)
-                                               << " (" << sig << ")";
+                qCInfo(LogSystem).nospace() << " * " << UnixSignalHandler::signalName(sig)
+                                            << " (" << sig << ")";
             }
         }
 #endif

@@ -10,6 +10,9 @@ accept_configuration:
 instructions:
   Build:
   - type: EnvironmentVariable
+    variableName: VERIFY_SOURCE_SBOM
+    variableValue: "ON"
+  - type: EnvironmentVariable
     variableName: BUILD_DOCUMENTATION
     variableValue: "1"
   - type: AppendToEnvironmentVariable

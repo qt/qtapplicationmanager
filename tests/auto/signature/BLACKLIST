@@ -2,3 +2,10 @@
 # QTBUG-109756
 rhel-9.0
 rhel-9.2
+
+[check]
+macos-11
+macos-12
+macos-13
+macos-14
+macos-15 # QTBUG-130554

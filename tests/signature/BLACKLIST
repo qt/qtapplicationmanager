@@ -1,0 +1,3 @@
+[check]
+windows
+macos # QTBUG-130554

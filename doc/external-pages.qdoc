@@ -10,3 +10,8 @@
     \externalpage https://specifications.freedesktop.org/notification-spec/
     \title org.freedesktop.Notifications
 */
+
+*!
+    \externalpage https://github.com/rgriebl/wlanalyze
+    \title wlanalyze
+*/

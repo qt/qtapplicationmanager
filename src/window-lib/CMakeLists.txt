@@ -31,6 +31,9 @@ qt_internal_add_module(AppManWindowPrivate
 )
 
 if(QT_FEATURE_am_multi_process)
+    if (NOT TARGET Wayland::Server)
+        qt_find_package(Wayland 1.15 PROVIDED_TARGETS Wayland::Server)
+    endif()
 
     qt6_generate_wayland_protocol_server_sources(AppManWindowPrivate
         FILES
@@ -44,6 +47,7 @@ if(QT_FEATURE_am_multi_process)
             waylandwindow.cpp waylandwindow.h
         LIBRARIES
             Qt::WaylandCompositorPrivate
+            Wayland::Server
         PUBLIC_LIBRARIES
             Qt::WaylandCompositor
     )

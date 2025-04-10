@@ -111,6 +111,10 @@ protected:
     void onPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurface *xdgSurface);
     void onXdgPongReceived(uint serial);
 
+    static QObject *preConstructor(QObject *parent);
+    static bool s_taggedLogging;
+    void setupLogging();
+
     QWaylandWlShell *m_wlShell;
     QWaylandXdgShell *m_xdgShell;
     QVector<QWaylandOutput *> m_outputs;

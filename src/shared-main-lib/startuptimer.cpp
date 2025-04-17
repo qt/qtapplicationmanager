@@ -341,7 +341,7 @@ void StartupTimer::checkFirstFrame()
 void StartupTimer::reset()
 {
     if (m_initialized) {
-        m_timer.restart();
+        m_timer.start();
         m_checkpoints.clear();
         m_processCreation = 0;
     }

@@ -284,7 +284,7 @@ void FrameTimer::reportFrameSwap()
 {
     int frameTime = m_timer.isValid() ? qMax(1, int(m_timer.nsecsElapsed() / 1000))
                                       : IdealFrameTime;
-    m_timer.restart();
+    m_timer.start();
 
     ++m_count;
     m_sum += frameTime;

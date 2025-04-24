@@ -109,8 +109,8 @@ Here's a snippet on how to do this with cmake:
 \badcode
 ...
 find_package(Qt6 COMPONENTS AppManPluginInterfacesPrivate)
-qt_add_plugin(mycontainer-plugin)
-target_link_libraries(mycontainer-plugin PUBLIC Qt::AppManPluginInterfacesPrivate)
+qt_add_plugin(mycontainer_plugin)
+target_link_libraries(mycontainer_plugin PUBLIC Qt::AppManPluginInterfacesPrivate)
 ...
 \endcode
 
@@ -120,7 +120,7 @@ Here's the qmake version:
 ...
 TEMPLATE = lib
 CONFIG += plugin
-TARGET = mycontainer-plugin
+TARGET = mycontainer_plugin
 
 QT += appman_plugininterfaces-private
 ...

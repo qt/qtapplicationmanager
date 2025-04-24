@@ -15,6 +15,7 @@ qt_standard_project_setup(REQUIRES 6.5)
 qt_add_plugin(softwarecontainer-plugin
     softwarecontainer.h
     softwarecontainer.cpp
+    CLASS_NAME softwarecontainer_plugin
 )
 
 target_link_libraries(softwarecontainer-plugin PUBLIC

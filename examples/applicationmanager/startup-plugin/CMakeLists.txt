@@ -15,6 +15,7 @@ qt_standard_project_setup(REQUIRES 6.5)
 qt_add_plugin(startup-plugin
     startup-plugin.h
     startup-plugin.cpp
+    CLASS_NAME startup_plugin
 )
 
 target_link_libraries(startup-plugin PUBLIC

@@ -28,18 +28,26 @@ TestCase {
     property WindowObject lastWindowAdded: null
     WindowItem {
         id: lastWindowItem
-        focus: true
     }
 
     ListView {
         id: listView
-        focus: true
         anchors.fill: parent
         opacity: 0.1
         model: ApplicationManager
         delegate: Item {
             required property var modelData
         }
+    }
+
+    // Without setting the focus to this item initially, the first Wayland client may not get
+    // focus even with forceActiveFocus. With software rendering there's even just a 1% chance
+    // that this might work without this dummy item.
+    TextInput {
+        id: focusDummy
+        focus: false
+        anchors.fill: parent
+        opacity: 0.01
     }
 
     ApplicationModel {
@@ -470,7 +478,7 @@ TestCase {
     function test_applicationInterface() {
         let req = IntentClient.sendIntentRequest("applicationInterfaceProperties", simpleApplication.id, { })
         verify(req)
-        tryVerify(() => { return req.succeeded })
+        tryVerify(() => { return req.succeeded }, 5000 * AmTest.timeoutFactor)
         const ai = {
             "applicationId": simpleApplication.id,
             "applicationProperties": {
@@ -507,7 +515,7 @@ TestCase {
     function test_qapplicationProperties() {
         let req = IntentClient.sendIntentRequest("qapplicationProperties", simpleApplication.id, { })
         verify(req)
-        tryVerify(() => { return req.succeeded })
+        tryVerify(() => { return req.succeeded }, 5000 * AmTest.timeoutFactor)
 
         let r = req.result
         let qap = { }
@@ -536,7 +544,8 @@ TestCase {
             skip("Test can only be run without AM_BACKGROUND_TEST set, since it requires input focus");
 
         // initialize focus
-        listView.forceActiveFocus()
+        focusDummy.forceActiveFocus()
+        compare(Window.activeFocusItem, focusDummy)
 
         verify(ApplicationManager.startApplication(simpleApplication.id))
         tryCompare(WindowManager, "count", 1)
@@ -546,7 +555,7 @@ TestCase {
 
         let req = IntentClient.sendIntentRequest("applicationManagerWindow", simpleApplication.id, { "waitUntilActive": 1000 * AmTest.timeoutFactor})
         verify(req)
-        tryVerify(() => { return req.succeeded })
+        tryVerify(() => { return req.succeeded }, 5000 * AmTest.timeoutFactor)
 
         let r = req.result
 

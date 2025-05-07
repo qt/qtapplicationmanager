@@ -30,6 +30,7 @@
 #include "dbusnotificationimpl.h"
 #include "waylandapplicationmanagerwindowimpl.h"
 #include "dbusapplicationinterfaceimpl.h"
+#include "startuptimer.h"
 #include "applicationmain.h"
 
 #ifdef interface // in case windows.h got included somehow
@@ -70,6 +71,7 @@ ApplicationMain::ApplicationMain(int &argc, char **argv) noexcept
         // mode is a singleton (which really does not fit the factory pattern well)
         return m_applicationInterfaceImpl.get();
     });
+    StartupTimer::instance()->checkpoint("after application constructor");
 }
 
 ApplicationMain::~ApplicationMain()

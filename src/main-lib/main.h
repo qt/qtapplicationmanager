@@ -123,7 +123,7 @@ private:
 
 private:
     bool m_isSingleProcessMode = false;
-    bool m_isRunningOnEmbedded = false;
+    static bool s_isRunningOnEmbedded;
     QUrl m_mainQml;
     QString m_mainQmlLocalFile;
     bool m_showFullscreen = false;

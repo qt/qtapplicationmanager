@@ -114,11 +114,18 @@ AM_QML_REGISTER_TYPES(QtApplicationManager_Application)
 QT_BEGIN_NAMESPACE_AM
 
 static bool unexpectedShutdown = true;
+bool Main::s_isRunningOnEmbedded = false;
 
 // We need to do some things BEFORE the Q*Application constructor runs, so we're using this
 // old trick to do this hooking transparently for the user of the class.
 int &Main::preConstructor(int &argc, char **argv, InitFlags initFlags)
 {
+#if defined(Q_OS_LINUX)
+    // prevent KDE/GNOME platform theme loading
+    s_isRunningOnEmbedded = !qEnvironmentVariableIsSet("XDG_CURRENT_DESKTOP");
+    qputenv("XDG_CURRENT_DESKTOP", "QTAM");
+#endif
+
     if (initFlags & InitFlag::InitializeLogging) {
         Logging::initialize(argc, argv);
         StartupTimer::instance()->checkpoint("after logging initialization");
@@ -134,13 +141,6 @@ Main::Main(int &argc, char **argv, InitFlags initFlags)
     : MainBase(SharedMain::preConstructor(Main::preConstructor(argc, argv, initFlags)), argv)
     , SharedMain()
 {
-    m_isRunningOnEmbedded =
-#if defined(Q_OS_LINUX)
-            !qEnvironmentVariableIsSet("XDG_CURRENT_DESKTOP");
-#else
-            false;
-#endif
-
     static bool once = false;
     if (!once) {
         once = true;
@@ -257,7 +257,7 @@ bool Main::isSingleProcessMode() const
 
 bool Main::isRunningOnEmbedded() const
 {
-    return m_isRunningOnEmbedded;
+    return s_isRunningOnEmbedded;
 }
 
 void Main::shutDown(const char *shutdownReason, int exitCode)

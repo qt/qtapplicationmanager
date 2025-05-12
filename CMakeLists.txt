@@ -172,7 +172,7 @@ add_custom_target("Other-Files" SOURCES
 
 ## QMAKE FEATURES #####################################################
 
-if(NOT QT_BUILD_STANDALONE_TESTS)
+if(NOT QT_BUILD_STANDALONE_TESTS AND NOT QT_BUILD_STANDALONE_EXAMPLES)
     # Copy mkspecs for users preferring qmake builds
     set(mkspecs_install_dir "${INSTALL_MKSPECSDIR}")
     qt_path_join(mkspecs_install_dir ${QT_INSTALL_DIR} ${mkspecs_install_dir})

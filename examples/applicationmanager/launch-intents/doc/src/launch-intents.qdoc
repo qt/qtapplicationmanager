@@ -9,6 +9,8 @@
 \title Launch Applications Using Intents System UI Example
 \image launch-intents-example.png The Launch Intents example with two applications running.
 
+\note Please \l{wayland-dev-packages}{read this} if you want to build the example on a Linux machine.
+
 \section1 Introduction
 
 This example shows you how to use intents as a basis for a launcher in a System UI.

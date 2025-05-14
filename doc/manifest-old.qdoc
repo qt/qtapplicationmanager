@@ -117,7 +117,7 @@ The fields within the \c info.yaml manifest data (second YAML document) are as f
     \li \e Required. The main executable - interpreted by the \c runtime.
 \row
     \li \c categories
-    \li array<string>
+    \li list<string>
     \li The list of category names the application should be associated with. This is mainly for
         the automated app-store uploads as well as displaying the application within a fixed set
         of categories in the System UI.
@@ -161,14 +161,14 @@ The fields within the \c info.yaml manifest data (second YAML document) are as f
         \c true. Otherwise the default is \c false.
 \row
     \li \c mimeTypes
-    \li array<string>
+    \li list<string>
     \target mimeTypes field
     \li An optional array of MIME types the application can handle. The application manager
         supports the classic file name or content to MIME type matching, as well as URL scheme
         matching. For more information, see \l{ApplicationManager::openUrl}.
 \row
     \li \c capabilities
-    \li array<string>
+    \li list<string>
     \li An optional, platform specific list of special access rights for the application. Later,
         the middleware can query these capabilities and verify them, via the application manager.
 
@@ -249,27 +249,27 @@ that specifies which runtime a configuration option applies to:
 \row
     \li \c importPaths
     \li qml, qml-in-process
-    \li array<string>
+    \li list<string>
     \li A list of paths to add to the QML-engine's import paths. Use of this parameter is
         equivalent to setting \c QML2_IMPORT_PATH for a program started from the command line.
 \row
     \li \c resources
     \li qml, qml-in-process
-    \li array<string>
+    \li list<string>
     \li Takes a list of \l{The Qt Resource System}{Qt resource} files (.rcc) or libraries that have
         resources \l{Resource Collection Files}{compiled-in} and registers them within the application
         process. Resources can be accessed with the ":" or "qrc://" file path prefix.
 \row
     \li \c pluginPaths
     \li qml, qml-in-process
-    \li array<string>
+    \li list<string>
     \li A list of paths to add to Qt's library paths, which are used to find plugins. Use of this
         parameter is equivalent to setting \c QT_PLUGIN_PATH for a program started from the command
         line.
 \row
     \li \c arguments
     \li native
-    \li array<string>
+    \li list<string>
     \li A list of command line parameters to use when starting the application's executable.
 \row
     \li \c environmentVariables

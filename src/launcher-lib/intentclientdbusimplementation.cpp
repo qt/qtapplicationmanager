@@ -81,7 +81,7 @@ void IntentClientDBusImplementation::requestToSystem(QPointer<IntentClientReques
 {
     QDBusPendingReply<QString> reply =
             m_dbusInterface->requestToSystem(icr->intentId(), icr->applicationId(),
-                                             convertFromJSVariant(icr->parameters()).toMap());
+                                             convertToDBusVariant(icr->parameters()).toMap());
 
     QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(reply, icr);
     connect(watcher, &QDBusPendingCallWatcher::finished, icr, [this, watcher, icr]() {
@@ -97,7 +97,7 @@ void IntentClientDBusImplementation::replyFromApplication(QPointer<IntentClientR
 {
     if (icr) {
         m_dbusInterface->replyFromApplication(icr->requestId().toString(), !icr->succeeded(),
-                                              convertFromJSVariant(icr->result()).toMap());
+                                              convertToDBusVariant(icr->result()).toMap());
         //TODO: should we wait for the call completion - how/why would we report a possible failure?
     }
 }

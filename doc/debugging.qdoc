@@ -23,6 +23,10 @@ The application manager defines the following logging categories:
 
 \include logging.cpp am-logging-categories
 
+\note The \c{am.qml*} categories are just for reporting problems with the QML engine in the
+      application manager itself. Normal QML output via the \c console object is handled just
+      like \l {Debugging QML Applications} {in any other Qt application}.
+
 \section2 Environment Variables
 
 This is a (incomplete) list of environment variables that influence the logging output at runtime:

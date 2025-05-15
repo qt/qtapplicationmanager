@@ -20,7 +20,7 @@ Q_DECLARE_METATYPE(QT_PREPEND_NAMESPACE_AM(UnixFdMap))
 
 QT_BEGIN_NAMESPACE_AM
 
-QVariant convertFromJSVariant(const QVariant &variant);
+QVariant convertToDBusVariant(const QVariant &variant);
 
 QVariant convertFromDBusVariant(const QVariant &variant);
 

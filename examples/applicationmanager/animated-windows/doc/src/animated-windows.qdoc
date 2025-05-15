@@ -11,6 +11,8 @@
 \title Animated Windows System UI Example
 \image animated-windows-example.jpg The Animated Windows example with two applications running.
 
+\note Please \l{wayland-dev-packages}{read this} if you want to build the example on a Linux machine.
+
 \section1 Introduction
 
 This example shows you how to animate windows to appear and disappear, in a System UI.

@@ -11,6 +11,8 @@
 \title Multiple Views per Window System UI Example
 \image multi-views.png
 
+\note Please \l{wayland-dev-packages}{read this} if you want to build the example on a Linux machine.
+
 \section1 Introduction
 
 This example shows you how to assign the same WindowObject to multiple WindowItems, resulting in

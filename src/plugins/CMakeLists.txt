@@ -1,4 +1,4 @@
 
-if(LINUX AND QT_FEATURE_am_multi_process)
+if(QT_FEATURE_am_bubblewrap_container)
     add_subdirectory(bubblewrap-container-plugin)
 endif()

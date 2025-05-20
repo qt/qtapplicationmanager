@@ -53,6 +53,13 @@ qt_feature("am-multi-process" PUBLIC
     DISABLE INPUT_force_mode STREQUAL 'single'
 )
 
+qt_feature("am-bubblewrap-container" PUBLIC
+    LABEL "Bubblewrap container support"
+    CONDITION LINUX AND QT_FEATURE_am_multi_process
+    ENABLE INPUT_bubblewrap STREQUAL 'yes'
+    DISABLE INPUT_bubblewrap STREQUAL 'no'
+)
+
 qt_feature("am-installer" PUBLIC
     LABEL "Enable the installer component"
     CONDITION QT_FEATURE_ssl AND NOT IOS

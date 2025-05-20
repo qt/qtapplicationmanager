@@ -199,6 +199,10 @@ modules:
   \li \c{systemd-watchdog}
   \li Set to \c no to disable building against \c libsystemd for \l{Watchdog} support and \c
       yes to force building with it. The default depends on the availability of \c libsystemd-dev.
+\row
+  \li \c{bubblewrap}
+  \li Set to \c no to disable building the \l{Bubblewrap Container} plugin and \c
+      yes to force building it. By default the plugin is built in multi-process mode.
 \endtable
 
 \section2 The Hardware ID

@@ -60,9 +60,32 @@ if (WIN32)
         # We need to set the PATH *inside* the bash, because MingW's bash.exe will always prepend
         # /mingw64/bin to $PATH, which in most cases has incompatible versions of the stdc++ and
         # gcc libs, preventing the appman-packager from starting.
-
+        set(appman_packager_found FALSE)
+        set(appman_packager_target "${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager")
+        if(CMAKE_HOST_WIN32 AND CMAKE_CROSSCOMPILING)
+            if (TARGET "${appman_packager_target}")
+                set(appman_packager_found TRUE)
+                get_target_property(packager ${appman_packager_target} IMPORTED_LOCATION)
+                cmake_path(GET packager ROOT_NAME root_name)
+            else()
+                set(path "${QT_HOST_PATH}/${QT6_HOST_INFO_BINDIR}/")
+                cmake_path(GET path ROOT_NAME root_name)
+            endif()
+            if(NOT root_name)
+                set(disk "C:")
+            else()
+                set(disk "")
+            endif()
+            if(appman_packager_found)
+                set(packager "${disk}${packager}")
+            else()
+                set(packager "${disk}${path}$<TARGET_FILE_NAME:${appman_packager_target}>")
+            endif()
+        else()
+            set(packager "$<TARGET_FILE:${appman_packager_target}>")
+        endif()
         add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/packages
-                           COMMAND ${bash} -c 'export PATH="`cygpath -u -p \"${env_path}\"`:$$PATH" \; ${CMAKE_CURRENT_BINARY_DIR}/create-test-packages.sh $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>'
+                           COMMAND ${bash} -c 'export PATH="`cygpath -u -p \"${env_path}\"`:$$PATH" \; ${CMAKE_CURRENT_BINARY_DIR}/create-test-packages.sh \"${packager}\"'
                            DEPENDS ${ALL_TEST_DATA_FILES}
         )
     endif()

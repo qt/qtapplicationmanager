@@ -143,12 +143,12 @@ private:
 
         WaylandWindow *m_waylandWindow{nullptr};
         WaylandQuickIgnoreKeyItem *m_waylandItem{nullptr};
-        bool m_complete = false;
     };
 #endif // QT_CONFIG(am_multi_process)
 
-    Impl *m_impl{nullptr};
-    bool m_objectFollowsItemSize{true};
+    Impl *m_impl = nullptr;
+    bool m_objectFollowsItemSize = true;
+    bool m_complete = false;
 
     // The only purpose of this item is to ensure all WindowItem children added by System UI code ends up
     // in front of WindowItem's internal QWaylandQuickItem (or the application's root item in case of

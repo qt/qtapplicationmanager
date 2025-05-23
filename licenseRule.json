@@ -76,7 +76,7 @@
             "": {
                 "comment": "Default",
                 "file type": "module and plugin",
-                "spdx": ["LicenseRef-Qt-Commercial OR GPL-3.0-only"]
+                "spdx": ["LicenseRef-Qt-Commercial"]
             },
             "doc/QtApplicationManagerDoc": {
                 "comment": "Default",
@@ -86,7 +86,7 @@
             "src/wayland-extensions/qtam-extension.xml": {
                 "comment": "exception",
                 "file type": "module and pluginn",
-                "spdx": ["LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0"]
+                "spdx": ["LicenseRef-Qt-Commercial"]
             },
             "doc/": {
                 "comment": "Default",
@@ -106,7 +106,7 @@
             "src/tools/": {
                 "comment": "Default",
                 "file type": "tools and utils",
-                "spdx": ["LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0"]
+                "spdx": ["LicenseRef-Qt-Commercial"]
             },
             "tests/": {
                 "comment": "Default",
@@ -121,7 +121,7 @@
             "util/": {
                 "comment": "Default",
                 "file type": "util",
-                "spdx": ["LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0"]
+                "spdx": ["LicenseRef-Qt-Commercial"]
             },
             "(examples|.*)(.*)/doc/images/": {
                 "comment": "Default",

@@ -12,14 +12,21 @@ path = ["util/**"]
 precedence = "closest"
 comment = "tools and utils"
 SPDX-FileCopyrightText = "Copyright (C) 2024 The Qt Company Ltd."
-SPDX-License-Identifier = "LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0"
+SPDX-License-Identifier = "LicenseRef-Qt-Commercial"
 
 [[annotations]]
-path = ["doc/QtApplicationManagerDoc", "src/**"]
+path = ["doc/QtApplicationManagerDoc"]
 precedence = "closest"
 comment = "src and plugin"
 SPDX-FileCopyrightText = "Copyright (C) 2024 The Qt Company Ltd."
 SPDX-License-Identifier = "LicenseRef-Qt-Commercial OR GPL-3.0-only"
+
+[[annotations]]
+path = ["src/**"]
+precedence = "closest"
+comment = "src and plugin"
+SPDX-FileCopyrightText = "Copyright (C) 2024 The Qt Company Ltd."
+SPDX-License-Identifier = "LicenseRef-Qt-Commercial"
 
 [[annotations]]
 path = ["coin/**", "**.cmake", "**.conf", "**.qrc",

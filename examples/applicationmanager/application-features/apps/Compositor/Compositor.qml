@@ -5,6 +5,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtApplicationManager.Application
 import QtWayland.Compositor
 import QtWayland.Compositor.XdgShell
 import QtWayland.Compositor.WlShell
@@ -12,7 +13,9 @@ import QtWayland.Compositor.WlShell
 Item {
     id: root
 
-    property ListModel shellSurfaces: ListModel {}
+    function close() {
+        shellSurfaces.clear();
+    }
 
     Text {
         anchors.fill: parent
@@ -26,30 +29,44 @@ Item {
               "<br><br><small>* in multi-process mode</small>"
     }
 
-    WaylandCompositor {
-        socketName: "qtam-wayland-nested"
+    Loader {
+        id: ldr
+        active: root.Window.window       // Window attached property might not be available immediately (in-process)
+        sourceComponent: Component {
+            WaylandCompositor {
+                socketName: "qtam-wayland-nested"
 
-        WaylandOutput {
-            window: Window.window
-            sizeFollowsWindow: true
-        }
+                WaylandOutput {
+                    window: root.Window.window
+                    sizeFollowsWindow: true
+                }
 
-        WlShell {
-            onWlShellSurfaceCreated: (shellSurface) => root.shellSurfaces.append({shellSurface: shellSurface});
-        }
+                WlShell {
+                    onWlShellSurfaceCreated: (shellSurface) => shellSurfaces.append({shellSurface});
+                }
 
-        XdgShell {
-            onToplevelCreated: (toplevel, xdgSurface) => root.shellSurfaces.append({shellSurface: xdgSurface});
+                XdgShell {
+                    onToplevelCreated: (toplevel, xdgSurface) => shellSurfaces.append({xdgSurface});
+                }
+            }
         }
     }
 
     Repeater {
-        model: root.shellSurfaces
+        model: ListModel { id: shellSurfaces }
         ShellSurfaceItem {
             required property var modelData
             required property int index
             shellSurface: modelData
-            onSurfaceDestroyed: root.shellSurfaces.remove(index)
+            onSurfaceDestroyed: shellSurfaces.remove(index)
+        }
+    }
+
+    Connections {
+        target: ApplicationInterface
+        function onQuit() {
+            root.close();
+            target.acknowledgeQuit();
         }
     }
 

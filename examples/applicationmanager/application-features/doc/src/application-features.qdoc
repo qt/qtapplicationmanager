@@ -127,10 +127,9 @@ The C++ code for the native widgets application is as follows:
 
 \section1 Code Structure
 
-Compared to the other Qt Application Manager Examples, which are purely based on QML, this example
-requires you to build it explicitly. The code is structured in a way where the resulting application
-folders only contain the artifacts necessary to run the application. Consequently, you can package
-these applications and install them as well.
+The code is structured in a way where the resulting application folders only contain the artifacts
+necessary to run the application. Consequently, you can package these applications and install them
+as well.
 
 To build Qt Application Manager, including its examples, you need to pass
 \c{-DQT_BUILD_EXAMPLES=ON} to CMake. For more details, see \l{build}{Build}.

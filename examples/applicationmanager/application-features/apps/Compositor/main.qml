@@ -5,17 +5,20 @@ import QtQuick
 import QtApplicationManager.Application
 
 ApplicationManagerWindow {
-    id: root
     color: "lightgrey"
 
-    Loader {
-        source: "Compositor.qml"
-        Text {
-            anchors.fill: parent
-            color: "red"
-            font.bold: true
-            text: "QtWaylandCompositor is not available"
-            visible: !parent.item
-        }
+    Text {
+        color: "red"
+        font.bold: true
+        text: "QtWaylandCompositor is not available"
+        visible: !ldr.item
     }
+
+    Loader {
+        id: ldr
+        anchors.fill: parent
+        source: "Compositor.qml"
+    }
+
+    onClosing: ldr.item?.close();
 }

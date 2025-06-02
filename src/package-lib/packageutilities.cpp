@@ -58,4 +58,13 @@ void PackageUtilities::addHeaderDataToDigest(const QVariantMap &header, QCryptog
     }
 }
 
+void PackageUtilities::addExtendedAttributeToDigest(QByteArrayView name, QByteArrayView value,
+                                                    QCryptographicHash &digest)
+{
+    digest.addData("XATTR/"_ba);
+    digest.addData(name);
+    digest.addData("/"_ba);
+    digest.addData(value);
+}
+
 QT_END_NAMESPACE_AM

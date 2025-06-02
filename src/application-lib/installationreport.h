@@ -41,6 +41,9 @@ public:
     QByteArray storeSignature() const;
     void setStoreSignature(const QByteArray &storeSignature);
 
+    bool includeExtendedAttributes() const;
+    void setIncludeExtendedAttributes(bool b);
+
     QStringList files() const;
     void addFile(const QString &file);
     void addFiles(const QStringList &files);
@@ -59,6 +62,7 @@ private:
     QByteArray m_storeSignature;
     QVariantMap m_extraMetaData;
     QVariantMap m_extraSignedMetaData;
+    bool m_includeExtendedAttributes = false;
 };
 
 QT_END_NAMESPACE_AM

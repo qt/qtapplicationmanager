@@ -19,6 +19,7 @@ QT_BEGIN_NAMESPACE_AM
 namespace PackageUtilities
 {
 void addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest);
+void addExtendedAttributeToDigest(QByteArrayView name, QByteArrayView value, QCryptographicHash &digest);
 void addHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) noexcept(false);
 
 // key == field name, value == type to choose correct hashing algorithm

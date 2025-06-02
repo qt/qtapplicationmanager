@@ -109,6 +109,16 @@ void InstallationReport::setStoreSignature(const QByteArray &storeSignature)
     m_storeSignature = storeSignature;
 }
 
+bool InstallationReport::includeExtendedAttributes() const
+{
+    return m_includeExtendedAttributes;
+}
+
+void InstallationReport::setIncludeExtendedAttributes(bool b)
+{
+    m_includeExtendedAttributes = b;
+}
+
 QStringList InstallationReport::files() const
 {
     return m_files;
@@ -181,6 +191,10 @@ void InstallationReport::deserialize(QIODevice *from)
             if (m_extraSignedMetaData.isEmpty())
                 throw Exception("extraSigned metadata is empty");
         }
+        auto includeExtendedAttributes = root.find(u"extendedAttributes"_s);
+        if (includeExtendedAttributes != root.end())
+            m_includeExtendedAttributes = includeExtendedAttributes.value().toBool();
+
         m_files = root[u"files"_s].toStringList();
         if (m_files.isEmpty())
             throw Exception("No files");
@@ -228,6 +242,8 @@ bool InstallationReport::serialize(QIODevice *to) const
         root[u"extra"_s] = m_extraMetaData;
     if (!m_extraSignedMetaData.isEmpty())
         root[u"extraSigned"_s] = m_extraSignedMetaData;
+    if (m_includeExtendedAttributes)
+        root[u"extendedAttributes"_s] = m_includeExtendedAttributes;
 
     root[u"files"_s] = files();
 

@@ -69,6 +69,7 @@ qt_internal_add_3rdparty_library(BundledLibArchive
         libarchive/archive_write_set_format.c
         libarchive/archive_write_set_format_by_name.c
         libarchive/archive_write_set_format_gnutar.c
+        libarchive/archive_write_set_format_pax.c
         libarchive/archive_write_set_format_ustar.c
         libarchive/archive_write_set_options.c
     INCLUDE_DIRECTORIES

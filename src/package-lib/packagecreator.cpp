@@ -34,6 +34,10 @@
 #  define S_IEXEC S_IXUSR
 #endif
 
+#if defined(Q_OS_LINUX)
+#  include <sys/xattr.h>
+#endif
+
 using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
@@ -143,6 +147,8 @@ bool PackageCreatorPrivate::create()
             m_metaData[u"extra"_s] = m_report.extraMetaData();
         if (!m_report.extraSignedMetaData().isEmpty())
             m_metaData[u"extraSigned"_s] = m_report.extraSignedMetaData();
+        if (m_report.includeExtendedAttributes())
+            m_metaData[u"extendedAttributes"_s] = true;
 
         PackageUtilities::addHeaderDataToDigest(m_metaData, digest);
 
@@ -151,8 +157,10 @@ bool PackageCreatorPrivate::create()
         ar = archive_write_new();
         if (!ar)
             throw Exception(Error::Archive, "[libarchive] could not create a new archive object");
-        if (archive_write_set_format_ustar(ar) != ARCHIVE_OK)
-            throw ArchiveException(ar, "could not set the archive format to USTAR");
+        if (archive_write_set_format_pax_restricted(ar) != ARCHIVE_OK)
+            throw ArchiveException(ar, "could not set the archive format to BSDTAR");
+        if (archive_write_set_options(ar, "xattrheader=LIBARCHIVE") != ARCHIVE_OK)
+            throw ArchiveException(ar, "could not set the PAX options for xattrheader");
         if (archive_write_set_options(ar, "hdrcharset=UTF-8") != ARCHIVE_OK)
             throw ArchiveException(ar, "could not set the HDRCHARSET option");
 
@@ -245,6 +253,44 @@ bool PackageCreatorPrivate::create()
             archive_entry_set_pathname_utf8(entry, file.toUtf8().constData());
             archive_entry_set_size(entry, static_cast<__LA_INT64_T>(fi.size()));
             archive_entry_set_mode(entry, mode);
+            archive_entry_xattr_clear(entry);
+
+            if (m_report.includeExtendedAttributes()) {
+#if defined(Q_OS_LINUX)
+                QByteArray xattrList;
+                xattrList.resize(65536);
+                ssize_t xattrListSize = ::listxattr(filePath.toUtf8().constData(), xattrList.data(), xattrList.size());
+                if (xattrListSize < 0) {
+                    if (errno == ENOTSUP)
+                        throw Exception(Error::Archive, "the filesystem at '%1' does not support xattrs").arg(filePath);
+                    else if (errno == ERANGE)
+                        throw Exception(Error::Archive, "file '%1' has more than %2 bytes of xattr data").arg(filePath).arg(xattrList.size());
+                    else
+                        throw Exception(errno, "cannot read xattrs of file '%1'").arg(filePath);
+                }
+                xattrList.resize(xattrListSize);
+                for (const QByteArray &xattrName : xattrList.split('\0')) {
+                    if (xattrName.isEmpty())
+                        continue;
+                    if (xattrName.startsWith("system.posix_acl"))
+                        continue;
+                    QByteArray xattrValue;
+                    xattrValue.resize(65536);
+                    ssize_t xattrValueSize = ::getxattr(filePath.toUtf8().constData(), xattrName.constData(), xattrValue.data(), xattrValue.size());
+                    if (xattrValueSize < 0)
+                        throw Exception(errno, "cannot read xattrs of file '%1'").arg(filePath);
+
+                    archive_entry_xattr_add_entry(entry, xattrName, xattrValue.constData(), xattrValueSize);
+
+                    PackageUtilities::addExtendedAttributeToDigest(
+                        xattrName,
+                        QByteArrayView(static_cast<const char *>(xattrValue), xattrValueSize),
+                        digest);
+                }
+#else
+                throw Exception(Error::IO, "extended attributes are not supported on this platform");
+#endif
+            }
 
             bool headerOk = (archive_write_header(ar, entry) == ARCHIVE_OK);
 

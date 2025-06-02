@@ -378,6 +378,11 @@ bool SudoClient::bindMountFileSystem(const QString &from, const QString &to, boo
     CALL(bindMountFileSystem, from << to << readOnly << namespacePid);
 }
 
+bool SudoClient::setExtendedAttribute(const QString &file, const QByteArray &attrName, const QByteArray &attrValue)
+{
+    CALL(setExtendedAttribute, file << attrName << attrValue);
+}
+
 void SudoClient::stopServer()
 {
 #ifdef Q_OS_LINUX
@@ -483,6 +488,12 @@ QByteArray SudoServer::receive(const QByteArray &msg)
         quint64 namespacePid;
         params >> from >> to >> readOnly >> namespacePid;
         result << bindMountFileSystem(from, to, readOnly, namespacePid);
+    } else if (function == "setExtendedAttribute") {
+        QString file;
+        QByteArray attrName;
+        QByteArray attrValue;
+        params >> file >> attrName >> attrValue;
+        result << setExtendedAttribute(file, attrName, attrValue);
     } else if (function == "stopServer") {
         m_stop = true;
     } else {
@@ -602,6 +613,30 @@ bool SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
     Q_UNUSED(readOnly)
     Q_UNUSED(namespacePid)
     m_errorString = u"bindMountFileSystem is only available on Linux"_s;
+    return false;
+#endif // Q_OS_LINUX
+}
+
+bool SudoServer::setExtendedAttribute(const QString &file, const QByteArray &attrName, const QByteArray &attrValue)
+{
+#if defined(Q_OS_LINUX)
+    bool result = true;
+
+    try {
+        const QByteArray futf8 = file.toUtf8();
+        if (::setxattr(futf8.constData(), attrName.constData(), attrValue.constData(), attrValue.size(), 0) != 0)
+            throw Exception(errno, "could not set extended attribute '%1' on file '%2'").arg(attrName).arg(file);
+        return true;
+    } catch (const Exception &e) {
+        result = false;
+        m_errorString = e.errorString();
+    }
+    return result;
+#else
+    Q_UNUSED(file)
+    Q_UNUSED(attrName)
+    Q_UNUSED(attrValue)
+    m_errorString = u"setExtendedAttribute is only available on Linux"_s;
     return false;
 #endif // Q_OS_LINUX
 }

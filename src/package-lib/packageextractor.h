@@ -32,6 +32,7 @@ public:
     void setDestinationDirectory(const QDir &destinationDir);
 
     void setFileExtractedCallback(const std::function<void(const QString &)> &callback);
+    void setExtendedAttributeCallback(const std::function<void(const QString &, const QByteArray &, const QByteArray &)> &callback);
 
     bool extract();
 

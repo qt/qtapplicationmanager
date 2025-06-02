@@ -39,6 +39,11 @@
 #  define S_IEXEC S_IXUSR
 #endif
 
+#if defined(Q_OS_LINUX)
+#  include <sys/xattr.h>
+#endif
+
+
 using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
@@ -63,6 +68,11 @@ void PackageExtractor::setDestinationDirectory(const QDir &destinationDir)
 void PackageExtractor::setFileExtractedCallback(const std::function<void(const QString &)> &callback)
 {
     d->m_fileExtractedCallback = callback;
+}
+
+void PackageExtractor::setExtendedAttributeCallback(const std::function<void(const QString &, const QByteArray &, const QByteArray &)> &callback)
+{
+    d->m_extendedAttributeCallback = callback;
 }
 
 const InstallationReport &PackageExtractor::installationReport() const
@@ -275,6 +285,41 @@ void PackageExtractorPrivate::extract()
             if (seenFooter && (packageEntryType != PackageEntry_Footer))
                 throw Exception(Error::Package, "only --PACKAGE-FOOTER--* files are allowed at the end of the package");
 
+            // The order of operations is a bit different between dirs and files, hence the lambda
+            auto extractExtendedAttributes = [&]() {
+#if defined(Q_OS_LINUX)
+                const QString filePath = m_destinationPath + entryPath;
+                const QByteArray utf8FilePath = filePath.toUtf8();
+                archive_entry_xattr_reset(entry);
+                while (true) {
+                    const char *xattrNameRaw = nullptr;
+                    const void *xattrValueRaw = nullptr;
+                    size_t xattrValueSize = 0;
+
+                    if (archive_entry_xattr_next(entry, &xattrNameRaw, &xattrValueRaw, &xattrValueSize) != ARCHIVE_OK)
+                        break;
+                    if (xattrNameRaw == nullptr || ((xattrValueRaw == nullptr) && (xattrValueSize != 0)))
+                        continue;
+
+                    const QByteArray xattrName = QByteArray::fromRawData(xattrNameRaw, qstrlen(xattrNameRaw));
+                    const QByteArray xattrValue = QByteArray::fromRawData(static_cast<const char *>(xattrValueRaw), xattrValueSize);
+
+                    if (xattrName.startsWith("system.posix_acl"))
+                        continue;
+
+                    if (m_extendedAttributeCallback) {
+                        // the callback will throw on error
+                        m_extendedAttributeCallback(filePath, xattrName, xattrValue);
+                    } else if (::setxattr(utf8FilePath, xattrNameRaw, xattrValueRaw, xattrValueSize, 0) != 0) {
+                        throw Exception(errno, "could not set xattr '%1' for entry '%2'")
+                        .arg(xattrName).arg(entryPath);
+                    }
+
+                    PackageUtilities::addExtendedAttributeToDigest(xattrName, xattrValue, digest);
+                }
+#endif
+            };
+
             switch (packageEntryType) {
             case PackageEntry_Dir:
                 if (!entryPath.endsWith(u'/'))
@@ -301,10 +346,23 @@ void PackageExtractorPrivate::extract()
                     if ((entryName != u".") && !entryDir.mkdir(entryName))
                         throw Exception(Error::IO, "could not create directory '%1'").arg(entryDir.filePath(entryName));
 
+                    if (m_report.includeExtendedAttributes())
+                        extractExtendedAttributes();
+
                     archive_read_data_skip(ar);
 
                 } else { // PackageEntry_File
                     f.setFileName(m_destinationPath + entryPath);
+
+                    if (m_report.includeExtendedAttributes()) {
+#if defined(Q_OS_LINUX)
+                        // we need to mknod first, otherwise "security.*" xattrs don't work correctly
+                        if (::mknod(f.fileName().toUtf8(), S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP, 0) != 0)
+                            throw Exception(errno, "could not create inode for file '%1'").arg(f.fileName());
+#endif
+                        extractExtendedAttributes();
+                    }
+
                     if (!f.open(QFile::WriteOnly | QFile::Truncate))
                         throw Exception(f, "could not create file");
 
@@ -455,6 +513,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
 
         m_report.setExtraMetaData(map.value(u"extra"_s).toMap());
         m_report.setExtraSignedMetaData(map.value(u"extraSigned"_s).toMap());
+        m_report.setIncludeExtendedAttributes(map.value(u"extendedAttributes"_s).toBool());
 
         PackageUtilities::addHeaderDataToDigest(map, digest);
 

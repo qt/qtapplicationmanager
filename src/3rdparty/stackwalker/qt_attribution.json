@@ -7,6 +7,10 @@
     "Description": "Walking the callstack in windows applications.",
     "Homepage": "https://github.com/JochenKalmbach/StackWalker",
     "Version": "2020-02-06",
+    "PURL": [
+        "pkg:github/JochenKalmbach/StackWalker@8ca119caf70a574f55810be3fc5bc1672b29447b"
+    ],
+    "Comment": "No relevant CPE found",
 
     "License": "BSD 2-clause \"Simplified\" License",
     "LicenseId": "BSD-2-Clause",

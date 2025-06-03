@@ -7,6 +7,10 @@
     "Description": "LibYAML is a YAML 1.1 parser and emitter written in C.",
     "Homepage": "https://github.com/yaml/libyaml",
     "Version": "0.2.5",
+    "PURL": [
+        "pkg:github/yaml/libyaml@$<VERSION>"
+    ],
+    "CPE": "cpe:2.3:a:pyyaml:libyaml:$<VERSION>:*:*:*:*:*:*:*",
 
     "License": "MIT License",
     "LicenseId": "MIT",

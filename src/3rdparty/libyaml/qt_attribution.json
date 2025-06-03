@@ -9,6 +9,10 @@
     "Homepage": "https://github.com/yaml/libyaml",
     "Version": "0.2.5",
     "DownloadLocation": "https://github.com/yaml/libyaml/releases/download/0.2.5/yaml-0.2.5.tar.gz",
+    "PURL": [
+        "pkg:github/yaml/libyaml@$<VERSION>"
+    ],
+    "CPE": "cpe:2.3:a:pyyaml:libyaml:$<VERSION>:*:*:*:*:*:*:*",
 
     "License": "MIT License",
     "LicenseId": "MIT",

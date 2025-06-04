@@ -11,6 +11,8 @@ qt_internal_add_test(tst_packagemanager
         Qt::AppManCommonPrivate
         Qt::AppManManagerPrivate
         Qt::AppManPackagePrivate
+    TESTDATA
+        BLACKLIST
 )
 
 qt_internal_extend_target(tst_packagemanager CONDITION TARGET Qt::DBus

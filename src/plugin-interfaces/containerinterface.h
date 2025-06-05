@@ -95,7 +95,7 @@ public:
                                           const QString &program, const QStringList &arguments) = 0;
     virtual bool hasRootPrivileges() = 0;
 
-    // this function will run with root privileges and throw std::execptions on error:
+    // this function needs root privileges and throws std::execptions on error:
     virtual void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
                                      quint64 namespacePid) = 0;
 };

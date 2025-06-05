@@ -381,6 +381,8 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
 
     Return \c true if your plugin is usable, given its configuration and system state. If not,
     then return \c false and the application manager will disable this container plugin.
+
+    \sa ContainerHelperFunctions
 */
 
 /*! \fn QString ContainerManagerInterface::identifier() const
@@ -422,4 +424,65 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
     set by ContainterInterface::setProgram using this debug-wrapper. The plugin is responsible for
     combining both and for handling the replacement of \c{%program%} and \c{%arguments%}. See the
     \l{DebugWrappers} {debug-wrapper documentation} for more information.
+*/
+
+
+/*! \class ContainerHelperFunctions
+    \inmodule QtApplicationManager
+    \brief A helper class for custom container solutions.
+
+    Your custom container implementation can use these functions to avoid code duplication.
+    Keep in mind that your plugin cannot link to the static application manager libraries, as
+    this would result in duplicate symbols.
+
+    A pointer to this interface is given to the plugin via ContainerManagerInterface::initialize().
+    The plugin does not own this pointer, it is owned by the application manager and valid
+    during the lifetime of the plugin.
+*/
+
+/*! \fn void ContainerHelperFunctions::closeAndClearFileDescriptors(QVector<int> &fdList)
+
+    Convenience function that closes all the file descriptors in the \a fdList vector and also
+    clears the vector afterwards.
+    Used mainly when dealing with stdio redirections.
+*/
+
+/*! \fn QStringList ContainerHelperFunctions::substituteCommand(const QStringList &debugWrapperCommand, const QString &program, const QStringList &arguments)
+
+    This function substitutes the \c{%program%} and \c{%arguments%} placeholders in the
+    \a debugWrapperCommand with the actual values of \a program and \a arguments.
+    The result is a QStringList that can be used to start the program with the debug-wrapper.
+    If the \a debugWrapperCommand is empty, an empty QStringList is returned.
+*/
+
+/*! \fn bool ContainerHelperFunctions::hasRootPrivileges()
+
+    Returns \c true if the application manager process was started via \c sudo or is
+    \c setuid-root and \c false otherwise.
+    Root privileges are required for certain operations, such as bindMountFileSystem.
+*/
+
+/*! \fn void ContainerHelperFunctions::bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid)
+
+    This function bind mounts the file system at \a from to the mountpoint \a to.
+    If \a readOnly is \c true, the bind mount will be read-only.
+
+    If \a namespacePid is non-zero, the bind mount will be done in the kernel mount namespace of
+    the process with the given PID. This is useful to bind-mount the application directory into
+    already started containers in case of quick-launching.
+    If \a namespacePid is zero, the bind mount will be done in the application manager's mount
+    namespace.
+
+    \note This function needs root privileges.
+    \note This functions will throw \c std::exceptions on error and will simply return on
+          successful completion.
+*/
+
+/*! \fn int ContainerHelperFunctions::watchdogSignal()
+    \since 6.10
+
+    Returns the Unix signal that is registered as "killed by watchdog" in the application
+    manager. If applicable, use this when the application manager requests
+    \l{ContainerInterface::stop}{stop} with \l{ContainerInterface::WatchdogExit}{WatchdogExit}
+    via ContainerInterface.
 */

@@ -161,7 +161,7 @@ qt_am_create_builtin_package(
 
 \section1 Description
 
-Adds a custom \c target that acts as a built-in package for the application-manager.
+Adds a custom \c target that acts as a built-in package for the application manager.
 The supplied \c FILES need to contain at least an info.yaml file that describes the package.
 
 If \c OUTPUT_DIRECTORY is specified, all files specified in \c FILES will be copied to this folder.

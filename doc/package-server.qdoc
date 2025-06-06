@@ -84,7 +84,7 @@ The \c{appman-package-server} naturally supports the standard Unix \b{--help} co
 
 \section2 Example Configuration File
 
-These configuration files follow the same pattern as all YAML files used by the application-manager.
+These configuration files follow the same pattern as all YAML files used by the application manager.
 The first document representing a file-format header and the second document being the actual
 configuration data:
 

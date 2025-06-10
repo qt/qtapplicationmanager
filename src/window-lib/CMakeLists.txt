@@ -28,7 +28,9 @@ qt_internal_add_module(AppManWindowPrivate
 )
 
 if(QT_FEATURE_am_multi_process)
-    qt_find_package(Wayland 1.15 PROVIDED_TARGETS Wayland::Server)
+    if (NOT TARGET Wayland::Server)
+        qt_find_package(Wayland 1.15 PROVIDED_TARGETS Wayland::Server)
+    endif()
 
     qt_generate_wayland_protocol_server_sources(AppManWindowPrivate
         FILES
@@ -49,6 +51,4 @@ if(QT_FEATURE_am_multi_process)
     )
 
     qt_internal_add_autogen_sync_header_dependencies(AppManWindowPrivate WaylandCompositor)
-
-    target_link_libraries(AppManWindowPrivate PRIVATE wayland-server)
 endif()

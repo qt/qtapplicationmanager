@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:cryptography
 
-#include <QScopedPointer>
+#include <memory>
 
 #include "exception.h"
 #include "cryptography.h"
@@ -66,25 +66,25 @@ static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_verify, int (*)(PKCS7 *, STACK_OF_X509 *, 
 // AXIVION ENABLE Qt-NonPodGlobalStatic
 
 struct OpenSslDeleter {
-    static inline void cleanup(X509 *x509)
+    inline void operator()(X509 *x509)
     { am_X509_free(x509); }
-    static inline void cleanup(BIO *bio)
+    inline void operator()(BIO *bio)
     { am_BIO_free(bio); }
-    static inline void cleanup(PKCS7 *pkcs7)
+    inline void operator()(PKCS7 *pkcs7)
     { am_PKCS7_free(pkcs7); }
-    static inline void cleanup(EVP_PKEY *pkey)
+    inline void operator()(EVP_PKEY *pkey)
     { am_EVP_PKEY_free(pkey); }
-    static inline void cleanup(PKCS12 *pkcs12)
+    inline void operator()(PKCS12 *pkcs12)
     { am_PKCS12_free(pkcs12); }
-    static inline void cleanup(X509_STORE *x509Store)
+    inline void operator()(X509_STORE *x509Store)
     { am_X509_STORE_free(x509Store); }
-    static inline void cleanup(STACK_OF_X509 *stackOfX509)
+    inline void operator()(STACK_OF_X509 *stackOfX509)
     { (Cryptography::LibCryptoFunctionBase::isOpenSSL11() ? am_OPENSSL_sk_pop_free
                                                           : am_sk_pop_free)
                 (stackOfX509, reinterpret_cast<void(*)(void *)>(am_X509_free.functionPointer())); }
 };
 
-template <typename T> using OpenSslPointer = QScopedPointer<T, OpenSslDeleter>;
+template <typename T> using OpenSslPointer = std::unique_ptr<T, OpenSslDeleter>;
 
 
 class OpenSslException : public Exception  // clazy:exclude=copyable-polymorphic

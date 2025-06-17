@@ -186,14 +186,14 @@ QStringList PluginContainerHelperFunctions::substituteCommand(const QStringList 
 
 bool PluginContainerHelperFunctions::hasRootPrivileges()
 {
-    return SudoClient::instance() && !SudoClient::instance()->isFallbackImplementation();
+    return !SudoClient::instance()->isFallbackImplementation();
 }
 
 void PluginContainerHelperFunctions::bindMountFileSystem(const QString &from, const QString &to,
                                                          bool readOnly, quint64 namespacePid)
 {
     auto sudo = SudoClient::instance();
-    if (sudo && !sudo->isFallbackImplementation()) {
+    if (!sudo->isFallbackImplementation()) {
         if (!sudo->bindMountFileSystem(from, to, readOnly, namespacePid))
             throw std::runtime_error(sudo->lastError().toLocal8Bit());
     } else {

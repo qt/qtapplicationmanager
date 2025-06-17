@@ -19,8 +19,6 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-bool removeRecursiveHelper(const QString &path);
-
 class PackageManagerPrivate
 {
 public:

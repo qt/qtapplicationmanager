@@ -34,6 +34,7 @@ using namespace Qt::StringLiterals;
 #  include <sys/prctl.h>
 #  include <sys/mount.h>
 #  include <sys/syscall.h>
+#  include <sys/xattr.h>
 #  include <sched.h>
 #  include <linux/capability.h>
 
@@ -140,8 +141,26 @@ QT_END_NAMESPACE_AM
 
 QT_BEGIN_NAMESPACE_AM
 
+void Sudo::fallbackServer()
+{
+    if (SudoServer::instance() && SudoClient::instance()) {
+        if (!SudoClient::instance()->isFallbackImplementation())
+            throw Exception("Sudo::fallbackServer was called after Sudo::forkServer");
+        return;
+    }
+
+    SudoServer::createInstance(-1);
+    SudoClient::createInstance(-1, SudoServer::instance());
+}
+
 void Sudo::forkServer(DropPrivileges dropPrivileges)
 {
+    if (SudoServer::instance() && SudoClient::instance()) {
+        if (SudoClient::instance()->isFallbackImplementation())
+            throw Exception("Sudo::forkServer was called after Sudo::fallbackServer");
+        return;
+    }
+
     bool canSudo = false;
 
 #if defined(Q_OS_LINUX)
@@ -153,8 +172,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
 #endif
 
     if (!canSudo) {
-        SudoServer::createInstance(-1);
-        SudoClient::createInstance(-1, SudoServer::instance());
+        fallbackServer();
         return;
     }
 

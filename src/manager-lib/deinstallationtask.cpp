@@ -5,7 +5,7 @@
 
 #include "logging.h"
 #include "packagemanager.h"
-#include "packagemanager_p.h"
+#include "sudo.h"
 #include "installationreport.h"
 #include "package.h"
 #include "exception.h"
@@ -104,7 +104,7 @@ void DeinstallationTask::execute()
 
         for (ScopedRenamer *toDelete : { &docDirRename, &appDirRename }) {
             if (toDelete->isRenamed()) {
-                if (!removeRecursiveHelper(toDelete->baseName() + u'-'))
+                if (!SudoClient::instance()->removeRecursive(toDelete->baseName() + u'-'))
                     qCCritical(LogInstaller) << "ERROR: could not remove" << (toDelete->baseName() + u'-');
             }
         }

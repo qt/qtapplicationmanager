@@ -32,6 +32,7 @@ public:
     };
 
     static void forkServer(DropPrivileges dropPrivileges) noexcept(false);
+    static void fallbackServer() noexcept(false);
 };
 
 class SudoInterface

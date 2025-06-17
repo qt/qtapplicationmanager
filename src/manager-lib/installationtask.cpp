@@ -19,6 +19,7 @@
 #include "packagemanager.h"
 #include "utilities.h"
 #include "signature.h"
+#include "sudo.h"
 #include "installationtask.h"
 
 #include <memory>
@@ -375,7 +376,7 @@ void InstallationTask::startInstallation() noexcept(false)
     QDir installationDir = QString(m_installationPath + u'/');
     QString installationTarget = m_packageId + u'+';
     if (installationDir.exists(installationTarget)) {
-        if (!removeRecursiveHelper(installationDir.absoluteFilePath(installationTarget)))
+        if (!SudoClient::instance()->removeRecursive(installationDir.absoluteFilePath(installationTarget)))
             throw Exception("could not remove old, partial installation %1/%2").arg(installationDir).arg(installationTarget);
     }
 
@@ -441,7 +442,7 @@ void InstallationTask::finishInstallation() noexcept(false)
 
     // this should not be necessary, but it also won't hurt
     if (mode == Update)
-        removeRecursiveHelper(m_applicationDir.absolutePath() + u'-');
+        SudoClient::instance()->removeRecursive(m_applicationDir.absolutePath() + u'-');
 
 #ifdef Q_OS_UNIX
     // write files to the filesystem

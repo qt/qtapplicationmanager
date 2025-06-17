@@ -927,9 +927,9 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
             if ((!fi.isDir() && !fi.isFile()) || !validNames.contains(name)) {
                 qCDebug(LogInstaller) << "cleanup: removing unreferenced inode" << name;
 
-                if (!removeRecursiveHelper(fi.absoluteFilePath())) {
-                    throw Exception(Error::IO, "could not remove broken installation leftover %1 (maybe due to missing root privileges)")
-                        .arg(fi.absoluteFilePath());
+                if (!SudoClient::instance()->removeRecursive(fi.absoluteFilePath())) {
+                    throw Exception(Error::IO, "could not remove broken installation leftover: %1")
+                        .arg(SudoClient::instance()->lastError());
                 }
             }
         }
@@ -1631,14 +1631,6 @@ bool PackageManager::validateDnsName(const QString &name, int minimalPartCount)
         qCDebug(LogInstaller).noquote() << "validateDnsName failed:" << e.errorString();
         return false;
     }
-}
-
-bool removeRecursiveHelper(const QString &path)
-{
-    if (SudoClient::instance())
-        return SudoClient::instance()->removeRecursive(path);
-    else
-        return recursiveOperation(path, safeRemove);
 }
 
 QT_END_NAMESPACE_AM

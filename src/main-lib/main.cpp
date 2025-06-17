@@ -134,6 +134,8 @@ int &Main::preConstructor(int &argc, char **argv, InitFlags initFlags)
     if (initFlags & InitFlag::ForkSudoServer) {
         Sudo::forkServer(Sudo::DropPrivilegesPermanently);
         StartupTimer::instance()->checkpoint("after sudo server fork");
+    } else {
+        Sudo::fallbackServer();
     }
     return argc;
 }

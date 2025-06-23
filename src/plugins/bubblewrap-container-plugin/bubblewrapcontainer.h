@@ -78,6 +78,8 @@ private:
     QByteArray m_statusBuffer;
     bool m_hasExitCode = false;
     int m_exitCode = 0;
+    QString m_currentControlGroup;
+    static bool s_hasCGroupV2;
 
     QProcess *m_process = nullptr;
 };

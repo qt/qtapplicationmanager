@@ -306,6 +306,7 @@ QMap<QString, QString> BubblewrapContainerManager::parseEnvFile(const QString &e
 }
 
 
+bool BubblewrapContainer::s_hasCGroupV2 = false;
 
 BubblewrapContainer::BubblewrapContainer(BubblewrapContainerManager *manager, const QVector<int> &stdioRedirections, const QMap<QString, QString> &debugWrapperEnvironment,
                                          const QStringList &debugWrapperCommand)
@@ -315,6 +316,7 @@ BubblewrapContainer::BubblewrapContainer(BubblewrapContainerManager *manager, co
     , m_debugWrapperEnvironment(debugWrapperEnvironment)
     , m_debugWrapperCommand(debugWrapperCommand)
 {
+    s_hasCGroupV2 = QFile::exists(u"/sys/fs/cgroup/cgroup.controllers"_s);
 }
 
 BubblewrapContainer::~BubblewrapContainer()
@@ -368,13 +370,36 @@ bool BubblewrapContainer::attachApplication(const QVariantMap &application)
 
 QString BubblewrapContainer::controlGroup() const
 {
-    return QString();
+    return m_currentControlGroup;
 }
 
 bool BubblewrapContainer::setControlGroup(const QString &groupName)
 {
-    Q_UNUSED(groupName)
-    return false;
+    if (!s_hasCGroupV2)
+        return false;
+
+    if (groupName == m_currentControlGroup)
+        return true;
+
+    //qCWarning(lcBwrap) << "Setting cgroup for" << m_program << ", pid" << m_process->processId() << ":" << "->" << groupName;
+
+    QString file = u"/sys/fs/cgroup/%1/cgroup.procs"_s.arg(groupName);
+    QFile f(file);
+    for (quint64 pid : { quint64(m_process->processId()), m_namespacePid }) {
+        bool ok = f.open(QFile::WriteOnly);
+        QByteArray pidString = QByteArray::number(pid);
+        pidString.append('\n');
+        ok = ok && (f.write(pidString) == pidString.size());
+
+        if (!ok) {
+            qCWarning(lcBwrap) << "Failed setting cgroup for" << m_program << ", pid" << pid << "->" << groupName;
+            return false;
+        }
+        f.close();
+    }
+
+    m_currentControlGroup = groupName;
+    return true;
 }
 
 bool BubblewrapContainer::setProgram(const QString &program)

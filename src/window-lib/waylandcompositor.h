@@ -113,7 +113,7 @@ protected:
     void onPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurface *xdgSurface);
 
     static QObject *preConstructor(QObject *parent);
-    static bool s_nestedLogging;
+    static bool s_taggedLogging;
     void setupLogging();
 
     QWaylandWlShell *m_wlShell;

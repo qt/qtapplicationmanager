@@ -10,6 +10,7 @@
 \image custom-appman.png Screenshot
 \brief Provides the basic structure and starting point for a custom application manager executable.
 \ingroup applicationmanager-examples
+\examplecategory {Embedded}
 
 \note Please \l{wayland-dev-packages}{read this} if you want to build the example on a Linux machine.
 

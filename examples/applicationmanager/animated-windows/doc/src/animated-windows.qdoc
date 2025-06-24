@@ -8,6 +8,7 @@
 \example applicationmanager/animated-windows
 \brief Learn how to animate windows to appear and disappear.
 \ingroup applicationmanager-examples
+\examplecategory {Embedded}
 \title Animated Windows System UI Example
 \image animated-windows-example.jpg The Animated Windows example with two applications running.
 

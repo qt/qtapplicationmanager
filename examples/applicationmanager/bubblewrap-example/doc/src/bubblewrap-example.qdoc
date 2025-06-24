@@ -6,6 +6,7 @@
 \example applicationmanager/bubblewrap-example
 \brief Learn how to use Bubblewrap Containers with the Application Manager.
 \ingroup applicationmanager-examples
+\examplecategory {Embedded}
 \title Bubblewrap Container Example
 \image bubblewrap-example.png Bubblewrap Container Example
 

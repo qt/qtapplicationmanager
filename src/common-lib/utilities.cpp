@@ -177,6 +177,11 @@ int timeoutFactor()
     return tf;
 }
 
+qreal slowAnimationSpeed()
+{
+    return 0.2f;
+}
+
 bool recursiveOperation(const QString &path, const std::function<bool (const QString &, RecursiveOperationType)> &operation)
 {
     QFileInfo pathInfo(path);

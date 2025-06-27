@@ -26,6 +26,7 @@ QT_FORWARD_DECLARE_CLASS(QJSEngine)
 QT_BEGIN_NAMESPACE_AM
 
 int timeoutFactor();
+qreal slowAnimationSpeed();
 
 using YamlFormat = QPair<QString, int>;
 

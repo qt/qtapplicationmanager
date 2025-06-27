@@ -27,6 +27,7 @@
 #include "applicationmanager.h"
 #include "abstractruntime.h"
 #include "runtimefactory.h"
+#include "utilities.h"
 #include "window.h"
 #include "windowitem.h"
 #include "windowmanager.h"
@@ -302,7 +303,7 @@ void WindowManager::setSlowAnimations(bool slowAnimations)
             updateViewSlowMode(view);
 
         // Update timer of the main, GUI, thread
-        QUnifiedTimer::instance()->setSlowModeEnabled(d->slowAnimations);
+        QUnifiedTimer::instance()->setSpeedModifier(d->slowAnimations ? slowAnimationSpeed() : 1.0f);
 
         // For new applications to start with the correct value
         RuntimeFactory::instance()->setSlowAnimations(d->slowAnimations);
@@ -345,7 +346,7 @@ void WindowManager::updateViewSlowMode(QQuickWindow *view)
 #else
             QObject::disconnect(con);
 #endif
-            QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+            QUnifiedTimer::instance()->setSpeedModifier(isSlow ? slowAnimationSpeed() : 1.0f);
         }
     }, Qt::DirectConnection));
 }

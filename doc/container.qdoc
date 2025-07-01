@@ -279,6 +279,7 @@ containers:
   bubblewrap:
     sharedNamespaces: [ '-all', '+net' ]
     bindMountHome: yes
+    environmentFiles: 'myEnv.env'
     configuration:
     - symlink:
         usr/lib: '/lib'
@@ -376,5 +377,13 @@ The \c bubblewrap container accepts the following configuration settings:
     \li \c unshareNetwork
     \li string
     \li \e Deprecated. Please use \c sharedNamespaces and \c networkSetupScript instead.
+
+  \row
+    \li \c environmentFiles
+    \li list<string>
+    \li A list of files that contain environment variables that should be set in the
+        container. The files are read in order and the variables are set in the container's
+        environment. This is useful to pass additional environment variables to the application
+        running inside the container. (default: empty)
 \endtable
 */

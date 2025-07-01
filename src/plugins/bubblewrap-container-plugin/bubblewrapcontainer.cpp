@@ -170,6 +170,13 @@ void BubblewrapContainerManager::setConfiguration(const QVariantMap &configurati
             m_bwrapArguments += { u"--ro-bind"_s, lip, lip };
     }
 
+    const QStringList envFiles = variantToStringList(m_configuration.value(u"environmentFiles"_s));
+    for (const auto &env: envFiles) {
+        const auto envList = parseEnvFile(env);
+        for (auto it = envList.constBegin(); it != envList.constEnd(); ++it )
+            m_bwrapArguments += { u"--setenv"_s, it.key(), it.value() };
+    }
+
     QVariant config = m_configuration.value(u"configuration"_s);
     if (config.metaType() == QMetaType::fromType<QVariantMap>()) {
         qCWarning(lcBwrap) << "Using a unordered map for the bwrap configuration is deprecated. Please convert to a list of key-value pairs.";
@@ -255,6 +262,47 @@ QStringList BubblewrapContainerManager::bwrapArguments() const
 QString BubblewrapContainerManager::networkSetupScript() const
 {
     return m_networkSetupScript;
+}
+
+QMap<QString, QString> BubblewrapContainerManager::parseEnvFile(const QString &envFile)
+{
+    QMap<QString, QString> envVariables;
+
+    QFile file(envFile);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qCCritical(lcBwrap) << "Couldn't open environmentFile" << envFile << ":" << file.errorString();
+        return envVariables;
+    }
+
+    QTextStream in(&file);
+    QString line;
+
+    int lineCount = 0;
+    while (in.readLineInto(&line)) {
+        lineCount++;
+        line = line.trimmed();
+        if (line.isEmpty() || line.startsWith(u'#'))
+            continue;
+
+        const auto splitted = line.split(u'=');
+        if (splitted.count() != 2) {
+            qCCritical(lcBwrap).nospace() << "Couldn't parse environment variable in " << envFile << ":" << lineCount;
+            continue;
+        }
+
+        QString value = splitted[1];
+        if (value.isEmpty()) {
+            qCCritical(lcBwrap).nospace() << "Environment variable doesn't have a value in " << envFile << ":" << lineCount;
+            continue;
+        }
+
+        if (value.startsWith(u'"') && value.endsWith(u'"'))
+            value = value.mid(1, value.length() - 2);
+
+        envVariables.insert(splitted[0], value);
+    }
+
+    return envVariables;
 }
 
 

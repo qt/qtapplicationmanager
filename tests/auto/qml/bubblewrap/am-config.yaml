@@ -18,6 +18,7 @@ containers:
   bubblewrap:
     sharedNamespaces: [ '-all', '+net' ]
     networkSetupScript: ${CONFIG_DIR}/netscript.sh
+    environmentFiles: [ '${CONFIG_DIR}/good.env', '${CONFIG_DIR}/bad.env' ]
 
     # set to yes, if you build against a system or Installer Qt and the launcher cannot be found
     bindMountHome: yes

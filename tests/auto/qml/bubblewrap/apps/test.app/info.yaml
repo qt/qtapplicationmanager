@@ -11,3 +11,5 @@ applications:
 - id:      'test.app'
   code:    'app.qml'
   runtime: 'qml'
+  runtimeParameters:
+    resources: 'libtestAppModule'

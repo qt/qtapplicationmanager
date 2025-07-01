@@ -110,6 +110,8 @@ public:
     QString networkSetupScript() const;
 
 private:
+    QMap<QString, QString> parseEnvFile(const QString &envFile);
+
     ContainerHelperFunctions *m_helpers = nullptr;
     QVariantMap m_configuration;
     QStringList m_bwrapArguments;

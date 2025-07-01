@@ -13,6 +13,7 @@ TestCase {
 
     property int spyTimeout: 5000 * AmTest.timeoutFactor
     property bool appStarted: false
+    property var appEnv
     property var netscriptArgs: ([])
 
     SignalSpy {
@@ -32,6 +33,7 @@ TestCase {
 
         onRequestReceived: function(request) {
             appStarted = true
+            appEnv = request.parameters.env;
             request.sendReply({ })
         }
     }
@@ -63,6 +65,12 @@ TestCase {
         windowAddedSpy.wait(spyTimeout)
         tryCompare(testCase, "appStarted", true, spyTimeout)
         runStateChangedSpy.clear()
+
+        compare(appEnv["FOO"], "bar");
+        compare(appEnv["BAR"], "quoted string");
+        compare(appEnv["BAZ"], "1");
+        compare(appEnv["BAD"], "");
+        compare(appEnv["BAD_TWO"], "");
 
         app.stop(false)
         runStateChangedSpy.wait(spyTimeout)    // wait for ShuttingDown

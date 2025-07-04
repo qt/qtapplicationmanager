@@ -16,6 +16,7 @@
 #include <QMessageAuthenticationCode>
 #include <QJsonDocument>
 #include <QTemporaryDir>
+#include <QProcess>
 
 #include "exception.h"
 #include "signature.h"
@@ -40,11 +41,13 @@ static const int Ext2BlockSize = 1024;
 PackagingJob *PackagingJob::create(const QString &destinationName, const QString &sourceDir,
                                    const QVariantMap &extraMetaData,
                                    const QVariantMap &extraSignedMetaData,
-                                   bool includeExtendedAttributes, bool asJson)
+                                   bool includeExtendedAttributes, const QString &prePackageCmd,
+                                   bool asJson)
 {
     PackagingJob *p = new PackagingJob();
     p->m_mode = Create;
     p->m_includeExtendedAttributes = includeExtendedAttributes;
+    p->m_prePackageCmd = prePackageCmd;
     p->m_asJson = asJson;
     p->m_destinationName = destinationName;
     p->m_sourceDir = sourceDir;
@@ -231,6 +234,13 @@ void PackagingJob::execute() noexcept(false)
                 throw Exception(Error::Package, "file names starting with --PACKAGE- are reserved by the packager (found: %1)").arg(entryPath);
 
             estimatedImageSize += (quint64(entryInfo.size()) + Ext2BlockSize - 1) / Ext2BlockSize;
+
+            if (!m_prePackageCmd.isEmpty()) {
+                auto cmd = m_prePackageCmd.split(u" "_s);
+                cmd.append(entryInfo.absoluteFilePath());
+                if (QProcess::execute(cmd.first(), cmd.mid(1)) != 0)
+                    throw Exception(Error::Package, "failed to call pre-package-command for file: %1").arg(entryInfo.absoluteFilePath());
+            }
 
             if (entryPath != infoName && entryPath != package->icon())
                 report.addFile(entryPath);

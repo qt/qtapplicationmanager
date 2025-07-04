@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QFile>
 #include <QDebug>
+#include <QProcess>
 #include <QCryptographicHash>
 #include <qplatformdefs.h>
 
@@ -221,7 +222,6 @@ bool PackageCreatorPrivate::create()
 
             QString filePath = m_sourcePath + file;
             QFileInfo fi(filePath);
-
             PackageEntryType packageEntryType;
             mode_t mode;
 

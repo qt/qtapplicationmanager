@@ -18,7 +18,8 @@ public:
     static PackagingJob *create(const QString &destinationName, const QString &sourceDir,
                                 const QVariantMap &extraMetaData = QVariantMap(),
                                 const QVariantMap &extraSignedMetaData = QVariantMap(),
-                                bool includeExtendedAttributes = false, bool asJson = false);
+                                bool includeExtendedAttributes = false, const QString &prePackageCmd = QString(),
+                                bool asJson = false);
 
     static PackagingJob *developerSign(const QString &sourceName, const QString &destinationName,
                                        const QString &certificateFile, const QString &passPhrase,
@@ -51,6 +52,7 @@ private:
     QString m_output;
     int m_resultCode = 0;
     bool m_includeExtendedAttributes = false;
+    QString m_prePackageCmd;
     bool m_asJson = false;
 
     QString m_sourceName;

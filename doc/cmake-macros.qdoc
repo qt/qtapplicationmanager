@@ -93,6 +93,8 @@ qt_am_create_installable_package(
     [INSTALL_DIRECTORY install_dir]
     [PACKAGE_DIRECTORY package_dir]
     [PACKAGE_NAME package_name]
+    [FAKEROOT]
+    [ADDITIONAL_OPTIONS]
     [DEPENDENCIES ...]
 )
 \endcode
@@ -112,6 +114,12 @@ to at least contain an \c info.yaml file that describes the package.
 Using the \c DEPENDENCIES argument, you can specify a list of targets this package depends on.
 
 The \c INSTALL_DIRECTORY argument can be used to specify a directory where the package will be installed into.
+
+The \c FAKEROOT argument will run the packager in a fake root environment. This is useful when using
+a pre-package-command that requires root privileges e.g. to set IMA signatures.
+
+The \c ADDITIONAL_OPTIONS argument can be used to pass additional command line options to the packager.
+See \l {Packager} for a list of available options.
 
 \note This function will serve as an anchor for the application manager's QtCreator integration
       to discover the available packages in a System UI.

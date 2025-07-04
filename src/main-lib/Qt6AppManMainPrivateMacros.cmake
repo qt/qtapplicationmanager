@@ -278,7 +278,7 @@ function(qt6_am_create_installable_package target)
     cmake_parse_arguments(
         PARSE_ARGV 1
         ARG
-        "" "OUTPUT_DIRECTORY;INSTALL_DIRECTORY;PACKAGE_DIRECTORY;PACKAGE_NAME" "FILES;DEPENDENCIES"
+        "FAKEROOT" "OUTPUT_DIRECTORY;INSTALL_DIRECTORY;PACKAGE_DIRECTORY;PACKAGE_NAME;" "FILES;DEPENDENCIES;ADDITIONAL_OPTIONS"
     )
 
     if (DEFINED ARG_KEYWORDS_MISSING_VALUES)
@@ -330,16 +330,35 @@ function(qt6_am_create_installable_package target)
         set(env_plugin_path "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}")
     endif()
 
+    if (ARG_FAKEROOT)
+        find_program(FAKEROOT_EXECUTABLE fakeroot NO_CACHE ONLY_CMAKE_FIND_ROOT_PATH)
+        if (FAKEROOT_EXECUTABLE)
+            message(STATUS "Using fakeroot executable: ${FAKEROO_PSEUDO_EXECUTABLE}")
+            set(RUN_WITH_FAKEROOT "${FAKEROO_PSEUDO_EXECUTABLE}")
+        elseif (QT_HOST_PATH)
+            message(STATUS "Searching for libpseudo in the host sysroot")
+            find_file(LIBPSEUDO libpseudo.so HINTS ${QT_HOST_PATH}/lib/pseudo/lib64 NO_CMAKE_FIND_ROOT_PATH)
+            if (NOT LIBPSEUDO)
+                message(FATAL_ERROR "Could not find fakeroot or libpseudo.so in the host sysroot")
+            endif()
+            set(RUN_WITH_FAKEROOT "PSEUDO_PREFIX=/usr")
+            list(APPEND RUN_WITH_FAKEROOT "PSEUDO_LOCALSTATEDIR=/tmp/am-pseudo")
+            list(APPEND RUN_WITH_FAKEROOT "LD_PRELOAD=${LIBPSEUDO}")
+        endif()
+    endif()
+
     qt_am_internal_find_host_packager()
 
     set(PACKAGE_PATH ${ARG_OUTPUT_DIRECTORY}/${ARG_PACKAGE_NAME})
     add_custom_command(
         OUTPUT  ${PACKAGE_PATH}
+        COMMAND ${CMAKE_COMMAND} -E rm -f ${PACKAGE_PATH}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${ARG_PACKAGE_DIRECTORY}
         COMMAND ${CMAKE_COMMAND} -E copy ${ARG_FILES} ${ARG_PACKAGE_DIRECTORY}
         COMMAND ${CMAKE_COMMAND} -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
+                    ${RUN_WITH_FAKEROOT}
                     $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>
-                    create-package ${PACKAGE_PATH} ${ARG_PACKAGE_DIRECTORY}
+                    create-package ${ARG_ADDITIONAL_OPTIONS} ${PACKAGE_PATH} ${ARG_PACKAGE_DIRECTORY}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS ${ARG_DEPENDENCIES} ${ARG_FILES}
         VERBATIM

@@ -8,6 +8,7 @@
 #include <QVersionNumber>
 #include <QCoreApplication>
 #include <QScopedValueRollback>
+#include <QStandardPaths>
 #include "packagemanager.h"
 #include "packagedatabase.h"
 #include "packagemanager_p.h"
@@ -309,6 +310,12 @@ PackageManager *PackageManager::instance()
 void PackageManager::enableInstaller()
 {
     d->enableInstaller = QT_CONFIG(am_installer);
+
+    if (d->enableInstaller) {
+        QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+        if (!dataDir.mkpath(u"installation-reports"_s))
+            throw Exception("could not create directory for installation-reports: \'%1\'").arg(dataDir.absoluteFilePath(u"installation-reports"_s));
+    }
 }
 
 void PackageManager::registerPackages()
@@ -859,6 +866,9 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
         validPaths.insert(d->documentPath, QString());
     if (!d->installationPath.isEmpty())
         validPaths.insert(d->installationPath, QString());
+    QString reportPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)
+                         + u"/installation-reports"_s;
+    validPaths.insert(reportPath, QString());
 
     auto packages = d->packages;
     packages.detach();  // we need to detach here, as the loop below might modify the list
@@ -870,9 +880,10 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
             QString pkgDir = d->installationPath + QDir::separator() + pkg->id();
             QStringList checkDirs;
             QStringList checkFiles;
+            QString instReportName = pkg->id() + u".yaml"_s;
 
             checkFiles << pkgDir + u"/info.yaml"_s;
-            checkFiles << pkgDir + u"/.installation-report.yaml"_s;
+            checkFiles << reportPath + u'/' + instReportName;
             checkDirs << pkgDir;
 
             for (const QString &checkFile : std::as_const(checkFiles)) {
@@ -896,6 +907,7 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
                 validPaths.insert(d->installationPath, pkg->id() + QDir::separator());
                 if (!d->documentPath.isEmpty())
                     validPaths.insert(d->documentPath, pkg->id() + QDir::separator());
+                validPaths.insert(reportPath, instReportName);
             } else {
                 if (startingPackageRemoval(pkg->id())) {
                     if (finishedPackageInstall(pkg->id()))
@@ -1429,7 +1441,11 @@ bool PackageManager::finishedPackageInstall(const QString &id)
 
         // attach the installation report (unless we're just downgrading a built-in)
         if (!isDowngrade) {
-            QFile irfile(newPackageInfo->baseDir().absoluteFilePath(u".installation-report.yaml"_s));
+            // the rename from '+' has already happened at this point
+            QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+            QString instReport = dataDir.absoluteFilePath(u"installation-reports/"_s + newPackageInfo->id() + u".yaml"_s);
+
+            QFile irfile(instReport);
             auto ir = std::make_unique<InstallationReport>(package->id());
             try {
                 if (Q_UNLIKELY(!irfile.open(QFile::ReadOnly)))

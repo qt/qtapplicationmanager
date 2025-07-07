@@ -50,6 +50,7 @@ private:
     void initMain(const QString &mainQml = { });
     void destroyMain();
     void copyRecursively(const QString &sourceDir, const QString &destDir);
+    void fixupInstallationReport(const QString &baseDir, const QString &appDir);
     int argc = 0;
     char **argv = nullptr;
     Main *main = nullptr;
@@ -94,6 +95,19 @@ void tst_Main::copyRecursively(const QString &sourcePath, const QString &destPat
     QStringList fileNames = sourceDir.entryList(QDir::Files | QDir::Hidden);
     for (const auto &fileName : fileNames)
         QFile::copy(sourceDir.filePath(fileName), destDir.filePath(fileName));
+}
+
+void tst_Main::fixupInstallationReport(const QString &baseDir, const QString &appDir)
+{
+    QString src = baseDir + u'/' + appDir + u"/.installation-report.yaml"_s;
+    if (QFile::exists(src)) {
+        QString dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+        QString dst = dataDir + u"/installation-reports/"_s + appDir.section(u'/', -1, 1) + u".yaml"_s;
+
+        if (QFile::exists(dst))
+            QFile::remove(dst);
+        QFile::rename(src, dst);
+    }
 }
 
 void tst_Main::cleanUpInstallationDir()
@@ -271,6 +285,7 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
 void tst_Main::updateForBuiltInAlreadyInstalled()
 {
     copyRecursively(QFINDTESTDATA("dir-with-update-already-installed"), m_tempDirPath);
+    fixupInstallationReport(m_tempDirPath, u"apps/test-pkg"_s);
 
     initMain();
 

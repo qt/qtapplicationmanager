@@ -7,6 +7,7 @@
 #include <QTemporaryDir>
 #include <QMessageAuthenticationCode>
 #include <QPointer>
+#include <QStandardPaths>
 
 #include "logging.h"
 #include "packagemanager_p.h"
@@ -145,7 +146,7 @@ void InstallationTask::execute()
 
         TemporaryDir extractionDir(m_installationPath + u"/.tmp-XXXXXX"_s);
         if (!extractionDir.isValid())
-            throw Exception("could not create a temporary extraction directory");
+            throw Exception("could not create a temporary extraction directory at %1").arg(m_installationPath);
 
         // protect m_canceled and changes to m_extractor
         QMutexLocker locker(&m_mutex);
@@ -410,7 +411,9 @@ void InstallationTask::finishInstallation() noexcept(false)
     // create the installation report
     InstallationReport report = m_extractor->installationReport();
 
-    QFile reportFile(m_extractionDir.absoluteFilePath(u".installation-report.yaml"_s));
+    QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    QString instReport = dataDir.absoluteFilePath(u"installation-reports/"_s + m_packageId + u".yaml"_s);
+    QFile reportFile(instReport + u'+');
     if (!reportFile.open(QFile::WriteOnly) || !report.serialize(&reportFile))
         throw Exception(reportFile, "could not write the installation report");
     reportFile.close();
@@ -426,6 +429,10 @@ void InstallationTask::finishInstallation() noexcept(false)
 
     // final rename
 
+    ScopedRenamer renameReport;
+    if (!renameReport.rename(instReport, ScopedRenamer::NamePlusToName))
+        throw Exception(Error::IO, "could not rename installation-report %1+ to %1 (including a backup to %1-)").arg(m_applicationDir);
+
     // POSIX cannot atomically rename directories, if the destination directory exists
     // and is non-empty. We need to do a double-rename in this case, which might fail!
 
@@ -439,11 +446,13 @@ void InstallationTask::finishInstallation() noexcept(false)
             throw Exception(Error::IO, "could not rename application directory %1+ to %1").arg(m_applicationDir);
     }
 
+
     // from this point onwards, we are not allowed to throw anymore, since the installation is "done"
 
     setState(CleaningUp);
 
     renameApplication.take();
+    renameReport.take();
     documentDirCreator.take();
 
     m_installationDirCreator.take();

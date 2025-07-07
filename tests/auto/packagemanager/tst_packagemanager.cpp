@@ -433,6 +433,9 @@ void tst_PackageManager::packageInstallation()
                                          : (devSigned ? AllowInstallations::RequireDevSigned
                                                       : AllowInstallations::AllowUnsigned));
 
+    QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    QString instReport = dataDir.absoluteFilePath(u"installation-reports/test-pkg.yaml"_s);
+
     int lastPass = (updatePackageName.isEmpty() ? 1 : 2);
     // pass 1 is the installation / pass 2 is the update (if needed)
     for (int pass = 1; pass <= lastPass; ++pass) {
@@ -471,7 +474,7 @@ void tst_PackageManager::packageInstallation()
             //QDirIterator it(m_workDir.path(), QDirIterator::Subdirectories);
             //while (it.hasNext()) { qDebug() << it.next(); }
 
-            QVERIFY(QFile::exists(installationDir + u"/test-pkg/.installation-report.yaml"_s));
+            QVERIFY(QFile::exists(instReport));
             QVERIFY(QDir(documentDir + u"/test-pkg"_s).exists());
 
             QString fileCheckPath = installationDir + u"/test-pkg"_s;
@@ -556,7 +559,7 @@ void tst_PackageManager::simulateErrorConditions_data()
 
 #ifdef Q_OS_LINUX
      QTest::newRow("applications-dir-read-only") \
-             << false << "~could not create installation directory .*" \
+             << false << "~could not create a temporary extraction directory .*" \
              << FunctionMap { { "before-start", [this]() { return chmod(pathTo(Internal0).toLocal8Bit(), 0000) == 0; } },
                               { "after-failed", [this]() { return chmod(pathTo(Internal0).toLocal8Bit(), 0777) == 0; } } };
 

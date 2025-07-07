@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QFile>
 #include <QDataStream>
+#include <QStandardPaths>
 
 #include "packagedatabase.h"
 #include "packageinfo.h"
@@ -124,8 +125,12 @@ QStringList PackageDatabase::findManifestsInDir(const QDir &manifestDir, bool sc
 
             if (!pkgDir.exists(u"info.yaml"_s))
                 throw Exception("couldn't find an info.yaml manifest");
-            if (!scanningBuiltInApps && !pkgDir.exists(u".installation-report.yaml"_s))
-                throw Exception("found a non-built-in package without an installation report");
+            if (!scanningBuiltInApps) {
+                QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+                QString instReport = dataDir.absoluteFilePath(u"installation-reports/"_s + pkgDirName + u".yaml"_s);
+                if (!QFile::exists(instReport))
+                    throw Exception("found a non-built-in package without an installation report");
+            }
 
             QString manifestPath = pkgDir.absoluteFilePath(u"info.yaml"_s);
             files << manifestPath;
@@ -271,7 +276,10 @@ void PackageDatabase::parseInstalled()
                     .arg(pkg->id(), pkgDir.path());
             }
 
-            QFile f(pkgDir.absoluteFilePath(u".installation-report.yaml"_s));
+            QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+            QString instReport = dataDir.absoluteFilePath(u"installation-reports/"_s + pkg->id() + u".yaml"_s);
+
+            QFile f(instReport);
             if (!f.open(QFile::ReadOnly))
                 throw Exception(f, "failed to open the installation report");
 

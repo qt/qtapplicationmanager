@@ -17,6 +17,7 @@
 #include "qmlinprocruntime.h"
 #include "runtimefactory.h"
 #include "utilities.h"
+#include "sudo.h"
 
 #include "../error-checking.h"
 
@@ -32,7 +33,7 @@ class tst_PackagerTool : public QObject
 
 private Q_SLOTS:
     void initTestCase();
-    void cleanup();
+    void cleanupTestCase();
 
     void test();
     void brokenMetadata_data();
@@ -67,6 +68,8 @@ void tst_PackagerTool::initTestCase()
 {
     if (!QDir(QString::fromLatin1(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
+
+    Sudo::fallbackServer();
 
     spyTimeout *= timeoutFactor();
 
@@ -112,7 +115,7 @@ void tst_PackagerTool::initTestCase()
     RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager(u"qml"_s));
 }
 
-void tst_PackagerTool::cleanup()
+void tst_PackagerTool::cleanupTestCase()
 {
     recursiveOperation(pathTo("internal-0"), safeRemove);
     recursiveOperation(pathTo("documents-0"), safeRemove);

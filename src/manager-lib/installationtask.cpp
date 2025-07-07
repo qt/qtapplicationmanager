@@ -87,7 +87,8 @@ public:
     { }
     ~TemporaryDir()
     {
-        recursiveOperation(path(), safeRemove);
+        if (autoRemove())
+            recursiveOperation(path(), safeRemove);
     }
 private:
     Q_DISABLE_COPY_MOVE(TemporaryDir)
@@ -142,7 +143,7 @@ void InstallationTask::execute()
         if (m_installationPath.isEmpty())
             throw Exception("no installation location was configured");
 
-        TemporaryDir extractionDir;
+        TemporaryDir extractionDir(m_installationPath + u"/.tmp-XXXXXX"_s);
         if (!extractionDir.isValid())
             throw Exception("could not create a temporary extraction directory");
 

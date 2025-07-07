@@ -318,9 +318,9 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
 
         startInstallation();
 
-        QFile::copy(oldDestinationDirectory.filePath(u"info.yaml"_s), m_extractionDir.filePath(u"info.yaml"_s));
+        QFile::rename(oldDestinationDirectory.filePath(u"info.yaml"_s), m_extractionDir.filePath(u"info.yaml"_s));
         if (!m_iconFileName.isEmpty())
-            QFile::copy(oldDestinationDirectory.filePath(m_iconFileName), m_extractionDir.filePath(m_iconFileName));
+            QFile::rename(oldDestinationDirectory.filePath(m_iconFileName), m_extractionDir.filePath(m_iconFileName));
 
         {
             QMutexLocker locker(&m_mutex);

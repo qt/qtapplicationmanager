@@ -777,6 +777,8 @@ void Watchdog::eventCallback(const QThread *thread, bool begin, QObject *receive
 
     if (auto *eld = std::as_const(WatchdogPrivate::s_eventLoopData).localData()) {
         Q_ASSERT(eld->m_thread == thread);
+        if (!eld->m_threadHandle)
+            eld->m_threadHandle = currentThreadHandle();
         d->eventNotify(eld, begin);
     }
 

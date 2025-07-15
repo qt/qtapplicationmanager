@@ -587,6 +587,8 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
                 }
             }
         }
+#    elif (__QNX__ >= 800)
+        logMsg(logTo, "\n > C++ backtraces are not supported on QNX 8");
 #    else
         Q_UNUSED(stackFramesToIgnore);
         constexpr int frames = 20;

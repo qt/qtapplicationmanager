@@ -714,7 +714,7 @@ Watchdog::Watchdog()
     connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
         shutdown();
         m_cleanShutdown = true;
-    });
+    }, Qt::SingleShotConnection);
     d->m_wdThread->start();
 }
 

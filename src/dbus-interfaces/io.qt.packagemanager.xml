@@ -2,6 +2,7 @@
 <node>
   <interface name="io.qt.PackageManager">
     <property name="count" type="i" access="read"/>
+    <property name="installationEnabled" type="b" access="read"/>
     <property name="allowInstallationOfUnsignedPackages" type="b" access="read"/>
     <property name="developmentMode" type="b" access="read"/>
     <property name="hardwareId" type="s" access="read"/>

@@ -675,6 +675,18 @@ bool PackageManager::isReady() const
 }
 
 /*!
+    \qmlproperty bool PackageManager::installationEnabled
+    \readonly
+
+    Defaults to \c true. Only returns \c false, if the installer part of the application manager
+    has been \l{config disable installer}{disabled at compile time}.
+*/
+bool PackageManager::installationEnabled() const
+{
+    return d->enableInstaller;
+}
+
+/*!
     \qmlproperty bool PackageManager::developmentMode
     \readonly
 
@@ -692,7 +704,7 @@ void PackageManager::setDevelopmentMode(bool enable)
 }
 
 /*!
-    \qmlproperty string PackageManager::allowInstallationOfUnsignedPackages
+    \qmlproperty bool PackageManager::allowInstallationOfUnsignedPackages
     \readonly
 
     This readonly property reflects the \l{allow-unsigned-packages}{\c allowUnsignedPackages}

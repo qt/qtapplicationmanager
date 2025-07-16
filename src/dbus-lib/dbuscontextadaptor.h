@@ -26,6 +26,7 @@ public:
     bool isRegistered() const;
 
     static QDBusContext *dbusContextFor(QDBusAbstractAdaptor *adaptor);
+    static void sendErrorReply(QDBusAbstractAdaptor *adaptor, const QString &errorString);
 
     template<typename T>
     T *generatedAdaptor() { return qobject_cast<T *>(m_adaptor); }

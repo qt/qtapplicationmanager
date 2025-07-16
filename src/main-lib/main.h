@@ -125,6 +125,7 @@ private:
     QUrl m_mainQml;
     QString m_mainQmlLocalFile;
     bool m_showFullscreen = false;
+    std::chrono::milliseconds m_shutdownTimeout { 0 };
 
     QQmlApplicationEngine *m_engine = nullptr;
     QQuickView *m_view = nullptr; // only set if we allocate the window ourselves

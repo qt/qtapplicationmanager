@@ -491,7 +491,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 19;
+    return 20;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -564,6 +564,7 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
                   &ConfigurationData::Wayland::ExtraSocket::groupId
               }
         & cd.instanceId
+        & cd.shutdownTimeout
         & cd.watchdog.eventloop.checkInterval
         & cd.watchdog.eventloop.warnTimeout
         & cd.watchdog.eventloop.killTimeout
@@ -642,6 +643,7 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(wayland.socketName);
     MERGE_FIELD(wayland.extraSockets);
     MERGE_FIELD(instanceId);
+    MERGE_FIELD(shutdownTimeout);
     into.watchdog.merge(from.watchdog);
 }
 
@@ -706,6 +708,8 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
         yp.parseFields({
             { "instanceId", false, YamlParser::Scalar, [&]() {
                  cd.instanceId = yp.parseString(); } },
+            { "shutdownTimeout", false, YamlParser::Scalar, [&]() {
+                 cd.shutdownTimeout = yp.parseDurationAsMSec(); } },
             { "runtimes", false, YamlParser::Map, [&]() {
                  cd.runtimes.configurations = yp.parseMap();
                  QVariant additionalLaunchers = cd.runtimes.configurations.take(u"additionalLaunchers"_s);

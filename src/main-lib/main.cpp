@@ -275,18 +275,21 @@ void Main::shutDown(const char *shutdownReason, int exitCode)
     static int code = exitCode;
     static const char *reason = shutdownReason;
 
-    static auto finalShutdown = []() {
+    static auto finalShutdown = [](bool force) {
         unexpectedShutdown = false;
         if (reason)
             qCInfo(LogSystem) << "Shutting down due to" << reason;
-        QCoreApplication::exit(code);
+        if (force)
+            ::exit(code);
+        else
+            QCoreApplication::exit(code);
     };
 
     static auto checkShutDownFinished = [](int nextDown) {
         down |= nextDown;
         if (down == (ApplicationManagerDown | QuickLauncherDown | WindowManagerDown)) {
             down = 0;
-            finalShutdown();
+            finalShutdown(false);
         }
     };
 
@@ -318,7 +321,7 @@ void Main::shutDown(const char *shutdownReason, int exitCode)
             resources << u"windows"_s;
         qCCritical(LogSystem, "There are still resources in use (%s). Check your System UI implementation. "
                               "Exiting regardless.", resources.join(u", "_s).toLocal8Bit().constData());
-        finalShutdown();
+        finalShutdown(true);
     });
 }
 

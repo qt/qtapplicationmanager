@@ -27,6 +27,12 @@ QDBusContext *QtAM::DBusContextAdaptor::dbusContextFor(QDBusAbstractAdaptor *ada
     return adaptor ? qobject_cast<DBusContextAdaptor *>(adaptor->parent()) : nullptr;
 }
 
+void DBusContextAdaptor::sendErrorReply(QDBusAbstractAdaptor *adaptor, const QString &errorString)
+{
+    if (auto *ctxt = dbusContextFor(adaptor))
+        ctxt->sendErrorReply(QDBusError::Failed, errorString);
+}
+
 QT_END_NAMESPACE_AM
 
 #include "moc_dbuscontextadaptor.cpp"

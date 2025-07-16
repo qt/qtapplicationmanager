@@ -49,6 +49,7 @@ class PackageManager : public QAbstractListModel
     Q_CLASSINFO("D-Bus Interface", "io.qt.PackageManager")
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     // these are const on purpose - these should never change in a running system
+    Q_PROPERTY(bool installationEnabled READ installationEnabled CONSTANT FINAL REVISION(6, 10))
     Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT FINAL)
     Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT FINAL)
     Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT FINAL)
@@ -94,6 +95,7 @@ public:
 
     bool isReady() const;
 
+    bool installationEnabled() const;
     bool developmentMode() const;
     void setDevelopmentMode(bool enable);
     bool allowInstallationOfUnsignedPackages() const;

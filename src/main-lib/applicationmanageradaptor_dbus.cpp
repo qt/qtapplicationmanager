@@ -25,6 +25,14 @@ using namespace Qt::StringLiterals;
 
 QT_USE_NAMESPACE_AM
 
+static bool checkApplicationId(ApplicationManagerAdaptor *a, const QString &id)
+{
+    if (ApplicationManager::instance()->application(id))
+        return true;
+    DBusContextAdaptor::sendErrorReply(a, u"Unknown application id '%1'"_s.arg(id));
+    return false;
+}
+
 ApplicationManagerAdaptor::ApplicationManagerAdaptor(QObject *parent)
     : QDBusAbstractAdaptor(parent)
 {
@@ -92,13 +100,19 @@ QStringList ApplicationManagerAdaptor::applicationIds()
 uint ApplicationManagerAdaptor::applicationRunState(const QString &id)
 {
     QT_AM_AUTHENTICATE_DBUS(uint)
-    return ApplicationManager::instance()->applicationRunState(id);
+    if (checkApplicationId(this, id))
+        return ApplicationManager::instance()->applicationRunState(id);
+    else
+        return { };
 }
 
 QStringList ApplicationManagerAdaptor::capabilities(const QString &id)
 {
     QT_AM_AUTHENTICATE_DBUS(QStringList)
-    return ApplicationManager::instance()->capabilities(id);
+    if (checkApplicationId(this, id))
+        return ApplicationManager::instance()->capabilities(id);
+    else
+        return { };
 }
 
 bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QString &debugWrapper)
@@ -139,8 +153,7 @@ bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QStrin
                                             std::move(stdioRedirections));
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
-        if (auto *ctxt = DBusContextAdaptor::dbusContextFor(this))
-            ctxt->sendErrorReply(QDBusError::Failed, e.errorString());
+        DBusContextAdaptor::sendErrorReply(this, e.errorString());
         return false;
     }
 }
@@ -148,10 +161,14 @@ bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QStrin
 QVariantMap ApplicationManagerAdaptor::get(const QString &id)
 {
     QT_AM_AUTHENTICATE_DBUS(QVariantMap)
-    auto map = ApplicationManager::instance()->get(id);
-    map.remove(u"application"_s);       // cannot marshall QObject *
-    map.remove(u"applicationObject"_s); // cannot marshall QObject *
-    return convertToDBusVariant(map).toMap();
+    if (checkApplicationId(this, id)) {
+        auto map = ApplicationManager::instance()->get(id);
+        map.remove(u"application"_s);       // cannot marshall QObject *
+        map.remove(u"applicationObject"_s); // cannot marshall QObject *
+        return convertToDBusVariant(map).toMap();
+    } else {
+        return { };
+    }
 }
 
 QString ApplicationManagerAdaptor::identifyApplication(qlonglong pid)
@@ -210,8 +227,7 @@ bool ApplicationManagerAdaptor::startApplication(const QString &id, const QtAM::
                                             std::move(stdioRedirections));
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
-        if (auto *ctxt = DBusContextAdaptor::dbusContextFor(this))
-            ctxt->sendErrorReply(QDBusError::Failed, e.errorString());
+        DBusContextAdaptor::sendErrorReply(this, e.errorString());
         return false;
     }
 }
@@ -235,7 +251,8 @@ void ApplicationManagerAdaptor::stopApplication(const QString &id)
 void ApplicationManagerAdaptor::stopApplication(const QString &id, bool forceKill)
 {
     QT_AM_AUTHENTICATE_DBUS(void)
-    ApplicationManager::instance()->stopApplication(id, forceKill);
+    if (checkApplicationId(this, id))
+        ApplicationManager::instance()->stopApplication(id, forceKill);
 }
 
 QString ApplicationManagerAdaptor::sendIntentRequestAs(const QString &requestingApplicationId,

@@ -20,6 +20,22 @@ using namespace Qt::StringLiterals;
 
 QT_USE_NAMESPACE_AM
 
+static bool checkPackageId(PackageManagerAdaptor *a, const QString &id)
+{
+    if (PackageManager::instance()->package(id))
+        return true;
+    DBusContextAdaptor::sendErrorReply(a, u"Unknown package id '%1'"_s.arg(id));
+    return false;
+}
+
+static bool checkInstaller(PackageManagerAdaptor *a)
+{
+    if (PackageManager::instance()->installationEnabled())
+        return true;
+    DBusContextAdaptor::sendErrorReply(a, u"The application-manager was compiled without the installer part"_s);
+    return false;
+}
+
 static QString taskStateToString(AsynchronousTask::TaskState state)
 {
     const char *cstr = QMetaEnum::fromType<AsynchronousTask::TaskState>().valueToKey(state);
@@ -84,6 +100,11 @@ PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
 PackageManagerAdaptor::~PackageManagerAdaptor()
 { }
 
+bool PackageManagerAdaptor::installationEnabled() const
+{
+    return PackageManager::instance()->installationEnabled();
+}
+
 bool PackageManagerAdaptor::allowInstallationOfUnsignedPackages() const
 {
     return PackageManager::instance()->allowInstallationOfUnsignedPackages();
@@ -127,13 +148,17 @@ QVariantMap PackageManagerAdaptor::documentLocation() const
 void PackageManagerAdaptor::acknowledgePackageInstallation(const QString &taskId)
 {
     QT_AM_AUTHENTICATE_DBUS(void)
-    PackageManager::instance()->acknowledgePackageInstallation(taskId);
+    if (checkInstaller(this))
+        PackageManager::instance()->acknowledgePackageInstallation(taskId);
 }
 
 bool PackageManagerAdaptor::cancelTask(const QString &taskId)
 {
     QT_AM_AUTHENTICATE_DBUS(bool)
-    return PackageManager::instance()->cancelTask(taskId);
+    if (checkInstaller(this))
+        return PackageManager::instance()->cancelTask(taskId);
+    else
+        return { };
 }
 
 int PackageManagerAdaptor::compareVersions(const QString &version1, const QString &version2)
@@ -151,30 +176,45 @@ QStringList PackageManagerAdaptor::packageIds()
 QVariantMap PackageManagerAdaptor::get(const QString &id)
 {
     QT_AM_AUTHENTICATE_DBUS(QVariantMap)
-    auto map = PackageManager::instance()->get(id);
-    map.remove(u"package"_s);       // cannot marshall QObject *
-    map.remove(u"packageObject"_s); // cannot marshall QObject *
-    return convertToDBusVariant(map).toMap();
+    if (checkPackageId(this, id)) {
+        auto map = PackageManager::instance()->get(id);
+        map.remove(u"package"_s);       // cannot marshall QObject *
+        map.remove(u"packageObject"_s); // cannot marshall QObject *
+        return convertToDBusVariant(map).toMap();
+    } else {
+        return { };
+    }
 }
 
 qlonglong PackageManagerAdaptor::installedPackageSize(const QString &packageId)
 {
     QT_AM_AUTHENTICATE_DBUS(qlonglong)
-    return PackageManager::instance()->installedPackageSize(packageId);
+    if (checkInstaller(this) && checkPackageId(this, packageId))
+        return PackageManager::instance()->installedPackageSize(packageId);
+    else
+        return { };
 }
 
 QVariantMap PackageManagerAdaptor::installedPackageExtraMetaData(const QString &packageId)
 {
     QT_AM_AUTHENTICATE_DBUS(QVariantMap)
-    const auto map = PackageManager::instance()->installedPackageExtraMetaData(packageId);
-    return convertToDBusVariant(map).toMap();
+    if (checkInstaller(this) && checkPackageId(this, packageId)) {
+        const auto map = PackageManager::instance()->installedPackageExtraMetaData(packageId);
+        return convertToDBusVariant(map).toMap();
+    } else {
+        return { };
+    }
 }
 
 QVariantMap PackageManagerAdaptor::installedPackageExtraSignedMetaData(const QString &packageId)
 {
     QT_AM_AUTHENTICATE_DBUS(QVariantMap)
-    const auto map = PackageManager::instance()->installedPackageExtraSignedMetaData(packageId);
-    return convertToDBusVariant(map).toMap();
+    if (checkInstaller(this) && checkPackageId(this, packageId)) {
+        const auto map = PackageManager::instance()->installedPackageExtraSignedMetaData(packageId);
+        return convertToDBusVariant(map).toMap();
+    } else {
+        return { };
+    }
 }
 
 QString PackageManagerAdaptor::removePackage(const QString &packageId, bool keepDocuments)
@@ -185,31 +225,46 @@ QString PackageManagerAdaptor::removePackage(const QString &packageId, bool keep
 QString PackageManagerAdaptor::removePackage(const QString &packageId, bool keepDocuments, bool force)
 {
     QT_AM_AUTHENTICATE_DBUS(QString)
-    return PackageManager::instance()->removePackage(packageId, keepDocuments, force);
+    if (checkInstaller(this) && checkPackageId(this, packageId))
+        return PackageManager::instance()->removePackage(packageId, keepDocuments, force);
+    else
+        return { };
 }
 
 QString PackageManagerAdaptor::startPackageInstallation(const QString &sourceUrl)
 {
     QT_AM_AUTHENTICATE_DBUS(QString)
-    return PackageManager::instance()->startPackageInstallation(sourceUrl);
+    if (checkInstaller(this))
+        return PackageManager::instance()->startPackageInstallation(sourceUrl);
+    else
+        return { };
 }
 
 QString PackageManagerAdaptor::taskState(const QString &taskId)
 {
     QT_AM_AUTHENTICATE_DBUS(QString)
-    return taskStateToString(PackageManager::instance()->taskState(taskId));
+    if (checkInstaller(this))
+        return taskStateToString(PackageManager::instance()->taskState(taskId));
+    else
+        return { };
 }
 
 QString PackageManagerAdaptor::taskPackageId(const QString &taskId)
 {
     QT_AM_AUTHENTICATE_DBUS(QString)
-    return PackageManager::instance()->taskPackageId(taskId);
+    if (checkInstaller(this))
+        return PackageManager::instance()->taskPackageId(taskId);
+    else
+        return { };
 }
 
 QStringList PackageManagerAdaptor::activeTaskIds()
 {
     QT_AM_AUTHENTICATE_DBUS(QStringList)
-    return PackageManager::instance()->activeTaskIds();
+    if (checkInstaller(this))
+        return PackageManager::instance()->activeTaskIds();
+    else
+        return { };
 }
 
 bool PackageManagerAdaptor::validateDnsName(const QString &name)

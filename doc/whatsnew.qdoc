@@ -8,6 +8,29 @@
 \title What's New
 \brief Important changes in Qt Application Manager
 
+\section1 Qt ApplicationManager 6.10
+
+This release is mostly about quality-of-live improvements:
+\list
+\li Debugging Wayland problems involving multiple clients, as well as nested compositor setups is
+    now a lot easier: all server-side \c WAYLAND_DEBUG messages produced by the application manager
+    can now optionally be prefixed with an \e <app-id> tag by setting the environment variable
+    \c {AM_TAGGED_WAYLAND_DEBUG=1}.
+    You can use \l{wlanalyze} to analyze these log files.
+    This feature has also been backported to 6.8, as it does not interfere with production code.
+
+\li The watchdog now uses a dedicated signal to kill processes, which makes it easy to differentiate
+    between a forced exit and a watchdog kill. The actual Unix signal differs between platforms,
+    but it is always a signal that is not used by the kernel (\c SIGSTKFLT on Linux x86 and ARM and
+    \c SIGEMT on Linux MIPS and the BSDs).
+
+\li Loading in-process QML applications does not block the event loop anymore. Instead the QML code
+    is loaded via the main window's incubator.
+\endlist
+
+In addition, the \e SoftwareContainers example has been removed, as the upstream project is no
+longer maintained.
+
 \section1 Qt ApplicationManager 6.9
 
 Due to a behavior change in the QtWaylandCompositor module, the "not visible" state on windows does

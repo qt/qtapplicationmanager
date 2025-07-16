@@ -114,3 +114,6 @@ watchdog:
     checkInterval: 2ms
     warnTimeout: 3ms
     killTimeout: 4ms
+
+instanceId: 'i1'
+shutdownTimeout: 4ms

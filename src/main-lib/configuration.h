@@ -25,6 +25,8 @@ struct ConfigurationData
 {
     QString instanceId;
 
+    std::chrono::milliseconds shutdownTimeout { 5000 };
+
     struct Runtimes {
         QStringList additionalLaunchers;
         QVariantMap configurations;

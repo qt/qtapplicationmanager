@@ -139,6 +139,9 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.yaml.watchdog.wayland.checkInterval, -1ms);
     QCOMPARE(c.yaml.watchdog.wayland.warnTimeout, -1ms);
     QCOMPARE(c.yaml.watchdog.wayland.killTimeout, -1ms);
+
+    QCOMPARE(c.yaml.instanceId, u""_s);
+    QCOMPARE(c.yaml.shutdownTimeout, 5s);
 }
 
 void tst_Configuration::simpleConfig()
@@ -261,6 +264,9 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.yaml.watchdog.wayland.checkInterval, 2ms);
     QCOMPARE(c.yaml.watchdog.wayland.warnTimeout, 3ms);
     QCOMPARE(c.yaml.watchdog.wayland.killTimeout, 4ms);
+
+    QCOMPARE(c.yaml.instanceId, u"i1"_s);
+    QCOMPARE(c.yaml.shutdownTimeout, 4ms);
 }
 
 void tst_Configuration::mergedConfig()
@@ -414,6 +420,9 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.yaml.watchdog.wayland.killTimeout, 5ms); // round to precision
 
 #undef TO_MS
+
+    QCOMPARE(c.yaml.instanceId, u"i2"_s);
+    QCOMPARE(c.yaml.shutdownTimeout, 42s);
 }
 
 void tst_Configuration::commandLineConfig()
@@ -526,6 +535,9 @@ void tst_Configuration::commandLineConfig()
 
     QCOMPARE(c.yaml.plugins.container, {});
     QCOMPARE(c.yaml.plugins.startup, {});
+
+    QCOMPARE(c.yaml.instanceId, u""_s);
+    QCOMPARE(c.yaml.shutdownTimeout.count(), 5000);
 }
 
 

@@ -168,6 +168,13 @@ ui:
             \l{Controller}{appman-controller tool}. A unique number is appended to this id to make
             it possible to disambiguate between instances with the same id. (default: appman)
     \row
+        \li [\c shutdownTimeout]
+        \li duration
+        \li When requested to shutdown via \c SIGINT, \c SIGTERM, \c{Qt.quit()} or by closing the
+            System UI's last window, the application manager tries to cleanly shutdown all its
+            subsystems. If this is not possible within this timeout, it will simply call \c ::exit.
+            (default: 5s)
+    \row
         \li \b --builtin-apps-manifest-dir
             \br [\c applications/builtinAppsManifestDir]
         \li string

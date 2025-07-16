@@ -251,6 +251,7 @@ void Main::setup(const Configuration *cfg) noexcept(false)
     createInstanceInfoFile(cfg->yaml.instanceId);
 
     m_showFullscreen = cfg->yaml.ui.fullscreen;
+    m_shutdownTimeout = cfg->yaml.shutdownTimeout;
 }
 
 bool Main::isSingleProcessMode() const
@@ -311,7 +312,7 @@ void Main::shutDown(const char *shutdownReason, int exitCode)
         m_windowManager->shutDown();
     }
 
-    QTimer::singleShot(5000, this, [] {
+    QTimer::singleShot(m_shutdownTimeout, this, [] {
         QStringList resources;
         if (!(down & ApplicationManagerDown))
             resources << u"runtimes"_s;

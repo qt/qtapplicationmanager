@@ -107,3 +107,6 @@ watchdog:
     checkInterval: 2.5h
     warnTimeout: 3.5h
     killTimeout: 5.5ms
+
+instanceId: 'i2'
+shutdownTimeout: 42s

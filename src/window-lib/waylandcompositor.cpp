@@ -135,9 +135,6 @@ QObject *WaylandCompositor::preConstructor(QObject *parent)
         } else if (amTaggedWaylandDebug && (waylandDebug == u"client")) {
             qCInfo(LogWayland) << "AM_TAGGED_WAYLAND_DEBUG is set, but this does not affect WAYLAND_DEBUG=client.\n";
         }
-        // The logs are messy enough as is, if you need client side output, start them via
-        // appman-controller and redirect stderr
-        qunsetenv("WAYLAND_DEBUG");
         once = true;
     }
     return parent;
@@ -201,6 +198,10 @@ WaylandCompositor::~WaylandCompositor()
 
 void WaylandCompositor::setupLogging()
 {
+    // The logs are messy enough as is, if you need client side output, start them via
+    // appman-controller and redirect stderr
+    qunsetenv("WAYLAND_DEBUG");
+
     // only need custom logging, if we need to tag
     if (!s_taggedLogging)
         return;

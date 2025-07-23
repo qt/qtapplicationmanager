@@ -62,6 +62,7 @@ class AbstractRuntime : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QtAM::AbstractContainer *container READ container CONSTANT FINAL)
+    Q_PROPERTY(QString runtimeId READ runtimeId CONSTANT FINAL REVISION(6, 10))
 
 public:
     ~AbstractRuntime() override;
@@ -69,6 +70,8 @@ public:
     AbstractContainer *container() const;
     Application *application() const;
     AbstractRuntimeManager *manager() const;
+
+    QString runtimeId() const;
 
     virtual bool isQuickLauncher() const;
     virtual bool attachApplicationToQuickLauncher(Application *app);

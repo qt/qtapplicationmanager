@@ -40,12 +40,36 @@
           built-in \c process container. Custom container plugins might not implement the necessary
           interface.
 */
+/*!
+    \qmlproperty bool Container::hasDebugWrapper
+    \readonly
+    \since 6.8
+
+    Returns \c true, if the runtime in this container is executing with a debug wrapper and \c
+    false otherwise.
+
+    \sa Debugging
+*/
 
 
 QT_BEGIN_NAMESPACE_AM
 
 AbstractContainer::~AbstractContainer()
 { }
+
+/*!
+    \qmlproperty string Container::containerId
+    \readonly
+    \since 6.10
+
+    This property returns the \c id of the container that is executing the application. The \c id
+    is a unique identifier for the container integration and can be used to reference it in other
+    parts of the System UI or in configuration files.
+*/
+QString AbstractContainer::containerId() const
+{
+    return m_manager->identifier();
+}
 
 QString AbstractContainer::controlGroup() const
 {

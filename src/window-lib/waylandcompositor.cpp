@@ -115,25 +115,43 @@ QObject *WaylandCompositor::preConstructor(QObject *parent)
     if (!once) {
         const auto waylandDebug = qEnvironmentVariable("WAYLAND_DEBUG");
         const bool amTaggedWaylandDebug = (qEnvironmentVariableIntValue("AM_TAGGED_WAYLAND_DEBUG") == 1);
-        bool nestedLogging = (waylandDebug == u"1")
-                             && (qApp->platformName().startsWith(u"wayland"));
 
-        if (amTaggedWaylandDebug)
-            s_taggedLogging = true;
+        const bool waylandDebugBoth = (waylandDebug == u"1");
+        const bool waylandDebugServer = (waylandDebug == u"server");
+        const bool waylandDebugClient = (waylandDebug == u"client");
+        const bool nestedLogging = waylandDebugBoth && (qApp->platformName().startsWith(u"wayland"));
 
-        if (nestedLogging && !amTaggedWaylandDebug) {            // we are a nested compositor and logging with WAYLAND_DEBUG=1 just creates a mess,
+        if (amTaggedWaylandDebug) {
+            if (waylandDebugServer || waylandDebugBoth) {
+                qCInfo(LogWayland) << "AM_TAGGED_WAYLAND_DEBUG is set. All server side WAYLAND_DEBUG logs are now tagged with "
+                                      "an <app-id> to make them distinguishable (see documentation).";
+
+                s_taggedLogging = true;
+
+                // We need to unset/change WAYLAND_DEBUG, so that libwayland-server does not
+                // activate its own logger in additon to our own.
+                if (waylandDebugBoth) {
+                    if (nestedLogging) {
+                        qCInfo(LogWayland) << "The application manager is running as a nested compositor and WAYLAND_DEBUG=1 is set. "
+                                              "WAYLAND_DEBUG will be unset for applications to avoid a 3-way mixed client/server log.";
+                        qunsetenv("WAYLAND_DEBUG");
+                    } else {
+                        qputenv("WAYLAND_DEBUG", "client");
+                    }
+                } else {
+                    qunsetenv("WAYLAND_DEBUG");
+                }
+            } else if (waylandDebugClient) {
+                qCInfo(LogWayland) << "AM_TAGGED_WAYLAND_DEBUG is set, but this does not affect WAYLAND_DEBUG=client.";
+            } else {
+                qCInfo(LogWayland) << "AM_TAGGED_WAYLAND_DEBUG is set but ignored, because WAYLAND_DEBUG is not set.";
+            }
+        } else if (nestedLogging) {
+            // we are a nested compositor and logging with WAYLAND_DEBUG=1 just creates a mess,
             // as both the server and client side output is intermixed without any tagging.
-            qCInfo(LogWayland) << "The application manager is running as a nested compositor and WAYLAND_DEBUG=1 is set.\n"
-                                  "This will produce a mixed client/server log that is not readable.\n"
+            qCInfo(LogWayland) << "The application manager is running as a nested compositor and WAYLAND_DEBUG=1 is set. "
+                                  "This will produce a mixed client/server log that is not readable. "
                                   "You should also set AM_TAGGED_WAYLAND_DEBUG=1 (see documentation).";
-        }
-        if (amTaggedWaylandDebug && waylandDebug.isEmpty()) {
-            qCInfo(LogWayland) << "AM_TAGGED_WAYLAND_DEBUG is set but ignored, because WAYLAND_DEBUG is not set.\n";
-        } else if (amTaggedWaylandDebug && ((waylandDebug == u"1") || (waylandDebug == u"server"))) {
-            qCInfo(LogWayland) << "AM_TAGGED_WAYLAND_DEBUG is set. All server side WAYLAND_DEBUG logs are now tagged with\n"
-                                  "an <app-id> to make them distinguishable (see documentation).\n";
-        } else if (amTaggedWaylandDebug && (waylandDebug == u"client")) {
-            qCInfo(LogWayland) << "AM_TAGGED_WAYLAND_DEBUG is set, but this does not affect WAYLAND_DEBUG=client.\n";
         }
         once = true;
     }
@@ -198,10 +216,6 @@ WaylandCompositor::~WaylandCompositor()
 
 void WaylandCompositor::setupLogging()
 {
-    // The logs are messy enough as is, if you need client side output, start them via
-    // appman-controller and redirect stderr
-    qunsetenv("WAYLAND_DEBUG");
-
     // only need custom logging, if we need to tag
     if (!s_taggedLogging)
         return;

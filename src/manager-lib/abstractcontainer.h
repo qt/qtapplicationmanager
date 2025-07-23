@@ -64,10 +64,13 @@ class AbstractContainer : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString controlGroup READ controlGroup WRITE setControlGroup NOTIFY controlGroupChanged FINAL)
-    Q_PROPERTY(bool hasDebugWrapper READ hasDebugWrapper CONSTANT FINAL)
+    Q_PROPERTY(bool hasDebugWrapper READ hasDebugWrapper CONSTANT FINAL REVISION(6, 8))
+    Q_PROPERTY(QString containerId READ containerId CONSTANT FINAL REVISION(6, 10))
 
 public:
     ~AbstractContainer() override;
+
+    QString containerId() const;
 
     virtual QString controlGroup() const;
     virtual bool setControlGroup(const QString &groupName);

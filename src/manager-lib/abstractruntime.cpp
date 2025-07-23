@@ -100,6 +100,21 @@ AbstractRuntimeManager *AbstractRuntime::manager() const
     return m_manager;
 }
 
+
+/*!
+    \qmlproperty string Runtime::runtimeId
+    \readonly
+    \since 6.10
+
+    This property returns the \c id of the runtime that is executing the application. The \c id
+    is a unique identifier for the runtime integration and can be used to reference it in other
+    parts of the System UI or in configuration files.
+*/
+QString AbstractRuntime::runtimeId() const
+{
+    return m_manager->identifier();
+}
+
 bool AbstractRuntime::isQuickLauncher() const
 {
     return false;

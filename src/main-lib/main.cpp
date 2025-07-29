@@ -22,6 +22,9 @@
 #  include "windowmanager_adaptor.h"
 #  include "notifications_adaptor.h"
 #endif
+#if defined(Q_OS_LINUX) && QT_CONFIG(am_libsystemd)
+#  include <systemd/sd-daemon.h>
+#endif
 
 #include <QFile>
 #include <QDir>
@@ -293,6 +296,8 @@ void Main::shutDown(const char *shutdownReason, int exitCode)
             finalShutdown(false);
         }
     };
+
+    notifySystemShutdown();
 
     if (m_applicationManager) {
         connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::shutDownFinished,
@@ -838,6 +843,8 @@ void Main::loadQml() noexcept(false)
         iface->afterQmlEngineLoad(m_engine);
 
     StartupTimer::instance()->checkpoint("after loading main QML file");
+
+    notifySystemReady();
 }
 
 void Main::showWindow(bool showFullscreen)
@@ -1160,6 +1167,34 @@ QString Main::hardwareId() const
 #endif
     }
     return hardwareId;
+}
+
+void Main::notifySystemReady()
+{
+#if defined(Q_OS_LINUX) && QT_CONFIG(am_libsystemd)
+    static bool once = false;
+    if (!once) {
+        if (qEnvironmentVariableIsSet("NOTIFY_SOCKET")) {
+            ::sd_notify(0, "READY=1");
+            qCDebug(LogSystem) << "Sent systemd 'ready' notification";
+        }
+        once = true;
+    }
+#endif
+}
+
+void Main::notifySystemShutdown()
+{
+#if defined(Q_OS_LINUX) && QT_CONFIG(am_libsystemd)
+    static bool once = false;
+    if (!once) {
+        if (qEnvironmentVariableIsSet("NOTIFY_SOCKET")) {
+            ::sd_notify(0, "STOPPING=1");
+            qCDebug(LogSystem) << "Sent systemd 'stopping' notification";
+        }
+        once = true;
+    }
+#endif
 }
 
 bool Main::notify(QObject *receiver, QEvent *event)

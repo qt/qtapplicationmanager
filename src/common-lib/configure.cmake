@@ -103,11 +103,11 @@ qt_feature("am-libdbus" PRIVATE
     DISABLE INPUT_libdbus STREQUAL 'no'
 )
 
-qt_feature("am-systemd-watchdog" PRIVATE
-    LABEL "Use systemd watchdog"
+qt_feature("am-libsystemd" PRIVATE
+    LABEL "Enable libsystemd features (startup notify/watchdog)"
     CONDITION WrapLibSystemd_FOUND
-    ENABLE INPUT_systemd_watchdog STREQUAL 'yes'
-    DISABLE INPUT_systemd_watchdog STREQUAL 'no'
+    ENABLE INPUT_libsystemd STREQUAL 'yes'
+    DISABLE INPUT_libsystemd STREQUAL 'no'
 )
 
 qt_feature("am-libbacktrace" PRIVATE
@@ -160,7 +160,7 @@ qt_configure_add_summary_entry(ARGS "am-tools-only")
 qt_configure_add_summary_entry(ARGS "am-package-server")
 qt_configure_add_summary_entry(ARGS "am-dltlogging")
 qt_configure_add_summary_entry(ARGS "am-libdbus")
-qt_configure_add_summary_entry(ARGS "am-systemd-watchdog")
+qt_configure_add_summary_entry(ARGS "am-libsystemd")
 qt_configure_add_summary_entry(ARGS "am-libbacktrace")
 qt_configure_add_summary_entry(ARGS "am-stackwalker")
 qt_configure_end_summary_section() # end of "Qt ApplicationManger" section

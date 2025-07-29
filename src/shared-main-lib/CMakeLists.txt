@@ -40,7 +40,7 @@ qt_internal_add_module(AppManSharedMainPrivate
         AM_COMPILING_APPMAN
 )
 
-qt_internal_extend_target(AppManSharedMainPrivate CONDITION QT_FEATURE_am_systemd_watchdog
+qt_internal_extend_target(AppManSharedMainPrivate CONDITION QT_FEATURE_am_libsystemd
     LIBRARIES
         WrapLibSystemd::WrapLibSystemd
 )

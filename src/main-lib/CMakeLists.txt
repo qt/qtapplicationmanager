@@ -83,3 +83,8 @@ qt_internal_extend_target(AppManMainPrivate CONDITION WIN32
     PUBLIC_LIBRARIES
         user32
 )
+
+qt_internal_extend_target(AppManMainPrivate CONDITION QT_FEATURE_am_libsystemd
+    LIBRARIES
+        WrapLibSystemd::WrapLibSystemd
+)

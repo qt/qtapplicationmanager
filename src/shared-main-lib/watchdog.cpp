@@ -16,7 +16,7 @@
 #if defined(Q_OS_UNIX)
 #  include <pthread.h>
 #  include <csignal>
-#  if QT_CONFIG(am_systemd_watchdog)
+#  if QT_CONFIG(am_libsystemd)
 #    include <systemd/sd-daemon.h>
 #  endif
 #elif defined(Q_OS_WINDOWS)
@@ -192,7 +192,7 @@ WatchdogPrivate::~WatchdogPrivate()
 
 void WatchdogPrivate::setupSystemdWatchdog()
 {
-#if QT_CONFIG(am_systemd_watchdog)
+#if QT_CONFIG(am_libsystemd)
     // we're on the wd thread
     Q_ASSERT(QThread::currentThread() == m_wdThread);
 

@@ -42,7 +42,7 @@ To build the application manager with all its features, the following components
     \li \b Qt 6.9.0 or higher.
     \li \b libyaml 2.2 or higher.
     \li \b libarchive 3.5 or higher \e{- if you need the installer functionality}.
-    \li \b libsystemd 183 or higher \e{- if you need systemd watchdog support}.
+    \li \b libsystemd 183 or higher \e{- if you need systemd watchdog and notify-ready support}.
 \endlist
 
 On Debian-based systems, this command installs all the required packages:
@@ -196,9 +196,10 @@ modules:
       integration) on Windows and macOS. This option is enabled by default.
       Settings this to \c no disables building \c libdbus-1.
 \row
-  \li \c{systemd-watchdog}
-  \li Set to \c no to disable building against \c libsystemd for \l{Watchdog} support and \c
-      yes to force building with it. The default depends on the availability of \c libsystemd-dev.
+  \li \c{libsystemd}
+  \li Set to \c no to disable building against \c libsystemd and \c yes to force building with it.
+      This is necessary for systemd \l{Watchdog} and notify-ready support.
+      The default depends on the availability of \c libsystemd-dev.
 \row
   \li \c{bubblewrap}
   \li Set to \c no to disable building the \l{Bubblewrap Container} plugin and \c

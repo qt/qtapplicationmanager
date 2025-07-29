@@ -109,6 +109,8 @@ protected:
     };
 
     QString hardwareId() const;
+    void notifySystemReady();
+    void notifySystemShutdown();
 
 public:
     bool notify(QObject *receiver, QEvent *event) override; // for watchdog

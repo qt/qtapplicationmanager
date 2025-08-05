@@ -160,7 +160,7 @@ bool PackageCreatorPrivate::create()
             throw Exception(Error::Archive, "[libarchive] could not create a new archive object");
         if (archive_write_set_format_pax_restricted(ar) != ARCHIVE_OK)
             throw ArchiveException(ar, "could not set the archive format to BSDTAR");
-        if (archive_write_set_options(ar, "xattrheader=LIBARCHIVE") != ARCHIVE_OK)
+        if (archive_write_set_options(ar, "xattrheader=SCHILY") != ARCHIVE_OK) // stay compatible with gnu-tar
             throw ArchiveException(ar, "could not set the PAX options for xattrheader");
         if (archive_write_set_options(ar, "hdrcharset=UTF-8") != ARCHIVE_OK)
             throw ArchiveException(ar, "could not set the HDRCHARSET option");

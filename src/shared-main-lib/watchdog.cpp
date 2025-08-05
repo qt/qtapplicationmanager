@@ -3,11 +3,13 @@
 
 #include <QCoreApplication>
 #include <QThread>
+#include <QChronoTimer>
 #include <private/qquickwindow_p.h>
 #include <private/qsgrenderloop_p.h>
 
 #include "logging.h"
 #include "utilities.h"
+#include "systemd.h"
 #include "watchdog.h"
 #include "watchdog_p.h"
 #include "qtappman_common-config_p.h"
@@ -15,9 +17,6 @@
 #if defined(Q_OS_UNIX)
 #  include <pthread.h>
 #  include <csignal>
-#  if QT_CONFIG(am_systemd_watchdog)
-#    include <systemd/sd-daemon.h>
-#  endif
 #elif defined(Q_OS_WINDOWS)
 #  include <windows.h>
 #endif
@@ -191,27 +190,22 @@ WatchdogPrivate::~WatchdogPrivate()
 
 void WatchdogPrivate::setupSystemdWatchdog()
 {
-#if QT_CONFIG(am_systemd_watchdog)
     // we're on the wd thread
     Q_ASSERT(QThread::currentThread() == m_wdThread);
 
-    uint64_t wdTimeoutUsec = 0;
-    if (::sd_watchdog_enabled(1, &wdTimeoutUsec) <= 0)
-        wdTimeoutUsec = 0;
+    const auto wdTimeout = Systemd::instance()->watchdogTimeout(true /*ignorePid*/);
 
-    if (wdTimeoutUsec > 0) {
-        static auto sdTrigger = []() { ::sd_notify(0, "WATCHDOG=1"); };
-        auto sdTimer = new QTimer(this);
-        sdTimer->setInterval(wdTimeoutUsec / 1000 / 2);
+    if (wdTimeout) {
+        static auto sdTrigger = []() { Systemd::instance()->notify(u"WATCHDOG=1"_s); };
+        auto sdTimer = new QChronoTimer(this);
+        sdTimer->setInterval(wdTimeout.value() / 2);
         // the timer is triggered on the wd thread
-        connect(sdTimer, &QTimer::timeout, this, sdTrigger);
+        connect(sdTimer, &QChronoTimer::timeout, this, sdTrigger);
         sdTrigger();
         sdTimer->start();
 
-        qCInfo(LogWatchdog).nospace() << "Systemd watchdog enabled (timeout is "
-                                      << (wdTimeoutUsec / 1000) << "ms)";
+        qCInfo(LogWatchdog).nospace() << "Systemd watchdog enabled (timeout is " << wdTimeout.value() << ")";
     }
-#endif
 }
 
 

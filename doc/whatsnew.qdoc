@@ -8,6 +8,15 @@
 \title What's New
 \brief Important changes in Qt Application Manager
 
+\section1 Qt ApplicationManager 6.9.3
+
+\list
+    \li The explicit libsystemd dependency and its corresponding CMake feature have been removed.
+        Qt Application Manager will now detect at runtime if the systemd watchdog is activated and
+        handle it without the need for libsystemd being available.
+\endlist
+
+
 \section1 Qt ApplicationManager 6.9
 
 Due to a behavior change in the QtWaylandCompositor module, the "not visible" state on windows does

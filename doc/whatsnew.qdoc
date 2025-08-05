@@ -28,7 +28,7 @@ This release is mostly about quality-of-live improvements:
     is loaded via the main window's incubator.
 
 \li When started via systemd, the application manager now automatically sends the expected \c READY
-    and \c STOPPING notifications if compiled with libsystemd support.
+    and \c STOPPING notifications.
 \endlist
 
 In addition, the \e SoftwareContainers example has been removed, as the upstream project is no

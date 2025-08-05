@@ -31,12 +31,11 @@ which can be very useful to diagnose freezes.
 
 \section1 Systemd Support
 
-Support for systemd's watchdog is built into the application manager as well: see \{Installation}.
-
-If enabled, the application manager will automatically detect at startup if it was launched by
-systemd and if the systemd unit file has the \c{WatchdogSec} option set. If this is the case, the
-application manager will periodically send the requested notifications to systemd from its
-watchdog thread.
+Support for systemd's watchdog is built into the application manager: it will automatically detect
+at startup if it was launched by systemd and if the systemd unit file has the \c{WatchdogSec}
+option set.
+If this is the case, the application manager will periodically send the requested notifications to
+systemd from its watchdog thread.
 
 \section1 Logging
 

@@ -26,6 +26,7 @@ qt_internal_add_module(AppManCommonPrivate
         processtitle.cpp processtitle.h
         qml-utilities.cpp qml-utilities.h
         qtyaml.cpp qtyaml.h
+        systemd.cpp systemd.h
         unixsignalhandler.cpp unixsignalhandler.h
         utilities.cpp utilities.h
         watchdogconfiguration.h watchdogconfiguration.cpp

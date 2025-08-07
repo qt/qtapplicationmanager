@@ -28,10 +28,6 @@ feature set of the application manager:
 \list
 \li Linux desktop and embedded in \l{Single-Process vs. Multi-Process Mode}
     {single-process and multi-process mode}
-    \note In multi-process mode, only the \b Intel, \b AMD (open source), and \b VMWare graphics
-          drivers are supported due to the varying stability levels in Wayland drivers. While other
-          drivers may work, they require either special QtWayland versions or specific firmware
-          blobs for the GPU driver.
 \endlist
 
 \section1 Prerequisites

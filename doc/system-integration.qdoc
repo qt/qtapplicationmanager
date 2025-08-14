@@ -97,4 +97,60 @@ WatchdogSec=10s
          to live with restrictions forever, even after switching back to an unprivileged user (e.g.
          \c secure_getenv(), \c LD_LIBRARY_PATH).
 
+
+\section1 Extra Wayland Sockets
+
+The application manager follows the basic Wayland socket setup: it always creates a Wayland socket
+in the default location (\c{$XDG_RUNTIME_DIR}) that is named \c{qtam-wayland-<number>}. This socket
+is owned by the user that runs the application manager, and only Wayland clients from the same
+user can connect to it.
+
+This should be sufficient for most setups, but if you have complex container setups, you might need
+additional sockets that are accessible for other (e.g. container) users.
+
+Before version 6.11, this was done by the application manager itself using the
+\c wayland/extraSockets configuration field, but it needed root privileges to create the sockets.
+
+Since version 6.11, this is instead configured via systemd \e socket units that are linked to the
+application manager service unit. For every extra socket, you need to create a systemd socket unit:
+
+\badcode
+# /etc/systemd/system/extra-wayland-socket.socket
+
+[Socket]
+Accept=no
+Service=minidesk.service
+FileDescriptorName=wayland.custom-short-unique-ascii-id
+ListenStream=/run/path/to/extra-socket
+#SocketUser=
+#SocketGroup=
+#SocketMod=
+\endcode
+
+\list
+\li The \c Accept field needs to be set to \c no.
+\li The \c Service field needs to link to the application manager service unit.
+\li The \c FileDescriptorName field is optional for normal systemd socket units, but required to
+    \b{not only} be set, but also start with the string \c{wayland.} for the application manager to
+    be able to use the socket.
+    Each one of the extra sockets must also append a short, unique identifier to this field.
+\li The \c ListenStream field is the path to the socket that will be created.
+\li The \c SocketUser, \c SocketGroup, and \c SocketMod fields are optional, but can be used to
+    set the user, group, and permissions of the socket. If not set, the socket will be owned by
+    \e root.
+\endlist
+
+In addition, you need to link back from the application manager service unit to the socket units,
+if the sockets should also automatically be started when you start the application manager service
+unit:
+
+\badcode
+# /etc/systemd/system/minidesk.service
+
+[Service]
+...
+Sockets=extra-wayland-socket.socket
+#Sockets=<other socket unit>.socket
+\endcode
+
 */

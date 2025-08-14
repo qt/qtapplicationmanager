@@ -22,6 +22,8 @@ public:
 
     std::optional<std::chrono::milliseconds> watchdogTimeout(bool ignorePid = false);
 
+    QMap<int, QString> listenFds(const QRegularExpression &nameRx, bool ignorePid = false);
+
 private:
     Systemd();
     Systemd(const Systemd &) = delete;
@@ -34,6 +36,10 @@ private:
     QByteArray m_notifySocket;
     QByteArray m_watchdogUsec;
     QByteArray m_watchdogPid;
+    QByteArray m_listenFds;
+    QByteArray m_listenFdNames;
+    QByteArray m_listenPid;
+
     int m_notifySocketFd = -1;
     bool m_notifySocketTriedToConnect = false;
 };

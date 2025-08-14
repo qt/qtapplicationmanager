@@ -9,20 +9,6 @@
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/global.h>
 
-QT_BEGIN_NAMESPACE_AM // ADL for op==
-
-// we only need this operator== for the test here
-inline bool operator==(const ConfigurationData::Wayland::ExtraSocket &wes1,
-                       const ConfigurationData::Wayland::ExtraSocket &wes2)
-{
-    return (wes1.path == wes2.path)
-           && (wes1.permissions == wes2.permissions)
-           && (wes1.userId == wes2.userId)
-           && (wes1.groupId == wes2.groupId);
-}
-
-QT_END_NAMESPACE_AM
-
 #include <QtTest/QtTest>
 
 using namespace std::chrono_literals;
@@ -116,7 +102,6 @@ void tst_Configuration::defaultConfig()
     QVERIFY(c.yaml.quicklaunch.runtimesPerContainer.isEmpty());
 
     QCOMPARE(c.yaml.wayland.socketName, u""_s);
-    QVERIFY(c.yaml.wayland.extraSockets.isEmpty());
 
     QCOMPARE(c.yaml.crashAction.printBacktrace, true);
     QCOMPARE(c.yaml.crashAction.printQmlStack, true);
@@ -236,12 +221,6 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.yaml.quicklaunch.failedStartLimitIntervalSec.count(), 43);
 
     QCOMPARE(c.yaml.wayland.socketName, u"my-wlsock-42"_s);
-
-    QList<ConfigurationData::Wayland::ExtraSocket> extraSockets {
-        { u"path-es1"_s, 0440, 1, 2 },
-        { u"path-es2"_s, 0222, 3, 4 }
-    };
-    QCOMPARE(c.yaml.wayland.extraSockets, extraSockets);
 
     QCOMPARE(c.yaml.crashAction.printBacktrace, true);
     QCOMPARE(c.yaml.crashAction.printQmlStack, true);
@@ -388,12 +367,6 @@ void tst_Configuration::mergedConfig()
 
     QCOMPARE(c.yaml.wayland.socketName, u"other-wlsock-0"_s);
 
-    QList<ConfigurationData::Wayland::ExtraSocket> extraSockets {
-        { u"path-es1"_s, 0440, 1, 2 },
-        { u"path-es2"_s, 0222, 3, 4 },
-        { u"path-es3"_s, -1, -1, -1 }
-    };
-    QCOMPARE(c.yaml.wayland.extraSockets, extraSockets);
     QCOMPARE(c.yaml.crashAction.printBacktrace, true);
     QCOMPARE(c.yaml.crashAction.printQmlStack, true);
     QCOMPARE(c.yaml.crashAction.waitForGdbAttach.count(), 42);
@@ -522,7 +495,6 @@ void tst_Configuration::commandLineConfig()
     QVERIFY(c.yaml.quicklaunch.runtimesPerContainer.isEmpty());
 
     QCOMPARE(c.yaml.wayland.socketName, u""_s);
-    QVERIFY(c.yaml.wayland.extraSockets.isEmpty());
 
     QCOMPARE(c.yaml.crashAction.printBacktrace, true);
     QCOMPARE(c.yaml.crashAction.printQmlStack, true);

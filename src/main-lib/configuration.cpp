@@ -550,7 +550,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 20;
+    return 21;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -615,13 +615,6 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.flags.allowUnsignedPackages
         & cd.flags.allowUnknownUiClients
         & cd.wayland.socketName
-              & SerializeList {
-                  cd.wayland.extraSockets,
-                  &ConfigurationData::Wayland::ExtraSocket::path,
-                  &ConfigurationData::Wayland::ExtraSocket::permissions,
-                  &ConfigurationData::Wayland::ExtraSocket::userId,
-                  &ConfigurationData::Wayland::ExtraSocket::groupId
-              }
         & cd.instanceId
         & cd.shutdownTimeout
         & cd.watchdog.eventloop.checkInterval
@@ -700,7 +693,6 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(flags.allowUnsignedPackages);
     MERGE_FIELD(flags.allowUnknownUiClients);
     MERGE_FIELD(wayland.socketName);
-    MERGE_FIELD(wayland.extraSockets);
     MERGE_FIELD(instanceId);
     MERGE_FIELD(shutdownTimeout);
     into.watchdog.merge(from.watchdog);
@@ -965,20 +957,8 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                      { "socketName", false, YamlParser::Scalar, [&]() {
                           cd.wayland.socketName = yp.parseString(); } },
                      { "extraSockets", false, YamlParser::List, [&]() {
-                          yp.parseList([&]() {
-                              ConfigurationData::Wayland::ExtraSocket wes;
-                              yp.parseFields({
-                                  { "path", true, YamlParser::Scalar, [&]() {
-                                       wes.path = yp.parseString(); } },
-                                  { "permissions", false, YamlParser::Scalar, [&]() {
-                                       wes.permissions = yp.parseInt(0); } },
-                                  { "userId", false, YamlParser::Scalar, [&]() {
-                                       wes.userId = yp.parseInt(); } },
-                                  { "groupId", false, YamlParser::Scalar, [&]() {
-                                       wes.groupId = yp.parseInt(); } }
-                              });
-                              cd.wayland.extraSockets.append(wes);
-                          }); } }
+                          qCDebug(LogDeployment) << "ignoring 'wayland/extraSockets'";
+                          (void) yp.parseList(); } }
                  }); } },
             { "systemProperties", false, YamlParser::Map, [&]() {
                  cd.systemProperties = yp.parseMap(); } },

@@ -70,7 +70,7 @@ public:
                              std::chrono::milliseconds warnTimeout,
                              std::chrono::milliseconds killTimeout);
 
-    bool addWaylandSocket(QLocalServer *waylandSocket);
+    void addWaylandSockets(const QMap<int, QString> &socketFds);
 
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;

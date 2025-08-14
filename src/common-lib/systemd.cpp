@@ -42,6 +42,9 @@ Systemd::Systemd()
     m_notifySocket  = getAndUnset("NOTIFY_SOCKET");
     m_watchdogUsec  = getAndUnset("WATCHDOG_USEC");
     m_watchdogPid   = getAndUnset("WATCHDOG_PID");
+    m_listenFds     = getAndUnset("LISTEN_FDS");
+    m_listenFdNames = getAndUnset("LISTEN_FDNAMES");
+    m_listenPid     = getAndUnset("LISTEN_PID");
 #endif
 }
 
@@ -127,6 +130,33 @@ std::optional<std::chrono::milliseconds> Systemd::watchdogTimeout(bool ignorePid
     if (msecs <= 1ms) // this needs to be > 0, when divided by 2
         return { };
     return msecs;
+}
+
+QMap<int, QString> Systemd::listenFds(const QRegularExpression &nameRx, bool ignorePid)
+{
+    if (m_listenFds.isEmpty())
+        return { };
+
+    if (!ignorePid && !checkPid(m_listenPid))
+        return { };
+
+    int fdCount = m_listenFds.toInt();
+    if (fdCount <= 0)
+        return { };
+
+    const auto names = QString::fromLocal8Bit(m_listenFdNames).split(u':');
+
+    if (names.size() != fdCount) {
+        qCWarning(LogSystem).noquote() << "Systemd listen FDs count does not match names count";
+        return { };
+    }
+
+    QMap<int, QString> result;
+    for (int i = 0; i < fdCount; ++i) {
+        if (nameRx.match(names[i]).hasMatch())
+            result.insert(i + 3 /* fds start at 3 */, names[i]);
+    }
+    return result;
 }
 
 QT_END_NAMESPACE_AM

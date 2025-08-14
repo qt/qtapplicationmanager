@@ -25,7 +25,7 @@ public:
     int findWindowByWaylandSurface(QWaylandSurface *waylandSurface) const;
 
     WaylandCompositor *waylandCompositor = nullptr;
-    QVector<int> extraWaylandSockets;
+    QMap<int, QString> extraWaylandSockets;
     struct {
         std::chrono::milliseconds checkInterval { };
         std::chrono::milliseconds warnTimeout { };

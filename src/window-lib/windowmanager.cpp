@@ -400,27 +400,21 @@ void WindowManager::setWatchdogTimeouts(std::chrono::milliseconds checkInterval,
 #endif
 }
 
-bool WindowManager::addWaylandSocket(QLocalServer *waylandSocket)
+void WindowManager::addWaylandSockets(const QMap<int, QString> &socketFds)
 {
 #if QT_CONFIG(am_multi_process)
-    if (d->waylandCompositor) {
-        qCWarning(LogGraphics) << "Cannot add extra Wayland sockets after the compositor has been created"
-                                  " (tried to add:" << waylandSocket->fullServerName() << ").";
-        delete waylandSocket;
-        return false;
-    }
+    if (!socketFds.isEmpty()) {
+        d->extraWaylandSockets.insert(socketFds);
 
-    if (!waylandSocket || (waylandSocket->socketDescriptor() < 0)) {
-        delete waylandSocket;
-        return false;
-    }
+        qCInfo(LogWayland) << "Adding extra sockets:" << socketFds.values().join(u", ");
 
-    waylandSocket->setParent(this);
-    d->extraWaylandSockets << int(waylandSocket->socketDescriptor());
-    return true;
+        if (d->waylandCompositor) {
+            for (auto it = socketFds.cbegin(); it != socketFds.cend(); ++it)
+                d->waylandCompositor->addSocketDescriptor(it.key());
+        }
+    }
 #else
-    Q_UNUSED(waylandSocket)
-    return true;
+    Q_UNUSED(socketFds)
 #endif
 }
 
@@ -687,8 +681,9 @@ void WindowManager::registerCompositorView(QQuickWindow *view)
             emit internalSignals.compositorAboutToBeCreated();
 
             d->waylandCompositor = new WaylandCompositor(view, d->waylandSocketName);
-            for (const auto &extraSocket : std::as_const(d->extraWaylandSockets))
-                d->waylandCompositor->addSocketDescriptor(extraSocket);
+            for (auto it = d->extraWaylandSockets.cbegin(); it != d->extraWaylandSockets.cend(); ++it)
+                d->waylandCompositor->addSocketDescriptor(it.key());
+
             d->waylandCompositor->setWatchdogTimeouts(d->waylandWatchdog.checkInterval,
                                                       d->waylandWatchdog.warnTimeout,
                                                       d->waylandWatchdog.killTimeout);

@@ -483,11 +483,6 @@ bool SudoClient::removeRecursive(const QString &fileOrDir)
     CALL(removeRecursive, fileOrDir);
 }
 
-bool SudoClient::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t user, gid_t group, mode_t permissions)
-{
-    CALL(setOwnerAndPermissionsRecursive, fileOrDir << user << group << permissions);
-}
-
 bool SudoClient::bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
                                      quint64 namespacePid)
 {
@@ -590,13 +585,6 @@ QByteArray SudoServer::receive(const QByteArray &msg)
         QString fileOrDir;
         params >> fileOrDir;
         result << removeRecursive(fileOrDir);
-    } else if (function == "setOwnerAndPermissionsRecursive") {
-        QString fileOrDir;
-        uid_t user;
-        gid_t group;
-        mode_t permissions;
-        params >> fileOrDir >> user >> group >> permissions;
-        result << setOwnerAndPermissionsRecursive(fileOrDir, user, group, permissions);
     } else if (function == "bindMountFileSystem") {
         QString from;
         QString to;
@@ -629,51 +617,6 @@ bool SudoServer::removeRecursive(const QString &fileOrDir)
         m_errorString = e.errorString();
         return false;
     }
-}
-
-bool SudoServer::setOwnerAndPermissionsRecursive(const QString &fileOrDir, uid_t user, gid_t group, mode_t permissions)
-{
-#if defined(Q_OS_LINUX)
-    static auto setOwnerAndPermissions =
-            [user, group, permissions](const QString &path, RecursiveOperationType type) -> bool {
-        if (type == RecursiveOperationType::EnterDirectory)
-            return true;
-
-        const QByteArray localPath = path.toLocal8Bit();
-        bool noModeChange = (permissions == static_cast<mode_t>(-1));
-        mode_t mode = permissions;
-
-        if (type == RecursiveOperationType::LeaveDirectory) {
-            // set the x bit for directories, but only where it makes sense
-            if (mode & 06)
-                mode |= 01;
-            if (mode & 060)
-                mode |= 010;
-            if (mode & 0600)
-                mode |= 0100;
-        }
-
-        return ((noModeChange ? true : (chmod(localPath, mode) == 0))
-                && (chown(localPath, user, group) == 0));
-    };
-
-    try {
-        if (!recursiveOperation(fileOrDir, setOwnerAndPermissions)) {
-            throw Exception(errno, "could not recursively set owner and permission on %1 to %2:%3 / %4")
-                .arg(fileOrDir).arg(user).arg(group).arg(int(permissions), 4, 8, QChar(u'0'));
-        }
-        return true;
-    } catch (const Exception &e) {
-        m_errorString = e.errorString();
-        return false;
-    }
-#else
-    Q_UNUSED(fileOrDir)
-    Q_UNUSED(user)
-    Q_UNUSED(group)
-    Q_UNUSED(permissions)
-    return false;
-#endif // Q_OS_LINUX
 }
 
 bool SudoServer::bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid)

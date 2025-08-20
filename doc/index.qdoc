@@ -32,6 +32,7 @@ For a high-level overview, see \l{Introduction}{Introduction to the Qt Applicati
     \li \l{Watchdog}
     \li \l{Using Qt Resources}
     \li \l{Single-Process vs. Multi-Process Mode}
+    \li \l{System Integration}
     \li \l{What's New}
 \endlist
 

@@ -3,11 +3,11 @@ dependencies:
     ref: 47e38b2ee3ed1bd35d6cf88a6c97039ca3415334
     required: true
   ../tqtc-qtdeclarative:
-    ref: c92107bff2388ed0572fa406909735dd9bd0768a
+    ref: adf1f14ee67b85bbb1f19a519904fea6d630e9aa
     required: true
   ../tqtc-qttools:
-    ref: 84d2f755ddd90981639cd7c98de8c4e5fbfacbdb
+    ref: 97704ffd992b43ae8e990afb0f8a5302c0f8bbb1
     required: false
   ../tqtc-qtwayland:
-    ref: fa499edd0906f70ae95bcacc0b0b2864199a8f58
+    ref: 50a922cca43120b136a0313000755615aecb7290
     required: false

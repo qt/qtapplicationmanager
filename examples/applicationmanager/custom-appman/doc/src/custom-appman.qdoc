@@ -59,8 +59,11 @@ object, which is a class derived from QGuiApplication (or QApplication, if widge
 enabled). In this case, we are supplying two init flags to the Main constructor:
 
 The first init flag, \c ForkSudoServer, is useful for the installer part of the application
-manager: if the executable is setuid-root, this will implicitly fork off a child process, which
-does keep the root privileges while the main process permanently drops them.
+manager: if the executable gets started by the root user and the \c{--setuid} command line option is
+set, this will implicitly fork off a child process (the \e sudo-helper), which does keep the root
+privileges, while the main process permanently drops them.
+
+Please see the \l{System Integration} page for more information.
 
 The second init flag, \c InitializeLogging, sets up the application manager's logging part
 implicitly for us (this is especially useful when dealing with DLT logging).

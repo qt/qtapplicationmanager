@@ -29,6 +29,10 @@ This release is mostly about quality-of-live improvements:
 
 \li When started via systemd, the application manager now automatically sends the expected \c READY
     and \c STOPPING notifications.
+
+\li Starting the appman binary as suid-root is not supported anymore due to security concerns.
+    The new and safer mechanism for enabling the sudo-helper process is documented on the newly
+    added \l{System Integration} page.
 \endlist
 
 In addition, the \e SoftwareContainers example has been removed, as the upstream project is no

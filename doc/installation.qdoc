@@ -264,4 +264,7 @@ appman -c /etc/target-am-config.yaml -c am-config.yaml --verbose main.qml
 \c{--verbose} gives you verbose output, which is quite helpful when first setting up the environment
 and also for debugging purposes.
 
+On a target you would want to have your init system / systemd take care of starting the application
+manager at boot time. Please see the \l{System Integration} page for more information.
+
 */

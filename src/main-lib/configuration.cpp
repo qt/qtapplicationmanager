@@ -288,6 +288,11 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     d->clp.addOption({ u"qml-debug"_s,            u"Enables QML debugging and profiling."_s });
     d->clp.addOption({ u"instance-id"_s,          u"Use this id to distinguish between multiple instances."_s, u"id"_s });
 
+#if defined(Q_OS_LINUX)
+    // this option is handled in sudo.cpp via an .init_array function
+    d->clp.addOption({ u"setuid"_s,               u"Set the user and group id to these values, when run as root."_s, u"user[:group]*"_s });
+#endif
+
     d->deprecatedOptions = {
         { { u"r"_s, u"recreate-database"_s }, { } },
         { u"installed-apps-manifest-dir"_s, { }, u"dir"_s },

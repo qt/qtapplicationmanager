@@ -59,9 +59,10 @@ public:
     arg(const C &c) noexcept
     {
         QString s;
-        for (int i = 0; i < c.size(); ++i) {
-            s += QStringLiteral("%1").arg(c.at(i));
-            if (i < (c.size() - 1))
+        for (auto it = c.cbegin(); it != c.cend(); ++it) {
+            s += QStringLiteral("%1").arg(*it);
+            auto nextIt = it;
+            if (++nextIt != c.cend())
                 s.append(u", ");
         }
         m_errorString = m_errorString.arg(s);

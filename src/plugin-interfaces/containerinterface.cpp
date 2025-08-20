@@ -475,9 +475,12 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
 
 /*! \fn bool ContainerHelperFunctions::hasRootPrivileges()
 
-    Returns \c true if the application manager process was started via \c sudo or is
-    \c setuid-root and \c false otherwise.
+    Returns \c true if the application manager process was started by the root user, and was
+    able to fork off its \e sudo-helper process.
+
     Root privileges are required for certain operations, such as bindMountFileSystem.
+
+    Please see the \l{System Integration} page for more information.
 */
 
 /*! \fn void ContainerHelperFunctions::bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid)

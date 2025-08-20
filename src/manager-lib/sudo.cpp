@@ -134,6 +134,26 @@ static void sigHupHandler(int sig)
         _exit(0);
 }
 
+static const char *setuidArg = nullptr;
+
+static void checkSetuidArg(int argc, char *argv[], char *envp[])
+{
+    Q_UNUSED(envp)
+    for (int i = 1; i < argc; ++i) {
+        if (qstrncmp(argv[i], "--setuid", 8) == 0) {
+            if (argv[i][8] == '=')
+                setuidArg = argv[i] + 9;
+            else if (!argv[i][8])
+                setuidArg = ((i + 1) < argc) ? argv[++i] : "";
+            break;
+        }
+    }
+}
+
+// register a .init function that is automatically run before main()
+decltype(checkSetuidArg) *init_checkSetuidArg
+    __attribute__((section(".init_array"), used)) = checkSetuidArg;
+
 QT_END_NAMESPACE_AM
 
 #endif // Q_OS_LINUX
@@ -166,7 +186,14 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
 #if defined(Q_OS_LINUX)
     uid_t realUid = getuid();
     uid_t effectiveUid = geteuid();
-    canSudo = (realUid == 0) || (effectiveUid == 0);
+    canSudo = (realUid == 0);
+
+    if (realUid != effectiveUid)
+        throw Exception("Running as suid executable is not supported anymore");
+
+    if ((realUid != 0) && setuidArg)
+        throw Exception("Cannot use the --setuid argument when not running as root");
+
 #else
     Q_UNUSED(dropPrivileges)
 #endif
@@ -177,20 +204,81 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
     }
 
 #if defined(Q_OS_LINUX)
-    gid_t realGid = getgid();
-    uid_t sudoUid = static_cast<uid_t>(qEnvironmentVariableIntValue("SUDO_UID"));
+    uid_t setUid = 0;
+    gid_t setGid = 0;
+    QSet<gid_t> setSupGids;
 
-    // run as normal user (e.g. 1000): uid == 1000  euid == 1000
-    // run with binary suid-root:      uid == 1000  euid == 0
-    // run with sudo (no suid-root):   uid == 0     euid == 0    $SUDO_UID == 1000
+    // setuidArg is initialized in checkSetuidArg, before main()
+    if (!setuidArg) {
+        // If we are running under sudo, we can also use SUDO_UID and SUDO_GID. This is especially
+        // important for auto-tests, as the testrunner does not like extra command line arguments.
+        bool hasSudoUid, hasSudoGid;
+        uid_t sudoUid = qgetenv("SUDO_UID").toUInt(&hasSudoUid);
+        gid_t sudoGid = qgetenv("SUDO_GID").toUInt(&hasSudoGid);
+        if (hasSudoUid && hasSudoGid) {
+            if (!::getpwuid(sudoUid))
+                throw Exception("Unknown SUDO_UID '%1'").arg(sudoUid);
+            if (!::getgrgid(sudoGid))
+                throw Exception("Unknown SUDO_GID '%1'").arg(sudoGid);
+            setUid = sudoUid;
+            setGid = sudoGid;
 
-    // treat sudo as special variant of a SUID executable
-    if (realUid == 0 && effectiveUid == 0 && sudoUid != 0) {
-        realUid = sudoUid;
-        realGid = static_cast<gid_t>(qEnvironmentVariableIntValue("SUDO_GID"));
+            for (const auto *env : { "SUDO_UID", "SUDO_GID", "SUDO_USER", "SUDO_COMMAND", "SUDO_HOME", "SUDO_TTY" })
+                qunsetenv(env);
 
-        if (setresgid(realGid, 0, 0) || setresuid(realUid, 0, 0))
-            throw Exception(errno, "Could not set real user or group ID");
+            if ((setUid == 0) || (setGid == 0)) {
+                throw Exception("The user invoking sudo needs to be an unprivileged user and group (got: %1:%2)")
+                    .arg(setUid).arg(setGid);
+            }
+        } else {
+            qCCritical(LogSystem) << "Running as root is not recommended! Please use --setuid=<user>[:<group>]* or sudo to run as an unprivileged user";
+        }
+    } else {
+        const auto list = QByteArray(setuidArg).trimmed().split(':');
+
+        static auto parseUser = [](const QByteArray &user) {
+            bool ok;
+            uid_t uid = user.toUInt(&ok);
+            if (ok && ::getpwuid(uid))
+                return uid;
+            else if (auto *pw = ::getpwnam(user))
+                return pw->pw_uid;
+            else
+                throw Exception("Unknown user '%1' for --setuid").arg(user);
+        };
+
+        static auto parseGroup = [](const QByteArray &group) {
+            bool ok;
+            gid_t gid = group.toUInt(&ok);
+            if (ok && ::getgrgid(gid))
+                return gid;
+            else if (auto *gr = ::getgrnam(group))
+                return gr->gr_gid;
+            else
+                throw Exception("Unknown group '%1' for --setuid").arg(group);
+        };
+
+        static auto groupForUser = [](uid_t uid) {
+            if (auto *pw = ::getpwuid(uid))
+                return pw->pw_gid;
+            else
+                throw Exception("Cannot determine group of uid '%1' for --setuid").arg(uid);
+        };
+
+        setUid = parseUser(list.at(0));
+        setGid = (list.size() >= 2) ? parseGroup(list.at(1))
+                                    : groupForUser(setUid);
+        const auto supGroups = list.mid(2);
+        for (const auto &supGroup : supGroups)
+            setSupGids << parseGroup(supGroup);
+
+        if (setSupGids.size() > NGROUPS_MAX)
+            throw Exception("Too many supplementary groups specified for --setuid, the maximum is %1").arg(NGROUPS_MAX);
+
+        if ((setUid == 0) || (setGid == 0) || setSupGids.contains(0)) {
+            throw Exception("The outcome of --setuid needs to be an unprivileged user and group (got: %1:%2, supplementary: %3)")
+                .arg(setUid).arg(setGid).arg(setSupGids);
+        }
     }
 
     int socketFds[2];
@@ -213,6 +301,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         // child
         close(0);
         setsid();
+        ::endgrent(); // force libc to cleanup
 
         // reset umask
         if (realUmask)
@@ -260,28 +349,67 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
     }
     // parent
 
-    // reset umask
-    if (realUmask)
-        umask(realUmask);
+    try {
+        // reset umask
+        if (realUmask)
+            umask(realUmask);
 
-    SudoClient::createInstance(socketFds[1]);
+        SudoClient::createInstance(socketFds[1]);
 
-    if (realUid != effectiveUid) {
-        // drop all root privileges
-        if (dropPrivileges == DropPrivilegesPermanently) {
-            if (setresgid(realGid, realGid, realGid) || setresuid(realUid, realUid, realUid)) {
-                kill(pid, SIGKILL);
-                throw Exception(errno, "Could not set real user or group ID");
+        if (setUid && setGid) {
+            // combine the user's supplementary groups with the additonal groups given to --setuid:
+            auto pw = ::getpwuid(setUid);
+            auto gr = ::getgrgid(setGid);
+            Q_ASSERT(pw);
+            Q_ASSERT(gr);
+
+            gid_t supGids[NGROUPS_MAX];
+            int supGidsLen = NGROUPS_MAX;
+            if (::getgrouplist(pw->pw_name, setGid, supGids, &supGidsLen) < 0)
+                throw Exception(errno, "Could not get supplementary groups for user %1").arg(pw->pw_name);
+            setSupGids.unite(QSet<gid_t> { supGids, supGids + supGidsLen });
+            if (setSupGids.size() > NGROUPS_MAX)
+                throw Exception("Too many supplementary groups when combining the groups of user %1 with the ones specified for --setuid").arg(pw->pw_name);
+            if (::setgroups(setSupGids.size(), QVector<gid_t>(setSupGids.cbegin(), setSupGids.cend()).constData()) < 0)
+                throw Exception(errno, "Could not set supplementary groups (%2) for user %1").arg(pw->pw_name).arg(setSupGids);
+
+            // drop all root privileges
+            if (dropPrivileges == DropPrivilegesPermanently) {
+                if (setresgid(setGid, setGid, setGid) || setresuid(setUid, setUid, setUid)) {
+                    throw Exception(errno, "Could not set real user or group ID");
+                }
+            } else {
+                qCCritical(LogSystem) << "\nSudo was instructed to NOT drop root privileges permanently.\nThis is dangerous and should only be used in auto-tests!\n";
+                if (setresgid(setGid, setGid, 0) || setresuid(setUid, setUid, 0)) {
+                    throw Exception(errno, "Could not set real user or group ID");
+                }
             }
-        } else {
-            qCCritical(LogSystem) << "\nSudo was instructed to NOT drop root privileges permanently.\nThis is dangerous and should only be used in auto-tests!\n";
-            if (setresgid(realGid, realGid, 0) || setresuid(realUid, realUid, 0)) {
-                kill(pid, 9);
-                throw Exception(errno, "Could not set real user or group ID");
+
+            // Fix env variables
+            // ::system("env"); // for testing
+            qputenv("HOME", pw->pw_dir);
+            qputenv("USER", pw->pw_name);
+            qputenv("LOGNAME", pw->pw_name);
+            qputenv("SHELL", pw->pw_shell);
+            QByteArray xdgRTD = qgetenv("XDG_RUNTIME_DIR");
+            if (xdgRTD.endsWith("/0")) {
+                xdgRTD.chop(1);
+                xdgRTD.append(QByteArray::number(setUid));
+                qputenv("XDG_RUNTIME_DIR", xdgRTD);
             }
+            // We are NOT changing to the user's home dir on purpose to avoid overriding a systemd setting
+
+            qCInfo(LogSystem).nospace() << "The sudo-helper process is active and the main process is now running as "
+                                        << pw->pw_name << ":" << gr->gr_name;
+
+            ::endgrent(); // force libc to cleanup
         }
+        ::atexit([]() { SudoClient::instance()->stopServer(); });
+
+    } catch (const Exception &e) {
+        ::kill(pid, SIGKILL);
+        throw;
     }
-    ::atexit([]() { SudoClient::instance()->stopServer(); });
 #endif
 }
 

@@ -537,6 +537,22 @@ ui:
         \li [\c watchdog]
         \li object
         \li Configures the built-in watchdog. See \l{Watchdog} for more information.
+    \row
+        \li \b --setuid
+        \li string
+        \target setuid
+        \li Please read the \l{System Integration} documenation to learn how the application
+            manager needs and uses root privileges.
+
+            This option is only valid on Linux and only if the application manager is started by
+            the \e root user.
+
+            If set, its value is \c{<user>[:<group>]*}. \c{<user>} needs to be either the numeric id
+            or name of an existing, unprivileged user. \c{<group>} needs to
+            likewise be either the numeric id or name of an existing, unprivileged group.
+            If the group is missing, the main group of the given user is used instead.
+            You can add more than one \c{<group>} field and these additional groups will extend
+            (but not override) the supplementary groups for the user.
 \endtable
 
 \section1 D-Bus Specification

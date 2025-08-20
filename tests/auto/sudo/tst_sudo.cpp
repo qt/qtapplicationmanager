@@ -53,7 +53,7 @@ void tst_Sudo::initTestCase()
     m_sudo = SudoClient::instance();
     QVERIFY(m_sudo);
     if (m_sudo->isFallbackImplementation())
-        QSKIP("Not running with root privileges - neither directly, or SUID-root, or sudo");
+        QSKIP("Not running with root privileges");
 }
 
 void tst_Sudo::privileges()

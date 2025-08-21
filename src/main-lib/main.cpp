@@ -583,6 +583,37 @@ void Main::setupInstaller(const Configuration *cfg) noexcept(false)
     if (!docPath.isEmpty() && (instPath.startsWith(docPath) || docPath.startsWith(instPath)))
         throw Exception("either installationDir or documentDir cannot be a sub-directory of the other");
 
+#  if defined(Q_OS_LINUX)
+    // make sure that a typo in the config does not wipe out system directories
+    static const QVector<QString> fhsPaths = {
+        u"/bin/"_s,
+        u"/boot/"_s,
+        u"/dev/"_s,
+        u"/etc/"_s,
+        u"/lib/"_s,
+        u"/lib64/"_s,
+        u"/proc/"_s,
+        u"/root/"_s,
+        u"/run/"_s,
+        u"/sbin/"_s,
+        u"/sys/"_s,
+        u"/usr/"_s,
+    };
+
+    static auto checkFhsPaths = [](const QString &path) -> bool {
+        for (const auto &fhsPath : fhsPaths) {
+            if (Q_UNLIKELY(path.startsWith(fhsPath)))
+                return false;
+        }
+        return true;
+    };
+
+    if (!docPath.isEmpty() && Q_UNLIKELY(!checkFhsPaths(docPath)))
+        throw Exception("To prevent accidents, documentDir cannot be below a system directory (%1)").arg(fhsPaths);
+    if (Q_UNLIKELY(!checkFhsPaths(instPath)))
+        throw Exception("To prevent accidents, installationDir cannot be below a system directory (%1)").arg(fhsPaths);
+#  endif
+
     if (Q_UNLIKELY(hardwareId().isEmpty()))
         throw Exception("the installer is enabled, but the device-id is empty");
 

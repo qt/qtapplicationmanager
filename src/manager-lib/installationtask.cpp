@@ -385,8 +385,12 @@ void InstallationTask::startInstallation() noexcept(false)
     QDir installationDir = QString(m_installationPath + u'/');
     QString installationTarget = m_packageId + u'+';
     if (installationDir.exists(installationTarget)) {
-        if (!SudoClient::instance()->removeRecursive(installationDir.absoluteFilePath(installationTarget)))
-            throw Exception("could not remove old, partial installation %1/%2").arg(installationDir).arg(installationTarget);
+        try {
+            PackageManager::instance()->removeRecursive(installationDir.absoluteFilePath(installationTarget));
+        } catch (const Exception &e) {
+            throw Exception("could not remove old, partial installation %1/%2: %3")
+                .arg(installationDir).arg(installationTarget).arg(e.errorString());
+        }
     }
 
     // 4. create new installation
@@ -458,8 +462,11 @@ void InstallationTask::finishInstallation() noexcept(false)
     m_installationDirCreator.take();
 
     // this should not be necessary, but it also won't hurt
-    if (mode == Update)
-        SudoClient::instance()->removeRecursive(m_applicationDir.absolutePath() + u'-');
+    if (mode == Update) {
+        try {
+            PackageManager::instance()->removeRecursive(m_applicationDir.absolutePath() + u'-');
+        } catch (...) { }
+    }
 
 #ifdef Q_OS_UNIX
     // write files to the filesystem

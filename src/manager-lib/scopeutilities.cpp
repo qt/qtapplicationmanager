@@ -5,7 +5,7 @@
 
 #include "logging.h"
 #include "scopeutilities.h"
-#include "sudo.h"
+#include "packagemanager.h"
 #include "utilities.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -19,10 +19,15 @@ bool ScopedDirectoryCreator::create(const QString &path, bool removeExisting)
     QFileInfo fi(m_path);
 
     if (fi.exists() && fi.isDir()) {
-        if (!removeExisting)
+        if (!removeExisting) {
             return m_created = true;
-        else if (!SudoClient::instance()->removeRecursive(m_path))
-            return false;
+        } else {
+            try {
+                PackageManager::instance()->removeRecursive(m_path);
+            } catch (...) {
+                return false;
+            }
+        }
     }
     //qWarning() << "CREATE" << path << fi.absolutePath() << fi.fileName();
     return m_created = QDir::root().mkpath(path);
@@ -38,8 +43,11 @@ bool ScopedDirectoryCreator::take()
 bool ScopedDirectoryCreator::destroy()
 {
     if (!m_taken) {
-        if (m_created)
-            SudoClient::instance()->removeRecursive(m_path);
+        if (m_created) {
+            try {
+                PackageManager::instance()->removeRecursive(m_path);
+            } catch(...) { }
+        }
         m_taken = true;
     }
     return m_taken;

@@ -727,6 +727,11 @@ void PackageManager::setAllowInstallationOfUnsignedPackages(bool enable)
     d->allowInstallationOfUnsignedPackages = enable;
 }
 
+void PackageManager::setUseSudoForDirectoryRemoval(bool enable)
+{
+    d->useSudoForDirectoryRemoval = enable;
+}
+
 /*!
     \qmlproperty string PackageManager::hardwareId
     \readonly
@@ -763,6 +768,17 @@ QString PackageManager::architecture() const
 QByteArrayList PackageManager::caCertificates() const
 {
     return d->chainOfTrust;
+}
+
+void PackageManager::removeRecursive(const QString &path) noexcept(false)
+{
+    if (d->useSudoForDirectoryRemoval) {
+        if (!SudoClient::instance()->removeRecursive(path))
+            throw Exception(SudoClient::instance()->lastError());
+    } else {
+        if (!recursiveOperation(path, safeRemove))
+            throw Exception(errno, "could not recursively remove %1").arg(path);
+    }
 }
 
 void PackageManager::setCACertificates(const QByteArrayList &chainOfTrust)
@@ -951,9 +967,11 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
             if ((!fi.isDir() && !fi.isFile()) || !validNames.contains(name)) {
                 qCDebug(LogInstaller) << "cleanup: removing unreferenced inode" << name;
 
-                if (!SudoClient::instance()->removeRecursive(fi.absoluteFilePath())) {
+                try {
+                    removeRecursive(fi.absoluteFilePath());
+                } catch (const Exception &e) {
                     throw Exception(Error::IO, "could not remove broken installation leftover: %1")
-                        .arg(SudoClient::instance()->lastError());
+                        .arg(e.errorString());
                 }
             }
         }

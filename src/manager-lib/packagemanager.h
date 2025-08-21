@@ -100,6 +100,7 @@ public:
     void setDevelopmentMode(bool enable);
     bool allowInstallationOfUnsignedPackages() const;
     void setAllowInstallationOfUnsignedPackages(bool enable);
+    void setUseSudoForDirectoryRemoval(bool enable);
     QString hardwareId() const;
     void setHardwareId(const QString &hwId);
     QString architecture() const;
@@ -180,6 +181,9 @@ private:
     static void registerQmlTypes();
     QByteArrayList caCertificates() const;
 
+    // this honors the useSudoForDirectoryRemoval flag
+    void removeRecursive(const QString &path) noexcept(false);
+
 private:
     explicit PackageManager(PackageDatabase *packageDatabase,
                             const QString &documentPath);
@@ -192,6 +196,7 @@ private:
 
     friend class InstallationTask;
     friend class DeinstallationTask;
+    friend class ScopedDirectoryCreator; // odd, but needed for removeRecursive
 };
 
 QT_END_NAMESPACE_AM

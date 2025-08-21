@@ -104,8 +104,12 @@ void DeinstallationTask::execute()
 
         for (ScopedRenamer *toDelete : { &docDirRename, &appDirRename }) {
             if (toDelete->isRenamed()) {
-                if (!SudoClient::instance()->removeRecursive(toDelete->baseName() + u'-'))
-                    qCCritical(LogInstaller) << "ERROR: could not remove" << (toDelete->baseName() + u'-');
+                try {
+                    PackageManager::instance()->removeRecursive(toDelete->baseName() + u'-');
+                } catch (const Exception &e) {
+                    qCCritical(LogInstaller) << "ERROR: could not remove" << (toDelete->baseName() + u'-')
+                                             << ':' << e.errorString();
+                }
             }
         }
 

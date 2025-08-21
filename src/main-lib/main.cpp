@@ -595,6 +595,13 @@ void Main::setupInstaller(const Configuration *cfg) noexcept(false)
 
     StartupTimer::instance()->checkpoint("after installer setup checks");
 
+    if (isRunningOnEmbedded()) {
+        // We do not want the PackageManager from cleaning up its installation directories using the
+        // sudo-helper on desktop systems. A simple typo in the config file might cause an
+        // accidental disk wipe when run via sudo.
+        m_packageManager->setUseSudoForDirectoryRemoval(true);
+    }
+
     if (cfg->yaml.flags.noSecurity || cfg->yaml.flags.allowUnsignedPackages)
         m_packageManager->setAllowInstallationOfUnsignedPackages(true);
 

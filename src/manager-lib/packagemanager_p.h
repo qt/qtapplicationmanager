@@ -31,6 +31,7 @@ public:
     bool enableInstaller = false;
     bool developmentMode = false;
     bool allowInstallationOfUnsignedPackages = false;
+    bool useSudoForDirectoryRemoval = false;
 
     QString installationPath;
     QString documentPath;

@@ -49,6 +49,7 @@
 #include <QLockFile>
 #if defined(Q_OS_LINUX)
 #  include <sys/file.h>
+#  include <sys/auxv.h>
 #endif
 
 #include "global.h"
@@ -126,6 +127,11 @@ int &Main::preConstructor(int &argc, char **argv, InitFlags initFlags)
     // prevent KDE/GNOME platform theme loading
     s_isRunningOnEmbedded = !qEnvironmentVariableIsSet("XDG_CURRENT_DESKTOP");
     qputenv("XDG_CURRENT_DESKTOP", "QTAM");
+
+    if (::getauxval(AT_SECURE)) {
+        qCInfo(LogSystem) << "The AT_SECURE kernel flag is set on this process "
+                             "(see 'man getauxval' for possible implications)";
+    }
 #endif
 
     if (initFlags & InitFlag::InitializeLogging) {

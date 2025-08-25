@@ -17,6 +17,7 @@
 #include "utilities.h"
 #include "exception.h"
 #include "global.h"
+#include "qtappman_common-config_p.h"
 
 #include <errno.h>
 
@@ -119,6 +120,18 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
 
         if (setresgid(realGid, 0, 0) || setresuid(realUid, 0, 0))
             throw Exception(errno, "Could not set real user or group ID");
+    }
+
+    if ((realUid != 0) && (effectiveUid == 0)) { // suid-root
+        if (getParentPid(::getpid()) != 1) { // init/systemd
+            if (QT_CONFIG(am_suid_hardened)) {
+                qCFatal(LogSystem, "The executable is suid-root, but was not started directly by init/systemd. Exiting.");
+            } else {
+                qCCritical(LogSystem, "The executable is suid-root, but was not started directly by init/systemd. "
+                                      "This is dangerous due to the appman's configurability and should be avoided "
+                                      "in production setups!");
+            }
+        }
     }
 
     int socketFds[2];

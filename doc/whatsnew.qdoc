@@ -28,7 +28,8 @@ This release is mostly about quality-of-live improvements:
     is loaded via the main window's incubator.
 
 \li When started via systemd, the application manager now automatically sends the expected \c READY
-    and \c STOPPING notifications.
+    and \c STOPPING notifications as well as systemd watchdog notifications.
+    There is no compile dependency on libsystemd anymore.
 
 \li Starting the appman binary as suid-root is not supported anymore due to security concerns.
     The new and safer mechanism for enabling the sudo-helper process is documented on the newly

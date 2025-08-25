@@ -132,23 +132,26 @@ qt_feature("am-widgets-support" PUBLIC
 qt_configure_add_summary_section(NAME "Qt Application Manager")
 qt_configure_add_summary_entry(ARGS "am-system-libyaml")
 qt_configure_add_summary_entry(ARGS "am-system-libarchive")
-qt_configure_add_summary_entry(ARGS "am-multi-process")
-qt_configure_add_summary_entry(ARGS "am-installer")
-if (QT_FEATURE_am_has_hardware_id)
-    qt_configure_add_summary_entry(
-        TYPE "message"
-        ARGS "${QT_FEATURE_LABEL_am_has_hardware_id}"
-        MESSAGE "yes (${INPUT_hardware_id})"
-    )
-else()
-    qt_configure_add_summary_entry(ARGS "am-has-hardware-id")
-endif()
-qt_configure_add_summary_entry(ARGS "am-external-dbus-interfaces")
-qt_configure_add_summary_entry(ARGS "am-widgets-support")
 qt_configure_add_summary_entry(ARGS "am-tools-only")
-qt_configure_add_summary_entry(ARGS "am-package-server")
-qt_configure_add_summary_entry(ARGS "am-dltlogging")
-qt_configure_add_summary_entry(ARGS "am-libdbus")
-qt_configure_add_summary_entry(ARGS "am-libbacktrace")
-qt_configure_add_summary_entry(ARGS "am-stackwalker")
+
+if (NOT QT_FEATURE_am_tools_only)
+    qt_configure_add_summary_entry(ARGS "am-multi-process")
+    qt_configure_add_summary_entry(ARGS "am-installer")
+    if (QT_FEATURE_am_has_hardware_id)
+        qt_configure_add_summary_entry(
+            TYPE "message"
+            ARGS "${QT_FEATURE_LABEL_am_has_hardware_id}"
+            MESSAGE "yes (${INPUT_hardware_id})"
+        )
+    else()
+        qt_configure_add_summary_entry(ARGS "am-has-hardware-id")
+    endif()
+    qt_configure_add_summary_entry(ARGS "am-external-dbus-interfaces")
+    qt_configure_add_summary_entry(ARGS "am-widgets-support")
+    qt_configure_add_summary_entry(ARGS "am-package-server")
+    qt_configure_add_summary_entry(ARGS "am-dltlogging")
+    qt_configure_add_summary_entry(ARGS "am-libdbus")
+    qt_configure_add_summary_entry(ARGS "am-libbacktrace")
+    qt_configure_add_summary_entry(ARGS "am-stackwalker")
+endif()
 qt_configure_end_summary_section() # end of "Qt ApplicationManger" section

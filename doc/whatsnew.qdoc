@@ -1,0 +1,50 @@
+// Copyright (C) 2023 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+
+\page whatsnew.html
+\ingroup qtappman-highlights
+\title What's New
+\brief Important changes in Qt Application Manager
+
+\section1 Qt ApplicationManager 6.5.10
+
+\list
+    \li There is an important change to the way you should run the application manager with root
+        privileges in order to enable the sudo-helper process.
+
+        If a malicious actor is able to take control over the unprivileged user account running the
+        application manager, they could potentially exploit the sudo-helper by running the appman
+        binary with a configuration that allows them to delete arbitrary files on the system with
+        root privileges.
+
+        Starting with 6.5.10, we \l{cmake-suid-hardened}{added a cmake option} that prevents a
+        suid-root appman binary from being executed by anything but the init system.
+
+        It is \b NOT enabled by default, as it could potentially break existing production setups,
+        as well as interfere with the standard \e{Boot to Qt}/\e{Qt Creator} development flow.
+\endlist
+
+
+\section1 Qt ApplicationManager 6.3
+
+The APIs and manifest definitions concerning the Package,
+Application and Intent fields for \c icon, \c name and \c description have
+been cleaned up.
+All three support the same API now, with the package's fields acting as a fallback for both the
+application and intent objects.
+Due to a clash between the property \c name and the function \c name in ApplicationObject,
+user code that called the \c{Application.name(language)} function before, now needs to replace
+this with \c{Application.names[language]}.
+
+
+\section1 Qt Application Manager 6.2
+
+No new APIs were added, but the build system switched from qmake to CMake and
+the deprecated legacy \c ApplicationInterfaceExtension IPC mechanism was
+finally removed.
+A direct replacement for the old IPC had been added in 5.14 already in form of the new \l{Intents}
+mechanism.
+
+*/

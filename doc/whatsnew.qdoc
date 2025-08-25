@@ -14,6 +14,20 @@
     \li The explicit libsystemd dependency and its corresponding CMake feature have been removed.
         Qt Application Manager will now detect at runtime if the systemd watchdog is activated and
         handle it without the need for libsystemd being available.
+
+    \li There is an important change to the way you should run the application manager with root
+        privileges in order to enable the sudo-helper process.
+
+        If a malicious actor is able to take control over the unprivileged user account running the
+        application manager, they could potentially exploit the sudo-helper by running the appman
+        binary with a configuration that allows them to delete arbitrary files on the system with
+        root privileges.
+
+        Starting with 6.9.3, we \l{cmake-suid-hardened}{added a cmake option} that prevents a
+        suid-root appman binary from being executed by anything but the init system.
+
+        It is \b NOT enabled by default, as it could potentially break existing production setups,
+        as well as interfere with the standard \e{Boot to Qt}/\e{Qt Creator} development flow.
 \endlist
 
 

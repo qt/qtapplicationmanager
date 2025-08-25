@@ -194,6 +194,12 @@ modules:
   \li \c{bubblewrap}
   \li Set to \c no to disable building the \l{Bubblewrap Container} plugin and \c
       yes to force building it. By default the plugin is built in multi-process mode.
+\row
+  \li \c{suid-hardened}
+  \target cmake-suid-hardened
+  \li If set to \c yes, the application manager will exit immediately when started suid-root and
+      its parent process not being the init/systemd process. Please see the
+      \l{Qt ApplicationManager 6.9.3}{6.9.3 change-log} for more information.
 \endtable
 
 \section2 The Hardware ID

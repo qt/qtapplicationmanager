@@ -1,5 +1,6 @@
-/* filenames.h -- minimal GCC filenames.h replacement for libbacktrace
-   Contributed by Alexander Monakov, ISP RAS
+/* btest.c -- Filename header for libbacktrace library
+   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Written by Ian Lance Taylor, Google.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -29,13 +30,23 @@ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.  */
 
-#ifndef BACKTRACE_AUX_FILENAMES_H
-#define BACKTRACE_AUX_FILENAMES_H
-
-/* Assume POSIX paths.  */
-
-#define IS_DIR_SEPARATOR(c) ((c) == '/')
-#define IS_ABSOLUTE_PATH(f) ((f)[0] == '/')
-
+#ifndef GCC_VERSION
+# define GCC_VERSION (__GNUC__ * 1000 + __GNUC_MINOR__)
 #endif
 
+#if (GCC_VERSION < 2007)
+# define __attribute__(x)
+#endif
+
+#ifndef ATTRIBUTE_UNUSED
+# define ATTRIBUTE_UNUSED __attribute__ ((__unused__))
+#endif
+
+#if defined(__MSDOS__) || defined(_WIN32) || defined(__OS2__) || defined (__CYGWIN__)
+# define IS_DIR_SEPARATOR(c) ((c) == '/' || (c) == '\\')
+# define HAS_DRIVE_SPEC(f) ((f)[0] != '\0' && (f)[1] == ':')
+# define IS_ABSOLUTE_PATH(f) (IS_DIR_SEPARATOR((f)[0]) || HAS_DRIVE_SPEC(f))
+#else
+# define IS_DIR_SEPARATOR(c) ((c) == '/')
+# define IS_ABSOLUTE_PATH(f) (IS_DIR_SEPARATOR((f)[0]))
+#endif

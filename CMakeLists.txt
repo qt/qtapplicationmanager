@@ -16,6 +16,7 @@ add_compile_definitions(
     QT_STRICT_ITERATORS
     QT_NO_CAST_TO_ASCII
     QT_NO_CAST_FROM_ASCII
+    QT_NO_CONTEXTLESS_CONNECT
 )
 
 # populate the platform check variables

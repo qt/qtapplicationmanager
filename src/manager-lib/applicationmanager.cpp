@@ -881,7 +881,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
     if (inProcess || isWindowManagerCompositorReady()) {
         return tryStartInContainer();
     } else {
-        connect(this, &ApplicationManager::windowManagerCompositorReadyChanged, tryStartInContainer);
+        connect(this, &ApplicationManager::windowManagerCompositorReadyChanged, container, tryStartInContainer);
         return true;
     }
 }

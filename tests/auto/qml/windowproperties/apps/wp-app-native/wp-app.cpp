@@ -4,6 +4,8 @@
 #include <QGuiApplication>
 #include <QQuickView>
 
+#include <signal.h>
+
 #include "waylandqtamclientextension_v2_p.h"
 
 using namespace Qt::StringLiterals;
@@ -28,6 +30,9 @@ int main(int argc, char **argv)
         if (allProperties.size() == expectedSize)
             qtamExtension->setWindowProperty(&w, u"BACKCHANNEL"_s, allProperties);
     });
+
+    // get rid of the "forced exit" message
+    ::signal(SIGTERM, [](int) { ::_Exit(0); });
 
     return app.exec();
 }

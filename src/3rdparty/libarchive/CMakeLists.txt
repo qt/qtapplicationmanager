@@ -21,7 +21,6 @@ qt_internal_add_3rdparty_library(BundledLibArchive
         libarchive/archive_entry_stat.c
         libarchive/archive_entry_strmode.c
         libarchive/archive_entry_xattr.c
-        libarchive/archive_getdate.c
         libarchive/archive_match.c
         libarchive/archive_options.c
         libarchive/archive_pathmatch.c
@@ -50,6 +49,7 @@ qt_internal_add_3rdparty_library(BundledLibArchive
         libarchive/archive_read_support_format_tar.c
         libarchive/archive_string.c
         libarchive/archive_string_sprintf.c
+        libarchive/archive_time.c
         libarchive/archive_util.c
         libarchive/archive_virtual.c
         libarchive/archive_write.c

@@ -21,8 +21,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD: head/lib/libarchive/archive_platform.h 201090 2009-12-28 02:22:04Z kientzle $
  */
 
 /* !!ONLY FOR USE INTERNALLY TO LIBARCHIVE!! */
@@ -63,6 +61,11 @@
 # endif
 #endif
 
+/* For cygwin, to avoid missing LONG, ULONG, PUCHAR, ... definitions */
+#ifdef __CYGWIN__
+#include <windef.h>
+#endif
+
 /* It should be possible to get rid of this by extending the feature-test
  * macros to cover Windows API functions, probably along with non-trivial
  * refactoring of code to find structures that sit more cleanly on top of
@@ -86,19 +89,6 @@
  * uses those macros to select/define replacements and include key
  * headers as required.
  */
-
-/* Get a real definition for __FBSDID or __RCSID if we can */
-#if HAVE_SYS_CDEFS_H
-#include <sys/cdefs.h>
-#endif
-
-/* If not, define them so as to avoid dangling semicolons. */
-#ifndef __FBSDID
-#define	__FBSDID(a)     struct _undefined_hack
-#endif
-#ifndef __RCSID
-#define	__RCSID(a)     struct _undefined_hack
-#endif
 
 /* Try to get standard C99-style integer type definitions. */
 #if HAVE_INTTYPES_H

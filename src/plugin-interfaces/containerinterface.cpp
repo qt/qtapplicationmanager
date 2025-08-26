@@ -387,6 +387,10 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
 
     For an example, please see \c{src/plugins/bubblewrap-container-plugin/}. This is a plugin, that
     integrates with \c bubblewrap containers.
+
+    \note Version 6.10 added new functionality to the plugin API and that required changing the
+          plugin \e iid from \c io.qt.ApplicationManager.ContainerManagerInterface to
+          \c io.qt.ApplicationManager.ContainerManagerInterface2.
 */
 
 /*! \fn void ContainerManagerInterface::initialize(ContainerHelperFunctions *helpers)

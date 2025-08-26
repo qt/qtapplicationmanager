@@ -25,6 +25,9 @@ branch-coverage
 *.pch
 *.log
 *.rcc
+*.cache
+*.vscode
+build
 
 config.tests/*/*
 !config.tests/*/*[.]*

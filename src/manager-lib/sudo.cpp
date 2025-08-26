@@ -128,12 +128,6 @@ struct mount_attr {
 
 QT_BEGIN_NAMESPACE_AM
 
-static void sigHupHandler(int sig)
-{
-    if (sig == SIGHUP)
-        _exit(0);
-}
-
 static const char *setuidArg = nullptr;
 
 static void checkSetuidArg(int argc, char *argv[], char *envp[])
@@ -181,108 +175,104 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         return;
     }
 
-    bool canSudo = false;
+#if !defined(Q_OS_LINUX)
+    Q_UNUSED(dropPrivileges)
+    return fallbackServer();
+#else
+    uid_t realUid = ::getuid();
+    if (realUid != 0)
+        return fallbackServer();
 
-#if defined(Q_OS_LINUX)
-    uid_t realUid = getuid();
-    uid_t effectiveUid = geteuid();
-    canSudo = (realUid == 0);
-
+    uid_t effectiveUid = ::geteuid();
     if (realUid != effectiveUid)
         throw Exception("Running as suid executable is not supported anymore");
 
     if ((realUid != 0) && setuidArg)
         throw Exception("Cannot use the --setuid argument when not running as root");
 
-#else
-    Q_UNUSED(dropPrivileges)
-#endif
+    static auto parseUser = [](const QByteArray &user) -> struct ::passwd * {
+        bool ok;
+        if (uid_t uid = user.toUInt(&ok); ok) {
+            if (auto *pw = ::getpwuid(uid))
+                return pw;
+        }
+        if (auto *pw = ::getpwnam(user))
+            return pw;
+        throw Exception("unknown user '%1'").arg(user);
+    };
 
-    if (!canSudo) {
-        fallbackServer();
-        return;
-    }
+    static auto parseGroup = [](const QByteArray &group) -> struct ::group * {
+        bool ok;
+        if (gid_t gid = group.toUInt(&ok); ok) {
+            if (auto *gr = ::getgrgid(gid))
+                return gr;
+        }
+        if (auto *gr = ::getgrnam(group))
+            return gr;
+        throw Exception("unknown user '%1'").arg(group);
+    };
 
-#if defined(Q_OS_LINUX)
-    uid_t setUid = 0;
-    gid_t setGid = 0;
+    static auto groupForUser = [](struct ::passwd *pw) -> struct ::group * {
+        if (pw) {
+            if (auto *gr = ::getgrgid(pw->pw_gid))
+                return gr;
+        }
+        throw Exception("cannot determine group of user '%1'").arg(pw ? pw->pw_name : "<unknown>");
+    };
+
+    struct ::passwd *setPw = nullptr;
+    struct ::group *setGr = nullptr;
     QSet<gid_t> setSupGids;
 
     // setuidArg is initialized in checkSetuidArg, before main()
     if (!setuidArg) {
         // If we are running under sudo, we can also use SUDO_UID and SUDO_GID. This is especially
         // important for auto-tests, as the testrunner does not like extra command line arguments.
-        bool hasSudoUid, hasSudoGid;
-        uid_t sudoUid = qgetenv("SUDO_UID").toUInt(&hasSudoUid);
-        gid_t sudoGid = qgetenv("SUDO_GID").toUInt(&hasSudoGid);
-        if (hasSudoUid && hasSudoGid) {
-            if (!::getpwuid(sudoUid))
-                throw Exception("Unknown SUDO_UID '%1'").arg(sudoUid);
-            if (!::getgrgid(sudoGid))
-                throw Exception("Unknown SUDO_GID '%1'").arg(sudoGid);
-            setUid = sudoUid;
-            setGid = sudoGid;
+        const QByteArray sudoUid = ::getenv("SUDO_UID");
+        const QByteArray sudoGid = ::getenv("SUDO_GID");
+        if (!sudoUid.isEmpty() && !sudoGid.isEmpty()) {
+            try {
+                setPw = parseUser(sudoUid);
+                setGr = parseGroup(sudoGid);
 
-            for (const auto *env : { "SUDO_UID", "SUDO_GID", "SUDO_USER", "SUDO_COMMAND", "SUDO_HOME", "SUDO_TTY" })
-                qunsetenv(env);
+                if ((setPw->pw_uid == 0) || (setGr->gr_gid == 0)) {
+                    throw Exception("the user and group invoking sudo needs to be unprivileged (got: %1:%2)")
+                        .arg(setPw->pw_name).arg(setGr->gr_name);
+                }
 
-            if ((setUid == 0) || (setGid == 0)) {
-                throw Exception("The user invoking sudo needs to be an unprivileged user and group (got: %1:%2)")
-                    .arg(setUid).arg(setGid);
+                for (const auto *env : { "SUDO_UID", "SUDO_GID", "SUDO_USER", "SUDO_COMMAND", "SUDO_HOME", "SUDO_TTY" })
+                    ::unsetenv(env);
+            } catch (const Exception &e) {
+                throw Exception("SUDO_UID/SUDO_GID: %1").arg(e.errorString());
             }
         } else {
             qCCritical(LogSystem) << "Running as root is not recommended! Please use --setuid=<user>[:<group>]* or sudo to run as an unprivileged user";
         }
     } else {
-        const auto list = QByteArray(setuidArg).trimmed().split(':');
+        try {
+            const auto list = QByteArray(setuidArg).trimmed().split(':');
 
-        static auto parseUser = [](const QByteArray &user) {
-            bool ok;
-            uid_t uid = user.toUInt(&ok);
-            if (ok && ::getpwuid(uid))
-                return uid;
-            else if (auto *pw = ::getpwnam(user))
-                return pw->pw_uid;
-            else
-                throw Exception("Unknown user '%1' for --setuid").arg(user);
-        };
+            setPw = parseUser(list.at(0));
+            setGr = (list.size() >= 2) ? parseGroup(list.at(1))
+                                       : groupForUser(setPw);
+            const auto supGroups = list.mid(2);
+            for (const auto &supGroup : supGroups)
+                setSupGids << parseGroup(supGroup)->gr_gid;
 
-        static auto parseGroup = [](const QByteArray &group) {
-            bool ok;
-            gid_t gid = group.toUInt(&ok);
-            if (ok && ::getgrgid(gid))
-                return gid;
-            else if (auto *gr = ::getgrnam(group))
-                return gr->gr_gid;
-            else
-                throw Exception("Unknown group '%1' for --setuid").arg(group);
-        };
+            if (setSupGids.size() > NGROUPS_MAX)
+                throw Exception("too many supplementary groups, the maximum is %1").arg(NGROUPS_MAX);
 
-        static auto groupForUser = [](uid_t uid) {
-            if (auto *pw = ::getpwuid(uid))
-                return pw->pw_gid;
-            else
-                throw Exception("Cannot determine group of uid '%1' for --setuid").arg(uid);
-        };
-
-        setUid = parseUser(list.at(0));
-        setGid = (list.size() >= 2) ? parseGroup(list.at(1))
-                                    : groupForUser(setUid);
-        const auto supGroups = list.mid(2);
-        for (const auto &supGroup : supGroups)
-            setSupGids << parseGroup(supGroup);
-
-        if (setSupGids.size() > NGROUPS_MAX)
-            throw Exception("Too many supplementary groups specified for --setuid, the maximum is %1").arg(NGROUPS_MAX);
-
-        if ((setUid == 0) || (setGid == 0) || setSupGids.contains(0)) {
-            throw Exception("The outcome of --setuid needs to be an unprivileged user and group (got: %1:%2, supplementary: %3)")
-                .arg(setUid).arg(setGid).arg(setSupGids);
+            if ((setPw->pw_uid == 0) || (setGr->gr_gid == 0) || setSupGids.contains(0)) {
+                throw Exception("user and group(s) need to be unprivileged (got: %1:%2, supplementary: %3)")
+                    .arg(setPw->pw_name).arg(setGr->gr_name).arg(setSupGids);
+            }
+        } catch (const Exception &e) {
+            throw Exception("Error parsing --setuid: %1").arg(e.errorString());
         }
     }
 
     int socketFds[2];
-    if (EINTR_LOOP(socketpair(AF_UNIX, SOCK_DGRAM, 0, socketFds)) != 0)
+    if (::socketpair(AF_UNIX, SOCK_DGRAM, 0, socketFds) != 0)
         throw Exception(errno, "Could not create a pair of sockets");
 
     // We need to make the gcda files generated by the root process writable by the normal user.
@@ -292,27 +282,27 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
 
     mode_t realUmask = 0;
     if (__gcov_init)
-        realUmask = umask(0);
+        realUmask = ::umask(0);
 
-    pid_t pid = fork();
+    pid_t pid = ::fork();
     if (pid < 0) {
         throw Exception(errno, "Could not fork process");
     } else if (pid == 0) {
-        // child
-        close(0);
-        setsid();
+        // child process, this is now the sudo-helper
+        ::close(0);
+        ::setsid();
         ::endgrent(); // force libc to cleanup
 
         // reset umask
         if (realUmask)
-            umask(realUmask);
+            ::umask(realUmask);
 
         // This call is Linux only, but it makes it so easy to detect a dying parent process.
         // We would have a big problem otherwise, since the main process drops its privileges,
         // which prevents it from sending SIGHUP to the child process, which still runs with
         // root privileges.
-        prctl(PR_SET_PDEATHSIG, SIGHUP);
-        signal(SIGHUP, sigHupHandler);
+        ::prctl(PR_SET_PDEATHSIG, SIGHUP);
+        ::signal(SIGHUP, [](int sig) { if (sig == SIGHUP) ::_exit(0); });
 
         // Drop as many capabilities as possible, just to be on the safe side
         static const quint32 neededCapabilities[] = {
@@ -325,11 +315,11 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         };
 
         bool capSetOk = false;
-        __user_cap_header_struct capHeader { AM_CAP_VERSION, getpid() };
+        __user_cap_header_struct capHeader { AM_CAP_VERSION, ::getpid() };
         __user_cap_data_struct capData[AM_CAP_SIZE];
-        if (capget(&capHeader, capData) == 0) {
+        if (::capget(&capHeader, capData) == 0) {
             quint32 capNeeded[AM_CAP_SIZE];
-            memset(&capNeeded, 0, sizeof(capNeeded));
+            ::memset(&capNeeded, 0, sizeof(capNeeded));
             for (quint32 cap : neededCapabilities) {
                 int idx = CAP_TO_INDEX(cap);
                 Q_ASSERT(idx < AM_CAP_SIZE);
@@ -337,7 +327,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
             }
             for (int i = 0; i < AM_CAP_SIZE; ++i)
                 capData[i].effective = capData[i].permitted = capData[i].inheritable = capNeeded[i];
-            if (capset(&capHeader, capData) == 0)
+            if (::capset(&capHeader, capData) == 0)
                 capSetOk = true;
         }
         if (!capSetOk)
@@ -347,63 +337,61 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         ProcessTitle::setTitle("%s", "sudo helper");
         SudoServer::instance()->run();
     }
-    // parent
 
+    // parent process, this is the main process
     try {
         // reset umask
         if (realUmask)
-            umask(realUmask);
+            ::umask(realUmask);
 
-        SudoClient::createInstance(socketFds[1]);
-
-        if (setUid && setGid) {
+        if (setPw && setGr) {
             // combine the user's supplementary groups with the additonal groups given to --setuid:
-            auto pw = ::getpwuid(setUid);
-            auto gr = ::getgrgid(setGid);
-            Q_ASSERT(pw);
-            Q_ASSERT(gr);
-
-            gid_t supGids[NGROUPS_MAX];
-            int supGidsLen = NGROUPS_MAX;
-            if (::getgrouplist(pw->pw_name, setGid, supGids, &supGidsLen) < 0)
-                throw Exception(errno, "Could not get supplementary groups for user %1").arg(pw->pw_name);
+            gid_t supGids[NGROUPS_MAX + 1];
+            int supGidsLen = NGROUPS_MAX + 1;
+            if (::getgrouplist(setPw->pw_name, setGr->gr_gid, supGids, &supGidsLen) < 0)
+                throw Exception("Could not get supplementary groups for user %1").arg(setPw->pw_name);
             setSupGids.unite(QSet<gid_t> { supGids, supGids + supGidsLen });
+            setSupGids.remove(setGr->gr_gid);
             if (setSupGids.size() > NGROUPS_MAX)
-                throw Exception("Too many supplementary groups when combining the groups of user %1 with the ones specified for --setuid").arg(pw->pw_name);
+                throw Exception("Too many supplementary groups when combining the groups of user %1 with the ones specified for --setuid").arg(setPw->pw_name);
             if (::setgroups(setSupGids.size(), QVector<gid_t>(setSupGids.cbegin(), setSupGids.cend()).constData()) < 0)
-                throw Exception(errno, "Could not set supplementary groups (%2) for user %1").arg(pw->pw_name).arg(setSupGids);
+                throw Exception(errno, "Could not set supplementary groups (%2) for user %1").arg(setPw->pw_name).arg(setSupGids);
 
             // drop all root privileges
             if (dropPrivileges == DropPrivilegesPermanently) {
-                if (setresgid(setGid, setGid, setGid) || setresuid(setUid, setUid, setUid)) {
-                    throw Exception(errno, "Could not set real user or group ID");
-                }
+                if (::setresgid(setGr->gr_gid, setGr->gr_gid, setGr->gr_gid) < 0)
+                    throw Exception(errno, "Could not permanently set the group to %1").arg(setGr->gr_name);
+                if (::setresuid(setPw->pw_uid, setPw->pw_uid, setPw->pw_uid) < 0)
+                    throw Exception(errno, "Could not permanently set the user to %1").arg(setPw->pw_name);
             } else {
+                if (::setresgid(setGr->gr_gid, setGr->gr_gid, 0) < 0)
+                    throw Exception(errno, "Could not set the group to %1").arg(setGr->gr_name);
+                if (::setresuid(setPw->pw_uid, setPw->pw_uid, 0) < 0)
+                    throw Exception(errno, "Could not set the user to %1").arg(setPw->pw_name);
                 qCCritical(LogSystem) << "\nSudo was instructed to NOT drop root privileges permanently.\nThis is dangerous and should only be used in auto-tests!\n";
-                if (setresgid(setGid, setGid, 0) || setresuid(setUid, setUid, 0)) {
-                    throw Exception(errno, "Could not set real user or group ID");
-                }
             }
 
             // Fix env variables
             // ::system("env"); // for testing
-            qputenv("HOME", pw->pw_dir);
-            qputenv("USER", pw->pw_name);
-            qputenv("LOGNAME", pw->pw_name);
-            qputenv("SHELL", pw->pw_shell);
-            QByteArray xdgRTD = qgetenv("XDG_RUNTIME_DIR");
+            ::setenv("HOME", setPw->pw_dir, 1);
+            ::setenv("USER", setPw->pw_name, 1);
+            ::setenv("LOGNAME", setPw->pw_name, 1);
+            ::setenv("SHELL", setPw->pw_shell, 1);
+            QByteArray xdgRTD = ::getenv("XDG_RUNTIME_DIR");
             if (xdgRTD.endsWith("/0")) {
                 xdgRTD.chop(1);
-                xdgRTD.append(QByteArray::number(setUid));
-                qputenv("XDG_RUNTIME_DIR", xdgRTD);
+                xdgRTD.append(QByteArray::number(setPw->pw_uid));
+                ::setenv("XDG_RUNTIME_DIR", xdgRTD, 1);
             }
             // We are NOT changing to the user's home dir on purpose to avoid overriding a systemd setting
 
             qCInfo(LogSystem).nospace() << "The sudo-helper process is active and the main process is now running as "
-                                        << pw->pw_name << ":" << gr->gr_name;
+                                        << setPw->pw_name << ":" << setGr->gr_name;
 
             ::endgrent(); // force libc to cleanup
         }
+
+        SudoClient::createInstance(socketFds[1]);
         ::atexit([]() { SudoClient::instance()->stopServer(); });
 
     } catch (const Exception &e) {

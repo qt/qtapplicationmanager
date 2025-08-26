@@ -889,12 +889,6 @@ void Main::loadQml() noexcept(false)
     Systemd::instance()->notify(u"READY=1"_s);
 }
 
-void Main::showWindow(bool showFullscreen)
-{
-    m_showFullscreen = showFullscreen;
-    showWindow();
-}
-
 void Main::showWindow()
 {
     setQuitOnLastWindowClosed(false);

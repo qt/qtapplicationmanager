@@ -7,8 +7,8 @@
 
     "Description": "LibYAML is a YAML 1.1 parser and emitter written in C.",
     "Homepage": "https://github.com/yaml/libyaml",
-    "Version": "0.2.5",
-    "DownloadLocation": "https://github.com/yaml/libyaml/releases/download/0.2.5/yaml-0.2.5.tar.gz",
+    "Version": "2024-05-20",
+    "DownloadLocation": "https://codeload.github.com/yaml/libyaml/zip/840b65c40675e2d06bf40405ad3f12dec7f35923",
     "PURL": [
         "pkg:github/yaml/libyaml@$<VERSION>"
     ],

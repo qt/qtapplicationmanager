@@ -200,7 +200,7 @@ struct LoggingGlobal
             quint32 currentlyAvailable = logBufferAvailable;
             uint idx = qCountTrailingZeroBits(currentlyAvailable);
             if (idx >= LoggingGlobal::LogBufferCount) {
-                QThread::usleep(5);
+                QThread::yieldCurrentThread();
                 continue;
             }
             quint32 reservation = currentlyAvailable ^ (1 << idx);

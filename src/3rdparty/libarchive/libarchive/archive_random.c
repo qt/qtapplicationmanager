@@ -24,14 +24,9 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-#if defined(__GLIBC__) && ((__GLIBC__ * 1000 + __GLIBC_MINOR__) >= 2036)
-#define HAVE_ARC4RANDOM_BUF 1
 #endif
 
 #if !defined(HAVE_ARC4RANDOM_BUF) && (!defined(_WIN32) || defined(__CYGWIN__))

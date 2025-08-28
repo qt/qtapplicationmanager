@@ -10,6 +10,8 @@
 #include <QtCore/QVector>
 #include <QtAppManCommon/global.h>
 
+QT_FORWARD_DECLARE_CLASS(QTimer)
+
 QT_BEGIN_NAMESPACE_AM
 
 class AbstractContainer;
@@ -34,9 +36,6 @@ public slots:
 signals:
     void shutDownFinished();
 
-protected:
-    void timerEvent(QTimerEvent *te) override;
-
 private:
     QuickLauncher(QObject *parent = nullptr);
     QuickLauncher(const QuickLauncher &);
@@ -44,7 +43,7 @@ private:
     QuickLauncher &operator=(const QuickLauncher &);
     static QuickLauncher *s_instance;
 
-    void triggerRebuild(int delay = 0);
+    void triggerRebuild();
     void removeEntry(AbstractContainer *container, AbstractRuntime *runtime);
 
     struct QuickLaunchEntry
@@ -56,9 +55,8 @@ private:
     };
 
     QVector<QuickLaunchEntry> m_quickLaunchPool;
-    int m_idleTimerId = 0;
-    CpuReader *m_idleCpu = nullptr;
-    bool m_isIdle = false;
+    QTimer *m_rebuildTimer;
+    CpuReader *m_idleCpu;
     qreal m_idleThreshold;
     bool m_shuttingDown = false;
 };

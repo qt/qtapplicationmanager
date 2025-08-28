@@ -83,6 +83,136 @@ The application manager sources have a script,
 unit tests. This script is \b not for use in production, but only for use in developing with
 signed packages.
 
+New in 6.11:
+\list
+\li Developer certificates can be bound to one or more specific package IDs, to prevent shadowing
+    or replacement of packages that are not owned by the developer. See \l {Binding Developer
+    Certificates to Package IDs}{below} for more information.
+\li Developer certificates need to have the \c decipherOnly bit set in the \e{Key Usage} X509
+    extension, while App-Store certificates need to have the \c encipherOnly bit set. This ensures
+    that developer and app-store certificates cannot be used interchangeably. The X509 format is not
+    easily extensible, but these otherwise unused key-usage bits can easily be set in any tool used
+    for creating certificates.
+\li The fingerprints of issuer certificates can optionally be white-listed in the configuration file.
+\li Certificate Revocation Lists (CRLs) can be loaded to revoke developer or app-store certificates.
+\endlist
+
+\section2 Creating Developer Certificates
+
+The examples below use the \c{openssl} command-line tool to create keys, CSRs, and certificates.
+You are however free to use any other tool that is able to create X.509v3 and PKCS#12 certificates.
+
+For a developer to receive a developer certificate, they would typically generate a private key and
+a certificate signing request (CSR) for their package:
+
+\badcode
+$ openssl req -new -nodes -newkey rsa:2048 -subj "/CN=Developer 1" \
+              -addext "subjectAltName=URI:qtam://packageid/my-package-id" \
+              -keyout developer.key -out developer-req.csr
+\endcode
+
+Please note that the actual parameters like key size and subject name would depend on your PKI
+policy. In this example, a 2048-bit RSA key is created with the common name \e "Developer 1".
+
+The \c{subjectAltName} extension is used to bind the developer certificate to one or more specific
+package IDs, in this case \c my-package-id.
+See \l{Binding Developer Certificates to Package IDs}{below for more information}.
+
+The \c developer-req.csr file would then be sent to the Developer CA for signing, while the
+\c developer.key file is kept private by the developer.
+
+On the CA side, the CSR is then verified and signed to create the developer certificate. Please
+note that developer certificates need to have the \c decipherOnly bit set in the \e{Key Usage}
+X509 extension.
+
+\badcode
+$ openssl ca -batch -config dev-ca.conf -policy signing_policy -extensions signing_req \
+             -infiles developer-req.csr -out developer.crt
+\endcode
+
+This generates the signed \c developer.crt file, which is then sent back to the developer.
+
+The final step for developers is to bundle their private key and the signed certificate into a
+P12 file, which is the format that the \l {Packager}{\c appman-packager} tool expects:
+
+\badcode
+$ openssl pkcs12 -export -in developer.crt -inkey developer.key -out developer.p12
+\endcode
+
+\section2 Binding Developer Certificates to Package IDs
+
+Up to version 6.11, all developer certificates were treated equally, meaning that a developer
+could sign any package. From version 6.11 onwards, developer certificates can be
+bound to one or more specific package IDs, to prevent shadowing or replacement of packages
+that are not owned by the developer.
+
+This ID list is stored in the \c{subjectAltName} X.509v3 extension of the developer certificate as
+\c {URI:qtam://packageid/...} entries. This extension is conventionally used to store alternative
+domain names for HTTPS server certificates.
+
+As with HTTPS certificates, you can use the \c{*} wildcard character to match multiple package
+IDs. For example, a developer certificate with the following \c{subjectAltName} extension:
+\badcode
+subjectAltName = URI:qtam://packageid/com.vendor.*, URI:qtam://packageid/io.qt.example
+\endcode
+
+would allow the developer to create and sign packages with an ID starting with
+\c{com.vendor.}, as well as the specific package with the ID \c{io.qt.example}.
+
+\note Adding this information is \b optional for developer certificates to retain backwards
+compatibility. However you are highly encouraged to add this information to your developer
+certificates to improve security. If you still need to issue an unrestricted developer certificate,
+you can use \c{URI:qtam://packageid/*} to explicitly allow all package IDs.
+
+\section2 Developer Signing Packages
+
+Each package can only have exactly one developer signature.
+
+A developer would sign their package as follows, after obtaining a valid developer certificate in
+P12 format (see above).
+
+\badcode
+$ appman-packager dev-sign-package the-pkg.ampkg the-pkg.dev-signed.ampkg developer.p12
+\endcode
+
+This takes the input package \c the-pkg.ampkg, signs it with the \c developer.p12 signature, and
+writes the output to \c the-pkg.dev-signed.ampkg.
+
+The signed package would then be uploaded/sent to an app-store for further processing.
+
+
+\section2 Store Signing Packages
+
+Each package can only have exactly one app-store signature.
+
+When a developer submits a package to an app-store, the app-store server backend and/or a human
+tester would verify the \e developer signature on the package first:
+
+\badcode
+$ appman-packager dev-verify-package --verbose the-pkg.dev-signed.ampkg dev-ca.crt intermediate-ca.crt root-ca.crt
+\endcode
+
+The actual number and names of the requires CA certificates depends on your PKI setup. The above
+is just an example.
+
+Next, the contents of the package should be verified: first and foremost the contents of \c
+info.yaml, but also the actual application code.
+
+Finally the package is signed with a \e store key:
+
+\badcode
+$ appman-packager store-sign-package the-pkg.signed.ampkg the.pkg.dev-store-signed.ampkg store.p12
+\endcode
+
+This takes the input package \c the-pkg.dev-signed.ampkg, signs it with the \c store.p12 signature,
+and writes the output to \c the-pkg.dev-store-signed.ampkg.
+
+The store-signed package would then be made available for download and installation.
+
+In order to differentiate between developer and store certificates (even if you use the same CA for
+everything), store certificates need to have the \c encipherOnly bit set in the \e{Key Usage} X509
+extension.
+
 \section1 Related Content
 
 \list

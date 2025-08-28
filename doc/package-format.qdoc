@@ -94,6 +94,8 @@ way: The binary digest is used as an input to create a detached PKCS7 signature.
 signature is then BASE64 encoded and stored in \c{--PACKAGE-FOOTER--} - either in the
 \c{developerSignature} or \c{storeSignature} field.
 
+There is also a separate page documenting the required \l{Public Key Infrastructure}.
+
 If you want to implement this signing algorithm yourself, then please look at these four
 existing implementations:
 

@@ -423,8 +423,9 @@ ui:
         \li [\c quicklaunch/idleLoad]
         \li real
         \li This is a system load value between \c 0 and \c 1. The application manager does not
-            start a new quick launcher, as long as the system's idle load is higher than this
-            value. (default: 0)
+            start a new quick launcher, as long as the system's load is higher than this
+            value. Setting this value to \c 0 disables this check and always starts a new quick
+            launcher when necessary. (default: 0)
     \row
         \li [\c quicklaunch/runtimesPerContainer]
         \li int

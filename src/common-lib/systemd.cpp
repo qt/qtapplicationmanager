@@ -3,15 +3,28 @@
 
 #include <QCoreApplication>
 #include <QRegularExpression>
+#include <QtEndian>
 #include <qplatformdefs.h>
 #include "systemd.h"
 #include "exception.h"
 #include "logging.h"
 
-#if defined(Q_OS_LINUX)
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#  include <sys/mman.h>
 #  include <sys/socket.h>
+#  include <sys/stat.h>
+#  include <sys/syscall.h>
+#  include <sys/uio.h>
 #  include <sys/un.h>
+#  include <fcntl.h>
 #  include <unistd.h>
+
+#  ifndef MFD_NOEXEC_SEAL
+#    define MFD_NOEXEC_SEAL 8U
+#  endif
+#  ifndef MFD_EXEC
+#    define MFD_EXEC 0x10U
+#  endif
 #endif
 
 using namespace std::chrono_literals;
@@ -32,7 +45,7 @@ Systemd::~Systemd()
 
 Systemd::Systemd()
 {
-#if defined(Q_OS_LINUX)
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     auto getAndUnset = [](const char *name) {
         auto var = qgetenv(name);
         qunsetenv(name);
@@ -45,6 +58,7 @@ Systemd::Systemd()
     m_listenFds     = getAndUnset("LISTEN_FDS");
     m_listenFdNames = getAndUnset("LISTEN_FDNAMES");
     m_listenPid     = getAndUnset("LISTEN_PID");
+    m_journalStream = qgetenv("JOURNAL_STREAM");
 #endif
 }
 
@@ -79,7 +93,7 @@ bool Systemd::notify(const QString &state)
             if ((socketPath.at(0) != '@') && (socketPath.at(0) != '/'))
                 throw Exception("invalid socket address: %1").arg(socketPath);
 
-#if defined(Q_OS_LINUX)
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
             // QLocalSocket cannot send datagrams and systemd does not allow streams...
             union {
                 struct ::sockaddr sa;
@@ -157,6 +171,261 @@ QMap<int, QString> Systemd::listenFds(const QRegularExpression &nameRx, bool ign
             result.insert(i + 3 /* fds start at 3 */, names[i]);
     }
     return result;
+}
+
+bool Systemd::canLogToJournal() const
+{
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    static const bool result = [this] {
+        QByteArrayView js(m_journalStream);
+        if (int pos = js.indexOf(':'); pos > 0) {
+            bool devOk, inoOk;
+            dev_t dev = static_cast<dev_t>(js.left(pos).toULongLong(&devOk));
+            ino_t ino = static_cast<ino_t>(js.mid(pos + 1).toULongLong(&inoOk));
+            if (devOk && inoOk) {
+                struct ::stat statStdErr;
+                if (::fstat(STDERR_FILENO, &statStdErr) == 0) {
+                    if ((statStdErr.st_dev == dev) && (statStdErr.st_ino == ino))
+                        return true;
+                }
+            }
+        }
+        return false;
+    }();
+    return result;
+#else
+    return false;
+#endif
+}
+
+bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
+                           const QString &message, QByteArray &b)
+{
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    // Instead of pulling in a libsystemd dependency, we use the native journald protocol:
+    // https://systemd.io/JOURNAL_NATIVE_PROTOCOL/
+    // Combined with our logBuffers mechanism from logging.cpp, this handler is alloc-free and
+    // async-signal-safe for any reasonable sized message.
+
+    const char priority = [=]() {
+        switch (msgType) {
+        case QtDebugMsg:    return '7';
+        case QtInfoMsg:     return '6';
+        case QtWarningMsg:  return '4';
+        default:
+        case QtCriticalMsg: return '2';
+        case QtFatalMsg:    return '1';
+        }
+    }();
+
+    const QByteArray appId = Logging::applicationId();
+    char lineBuf[32];
+    char priAndTid[32];
+    auto priAndTidLen = std::snprintf(priAndTid, sizeof(priAndTid), "PRIORITY=%c\nTID=%i",
+                                      priority, (int) ::syscall(SYS_gettid));
+
+    // We are using scatter/gather IO to send the message in one datagram without allocations
+    // and with minimal copying.
+    // For efficiency, the required trailing new-line is always pre-pended to the next field.
+
+    struct ::iovec iov[12] = {
+                              { (void *) priAndTid, (size_t) priAndTidLen },
+                              { (void *) "\nQT_CATEGORY=", 13 },
+                              { (void *) context.category, qstrlen(context.category) },
+                              };
+    size_t iovLen = 3;
+
+    if (!appId.isEmpty()) {
+        iov[iovLen++] = { (void *) "\nQT_AM_APPID=", 13 };
+        iov[iovLen++] = { (void *) appId.constData(), (size_t) appId.size() };
+    }
+    if (context.file && context.file[0]) {
+        iov[iovLen++] = { (void *) "\nCODE_FILE=", 11 };
+        iov[iovLen++] = { (void *) context.file, (size_t) qstrlen(context.file) };
+    }
+    if (context.line > 0) {
+        auto lineBufLen = std::snprintf(lineBuf, sizeof(lineBuf), "\nCODE_LINE=%i", context.line);
+        iov[iovLen++] = { (void *) lineBuf, (size_t) lineBufLen };
+    }
+    if (context.function && context.function[0]) {
+        iov[iovLen++] = { (void *) "\nCODE_FUNC=", 11 };
+        iov[iovLen++] = { (void *) context.function, (size_t) qstrlen(context.function) };
+    }
+
+    if (m_extraJournalFieldsLock.tryLockForRead()) {
+        // It's better to skip the extra fields than to block logging. This can only happen if
+        // someone is calling setExtraJournalFields() from a different thread, but you should do
+        // this only once in the startup phase anyway.
+        if (!m_extraJournalFieldsBuffer.isEmpty()) {
+            iov[iovLen++] = { (void *) m_extraJournalFieldsBuffer.constData(),
+                             (size_t) m_extraJournalFieldsBuffer.size() };
+        }
+        m_extraJournalFieldsLock.unlock();
+    }
+
+    bool hasNewlines = message.contains(u'\n');
+    b += (hasNewlines ? "\nMESSAGE\n12345678" : "\nMESSAGE=");
+    qsizetype msgBegin = b.size();
+
+    b += '[';
+    if (!appId.isEmpty()) {
+        b += appId;
+        b += " | ";
+    }
+    b += context.category;
+    b += "] ";
+
+    // Don't use QString::toLocal8Bit() here, because it always allocates memory.
+    // QStringEncoder together with op+=() on the other hand only allocates if necessary.
+    b += QStringEncoder(QStringEncoder::System).encode(message);
+    if (hasNewlines) {
+        // overwrite the '12345678' placeholder with the length of the message
+        qsizetype msgEnd = b.size();
+        qToLittleEndian(qint64(msgEnd - msgBegin), b.data() + msgBegin - 8);
+    }
+    b += '\n';
+
+    iov[iovLen++] =  { (void *) b.constData(), (size_t) b.size() };
+
+    // The target is always the same socket
+    static const ::sockaddr_un sa {
+        .sun_family = AF_UNIX,
+#if defined(__GNUC__) && (__GNUC__ < 11) && !defined(__clang__) // gcc < 11 bug
+        { .sun_path = "/run/systemd/journal/socket" }
+#else
+        .sun_path = "/run/systemd/journal/socket"
+#endif
+    };
+
+    struct ::msghdr mh = {
+        .msg_name    = (struct ::sockaddr *) &sa,
+        .msg_namelen = (socklen_t) (offsetof(struct sockaddr_un, sun_path) + ::strlen(sa.sun_path)),
+        .msg_iov     = iov,
+        .msg_iovlen  = iovLen,
+        .msg_control = nullptr,
+        .msg_controllen = 0,
+        .msg_flags   = 0,
+    };
+
+    static const int journalSocket = []() {
+        // this part is a reimplementation of libsystemd code
+        int s = ::socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+        if (s >= 0) {
+            int bufSize = 8 * 1024 * 1024; // 8MB
+            int value;
+            ::socklen_t valueLen = sizeof(value);
+            if ((::getsockopt(s, SOL_SOCKET, SO_SNDBUF, &value, &valueLen) < 0)
+                || (valueLen != sizeof(value))
+                || (value < (2 * bufSize))) {
+                value = bufSize;
+                valueLen = sizeof(value);
+                (void) ::setsockopt(s, SOL_SOCKET, SO_SNDBUF, &value, valueLen);
+            }
+        }
+        return s;
+    }();
+
+    if (Q_UNLIKELY(journalSocket < 0)) // Only possible, if the kernel is out of socket handles
+        return false;
+
+    ssize_t result = ::sendmsg(journalSocket, &mh, MSG_NOSIGNAL);
+
+    if (result >= 0)
+        return true;
+
+    if ((errno != EMSGSIZE) && (errno != ENOBUFS) && (errno != EAGAIN))
+        return false; // unrecoverable error
+
+    // Plan B: Use a memfd to send the message in case it was too large or the socket buffer was full.
+    //         This part is a reimplementation of the libsystemd code.
+
+    static auto memfd_create_wrapper = [](const char *name, unsigned int mode) {
+        // This is a wrapper around memfd_create() that adds compatibility with older kernels (< 6.3)
+        // where memfd_create() did not support the MFD_EXEC and MFD_NOEXEC_SEAL flags
+
+        int mfd = ::memfd_create(name, mode);
+        if ((mfd < 0) && (errno == -EINVAL)) {
+            auto modeCompat = mode & ~(MFD_EXEC | MFD_NOEXEC_SEAL);
+            if (mode == modeCompat)
+                return mfd;
+            mfd = ::memfd_create(name, modeCompat);
+        }
+        return mfd;
+    };
+    int memFd = memfd_create_wrapper("journal-data", MFD_CLOEXEC | MFD_NOEXEC_SEAL | MFD_ALLOW_SEALING);
+    if (memFd < 0)
+        return false;
+    auto cleanup = qScopeGuard([=]() { ::close(memFd); });
+
+    if (::writev(memFd, iov, iovLen) < 0)
+        return false;
+    if (::fcntl(memFd, F_ADD_SEALS, F_SEAL_SEAL | F_SEAL_SHRINK | F_SEAL_GROW | F_SEAL_WRITE) < 0)
+        return false;
+
+    // We are re-using mh here, but we switch from data (msg_iov) to sending an fd (msg_control)
+    mh.msg_iov = nullptr;
+    mh.msg_iovlen = 0;
+
+    // There is no nice way to avoid this C macro hell that's need to send a single fd along
+    union {
+        uint8_t buf[CMSG_SPACE(sizeof(int))];
+        struct ::cmsghdr cmsghdr;
+    } control;
+
+    mh.msg_control = &control;
+    mh.msg_controllen = sizeof(control);
+
+    auto cmsg = CMSG_FIRSTHDR(&mh);
+    cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+    cmsg->cmsg_level = SOL_SOCKET;
+    cmsg->cmsg_type = SCM_RIGHTS;
+    ::memcpy(CMSG_DATA(cmsg), &memFd, sizeof(int));
+
+    return (::sendmsg(journalSocket, &mh, MSG_NOSIGNAL) >= 0);
+#else
+    Q_UNUSED(msgType)
+    Q_UNUSED(context)
+    Q_UNUSED(message)
+    Q_UNUSED(b)
+    return false;
+#endif
+}
+
+QMap<QByteArray, QByteArray> Systemd::extraJournalFields()
+{
+    QReadLocker locker(&m_extraJournalFieldsLock);
+    return m_extraJournalFields;
+}
+
+void Systemd::setExtraJournalFields(const QMap<QByteArray, QByteArray> &fields)
+{
+    // Convert to a single, readily encoded buffer that uses the same efficient "new-line first"
+    // format that the logToJournal() method uses for all the other fields.
+
+    QByteArray buffer;
+    for (auto it = fields.constBegin(); it != fields.constEnd(); ++it) {
+        if (it.key().isEmpty())
+            throw Exception("System Journal: field names must not be empty");
+        if (!it.key().isValidUtf8())
+            throw Exception("System Journal: field names must be valid UTF-8");
+        if (it.key().contains('=') || it.key().contains('\n'))
+            throw Exception("System Journal: field names must not contain '=' or new-line characters");
+        if (!it.value().isValidUtf8()) // we do not support binary data at the moment
+            throw Exception("System Journal: field values must be valid UTF-8");
+        if (it.value().contains('\n')) {
+            buffer += '\n' + it.key() + "\n12345678";
+            auto begin = buffer.size();
+            buffer += it.value();
+            auto end = buffer.size();
+            qToLittleEndian(qint64(end - begin), buffer.data() + begin - 8);
+        } else {
+            buffer += '\n' + it.key() + '=' + it.value();
+        }
+    }
+
+    QWriteLocker locker(&m_extraJournalFieldsLock);
+    m_extraJournalFieldsBuffer = buffer;
+    m_extraJournalFields = fields;
 }
 
 QT_END_NAMESPACE_AM

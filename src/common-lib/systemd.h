@@ -8,6 +8,8 @@
 #include <optional>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QMap>
+#include <QtCore/QReadWriteLock>
 #include <QtAppManCommon/global.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -24,6 +26,13 @@ public:
 
     QMap<int, QString> listenFds(const QRegularExpression &nameRx, bool ignorePid = false);
 
+    bool canLogToJournal() const;
+    bool logToJournal(QtMsgType msgType, const QMessageLogContext &context, const QString &message,
+                      QByteArray &tmpBuffer);
+
+    QMap<QByteArray, QByteArray> extraJournalFields();
+    void setExtraJournalFields(const QMap<QByteArray, QByteArray> &fields) noexcept(false);
+
 private:
     Systemd();
     Systemd(const Systemd &) = delete;
@@ -39,9 +48,14 @@ private:
     QByteArray m_listenFds;
     QByteArray m_listenFdNames;
     QByteArray m_listenPid;
+    QByteArray m_journalStream;
 
     int m_notifySocketFd = -1;
     bool m_notifySocketTriedToConnect = false;
+
+    QReadWriteLock m_extraJournalFieldsLock;
+    QMap<QByteArray, QByteArray> m_extraJournalFields;
+    QByteArray m_extraJournalFieldsBuffer;
 
     friend class SystemdTest;
 };

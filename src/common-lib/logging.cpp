@@ -14,6 +14,7 @@
 #include "logging.h"
 #include "console.h"
 #include "colorprint.h"
+#include "systemd.h"
 #include "qtappman_common-config_p.h"
 
 #include <cstdio>
@@ -160,6 +161,7 @@ struct LoggingGlobal
     bool dltEnabled = QT_CONFIG(am_dltlogging);
     bool messagePatternDefined = false;
     bool useAMConsoleLogger = false;
+    bool useJournalLogger = false;
     bool noCustomLogging = false;
     QStringList rules;
     QtMessageHandler defaultQtHandler = nullptr;
@@ -184,7 +186,7 @@ struct LoggingGlobal
     // the size of the longest message to completely avoid allocations (see QStringEncoder).
     static constexpr int LogBufferSize = 1024;
 
-    // The maximum size of any buffer. If a buffer got resized beyond this valud due to
+    // The maximum size of any buffer. If a buffer got resized beyond this value due to
     // a very long message text, it will be discarded and a new buffer will be allocated.
     static constexpr int LogBufferMaxSize = 2 * LogBufferSize;
 
@@ -254,21 +256,47 @@ DeferredMessage::~DeferredMessage()
 }
 
 
+class LogBufferReference
+{
+public:
+    LogBufferReference()
+        : m_index(lg()->acquireLogBuffer())
+        , m_buffer(lg()->logBuffers[m_index])
+    {
+        if (m_buffer.capacity() > LoggingGlobal::LogBufferMaxSize)
+            m_buffer.clear();
+        if (!m_buffer.capacity())
+            m_buffer.reserve(LoggingGlobal::LogBufferSize);
+        m_buffer.resize(0);
+    }
+
+    ~LogBufferReference()
+    {
+        lg()->releaseLogBuffer(m_index);
+    }
+
+    QByteArray &buffer() { return m_buffer; }
+
+private:
+    int m_index;
+    QByteArray &m_buffer;
+};
+
+
+static bool logToJournal(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
+{
+    LogBufferReference lbr;
+    return Systemd::instance()->logToJournal(msgType, context, message, lbr.buffer());
+}
+
+
 static void colorLogToStderr(QtMsgType msgType, const QMessageLogContext &context, const QString &message)
 {
     if (msgType < QtDebugMsg || msgType > QtInfoMsg)
         msgType = QtCriticalMsg;
 
-    uint logBufferIndex = lg()->acquireLogBuffer();
-    auto releaseLogBuffer = qScopeGuard([=] { lg()->releaseLogBuffer(logBufferIndex); });
-
-    QByteArray &logBuffer = lg()->logBuffers[logBufferIndex];
-
-    if (logBuffer.capacity() > LoggingGlobal::LogBufferMaxSize)
-        logBuffer.clear();
-    if (!logBuffer.capacity())
-        logBuffer.reserve(LoggingGlobal::LogBufferSize);
-    logBuffer.resize(0);
+    LogBufferReference lbr;
+    QByteArray &logBuffer = lbr.buffer();
 
     int consoleWidth = Console::width();
 
@@ -388,6 +416,11 @@ void Logging::messageHandler(QtMsgType msgType, const QMessageLogContext &contex
     if (lg()->dltEnabled)
         QDltRegistration::messageHandler(msgType, context, message);
 #endif
+    if (Q_LIKELY(lg()->useJournalLogger)) {
+        if (Q_LIKELY(logToJournal(msgType, context, message)))
+            return;
+    }
+
     if (Q_UNLIKELY(!lg()->useAMConsoleLogger))
         lg()->defaultQtHandler(msgType, context, message);
     else
@@ -412,6 +445,10 @@ void Logging::initialize(int argc, const char * const *argv)
         lg()->dltEnabled = false;
         return;
     }
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    lg()->useJournalLogger = Systemd::instance()->canLogToJournal();
+#endif
 
     if (qEnvironmentVariableIntValue("AM_NO_DLT_LOGGING") == 1)
         lg()->dltEnabled = false;

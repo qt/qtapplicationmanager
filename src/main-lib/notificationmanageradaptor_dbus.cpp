@@ -8,6 +8,10 @@
 #  include <unistd.h>
 #endif
 
+#include "logging.h"
+#include "dbuscontextadaptor.h"
+#include "applicationmanager.h"
+#include "abstractruntime.h"
 #include "notificationmanager.h"
 #include "notifications_adaptor.h"
 
@@ -59,6 +63,26 @@ uint NotificationsAdaptor::Notify(const QString &app_name, uint replaces_id, con
                                   const QString &summary, const QString &body,
                                   const QStringList &actions, const QVariantMap &hints, int timeout)
 {
+    if (auto *app = ApplicationManager::instance()->application(app_name)) {
+        // this request is coming from an application we know about, make sure it really is that app
+        bool pidMatches = false;
+
+        if (qint64 appPid = app->currentRuntime() ? app->currentRuntime()->applicationProcessId() : 0) {
+            auto ctx = DBusContextAdaptor::dbusContextFor(this);
+            auto reply = ctx->connection().interface()->servicePid(ctx->message().service());
+            if (reply.isValid() && (reply.value() == appPid))
+                pidMatches = true;
+        }
+        if (!pidMatches) {
+            qCCritical(LogNotifications) << "Ignoring notification from application"
+                                         << app_name << "as it did not actually originate from that application.";
+            return 0;
+        }
+    } else {
+        // this request is coming from the outside and app_name could be anything
+        //TODO: 6.11: prefix with ":ext:"
+    }
+
     return NotificationManager::instance()->showNotification(app_name, replaces_id, app_icon,
                                                              summary, body, actions, hints, timeout);
 }

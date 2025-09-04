@@ -6,7 +6,6 @@ qt_internal_add_module(AppManDBusPrivate
     INTERNAL_MODULE
     SOURCES
         dbuscontextadaptor.cpp dbuscontextadaptor.h
-        dbusdaemon.cpp dbusdaemon.h
         dbuspolicy.cpp dbuspolicy.h
     PUBLIC_LIBRARIES
         Qt::Core

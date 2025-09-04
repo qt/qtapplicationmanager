@@ -10,11 +10,10 @@
 
 #include "qtappman_common-config_p.h"
 
-#if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
+#if defined(QT_DBUS_LIB)
 #  include <QDBusConnection>
 #  include <QDBusAbstractAdaptor>
 #  include <QDBusServer>
-#  include "dbusdaemon.h"
 #  include "dbuspolicy.h"
 #  include "dbuscontextadaptor.h"
 #  include "applicationmanager_adaptor.h"
@@ -187,7 +186,7 @@ Main::~Main()
     delete ContainerFactory::instance();
     delete StartupTimer::instance();
 
-#if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
+#if defined(QT_DBUS_LIB)
     delete DBusPolicy::instance();
 #endif
 }
@@ -926,202 +925,152 @@ void Main::showWindow()
 
 void Main::setupDBus(const Configuration *cfg)
 {
-#if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
+#if defined(QT_DBUS_LIB)
+    // Initialize the policy checker
     DBusPolicy::createInstance([](qint64 pid) { return ApplicationManager::instance()->identifyAllApplications(pid); },
                                [](const QString &appId) { return ApplicationManager::instance()->capabilities(appId); });
 
-    // <0> DBusContextAdaptor instance
-    // <1> D-Bus name (extracted from callback function busForInterface)
-    // <2> D-Bus service
-    // <3> D-Bus path
-    // <4> Interface name (extracted from Q_CLASSINFO below)
-
-    std::vector<std::tuple<DBusContextAdaptor *, QString, QString, QString, QString>> ifaces;
-
-    auto addInterface = [&](DBusContextAdaptor *adaptor, const QString &service, const QString &path) {
-        int idx = adaptor->parent()->metaObject()->indexOfClassInfo("D-Bus Interface");
+    // Don't repeat yourself: we already have the interface name in the class infos
+    static auto interfaceNameForAdaptor = [](const QMetaObject *mobj) -> QString {
+        const int idx = mobj->indexOfClassInfo("D-Bus Interface");
         if (idx < 0) {
             throw Exception("Could not get class-info \"D-Bus Interface\" for D-Bus adapter %1")
-                    .arg(QString::fromLatin1(adaptor->parent()->metaObject()->className()));
+                .arg(mobj->className());
         }
-        QString interfaceName = QString::fromLatin1(adaptor->parent()->metaObject()->classInfo(idx).value());
-        auto iit = cfg->yaml.dbus.registrations.constFind(interfaceName);
-        QString bus = (iit != cfg->yaml.dbus.registrations.cend()) ? iit->toString() : cfg->dbus();
-
-        ifaces.emplace_back(adaptor, bus, service, path, interfaceName);
+        return QString::fromLatin1(mobj->classInfo(idx).value());
     };
 
-    addInterface(DBusContextAdaptor::create<PackageManagerAdaptor>(m_packageManager),
-                 u"io.qt.ApplicationManager"_s, u"/PackageManager"_s);
-    addInterface(DBusContextAdaptor::create<WindowManagerAdaptor>(m_windowManager),
-                 u"io.qt.ApplicationManager"_s, u"/WindowManager"_s);
-    addInterface(DBusContextAdaptor::create<NotificationsAdaptor>(m_notificationManager),
-                 u"org.freedesktop.Notifications"_s, u"/org/freedesktop/Notifications"_s);
-    addInterface(DBusContextAdaptor::create<ApplicationManagerAdaptor>(m_applicationManager),
-                 u"io.qt.ApplicationManager"_s, u"/ApplicationManager"_s);
-
-    bool autoOnly = true;
-    bool noneOnly = true;
-
-    // check if all interfaces are on the "auto" bus and replace the "none" bus with nullptr
-    for (auto &&iface : ifaces) {
-        QString dbusName = std::get<1>(iface);
-        if (dbusName != u"auto"_s)
-            autoOnly = false;
-        if (dbusName == u"none")
-            std::get<1>(iface).clear();
-        else
-            noneOnly = false;
-    }
-
-    // start a private dbus-daemon session instance if all interfaces are set to "auto"
-    if (Q_UNLIKELY(autoOnly)) {
-        try {
-            DBusDaemonProcess::start();
-            StartupTimer::instance()->checkpoint("after starting session D-Bus");
-        } catch (const Exception &e) {
-#  if defined(Q_OS_LINUX)
-            qCWarning(LogDBus) << "Disabling external D-Bus interfaces:" << e.what();
-            for (auto &&iface : ifaces)
-                std::get<1>(iface).clear();
-            noneOnly = true;
-#  else
-            qCWarning(LogDBus) << "Could not start a private dbus-daemon:" << e.what();
-            qCInfo(LogDBus) << "Enabling DBus P2P access for appman-controller";
-            for (auto &&iface : ifaces) {
-                QString &dbusName = std::get<1>(iface);
-                if (dbusName == u"auto")
-                    dbusName = u"p2p"_s;
-            }
-#  endif
+    // All the available adaptors: <factory, service, path, interface, availableInDevMode>
+    const std::array<std::tuple<std::function<DBusContextAdaptor *()>, QString, QString, QString, bool>, 4> adaptors { {
+        {
+            [this] { return DBusContextAdaptor::create<ApplicationManagerAdaptor>(m_applicationManager); },
+            u"io.qt.ApplicationManager"_s,
+            u"/ApplicationManager"_s,
+            interfaceNameForAdaptor(&ApplicationManagerAdaptor::staticMetaObject),
+            true /*devmode*/
+        },
+        {
+            [this] { return DBusContextAdaptor::create<PackageManagerAdaptor>(m_packageManager); },
+            u"io.qt.ApplicationManager"_s,
+            u"/PackageManager"_s,
+            interfaceNameForAdaptor(&PackageManagerAdaptor::staticMetaObject),
+            true /*devmode*/
+        },
+        {
+            [this] { return DBusContextAdaptor::create<WindowManagerAdaptor>(m_windowManager); },
+            u"io.qt.ApplicationManager"_s,
+            u"/WindowManager"_s,
+            interfaceNameForAdaptor(&WindowManagerAdaptor::staticMetaObject),
+            false /*devmode*/
+        },
+        {
+            [this] { return DBusContextAdaptor::create<NotificationsAdaptor>(m_notificationManager); },
+            u"org.freedesktop.Notifications"_s,
+            u"/org/freedesktop/Notifications"_s,
+            interfaceNameForAdaptor(&NotificationsAdaptor::staticMetaObject),
+            false /*devmode*/
         }
+    } };
+
+    // If development mode is active, we start a P2P server and register the AM and PM singletons
+    // on that bus. The adaptors here are special, as they do development mode checks
+    if (cfg->yaml.flags.developmentMode != ConfigurationData::Flags::DevelopmentMode::Disabled) {
+        m_p2pServer = new QDBusServer(this);
+        m_p2pServer->setAnonymousAuthenticationAllowed(true);
+
+        if (!m_p2pServer->isConnected()) {
+             throw Exception("Failed to create a P2P D-Bus server for the appman-controller: %1")
+                .arg(m_p2pServer->lastError().message());
+        }
+
+        auto dbusMap = m_infoFileContents[u"dbus"_s].toMap();
+        const QString dbusAddress = u"p2p:"_s + m_p2pServer->address();
+
+        qCDebug(LogDBus) << "Registering development mode D-Bus services:";
+
+        for (const auto &[create, serviceName, path, interfaceName, devMode] : adaptors) {
+            if (!devMode)
+                continue;
+            DBusContextAdaptor *contextAdaptor = create();
+            auto generatedAdaptor = contextAdaptor->generatedAdaptor<QDBusAbstractAdaptor>();
+            // The header for the adaptors is autogenerated, so we cannot add a C++ member variable
+            generatedAdaptor->setProperty("developmentModeChecksEnabled", true);
+            m_p2pAdaptors.insert(path, contextAdaptor);
+            dbusMap.insert(interfaceName, dbusAddress);
+
+            qCDebug(LogDBus).nospace().noquote() << " * " << serviceName << path;
+        }
+
+        QObject::connect(m_p2pServer, &QDBusServer::newConnection,
+                         this, [this](const QDBusConnection &conn) {
+            for (const auto &[path, adaptor] : std::as_const(m_p2pAdaptors).asKeyValueRange())
+                adaptor->registerOnDBus(conn, path);
+        });
+
+        // Write the bus address to our info file for the appman-controller tool
+        m_infoFileContents[u"dbus"_s] = dbusMap;
     }
 
-    if (!noneOnly) {
-        qCDebug(LogDBus) << "Registering D-Bus services:";
+    // Create all adaptors for external busses that have been explicitly requested via the config
+    bool first = true;
+    for (const auto &[create, serviceName, path, interfaceName, devMode] : adaptors) {
+        auto iit = cfg->yaml.dbus.registrations.constFind(interfaceName);
+        if (iit != cfg->yaml.dbus.registrations.cend()) {
+            auto dbusName = iit->toString();
 
-        for (auto &&iface : ifaces) {
-            auto *generatedAdaptor = std::get<0>(iface)->generatedAdaptor<QDBusAbstractAdaptor>();
-            QString &dbusName = std::get<1>(iface);
-            QString &interfaceName = std::get<4>(iface);
+            if ((dbusName == u"auto") || (dbusName == u"p2p"))
+                throw Exception("The 'auto' and 'p2p' D-Bus names are not supported anymore");
 
-            if (dbusName.isEmpty())
+            if (dbusName.isEmpty() || (dbusName == u"none"))
                 continue;
 
-            auto dbusAddress = registerDBusObject(generatedAdaptor, dbusName,
-                                                  std::get<2>(iface), std::get<3>(iface));
-            auto policy = cfg->yaml.dbus.policies.value(interfaceName).toMap();
-
-            if (!DBusPolicy::instance()->add(generatedAdaptor, policy))
-                throw Exception(Error::DBus, "could not set DBus policy for %1").arg(interfaceName);
-
-            // Write the bus address to our info file for the appman-controller tool
-            if (interfaceName.startsWith(u"io.qt.")) {
-                auto map = m_infoFileContents[u"dbus"_s].toMap();
-                map.insert(interfaceName, dbusAddress);
-                m_infoFileContents[u"dbus"_s] = map;
+            if (first) {
+                qCDebug(LogDBus) << "Registering external D-Bus services:";
+                first = false;
             }
+
+            DBusContextAdaptor *contextAdaptor = create();
+            auto generatedAdaptor = contextAdaptor->generatedAdaptor<QDBusAbstractAdaptor>();
+
+            QDBusConnection conn = [dbusName, customId = serviceName] { // C++17 capture kludge
+                if (dbusName == u"system")
+                    return QDBusConnection::systemBus();
+                else if (dbusName == u"session")
+                    return QDBusConnection::sessionBus();
+                else
+                    return QDBusConnection::connectToBus(dbusName, u"custom_"_s + customId);
+            }();
+
+            if (!conn.isConnected()) {
+                throw Exception("could not connect to D-Bus (%1): %2")
+                    .arg(dbusName).arg(conn.lastError().message());
+            }
+
+            if (!conn.registerObject(path, generatedAdaptor->parent(), QDBusConnection::ExportAdaptors)) {
+                throw Exception("could not register object %1 on D-Bus (%2): %3")
+                    .arg(path).arg(dbusName).arg(conn.lastError().message());
+            }
+
+            if (!conn.registerService(serviceName)) {
+                throw Exception("could not register service %1 on D-Bus (%2): %3")
+                    .arg(serviceName).arg(dbusName).arg(conn.lastError().message());
+            }
+
+            qCDebug(LogDBus).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
+
+            auto policy = cfg->yaml.dbus.policies.value(interfaceName).toMap();
+            if (!DBusPolicy::instance()->add(generatedAdaptor, policy))
+                throw Exception(Error::DBus, "could not set D-Bus policy for %1").arg(interfaceName);
         }
     }
+    if (first)
+        qCDebug(LogDBus) << "Not registering any external D-Bus services";
+
 #else
     Q_UNUSED(cfg)
     Q_UNUSED(m_p2pServer)
     Q_UNUSED(m_p2pAdaptors)
-    Q_UNUSED(m_p2pFailed)
-#endif // defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
-}
-
-QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName,
-                                 const QString &serviceName, const QString &path) noexcept(false)
-{
-#if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
-    QString dbusAddress;
-    QString dbusRealName = dbusName;
-    QDBusConnection conn((QString()));
-    bool isP2P = false;
-
-    if (dbusName.isEmpty()) {
-        return { };
-    } else if (dbusName == u"system") {
-        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SYSTEM_BUS_ADDRESS"));
-#  if defined(Q_OS_LINUX)
-        if (dbusAddress.isEmpty())
-            dbusAddress = u"unix:path=/var/run/dbus/system_bus_socket"_s;
-#  endif
-        conn = QDBusConnection::systemBus();
-    } else if (dbusName == u"session") {
-        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
-        conn = QDBusConnection::sessionBus();
-    } else if (dbusName == u"auto") {
-        dbusAddress = QString::fromLocal8Bit(qgetenv("DBUS_SESSION_BUS_ADDRESS"));
-        // we cannot be using QDBusConnection::sessionBus() here, because some plugin
-        // might have called that function before we could spawn our own session bus. In
-        // this case, Qt has cached the bus name and we would get the old one back.
-        conn = QDBusConnection::connectToBus(dbusAddress, u"qtam_session"_s);
-        if (!conn.isConnected())
-            return { };
-        dbusRealName = u"session"_s;
-    } else if (dbusName == u"p2p") {
-        if (!m_p2pServer && !m_p2pFailed) {
-            m_p2pServer = new QDBusServer(this);
-            m_p2pServer->setAnonymousAuthenticationAllowed(true);
-
-            if (!m_p2pServer->isConnected()) {
-                m_p2pFailed = true;
-                delete m_p2pServer;
-                m_p2pServer = nullptr;
-                qCCritical(LogDBus) << "Failed to create a P2P DBus server for appman-controller";
-            } else {
-                QObject::connect(m_p2pServer, &QDBusServer::newConnection,
-                                 this, [this](const QDBusConnection &conn) {
-                    for (const auto &[path, object] : std::as_const(m_p2pAdaptors).asKeyValueRange())
-                        object->registerOnDBus(conn, path);
-                });
-            }
-        }
-        if (m_p2pFailed)
-            return { };
-        m_p2pAdaptors.insert(path, qobject_cast<DBusContextAdaptor *>(adaptor->parent()));
-        dbusAddress = u"p2p:"_s + m_p2pServer->address();
-        isP2P = true;
-    } else {
-        dbusAddress = dbusName;
-        conn = QDBusConnection::connectToBus(dbusAddress, u"custom"_s);
-    }
-
-    if (!isP2P) {
-        if (!conn.isConnected()) {
-            throw Exception("could not connect to D-Bus (%1): %2")
-                .arg(dbusAddress.isEmpty() ? dbusRealName : dbusAddress).arg(conn.lastError().message());
-        }
-
-        if (!conn.registerObject(path, adaptor->parent(), QDBusConnection::ExportAdaptors)) {
-            throw Exception("could not register object %1 on D-Bus (%2): %3")
-                .arg(path).arg(dbusRealName).arg(conn.lastError().message());
-        }
-
-        if (!conn.registerService(serviceName)) {
-            throw Exception("could not register service %1 on D-Bus (%2): %3")
-                .arg(serviceName).arg(dbusRealName).arg(conn.lastError().message());
-        }
-    }
-
-    if (adaptor->parent() && adaptor->parent()->parent()) {
-        // we need this information later on to tell apps where services are listening
-        adaptor->parent()->parent()->setProperty("_am_dbus_name", dbusRealName);
-        adaptor->parent()->parent()->setProperty("_am_dbus_address", dbusAddress);
-    }
-
-    qCDebug(LogDBus).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusRealName << "]";
-
-    return dbusAddress.isEmpty() ? dbusRealName : dbusAddress;
-#else
-    Q_UNUSED(adaptor)
-    Q_UNUSED(dbusName)
-    Q_UNUSED(serviceName)
-    Q_UNUSED(path)
-    return { };
-#endif // defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
+#endif // defined(QT_DBUS_LIB)
 }
 
 QString Main::hardwareId() const

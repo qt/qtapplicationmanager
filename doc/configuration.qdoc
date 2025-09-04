@@ -204,29 +204,13 @@ ui:
     \row
         \li \b --dbus
         \li string
-        \li Registers the ApplicationManager, PackageManager, NotificationManager, and
-            WindowManager on the specified D-Bus. This can be a full D-Bus bus specification string,
-            \c session, \c system, \c auto (default), or \c none (for no registration at all).
-
-            Use the \c auto keyword on the desktop or during development only. This keyword implies
-            that the application manager tries to start a private session bus and uses that bus if
-            successful. Otherwise, it results in no registration at all, which is equivalent to
-            \c none.
-
-            On production systems, you may want to put the application manager on the \c system bus,
-            where you can set detailed security policies using standard D-Bus mechanisms, while
-            keeping the NotificationManager on the session bus. See the more advanced config-file
-            option\c dbus below.
-
+        \li Deprecated and ignored; use the \c dbus config key instead.
     \row
         \li [\c dbus]
         \li map<object>
         \li Allows for more fine-grained control over D-Bus registrations and function call
-            policies. Every key (with one exception - see next) in this map corresponds to the
-            D-Bus interface name you want to configure (\c io.qt.ApplicationManager,
-            \c io.qt.PackageManager, \c io.qt.WindowManager, and \c org.freedesktop.Notifications).
-            If such a key is present, it takes precedence over the \c dbus command line option.
-            Each key's value is a \l{D-Bus specification} object.
+            policies. Every key in this map corresponds to the D-Bus interface name you want to
+            configure, while the value is \l{D-Bus specification} object.
     \row
         \li \b --fullscreen
             \br [\c ui/fullscreen]

@@ -288,7 +288,6 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     d->clp.addOption({ u"builtin-apps-manifest-dir"_s, u"Base directory for built-in application manifests."_s, u"dir"_s });
     d->clp.addOption({ u"installation-dir"_s,     u"Base directory for package installations."_s, u"dir"_s });
     d->clp.addOption({ u"document-dir"_s,         u"Base directory for per-package document directories."_s, u"dir"_s });
-    d->clp.addOption({ u"dbus"_s,                 u"Register on the specified D-Bus."_s, u"<bus>|system|session|none|auto"_s, u"auto"_s });
     d->clp.addOption({ u"fullscreen"_s,           u"Display in full-screen."_s });
     d->clp.addOption({ u"no-fullscreen"_s,        u"Do not display in full-screen."_s });
     d->clp.addOption({ u"I"_s,                    u"Additional QML import path."_s, u"dir"_s });
@@ -321,6 +320,7 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
         { u"enable-touch-emulation"_s, { } },
         { u"load-dummydata"_s, { } },
         { u"no-ui-watchdog"_s, { } },
+        { u"dbus"_s, { }, u"bus"_s },
     };
 
     for (auto &opt : d->deprecatedOptions) {
@@ -1099,11 +1099,6 @@ QString Configuration::singleApp() const
 {
     //TODO: single-package
     return d->clp.value(u"single-app"_s);
-}
-
-QString Configuration::dbus() const
-{
-    return d->clp.value(u"dbus"_s);
 }
 
 QString Configuration::waylandSocketName() const

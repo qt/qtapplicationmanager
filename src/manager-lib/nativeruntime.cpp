@@ -26,12 +26,12 @@
 #include "qtyaml.h"
 #include "utilities.h"
 #include "unixsignalhandler.h"
-#include "notificationmanager.h"
 #include "dbus-utilities.h"
 #include "systemd.h"
 
 #include "runtimeinterface_adaptor.h"
 #include "applicationinterface_adaptor.h"
+#include "notificationinterface_adaptor.h"
 
 using namespace Qt::StringLiterals;
 
@@ -78,6 +78,7 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
     , m_startedViaLauncher(manager->identifier() != u"native")
     , m_dbusApplicationInterface(DBusContextAdaptor::create<ApplicationInterfaceAdaptor>(this))
     , m_dbusRuntimeInterface(DBusContextAdaptor::create<RuntimeInterfaceAdaptor>(this))
+    , m_dbusNotificationInterface(DBusContextAdaptor::create<NotificationInterfaceAdaptor>(this))
 {
     QString socketPath = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
     if (socketPath.isEmpty())
@@ -271,7 +272,6 @@ bool NativeRuntime::start()
 
     QVariantMap dbusConfig = {
         { u"p2p"_s, applicationInterfaceServer()->address() },
-        { u"org.freedesktop.Notifications"_s, NotificationManager::instance()->property("_am_dbus_name").toString()}
     };
 
     QVariantMap loggingConfig = {
@@ -481,9 +481,14 @@ void NativeRuntime::onDBusPeerConnection(const QDBusConnection &connection)
         qCWarning(LogSystem) << "ERROR: could not register the /ApplicationInterface object on the peer DBus:"
                              << conn.lastError().message();
     }
+    if (!m_dbusNotificationInterface->registerOnDBus(conn, u"/NotificationInterface"_s)) {
+        qCWarning(LogSystem) << "ERROR: could not register the /NotificationInterface object on the peer DBus:"
+                             << conn.lastError().message();
+    }
 
 #ifdef EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS
     m_dbusApplicationInterface->registerOnDBus(QDBusConnection::sessionBus(), u"/Application%1/ApplicationInterface"_s.arg(applicationProcessId()));
+    m_dbusNotificationInterface->registerOnDBus(QDBusConnection::sessionBus(), u"/Application%1/NotificationInterface"_s.arg(applicationProcessId()));
 #endif
 
     if (m_startedViaLauncher) {

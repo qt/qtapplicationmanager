@@ -24,7 +24,7 @@
 #include "qml-utilities.h"
 #include "applicationinterface_interface.h"
 #include "runtimeinterface_interface.h"
-#include "notifications_interface.h"
+#include "notificationinterface_interface.h"
 #include "intentclientdbusimplementation.h"
 #include "intentclient.h"
 #include "dbusnotificationimpl.h"
@@ -142,11 +142,6 @@ QMap<QByteArray, QByteArray> ApplicationMain::extraJournalFields() const
 QString ApplicationMain::p2pDBusName() const
 {
     return u"am"_s;
-}
-
-QString ApplicationMain::notificationDBusName() const
-{
-    return m_dbusAddressNotifications.isEmpty() ? QString() : u"am_notification_bus"_s;
 }
 
 OpenGLConfiguration ApplicationMain::openGLConfiguration() const
@@ -281,7 +276,6 @@ void ApplicationMain::loadConfiguration(const QByteArray &configYaml) noexcept(f
 
     QVariantMap dbusConfig = m_configuration.value(u"dbus"_s).toMap();
     m_dbusAddressP2P = dbusConfig.value(u"p2p"_s).toString();
-    m_dbusAddressNotifications = dbusConfig.value(u"org.freedesktop.Notifications"_s).toString();
 
     QVariantMap uiConfig = m_configuration.value(u"ui"_s).toMap();
     m_slowAnimations = uiConfig.value(u"slowAnimations"_s).toBool();
@@ -323,22 +317,6 @@ void ApplicationMain::setupDBusConnections() noexcept(false)
         throw Exception("could not connect to the P2P D-Bus via: %1").arg(m_dbusAddressP2P);
 
     qCDebug(LogRuntime) << "Connected to the P2P D-Bus via:" << m_dbusAddressP2P;
-
-    if (!m_dbusAddressNotifications.isEmpty()) {
-        if (m_dbusAddressNotifications == u"system")
-            dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SystemBus, notificationDBusName());
-        else if (m_dbusAddressNotifications == u"session")
-            dbusConnection = QDBusConnection::connectToBus(QDBusConnection::SessionBus, notificationDBusName());
-        else
-            dbusConnection = QDBusConnection::connectToBus(m_dbusAddressNotifications, notificationDBusName());
-
-        if (!dbusConnection.isConnected())
-            throw Exception("could not connect to the Notification D-Bus via: %1").arg(m_dbusAddressNotifications);
-
-        qCDebug(LogRuntime) << "Connected to the Notification D-Bus via:" << m_dbusAddressNotifications;
-    } else {
-        qCWarning(LogDeployment) << "Notifications are not supported by this configuration";
-    }
 }
 
 template<typename T>
@@ -400,8 +378,47 @@ void ApplicationMain::connectDBusInterfaces(bool isRuntimeLauncher) noexcept(fal
                        this, &ApplicationMain::slowAnimationsChanged);
 
     if (!ok) {
-        throw Exception("could not connect the ApplicationInterface via D-Bus: %1")
+        throw Exception("could not connect the ApplicationInterface signals via D-Bus: %1")
             .arg(m_dbusApplicationInterface->lastError().name());
+    }
+
+    m_dbusNotificationInterface = tryConnectToDBusInterface<IoQtApplicationManagerNotificationInterfaceInterface>(
+        { }, u"/NotificationInterface"_s, p2pDBusName(), this);
+
+    if (!m_dbusNotificationInterface)
+        throw Exception("could not connect to the NotificationInterface on the P2P D-Bus");
+    if (!m_dbusNotificationInterface->isValid()) {
+        throw Exception("NotificationInterface on the P2P D-Bus is not valid: %1")
+        .arg(m_dbusNotificationInterface->lastError().message());
+    }
+
+    ok = ok && connect(m_dbusNotificationInterface, &IoQtApplicationManagerNotificationInterfaceInterface::closed,
+                       this, [this](uint notificationId, uint reason) {
+             Q_UNUSED(reason)
+
+             qDebug("Notification was closed signal: %u", notificationId);
+             for (const QPointer<Notification> &n : std::as_const(m_allNotifications)) {
+                 if (n && (n->notificationId() == notificationId)) {
+                     n->close();
+                     m_allNotifications.removeAll(n);
+                     break;
+                 }
+             }
+         });
+    ok = ok && connect(m_dbusNotificationInterface, &IoQtApplicationManagerNotificationInterfaceInterface::actionInvoked,
+                       this, [this](uint notificationId, const QString &actionId) {
+             qDebug("Notification action triggered signal: %u %s", notificationId, qPrintable(actionId));
+             for (const QPointer<Notification> &n : std::as_const(m_allNotifications)) {
+                 if (n && (n->notificationId() == notificationId)) {
+                     n->triggerAction(actionId);
+                     break;
+                 }
+             }
+         });
+
+    if (!ok) {
+        throw Exception("could not connect the NotificationInterface signals via D-Bus: %1")
+            .arg(m_dbusNotificationInterface->lastError().name());
     }
 
     if (isRuntimeLauncher) {
@@ -415,55 +432,12 @@ void ApplicationMain::connectDBusInterfaces(bool isRuntimeLauncher) noexcept(fal
                       .arg(m_dbusRuntimeInterface->lastError().message());
         }
 
-        if (!connect(m_dbusRuntimeInterface, &IoQtApplicationManagerRuntimeInterfaceInterface::startApplication,
-                     this, &ApplicationMain::startApplication)) {
+        ok = ok && connect(m_dbusRuntimeInterface, &IoQtApplicationManagerRuntimeInterfaceInterface::startApplication,
+                           this, &ApplicationMain::startApplication);
+
+        if (!ok) {
             throw Exception("could not connect the RuntimeInterface signals via D-Bus: %1")
-                      .arg(m_dbusRuntimeInterface->lastError().name());
-        }
-    }
-
-
-    if (!m_dbusAddressNotifications.isEmpty()) {
-        m_dbusNotificationInterface = tryConnectToDBusInterface<OrgFreedesktopNotificationsInterface>(
-            u"org.freedesktop.Notifications"_s, u"/org/freedesktop/Notifications"_s,
-            notificationDBusName(), this);
-
-        if (m_dbusNotificationInterface) {
-            ok = ok && connect(m_dbusNotificationInterface, &OrgFreedesktopNotificationsInterface::NotificationClosed,
-                               this, [this](uint notificationId, uint reason) {
-                     Q_UNUSED(reason)
-
-                     qDebug("Notification was closed signal: %u", notificationId);
-                     for (const QPointer<Notification> &n : std::as_const(m_allNotifications)) {
-                         if (n->notificationId() == notificationId) {
-                             n->close();
-                             m_allNotifications.removeAll(n);
-                             break;
-                         }
-                     }
-
-                 });
-            ok = ok && connect(m_dbusNotificationInterface, &OrgFreedesktopNotificationsInterface::ActionInvoked,
-                               this, [this](uint notificationId, const QString &actionId) {
-                     qDebug("Notification action triggered signal: %u %s", notificationId, qPrintable(actionId));
-                     for (const QPointer<Notification> &n : std::as_const(m_allNotifications)) {
-                         if (n->notificationId() == notificationId) {
-                             n->triggerAction(actionId);
-                             break;
-                         }
-                     }
-                 });
-
-            if (!ok) {
-                qCritical("ERROR: could not connect the org.freedesktop.Notifications signals via D-Bus: %s",
-                          qPrintable(m_dbusNotificationInterface->lastError().name()));
-
-                delete m_dbusNotificationInterface;
-                m_dbusNotificationInterface = nullptr;
-            }
-
-        } else {
-            qCritical("ERROR: could not connect to the org.freedesktop.Notifications interface via D-Bus");
+                .arg(m_dbusRuntimeInterface->lastError().name());
         }
     }
 
@@ -477,14 +451,13 @@ void ApplicationMain::connectDBusInterfaces(bool isRuntimeLauncher) noexcept(fal
 uint QtAM::ApplicationMain::showNotification(Notification *notification)
 {
     if (notification && m_dbusNotificationInterface) {
-        uint newId = m_dbusNotificationInterface->Notify(applicationId(),
-                                                         notification->notificationId(),
-                                                         notification->icon().toString(),
-                                                         notification->summary(),
-                                                         notification->body(),
-                                                         notification->libnotifyActionList(),
-                                                         notification->libnotifyHints(),
-                                                         notification->timeout());
+        uint newId = m_dbusNotificationInterface->show(notification->notificationId(),
+                                                       notification->icon().toString(),
+                                                       notification->summary(),
+                                                       notification->body(),
+                                                       notification->libnotifyActionList(),
+                                                       notification->libnotifyHints(),
+                                                       notification->timeout());
         if (newId) {
             m_allNotifications << notification;
             return newId;
@@ -496,7 +469,7 @@ uint QtAM::ApplicationMain::showNotification(Notification *notification)
 void ApplicationMain::closeNotification(Notification *notification)
 {
     if (notification && m_dbusNotificationInterface)
-        m_dbusNotificationInterface->CloseNotification(notification->notificationId());
+        m_dbusNotificationInterface->close(notification->notificationId());
 
 }
 

@@ -126,14 +126,12 @@ void tst_Main::init()
 
 void tst_Main::initMain(const QString &mainQml)
 {
-    argc = mainQml.isNull() ? 4 : 5;
+    argc = mainQml.isNull() ? 2: 3;
     argv = new char*[size_t(argc) + 1];
     argv[0] = qstrdup("tst_Main");
-    argv[1] = qstrdup("--dbus");
-    argv[2] = qstrdup("none");
-    argv[3] = qstrdup("--no-cache");
+    argv[1] = qstrdup("--no-cache");
     if (!mainQml.isNull())
-        argv[4] = qstrdup(mainQml.toLocal8Bit());
+        argv[2] = qstrdup(mainQml.toLocal8Bit());
     argv[argc] = nullptr;
 
     main = new Main(argc, argv);

@@ -62,6 +62,7 @@ if (QT_FEATURE_am_multi_process)
             ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.applicationinterface.xml
             ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.runtimeinterface.xml
             ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.intentinterface.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.notificationinterface.xml
         DBUS_ADAPTOR_FLAGS
             -i dbus-utilities.h
     )
@@ -69,6 +70,7 @@ if (QT_FEATURE_am_multi_process)
         SOURCES
             applicationinterfaceadaptor_dbus.cpp
             runtimeinterfaceadaptor_dbus.cpp
+            notificationinterfaceadaptor_dbus.cpp
             nativeruntime.cpp nativeruntime.h
             processcontainer.cpp processcontainer.h
         PUBLIC_LIBRARIES

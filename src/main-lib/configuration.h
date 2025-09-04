@@ -165,7 +165,6 @@ public:
     bool noDltLogging() const;
     bool qmlDebugging() const;
     QString singleApp() const;
-    QString dbus() const;
     QString waylandSocketName() const;
 
     // for backwards compatibility

@@ -456,7 +456,6 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.singleApp(), u"appname"_s);
     QCOMPARE(c.qmlDebugging(), true);
     QCOMPARE(c.waylandSocketName(), u"wlsock-1"_s);
-    QCOMPARE(c.dbus(), u"system"_s);
 
     // values from config file
     QCOMPARE(c.yaml.ui.mainQml, u"main-cl.qml"_s);

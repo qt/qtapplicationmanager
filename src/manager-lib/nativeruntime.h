@@ -21,6 +21,7 @@ QT_FORWARD_DECLARE_CLASS(QDBusConnection)
 QT_FORWARD_DECLARE_CLASS(QDBusServer)
 
 class RuntimeInterfaceAdaptor;
+class NotificationInterfaceAdaptor;
 class ApplicationInterfaceAdaptor;
 
 QT_BEGIN_NAMESPACE_AM
@@ -98,6 +99,7 @@ private:
 
     std::unique_ptr<DBusContextAdaptor> m_dbusApplicationInterface;
     std::unique_ptr<DBusContextAdaptor> m_dbusRuntimeInterface;
+    std::unique_ptr<DBusContextAdaptor> m_dbusNotificationInterface;
     AbstractContainerProcess *m_process = nullptr;
     QDBusServer *m_applicationInterfaceServer;
     bool m_slowAnimations = false;

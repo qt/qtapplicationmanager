@@ -63,13 +63,6 @@ qt_feature("am-installer" PUBLIC
     DISABLE INPUT_installer STREQUAL 'no'
 )
 
-qt_feature("am-external-dbus-interfaces" PRIVATE
-    LABEL "Enable external DBus interfaces"
-    CONDITION TARGET Qt::DBus
-    ENABLE INPUT_external_dbus_interfaces STREQUAL 'yes'
-    DISABLE INPUT_external_dbus_interfaces STREQUAL 'no'
-)
-
 qt_feature("am-package-server" PRIVATE
     LABEL "Build the package-server"
     CONDITION TARGET Qt::HttpServer AND QT_FEATURE_am_installer
@@ -154,7 +147,6 @@ if (NOT QT_FEATURE_am_tools_only)
     else()
         qt_configure_add_summary_entry(ARGS "am-has-hardware-id")
     endif()
-    qt_configure_add_summary_entry(ARGS "am-external-dbus-interfaces")
     qt_configure_add_summary_entry(ARGS "am-widgets-support")
     qt_configure_add_summary_entry(ARGS "am-package-server")
     qt_configure_add_summary_entry(ARGS "am-dltlogging")

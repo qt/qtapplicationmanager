@@ -1,0 +1,27 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="io.qt.ApplicationManager.NotificationInterface">
+    <signal name="closed">
+      <arg name="id" type="u" direction="out"/>
+      <arg name="reason" type="u" direction="out"/>
+    </signal>
+    <signal name="actionInvoked">
+      <arg name="id" type="u" direction="out"/>
+      <arg name="actionKey" type="s" direction="out"/>
+    </signal>
+    <method name="show">
+      <arg type="u" direction="out"/>
+      <arg name="replacesId" type="u" direction="in"/>
+      <arg name="appIcon" type="s" direction="in"/>
+      <arg name="summary" type="s" direction="in"/>
+      <arg name="body" type="s" direction="in"/>
+      <arg name="actions" type="as" direction="in"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In5" value="QVariantMap"/>
+      <arg name="hints" type="a{sv}" direction="in"/>
+      <arg name="timeout" type="i" direction="in"/>
+    </method>
+    <method name="close">
+      <arg name="id" type="u" direction="in"/>
+    </method>
+  </interface>
+</node>

@@ -144,7 +144,7 @@ private:
         if (dbus == u"system") {
             conn = QDBusConnection::systemBus();
             m_dbusName = u"[system-bus]"_s;
-        } else if (dbus.isEmpty()) {
+        } else if (dbus == u"session") {
             conn = QDBusConnection::sessionBus();
             m_dbusName = u"[session-bus]"_s;
         } else if (dbus.startsWith(u"p2p:")) {
@@ -153,7 +153,7 @@ private:
             m_dbusName = u"[p2p] "_s + address;
             m_dbusService.clear(); // no service names allowed on p2p busses
         } else {
-            conn = QDBusConnection::connectToBus(dbus, u"custom"_s);
+            conn = QDBusConnection::connectToBus(dbus, u"custom_%1"_s.arg(iface));
             m_dbusName = dbus;
         }
 

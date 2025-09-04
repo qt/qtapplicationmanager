@@ -27,7 +27,7 @@ using ApplicationMainBase = QGuiApplication;
 QT_FORWARD_DECLARE_CLASS(QWindow)
 class IoQtApplicationManagerApplicationInterfaceInterface;
 class IoQtApplicationManagerRuntimeInterfaceInterface;
-class OrgFreedesktopNotificationsInterface;
+class IoQtApplicationManagerNotificationInterfaceInterface;
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -54,7 +54,6 @@ public:
 
     // D-Bus names (use with QDBusConnection)
     QString p2pDBusName() const;
-    QString notificationDBusName() const;
 
     // basic configuration
     QString baseDir() const;
@@ -143,11 +142,10 @@ private:
     std::unique_ptr<ApplicationInterfaceImpl> m_applicationInterfaceImpl;
 
     QString m_dbusAddressP2P;
-    QString m_dbusAddressNotifications;
 
     IoQtApplicationManagerApplicationInterfaceInterface *m_dbusApplicationInterface = nullptr;
     IoQtApplicationManagerRuntimeInterfaceInterface *m_dbusRuntimeInterface = nullptr;
-    OrgFreedesktopNotificationsInterface *m_dbusNotificationInterface = nullptr;
+    IoQtApplicationManagerNotificationInterfaceInterface *m_dbusNotificationInterface = nullptr;
 
     QVector<QPointer<Notification>> m_allNotifications;
 };

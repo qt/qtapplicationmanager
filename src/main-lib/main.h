@@ -114,9 +114,6 @@ public:
 private:
     static int &preConstructor(int &argc, char **argv, InitFlags initFlags);
 
-    QString registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &dbusName,
-                               const QString &serviceName, const QString &path) noexcept(false);
-
 private:
     bool m_isSingleProcessMode = false;
     static bool s_isRunningOnEmbedded;
@@ -147,7 +144,6 @@ private:
 
     QDBusServer *m_p2pServer = nullptr;
     QHash<QString, DBusContextAdaptor *> m_p2pAdaptors;
-    bool m_p2pFailed = false;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Main::InitFlags)

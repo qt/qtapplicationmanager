@@ -58,7 +58,7 @@ void QmlInProcNotificationImpl::initialize()
                      nm, [](uint notificationId, const QString &actionId) {
         qDebug("Notification action triggered signal: %u %s", notificationId, qPrintable(actionId));
         for (const QPointer<Notification> &n : std::as_const(s_allNotifications)) {
-            if (n->notificationId() == notificationId) {
+            if (n && (n->notificationId() == notificationId)) {
                 n->triggerAction(actionId);
                 break;
             }
@@ -73,7 +73,7 @@ void QmlInProcNotificationImpl::initialize()
         // quick fix: in case apps have been closed items are null (see AUTOSUITE-14)
         s_allNotifications.removeAll(nullptr);
         for (const QPointer<Notification> &n : std::as_const(s_allNotifications)) {
-            if (n->notificationId() == notificationId) {
+            if (n && (n->notificationId() == notificationId)) {
                 n->close();
                 s_allNotifications.removeAll(n);
                 break;

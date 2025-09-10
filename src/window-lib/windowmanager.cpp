@@ -303,8 +303,11 @@ void WindowManager::setSlowAnimations(bool slowAnimations)
             updateViewSlowMode(view);
 
         // Update timer of the main, GUI, thread
+#if QT_VERSION < QT_VERSION_CHECK(6, 11, 0)
+        QUnifiedTimer::instance()->setSlowModeEnabled(d->slowAnimations);
+#else
         QUnifiedTimer::instance()->setSpeedModifier(d->slowAnimations ? slowAnimationSpeed() : 1.0f);
-
+#endif
         // For new applications to start with the correct value
         RuntimeFactory::instance()->setSlowAnimations(d->slowAnimations);
 
@@ -346,7 +349,11 @@ void WindowManager::updateViewSlowMode(QQuickWindow *view)
 #else
             QObject::disconnect(con);
 #endif
+#if QT_VERSION < QT_VERSION_CHECK(6, 11, 0)
+            QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+#else
             QUnifiedTimer::instance()->setSpeedModifier(isSlow ? slowAnimationSpeed() : 1.0f);
+#endif
         }
     }, Qt::DirectConnection));
 }

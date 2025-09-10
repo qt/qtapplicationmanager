@@ -704,7 +704,11 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
 
 void Main::setupWindowManager(const Configuration *cfg)
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 11, 0)
+    QUnifiedTimer::instance()->setSlowModeEnabled(cfg->slowAnimations());
+#else
     QUnifiedTimer::instance()->setSpeedModifier(cfg->slowAnimations() ? slowAnimationSpeed() : 1.0f);
+#endif
 
     auto waylandSocketName = [cfg]() -> QString {
         QString socketName = cfg->waylandSocketName(); // get the default value

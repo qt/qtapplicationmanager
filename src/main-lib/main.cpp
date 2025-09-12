@@ -273,66 +273,75 @@ bool Main::isRunningOnEmbedded() const
 
 void Main::shutDown(const char *shutdownReason, int exitCode)
 {
+    if (m_shutdownStarted) // avoid recursion
+        return;
+
     enum {
         ApplicationManagerDown = 0x01,
-        QuickLauncherDown = 0x02,
-        WindowManagerDown = 0x04
+        QuickLauncherDown      = 0x02,
+        WindowManagerDown      = 0x04,
+
+        AllDown                = 0x07,
     };
 
-    static int down = 0;
-    static int code = exitCode;
-    static const char *reason = shutdownReason;
-
-    static auto finalShutdown = [](bool force) {
-        unexpectedShutdown = false;
-        if (reason)
-            qCInfo(LogSystem) << "Shutting down due to" << reason;
-        if (force)
-            ::exit(code);
-        else
-            QCoreApplication::exit(code);
-    };
-
-    static auto checkShutDownFinished = [](int nextDown) {
-        down |= nextDown;
-        if (down == (ApplicationManagerDown | QuickLauncherDown | WindowManagerDown)) {
-            down = 0;
-            finalShutdown(false);
-        }
-    };
+    m_shutdownStarted = true;
+    m_shutdownStage = AllDown;
+    m_shutdownExitCode = exitCode;
+    m_shutdownReason = shutdownReason;
 
     Systemd::instance()->notify(u"STOPPING=1"_s);
 
+    auto finalShutdown = [this](bool force) {
+        unexpectedShutdown = false;
+        if (m_shutdownReason && (qEnvironmentVariableIntValue("QT_QTESTLIB_RUNNING") != 1))
+            qCInfo(LogSystem) << "Shutting down due to" << m_shutdownReason;
+        if (force)
+            ::exit(m_shutdownExitCode);
+        else
+            QCoreApplication::exit(m_shutdownExitCode);
+    };
+
+    auto checkNextDown = [this, finalShutdown](int nextDown) {
+        m_shutdownStage |= nextDown;
+        if (m_shutdownStage == AllDown)
+            finalShutdown(false);
+    };
+
     if (m_applicationManager) {
+        m_shutdownStage &= ~ApplicationManagerDown;
         connect(&m_applicationManager->internalSignals, &ApplicationManagerInternalSignals::shutDownFinished,
-                this, []() { checkShutDownFinished(ApplicationManagerDown); });
+                this, [checkNextDown]() { checkNextDown(ApplicationManagerDown); });
         m_applicationManager->shutDown();
     }
     if (m_quickLauncher) {
+        m_shutdownStage &= ~QuickLauncherDown;
         connect(m_quickLauncher, &QuickLauncher::shutDownFinished,
-                this, []() { checkShutDownFinished(QuickLauncherDown); });
+                this, [checkNextDown]() { checkNextDown(QuickLauncherDown); });
         m_quickLauncher->shutDown();
-    } else {
-        down |= QuickLauncherDown;
     }
     if (m_windowManager) {
+        m_shutdownStage &= ~WindowManagerDown;
         connect(&m_windowManager->internalSignals, &WindowManagerInternalSignals::shutDownFinished,
-                this, []() { checkShutDownFinished(WindowManagerDown); });
+                this, [checkNextDown]() { checkNextDown(WindowManagerDown); });
         m_windowManager->shutDown();
     }
 
-    QTimer::singleShot(m_shutdownTimeout, this, [] {
-        QStringList resources;
-        if (!(down & ApplicationManagerDown))
-            resources << u"runtimes"_s;
-        if (!(down & QuickLauncherDown))
-            resources << u"quick-launchers"_s;
-        if (!(down & WindowManagerDown))
-            resources << u"windows"_s;
-        qCCritical(LogSystem, "There are still resources in use (%s). Check your System UI implementation. "
-                              "Exiting regardless.", resources.join(u", "_s).toLocal8Bit().constData());
-        finalShutdown(true);
-    });
+    if (m_shutdownStage == AllDown) {
+        QTimer::singleShot(0, this, [finalShutdown]() { finalShutdown(false); });
+    } else {
+        QTimer::singleShot(m_shutdownTimeout, this, [this, finalShutdown] {
+            QStringList resources;
+            if (!(m_shutdownStage & ApplicationManagerDown))
+                resources << u"runtimes"_s;
+            if (!(m_shutdownStage & QuickLauncherDown))
+                resources << u"quick-launchers"_s;
+            if (!(m_shutdownStage & WindowManagerDown))
+                resources << u"windows"_s;
+            qCCritical(LogSystem, "There are still resources in use (%s). Check your System UI implementation. "
+                                  "Exiting regardless.", resources.join(u", "_s).toLocal8Bit().constData());
+            finalShutdown(true);
+        });
+    }
 }
 
 QQmlApplicationEngine *Main::qmlEngine() const

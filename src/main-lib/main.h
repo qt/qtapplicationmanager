@@ -123,6 +123,11 @@ private:
     QUrl m_mainQml;
     QString m_mainQmlLocalFile;
     bool m_showFullscreen = false;
+
+    bool m_shutdownStarted = false;
+    int m_shutdownExitCode = 0;
+    int m_shutdownStage = 0;
+    const char *m_shutdownReason = nullptr;
     std::chrono::milliseconds m_shutdownTimeout { 0 };
 
     QQmlApplicationEngine *m_engine = nullptr;

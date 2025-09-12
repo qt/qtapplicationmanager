@@ -158,6 +158,7 @@ void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
         u"am.wayland.debug=false"_s,
         u"qt.qml.overloadresolution.info=false"_s,
         u"qt.widgets.painting.info=false"_s,
+        u"qt.qpa.input.devices.info=false"_s,
     };
 
     QStringList rules = loggingRules;

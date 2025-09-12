@@ -32,6 +32,13 @@ WaylandXdgWatchdog::WaylandXdgWatchdog(QWaylandXdgShell *xdgShell)
             this, [this](QWaylandXdgSurface *surface) {
         auto *client = (surface && surface->surface()) ? surface->surface()->client() : nullptr;
         watchClient(client);
+
+        // update the client data if the surface goes away
+        connect(surface, &QObject::destroyed,
+                this, [this, clientPtr = QPointer(client)](QObject *) {
+            if (clientPtr)
+                watchClient(clientPtr.get());
+        });
     });
 
     // send out pings
@@ -89,32 +96,31 @@ void WaylandXdgWatchdog::setTimeouts(std::chrono::milliseconds checkInterval,
 void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
 {
     // Please note, that a 'client' is normally one app, but this function is called for every
-    // window that app opens. When using container solutions, there is a possibility that multiple
-    // app containers are mapped to one host process-id, resulting in a single 'client' object
-    // representing multiple apps.
+    // window that an app opens or closes.
+    // When using container solutions, there is a possibility that multiple app containers are
+    // mapped to one host process-id, resulting in a single 'client' object representing multiple
+    // apps.
 
     auto updateClientData = [](ClientData *cd) {
-        auto pid = cd->m_client->processId();
-        cd->m_apps = ApplicationManager::instance()->fromProcessId(pid);
+        cd->m_runtimes = AbstractRuntimeManager::fromProcessId(cd->m_pid);
         cd->m_hasDebugWrapper = false;
 
         QString desc = u"Wayland client "_s;
-        if (!cd->m_apps.isEmpty()) {
+        if (!cd->m_runtimes.isEmpty()) {
             bool first = true;
-            for (const auto *app : std::as_const(cd->m_apps)) {
+            for (const auto *runtime : std::as_const(cd->m_runtimes)) {
                 if (first)
                     first = false;
                 else
                     desc.append(u',');
-                desc.append(app->id());
-                if (app->currentRuntime() && app->currentRuntime()->container() &&
-                    app->currentRuntime()->container()->hasDebugWrapper()) {
+                desc.append(runtime->application() ? runtime->application()->id() : u"<launcher>"_s);
+
+                if (runtime->container() && runtime->container()->hasDebugWrapper())
                     cd->m_hasDebugWrapper = true;
-                }
             }
             desc.append(u" / ");
         }
-        desc = desc + u"pid: " + QString::number(pid);
+        desc = desc + u"pid: " + QString::number(cd->m_pid);
         cd->m_description = desc;
     };
 
@@ -152,7 +158,9 @@ void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
 
     auto *cd = new ClientData;
     cd->m_client = client;
+    cd->m_pid = client->processId();
     updateClientData(cd);
+
     m_clients << cd;
 
     activatePing(cd);
@@ -231,20 +239,14 @@ void WaylandXdgWatchdog::onPongKillTimeout()
                 continue;
             }
 
-            if (cd->m_apps.isEmpty()) {
-                qint64 pid = cd->m_client->processId();
-                if ((pid > 0) && isDebuggerAttached(pid))
-                    qCCritical(LogWatchdog).noquote() << "Debugger is attached to the client, not killing client";
-                else
-                    cd->m_client->kill(UnixSignalHandler::watchdogSignal());
+            if ((cd->m_pid > 0) && isDebuggerAttached(cd->m_pid))
+                qCCritical(LogWatchdog).noquote() << cd->m_description << "has a debugger attached, not killing client";
+
+            if (cd->m_runtimes.isEmpty()) {
+                cd->m_client->kill(UnixSignalHandler::watchdogSignal());
             } else {
-                for (auto *app : std::as_const(cd->m_apps)) {
-                    qint64 pid = app->currentRuntime() ? app->currentRuntime()->applicationProcessId() : 0;
-                    if ((pid > 0) && isDebuggerAttached(pid))
-                        qCCritical(LogWatchdog).noquote() << "Debugger is attached to the app, not killing" << app->id();
-                    else
-                        ApplicationManager::instance()->stopApplicationInternal(app, Am::WatchdogExit);
-                }
+                for (auto *runtime : std::as_const(cd->m_runtimes))
+                    runtime->stop(Am::WatchdogExit);
             }
         }
     }

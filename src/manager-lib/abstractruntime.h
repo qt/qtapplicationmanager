@@ -42,9 +42,14 @@ public:
     QVariantMap configuration() const;
     void setConfiguration(const QVariantMap &configuration);
 
+    static QList<QtAM::AbstractRuntime *> fromProcessId(qint64 pid);
+
 private:
     QString m_id;
     QVariantMap m_configuration;
+
+    friend class AbstractRuntime;
+    static QList<AbstractRuntime *> s_allRuntimes;
 };
 
 class RuntimeSignaler : public QObject

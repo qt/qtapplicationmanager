@@ -43,6 +43,8 @@ AbstractRuntime::AbstractRuntime(AbstractContainer *container, Application *app,
 {
     Q_STATIC_ASSERT(SecurityTokenSize == sizeof(QUuid));
     m_securityToken = QUuid::createUuid().toRfc4122();
+
+    AbstractRuntimeManager::s_allRuntimes.append(this);
 }
 
 QVariantMap AbstractRuntime::configuration() const
@@ -93,6 +95,7 @@ Application *AbstractRuntime::application() const
 AbstractRuntime::~AbstractRuntime()
 {
     delete m_container;
+    AbstractRuntimeManager::s_allRuntimes.removeOne(this);
 }
 
 AbstractRuntimeManager *AbstractRuntime::manager() const
@@ -154,6 +157,8 @@ AbstractContainer *AbstractRuntime::container() const
     return m_container;
 }
 
+QList<AbstractRuntime *> AbstractRuntimeManager::s_allRuntimes;
+
 AbstractRuntimeManager::AbstractRuntimeManager(const QString &id, QObject *parent)
     : QObject(parent)
     , m_id(id)
@@ -182,6 +187,17 @@ QVariantMap AbstractRuntimeManager::configuration() const
 void AbstractRuntimeManager::setConfiguration(const QVariantMap &configuration)
 {
     m_configuration = configuration;
+}
+
+QList<AbstractRuntime *> AbstractRuntimeManager::fromProcessId(qint64 pid)
+{
+    QList<AbstractRuntime *> result;
+
+    for (AbstractRuntime *runtime : std::as_const(s_allRuntimes)) {
+        if (runtime->applicationProcessId() == pid)
+            result << runtime;
+    }
+    return result;
 }
 
 QT_END_NAMESPACE_AM

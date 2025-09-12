@@ -20,7 +20,7 @@ QT_FORWARD_DECLARE_CLASS(QWaylandXdgShell)
 
 QT_BEGIN_NAMESPACE_AM
 
-class Application;
+class AbstractRuntime;
 
 class WaylandXdgWatchdog : public QObject
 {
@@ -50,9 +50,10 @@ private:
 
     struct ClientData {
         QWaylandClient *m_client = nullptr;
+        qint64 m_pid = 0;
         uint m_pingSerial = 0;
         QString m_description;
-        QList<Application *> m_apps;
+        QList<AbstractRuntime *> m_runtimes;
         bool m_hasDebugWrapper = false;
     };
     QList<ClientData *> m_clients;

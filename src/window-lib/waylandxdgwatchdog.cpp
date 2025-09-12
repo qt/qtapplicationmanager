@@ -10,6 +10,7 @@
 #include "application.h"
 #include "applicationmanager.h"
 #include "logging.h"
+#include "unixsignalhandler.h"
 #include "utilities.h"
 #include "waylandxdgwatchdog.h"
 
@@ -81,6 +82,7 @@ void WaylandXdgWatchdog::setTimeouts(std::chrono::milliseconds checkInterval,
         qCWarning(LogWatchdog).nospace()
             << "Wayland client warning timeout (" << m_warnTimeout
             << ") is greater than kill timeout (" << m_killTimeout << ")";
+        m_warnTimeout = 0ms;
     }
 }
 
@@ -234,7 +236,7 @@ void WaylandXdgWatchdog::onPongKillTimeout()
                 if ((pid > 0) && isDebuggerAttached(pid))
                     qCCritical(LogWatchdog).noquote() << "Debugger is attached to the client, not killing client";
                 else
-                    cd->m_client->kill(SIGKILL);
+                    cd->m_client->kill(UnixSignalHandler::watchdogSignal());
             } else {
                 for (auto *app : std::as_const(cd->m_apps)) {
                     qint64 pid = app->currentRuntime() ? app->currentRuntime()->applicationProcessId() : 0;

@@ -236,6 +236,7 @@ void WatchdogPrivate::setEventLoopTimeouts(std::chrono::milliseconds check, std:
         qCWarning(LogWatchdog).nospace()
             << "Event loop warning timeout (" << m_warnEventLoopTime
             << ") is greater than kill timeout (" << m_killEventLoopTime << ")";
+        m_warnEventLoopTime = 0ms;
     }
 
     Watchdog::s_instance->m_active = isEventLoopWatchingEnabled() || isQuickWindowWatchingEnabled();
@@ -450,6 +451,7 @@ void WatchdogPrivate::setQuickWindowTimeouts(std::chrono::milliseconds check,
         qCWarning(LogWatchdog).nospace()
             << "Quick window warning timeout (" << m_warnQuickWindowTime
             << ") is greater than kill timeout (" << m_killQuickWindowTime << ")";
+        m_warnQuickWindowTime = 0ms;
     }
 
     Watchdog::s_instance->m_active = isEventLoopWatchingEnabled() || isQuickWindowWatchingEnabled();

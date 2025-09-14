@@ -6,7 +6,7 @@ applications:
   installationDir: "${stdpath:TempLocation}/qtam-example/package-installation/apps"
 
 ui:
-  fullscreen: no
+  fullscreen: false
   mainQml: "${CONFIG_DIR}/system-ui/main.qml"
   style: Universal
 
@@ -18,6 +18,6 @@ systemProperties:
 
 # development setup:
 flags:
-  noSecurity: yes
-  noUiWatchdog: yes
+  noSecurity: true
+  noUiWatchdog: true
   developmentMode: system

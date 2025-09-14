@@ -12,7 +12,6 @@
 
 QT_USE_NAMESPACE_AM
 using namespace Qt::StringLiterals;
-using namespace QtYaml;
 
 const QString PSConfiguration::DefaultListenAddress  = u"localhost:8020"_s;
 const QString PSConfiguration::DefaultConfigFile     = u"amps-config.yaml"_s;
@@ -175,7 +174,7 @@ void PSConfiguration::parse(const QStringList &args)
         if (!developerVerificationCaCertificateFiles.isEmpty())
             config.insert(u"developerVerificationCaCertificates"_s, developerVerificationCaCertificateFiles);
 
-        auto yaml = QtYaml::yamlFromVariantDocuments({ header, config });
+        auto yaml = YamlEmitter::fromVariantDocuments({ header, config });
         QFile f(dataDirectory.absoluteFilePath(DefaultConfigFile));
         if (!f.open(QIODevice::WriteOnly) || (f.write(yaml) != yaml.size()))
             throw Exception(f, "failed to save configuration as YAML");

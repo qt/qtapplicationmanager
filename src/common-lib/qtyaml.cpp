@@ -4,8 +4,6 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:data-parser
 
-#include <charconv>
-
 #include <QVariant>
 #include <QRegularExpression>
 #include <QDebug>
@@ -13,223 +11,221 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QByteArray>
+#include <QVersionNumber>
 
 #include <yaml.h>
 
 #include "qtyaml.h"
 #include "exception.h"
+#include "logging.h"
 
 using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
+#if QT_AM_VERSION < QT_VERSION_CHECK(6, 12, 0)
+static constexpr YamlVersion defaultVersion = YamlVersion::V1_1;
 
-namespace QtYaml {
+static bool showDeprecationWarnings = true;
 
-enum ValueIndex {
-    ValueNull,
-    ValueTrue,
-    ValueFalse,
-    ValueNaN,
-    ValueInf
-};
-
-struct StaticMapping
+void YamlParser::disableDeprecationWarnings()
 {
-    QString text;
-    ValueIndex index = ValueNull;
-};
-
-static const StaticMapping staticMappings[] = { // keep this sorted for bsearch !!
-    { u".INF"_s,  ValueInf },
-    { u".Inf"_s,  ValueInf },
-    { u".NAN"_s,  ValueNaN },
-    { u".NaN"_s,  ValueNaN },
-    { u".inf"_s,  ValueInf },
-    { u".nan"_s,  ValueNaN },
-    { u"FALSE"_s, ValueFalse },
-    { u"False"_s, ValueFalse },
-    { u"N"_s,     ValueFalse },
-    { u"NO"_s,    ValueFalse },
-    { u"NULL"_s,  ValueNull },
-    { u"No"_s,    ValueFalse },
-    { u"Null"_s,  ValueNull },
-    { u"OFF"_s,   ValueFalse },
-    { u"Off"_s,   ValueFalse },
-    { u"ON"_s,    ValueTrue },
-    { u"On"_s,    ValueTrue },
-    { u"TRUE"_s,  ValueTrue },
-    { u"True"_s,  ValueTrue },
-    { u"Y"_s,     ValueTrue },
-    { u"YES"_s,   ValueTrue },
-    { u"Yes"_s,   ValueTrue },
-    { u"false"_s, ValueFalse },
-    { u"n"_s,     ValueFalse },
-    { u"no"_s,    ValueFalse },
-    { u"null"_s,  ValueNull },
-    { u"off"_s,   ValueFalse },
-    { u"on"_s,    ValueTrue },
-    { u"true"_s,  ValueTrue },
-    { u"y"_s,     ValueTrue },
-    { u"yes"_s,   ValueTrue },
-    { u"~"_s,     ValueNull }
-};
-
-
-static inline StaticMapping *findStaticMapping(const QString &str)
-{
-    static const QString firstCharStaticMappings = u".FNOTYfnoty~"_s;
-    const QChar firstChar = str.isEmpty() ? QChar(0) : str.at(0);
-
-    if (firstCharStaticMappings.contains(firstChar)) { // cheap check to avoid expensive bsearch
-        StaticMapping key { str, ValueNull };
-        auto found = bsearch(&key,
-                             staticMappings,
-                             sizeof(staticMappings) / sizeof(staticMappings[0]),
-                             sizeof(staticMappings[0]),
-                             [](const void *m1, const void *m2) {
-                                 return static_cast<const StaticMapping *>(m1)->text.compare(static_cast<const StaticMapping *>(m2)->text);
-                             });
-
-        return static_cast<StaticMapping *>(found);
-    }
-    return nullptr;
-};
-
-
-static inline void yerr(int result) noexcept(false)
-{
-    if (!result)
-        throw std::exception();
+    showDeprecationWarnings = false;
 }
 
-static void emitYamlScalar(yaml_emitter_t *e, const QByteArray &ba, bool quoting = false) noexcept(false)
+static void deprecationWarningHelper(const char *feature, const YamlParser *parser)
+{
+    // this is not ideal, but then again, this is a temporary measure
+    QString s = YamlParserException(parser, nullptr).errorString();
+    s.remove(u"YAML parse error:\n"_s);
+    s.remove(u": error"_s);
+    qCWarning(LogDeployment).noquote() << "Document is not explicitly versioned and YAML 1.2 deprecates"
+                                       << feature << "at" << s;
+}
+
+#define deprecationWarning(condition, feature, parser)  \
+    while (condition && parser && showDeprecationWarnings) { \
+        deprecationWarningHelper(feature, parser); \
+            break; \
+    }
+
+#else
+static constexpr YamlVersion defaultVersion = YamlVersion::V1_2;
+#define deprecationWarning(condition, feature, parser)
+#endif
+
+
+class YamlEmitterPrivate
+{
+public:
+    YamlEmitterPrivate(YamlVersion version, YamlEmitter::Style style);
+
+    QByteArray emitDocuments(const QVector<QVariant> &documents);
+
+    inline void throwOnError(int result) noexcept(false)
+    {
+        if (!result)
+            throw std::exception();
+    }
+    void emitVariant(const QVariant &value) noexcept(false);
+    void emitScalar(const QByteArray &ba, bool quoting = false) noexcept(false);
+
+private:
+    YamlVersion m_version;
+    YamlEmitter::Style m_style;
+    yaml_emitter_t m_emitter;
+};
+
+YamlEmitterPrivate::YamlEmitterPrivate(YamlVersion version, YamlEmitter::Style style)
+    : m_version((version == YamlVersion::None) ? defaultVersion : version)
+    , m_style(style)
+{ }
+
+void YamlEmitterPrivate::emitScalar(const QByteArray &ba, bool quoting)
 {
     yaml_event_t event;
-    yerr(yaml_scalar_event_initialize(&event,
-                                      nullptr,
-                                      nullptr,
-                                      reinterpret_cast<yaml_char_t *>(const_cast<char *>(ba.constData())),
-                                      int(ba.size()),
-                                      1,
-                                      1,
-                                      quoting ? YAML_SINGLE_QUOTED_SCALAR_STYLE : YAML_ANY_SCALAR_STYLE));
-    yerr(yaml_emitter_emit(e, &event));
+    throwOnError(yaml_scalar_event_initialize(&event,
+                                              nullptr,
+                                              nullptr,
+                                              reinterpret_cast<const yaml_char_t *>(ba.constData()),
+                                              int(ba.size()),
+                                              1,
+                                              1,
+                                              quoting ? YAML_SINGLE_QUOTED_SCALAR_STYLE
+                                                      : YAML_ANY_SCALAR_STYLE));
+    throwOnError(yaml_emitter_emit(&m_emitter, &event));
 }
 
-static void emitYaml(yaml_emitter_t *e, const QVariant &value, YamlStyle style) noexcept(false)
+void YamlEmitterPrivate::emitVariant(const QVariant &value)
 {
     yaml_event_t event;
 
     switch (value.metaType().id()) {
     case QMetaType::UnknownType:
     case QMetaType::Nullptr:
-        emitYamlScalar(e, "~");
+        emitScalar("~");
         break;
     case QMetaType::Bool:
-        emitYamlScalar(e, value.toBool() ? "true" : "false");
+        emitScalar(value.toBool() ? "true" : "false");
         break;
     case QMetaType::Int:
     case QMetaType::LongLong:
-        emitYamlScalar(e, QByteArray::number(value.toLongLong()));
+        emitScalar(QByteArray::number(value.toLongLong()));
         break;
     case QMetaType::UInt:
     case QMetaType::ULongLong:
-        emitYamlScalar(e, QByteArray::number(value.toULongLong()));
+        emitScalar(QByteArray::number(value.toULongLong()));
         break;
     case QMetaType::Double:
-        emitYamlScalar(e, QByteArray::number(value.toDouble()));
+        emitScalar(QByteArray::number(value.toDouble()));
         break;
     default:
     case QMetaType::QString:
-        emitYamlScalar(e, value.toString().toUtf8(), true);
+        emitScalar(value.toString().toUtf8(), true);
         break;
     case QMetaType::QVariantList:
     case QMetaType::QStringList: {
-        yerr(yaml_sequence_start_event_initialize(&event, nullptr, nullptr, 1, style == FlowStyle ? YAML_FLOW_SEQUENCE_STYLE : YAML_BLOCK_SEQUENCE_STYLE));
-        yerr(yaml_emitter_emit(e, &event));
+        throwOnError(yaml_sequence_start_event_initialize(&event, nullptr, nullptr, 1,
+                                                          (m_style == YamlEmitter::Style::Flow)
+                                                              ? YAML_FLOW_SEQUENCE_STYLE
+                                                              : YAML_BLOCK_SEQUENCE_STYLE));
+        throwOnError(yaml_emitter_emit(&m_emitter, &event));
 
         const QVariantList list = value.toList();
         for (const QVariant &listValue : list)
-            emitYaml(e, listValue, style);
+            emitVariant(listValue);
 
-        yerr(yaml_sequence_end_event_initialize(&event));
-        yerr(yaml_emitter_emit(e, &event));
+        throwOnError(yaml_sequence_end_event_initialize(&event));
+        throwOnError(yaml_emitter_emit(&m_emitter, &event));
         break;
     }
     case QMetaType::QVariantMap: {
-        yerr(yaml_mapping_start_event_initialize(&event, nullptr, nullptr, 1, style == FlowStyle ? YAML_FLOW_MAPPING_STYLE : YAML_BLOCK_MAPPING_STYLE));
-        yerr(yaml_emitter_emit(e, &event));
+        throwOnError(yaml_mapping_start_event_initialize(&event, nullptr, nullptr, 1,
+                                                         (m_style == YamlEmitter::Style::Flow)
+                                                             ? YAML_FLOW_MAPPING_STYLE
+                                                             : YAML_BLOCK_MAPPING_STYLE));
+        throwOnError(yaml_emitter_emit(&m_emitter, &event));
 
         QVariantMap map = value.toMap();
         for (auto it = map.constBegin(); it != map.constEnd(); ++it) {
             const QString &key = it.key();
             // We could just quote everything, but this would break backwards compatibility
             // inside the AM itself (e.g. HMAC calculations for installation-report.yaml)
-            bool needsQuoting = key.isEmpty() || findStaticMapping(key);
+            bool needsQuoting = key.isEmpty()
+                                || YamlParser::parseKeyword(key, nullptr, m_version).isValid();
             if (!needsQuoting) {
                 char16_t firstChar = key.at(0).unicode();
                 needsQuoting = ((firstChar >= u'0' && firstChar <= u'9')
                                 || firstChar == u'+' || firstChar == u'-' || firstChar == u'.');
             }
-            emitYamlScalar(e, key.toUtf8(), needsQuoting);
-            emitYaml(e, it.value(), style);
+            emitScalar(key.toUtf8(), needsQuoting);
+            emitVariant(it.value());
         }
 
-        yerr(yaml_mapping_end_event_initialize(&event));
-        yerr(yaml_emitter_emit(e, &event));
+        throwOnError(yaml_mapping_end_event_initialize(&event));
+        throwOnError(yaml_emitter_emit(&m_emitter, &event));
         break;
     }
     }
 }
 
 
-QByteArray yamlFromVariantDocuments(const QVector<QVariant> &documents, YamlStyle style)
+QByteArray YamlEmitterPrivate::emitDocuments(const QVector<QVariant> &documents)
 {
     QByteArray out;
 
-    yaml_emitter_t e;
-    yaml_emitter_initialize(&e);
-    yaml_emitter_set_output(&e, [] (void *data, unsigned char *buffer, size_t size) { static_cast<QByteArray *>(data)->append(reinterpret_cast<char *>(buffer), int(size)); return 1; }, &out);
+    yaml_emitter_initialize(&m_emitter);
+    yaml_emitter_set_output(&m_emitter, [] (void *data, unsigned char *buffer, size_t size) {
+        static_cast<QByteArray *>(data)->append(reinterpret_cast<char *>(buffer), int(size));
+        return 1;
+    }, &out);
 
-    //if (style == FlowStyle)
-    yaml_emitter_set_width(&e, 80);
-    yaml_emitter_set_indent(&e, 2);
+    yaml_emitter_set_width(&m_emitter, 80);
+    yaml_emitter_set_indent(&m_emitter, 2);
 
     try {
         yaml_event_t event;
-        yerr(yaml_stream_start_event_initialize(&event, YAML_UTF8_ENCODING));
-        yerr(yaml_emitter_emit(&e, &event));
+        throwOnError(yaml_stream_start_event_initialize(&event, YAML_UTF8_ENCODING));
+        throwOnError(yaml_emitter_emit(&m_emitter, &event));
 
         bool first = true;
-        yaml_version_directive_t yamlVersion { 1, 1 };
+        Q_ASSERT(m_version != YamlVersion::None); // set in the constructor
+        yaml_version_directive_t yamlVersion { 1, int(m_version) };
 
         for (const QVariant &doc : documents) {
-            yerr(yaml_document_start_event_initialize(&event, first ? &yamlVersion : nullptr, nullptr, nullptr, 0));
-            yerr(yaml_emitter_emit(&e, &event));
+            throwOnError(yaml_document_start_event_initialize(&event, first ? &yamlVersion : nullptr,
+                                                              nullptr, nullptr, 0));
+            throwOnError(yaml_emitter_emit(&m_emitter, &event));
+
+            emitVariant(doc);
+
+            throwOnError(yaml_document_end_event_initialize(&event, 1));
+            throwOnError(yaml_emitter_emit(&m_emitter, &event));
 
             first = false;
-
-            emitYaml(&e, doc, style);
-
-            yerr(yaml_document_end_event_initialize(&event, 1));
-            yerr(yaml_emitter_emit(&e, &event));
         }
 
-        yerr(yaml_stream_end_event_initialize(&event));
-        yerr(yaml_emitter_emit(&e, &event));
+        throwOnError(yaml_stream_end_event_initialize(&event));
+        throwOnError(yaml_emitter_emit(&m_emitter, &event));
     } catch (const std::exception &) {
         out.clear();
     }
-    yaml_emitter_delete(&e);
+    yaml_emitter_delete(&m_emitter);
 
     return out;
 }
 
+QByteArray YamlEmitter::fromVariantDocuments(const QVector<QVariant> &documents,
+                                             YamlVersion version, Style style)
+{
+    return YamlEmitterPrivate(version, style).emitDocuments(documents);
+}
 
-} // namespace QtYaml
+QByteArray YamlEmitter::fromVariantDocuments(const QVector<QVariant> &documents, Style style)
+{
+    return fromVariantDocuments(documents, YamlVersion::None, style);
+}
 
-using namespace QtYaml;
 
 class YamlParserPrivate   // AXIVION Line Qt-Generic-InitializeAllFieldsInConstructor: not possible
 {
@@ -240,7 +236,8 @@ public:
     bool parsedHeader = false;
     yaml_parser_t parser;
     yaml_event_t event;
-
+    YamlVersion documentVersion = YamlVersion::None;
+    YamlVersion parseVersion = YamlVersion::None;
 };
 
 static QString mapEventNames(const QVector<yaml_event_type_t> &events)
@@ -268,9 +265,11 @@ static QString mapEventNames(const QVector<yaml_event_type_t> &events)
 }
 
 
-YamlParser::YamlParser(const QByteArray &data, const QString &fileName)
+YamlParser::YamlParser(const QByteArray &data, YamlVersion parseVersion, const QString &fileName)
     : d(new YamlParserPrivate)
 {
+    d->parseVersion = parseVersion;
+
     d->data = data;
     if (!fileName.isEmpty()) {
         QFileInfo fi(fileName);
@@ -283,7 +282,8 @@ YamlParser::YamlParser(const QByteArray &data, const QString &fileName)
 
     if (!yaml_parser_initialize(&d->parser))
         throw Exception("Failed to initialize YAML parser");
-    yaml_parser_set_input_string(&d->parser, reinterpret_cast<const unsigned char *>(d->data.constData()),
+    yaml_parser_set_input_string(&d->parser,
+                                 reinterpret_cast<const unsigned char *>(d->data.constData()),
                                  static_cast<size_t>(d->data.size()));
     nextEvent();
     if (d->event.type != YAML_STREAM_START_EVENT)
@@ -296,6 +296,10 @@ YamlParser::YamlParser(const QByteArray &data, const QString &fileName)
         throw Exception("Only UTF-8 is supported as a YAML encoding");
     }
 }
+
+YamlParser::YamlParser(const QByteArray &data, const QString &fileName)
+    : YamlParser(data, YamlVersion::None, fileName)
+{ }
 
 YamlParser::~YamlParser()
 {
@@ -365,6 +369,25 @@ bool YamlParser::nextDocument()
     while (d->event.type != YAML_STREAM_END_EVENT) {
         nextEvent();
         if (d->event.type == YAML_DOCUMENT_START_EVENT) {
+            if (d->event.data.document_start.version_directive) {
+                // YAML version directive found
+                QVersionNumber v{d->event.data.document_start.version_directive->major,
+                                 d->event.data.document_start.version_directive->minor};
+                if (v < QVersionNumber(1, 1) || v > QVersionNumber(1, 2)) {
+                    throw YamlParserException(this, "Only YAML versions 1.1 and 1.2 are supported (found %1)")
+                        .arg(v.toString());
+                }
+                d->documentVersion = (v.minorVersion() == 1) ? YamlVersion::V1_1 : YamlVersion::V1_2;
+            }
+            if (d->documentVersion == YamlVersion::None) {
+                // No version directive found, use the default version
+                if (d->parseVersion == YamlVersion::None)
+                    d->parseVersion = defaultVersion;
+            } else {
+                d->parseVersion = d->documentVersion; // Version directive found, use it
+            }
+            Q_ASSERT(d->parseVersion != YamlVersion::None);
+
             nextEvent(); // advance to the first child or end-of-document
             return true;
         }
@@ -484,90 +507,249 @@ std::chrono::microseconds YamlParser::parseDurationAsUSec(QStringView defaultUni
     return std::chrono::microseconds(qint64(value * f));
 }
 
+QVariant YamlParser::parseKeyword(const QString &str, YamlParser *parser, YamlVersion parseVersion)
+{
+    // This function is static to allow the Emitter to query for keywords as well.
+    // - if called by the parser, 'parser' is 'this' and 'parseVersion' is ignored, because it is
+    //   supplied via 'parser'.
+    // - if called by the emitter, 'parser' is null and 'parseVersion' sets the version to use.
+
+    // QVariant { } is also 'null', but NOT 'valid'
+    static const auto vnull = QVariant::fromValue(nullptr);
+
+    const static QHash<QString, std::pair<QVariant, qint8>> mappings {
+        { u".INF"_s,  { qInf(),  1 | 2 } },
+        { u".Inf"_s,  { qInf(),  1 | 2 } },
+        { u".inf"_s,  { qInf(),  1 | 2 } },
+        { u"+.INF"_s, { qInf(),  1 | 2 } },
+        { u"+.Inf"_s, { qInf(),  1 | 2 } },
+        { u"+.inf"_s, { qInf(),  1 | 2 } },
+        { u"-.INF"_s, { -qInf(), 1 | 2 } },
+        { u"-.Inf"_s, { -qInf(), 1 | 2 } },
+        { u"-.inf"_s, { -qInf(), 1 | 2 } },
+        { u".NAN"_s,  { qQNaN(), 1 | 2 } },
+        { u".NaN"_s,  { qQNaN(), 1 | 2 } },
+        { u".nan"_s,  { qQNaN(), 1 | 2 } },
+        { u"FALSE"_s, { false,   1 | 2 } },
+        { u"False"_s, { false,   1 | 2 } },
+        { u"false"_s, { false,   1 | 2 } },
+        { u"TRUE"_s,  { true,    1 | 2 } },
+        { u"True"_s,  { true,    1 | 2 } },
+        { u"true"_s,  { true,    1 | 2 } },
+        { u"NULL"_s,  { vnull,   1 | 2 } },
+        { u"Null"_s,  { vnull,   1 | 2 } },
+        { u"null"_s,  { vnull,   1 | 2 } },
+        { u"~"_s,     { vnull,   1 | 2 } },
+        { u"N"_s,     { false,   1 } },
+        { u"n"_s,     { false,   1 } },
+        { u"NO"_s,    { false,   1 } },
+        { u"No"_s,    { false,   1 } },
+        { u"no"_s,    { false,   1 } },
+        { u"OFF"_s,   { false,   1 } },
+        { u"Off"_s,   { false,   1 } },
+        { u"off"_s,   { false,   1 } },
+        { u"ON"_s,    { true,    1 } },
+        { u"On"_s,    { true,    1 } },
+        { u"on"_s,    { true,    1 } },
+        { u"Y"_s,     { true,    1 } },
+        { u"y"_s,     { true,    1 } },
+        { u"YES"_s,   { true,    1 } },
+        { u"Yes"_s,   { true,    1 } },
+        { u"yes"_s,   { true,    1 } }
+    };
+
+    static constexpr qsizetype longest = 5;
+
+    if (auto l = str.length(); (l == 0) || (l > longest)) // early out to avoid expensive hashing
+        return { };
+
+    const int v = ((parser ? parser->d->parseVersion : parseVersion) == YamlVersion::V1_1) ? 1 : 2;
+
+    if (auto it = mappings.constFind(str); it != mappings.cend()) {
+        // we parse an implicitly 1.1 versioned doc, but the keyword is gone in 1.2
+        deprecationWarning((parser && (parser->d->documentVersion == YamlVersion::None)
+                            && (v == 1) && !(it->second & 2)), "keyword", parser);
+
+        if (it->second & v)  // check if the keyword is valid in the current version
+            return it->first;
+    }
+    return { };
+}
+
 QVariant YamlParser::parseScalar()
 {
     if (!isScalar())
-        throw YamlParserException(this, "Cannot parse non-scalar as scalar");
-
+        throw YamlParserException(this, "Cannot parse %1 as scalar").arg(mapEventNames({ d->event.type }));
     QString scalar = parseString();
 
-    if (d->event.data.scalar.style == YAML_SINGLE_QUOTED_SCALAR_STYLE
-        || d->event.data.scalar.style == YAML_DOUBLE_QUOTED_SCALAR_STYLE) {
-        return scalar;
-    }
-
-    static const QVariant staticValues[] = {
-        QVariant::fromValue(nullptr),  // ValueNull
-        QVariant(true),                // ValueTrue
-        QVariant(false),               // ValueFalse
-        QVariant(qQNaN()),             // ValueNaN
-        QVariant(qInf()),              // ValueInf
+    const auto scalarAsKeyword = [&]() -> QVariant {
+        if (scalar.isEmpty())
+            return QVariant::fromValue(nullptr);
+        if (auto v = parseKeyword(scalar, this); v.isValid())
+            return v;
+        return { };
     };
 
-    if (scalar.isEmpty())
-        return staticValues[ValueNull];
+    // We are using QRegularExpressions in multiple threads here, although the class is not
+    // marked thread-safe. We are relying on the const match() function to behave thread-safe
+    // which it does. There's an autotest (tst_yaml / parallel) to make sure we catch changes
+    // in the internal implementation in the future.
+    // The easiest way would be to deep-copy the objects into TLS instances, but
+    // QRegularExpression is lacking such a functionality. Creating all the objects from
+    // scratch in every thread is expensive though, so we count on match() being thread-safe.
 
-    if (auto sm = findStaticMapping(scalar))
-        return staticValues[sm->index];
+    auto scalarAsFloat = [&]() -> QVariant {
+        if (scalar.isEmpty())
+            return { };
+        char16_t firstChar = scalar.at(0).unicode();
+        if ((firstChar >= u'0' && firstChar <= u'9')   // cheap check to avoid expensive regexps
+                || firstChar == u'+' || firstChar == u'-' || firstChar == u'.') {
+            // The regexp from the 1.1 standard is broken, as not even '0' matches it, although
+            // the spec lists that as a valid float. We always use the 1.2 version, which is able
+            // to match decimal integers as well.
+            //static const QRegularExpression floatRegExp11(u"\\A[-+]?([0-9][0-9_]*)?\\.[0-9.]*([eE][-+][0-9]+)?\\z"_s);
+            static const QRegularExpression floatRegExp12(uR"(\A[-+]?(\.[0-9]+|[0-9]+(\.[0-9]*)?)([eE][-+]?[0-9]+)?\z)"_s);
 
-    char16_t firstChar = scalar.at(0).unicode();
-    if ((firstChar >= u'0' && firstChar <= u'9')   // cheap check to avoid expensive regexps
-            || firstChar == u'+' || firstChar == u'-' || firstChar == u'.') {
-        // We are using QRegularExpressions in multiple threads here, although the class is not
-        // marked thread-safe. We are relying on the const match() function to behave thread-safe
-        // which it does. There's an autotest (tst_yaml / parallel) to make sure we catch changes
-        // in the internal implementation in the future.
-        // The easiest way would be to deep-copy the objects into TLS instances, but
-        // QRegularExpression is lacking such a functionality. Creating all the objects from
-        // scratch in every thread is expensive though, so we count on match() being thread-safe.
-        static const QRegularExpression numberRegExps[] = {
-            QRegularExpression(u"\\A[-+]?(0|[1-9][0-9_]*)\\z"_s), // decimal
-            QRegularExpression(u"\\A[-+]?([0-9][0-9_]*)?\\.[0-9.]*([eE][-+][0-9]+)?\\z"_s), // float
-            QRegularExpression(u"\\A[-+]?0x[0-9a-fA-F_]+\\z"_s),  // hexadecimal
-            QRegularExpression(u"\\A[-+]?0b[0-1_]+\\z"_s),        // binary
-            QRegularExpression(u"\\A[-+]?0[0-7_]+\\z"_s),         // octal
-        };
-        for (size_t numberIndex = 0; numberIndex < (sizeof(numberRegExps) / sizeof(*numberRegExps)); ++numberIndex) {
-            if (numberRegExps[numberIndex].match(scalar).hasMatch()) {
-                bool ok = false;
-                QVariant val;
+            auto &regExp = floatRegExp12;
 
-                // YAML allows _ as a grouping separator
-                if (scalar.contains(u'_'))
-                    scalar = scalar.replace(u'_', u""_s);
+            if (regExp.match(scalar).hasMatch()) {
+                QString numberStr = scalar;
 
-                if (numberIndex == 1) {
-                    val = scalar.toDouble(&ok);
-                } else {
-                    int base = 10;
+                // YAML 1.1 allows _ as a grouping separator
+                if (d->parseVersion == YamlVersion::V1_1) {
+                    if (numberStr.contains(u'_')) {
+                        numberStr = numberStr.replace(u'_', u""_s);
 
-                    switch (numberIndex) {
-                    case 0: base = 10; break;
-                    case 2: base = 16; break;
-                    case 3: base = 2; scalar.replace(u"0b"_s, u""_s); break; // Qt chokes on 0b
-                    case 4: base = 8; break;
-                    }
-
-                    qint64 s64 = scalar.toLongLong(&ok, base);
-                    if (ok && (s64 <= std::numeric_limits<qint32>::max())) {
-                        val = qint32(s64);
-                    } else if (ok) {
-                        val = s64;
-                    } else {
-                        quint64 u64 = scalar.toULongLong(&ok, base);
-
-                        if (ok && (u64 <= std::numeric_limits<quint32>::max()))
-                            val = quint32(u64);
-                        else if (ok)
-                            val = u64;
+                        deprecationWarning(d->documentVersion == YamlVersion::None,
+                                           "number grouping", this);
                     }
                 }
-                if (ok)
-                    return val;
+
+                bool ok = false;
+                if (auto d = numberStr.toDouble(&ok); ok)
+                    return d;
             }
         }
+        return { };
+    };
+
+    auto scalarAsInt = [&]() -> QVariant {
+        if (scalar.isEmpty())
+            return { };
+        char16_t firstChar = scalar.at(0).unicode();
+        if ((firstChar >= u'0' && firstChar <= u'9')   // cheap check to avoid expensive regexps
+            || firstChar == u'+' || firstChar == u'-') {
+            static const std::array<std::tuple<int, int, QRegularExpression>, 4> numberRegExps11 {{
+                { 10, 0, QRegularExpression(u"\\A[-+]?(0|[1-9][0-9_]*)\\z"_s) }, // decimal
+                { 16, 2, QRegularExpression(u"\\A[-+]?0x[0-9a-fA-F_]+\\z"_s) },  // hexadecimal
+                {  2, 2, QRegularExpression(u"\\A[-+]?0b[0-1_]+\\z"_s) },        // binary
+                {  8, 1, QRegularExpression(u"\\A[-+]?0[0-7_]+\\z"_s) },         // octal
+            }};
+            static const std::array<std::tuple<int, int, QRegularExpression>, 4> numberRegExps12 {{
+                { 10, 0, QRegularExpression(uR"(\A[-+]?[0-9]+\z)"_s) },    // decimal
+                { 16, 2, QRegularExpression(uR"(\A0x[0-9a-fA-F]+\z)"_s) }, // hexadecimal
+                {  8, 2, QRegularExpression(uR"(\A0o[0-7]+\z)"_s) },       // octal
+                { -1, 0, { } }, // dummy value to keep the array sizes the same
+            }};
+
+            const auto &numberRegExps = (d->parseVersion == YamlVersion::V1_2) ? numberRegExps12
+                                                                               : numberRegExps11;
+
+            for (const auto &[base, offset, regExp] : numberRegExps) {
+                if (base < 0)
+                    continue;
+
+                if (regExp.match(scalar).hasMatch()) {
+                    bool ok = false;
+                    QVariant val;
+                    QString numberStr = offset ? scalar.mid(offset) : scalar;
+
+                    if (d->parseVersion == YamlVersion::V1_1) {
+                        // YAML 1.1 allows _ as a grouping separator
+                        if (numberStr.contains(u'_')) {
+                            numberStr = numberStr.replace(u'_', u""_s);
+
+                            deprecationWarning(d->documentVersion == YamlVersion::None,
+                                               "number grouping", this);
+                        }
+
+                        if (d->documentVersion == YamlVersion::None) {
+                            deprecationWarning((base != 10) && !scalar.startsWith(u'0'),
+                                               "signed non-decimal numbers", this);
+                            deprecationWarning(base == 8,
+                                               "octal encoded nummbers with just a '0' prefix", this);
+                            deprecationWarning(base == 2, "binary encoded numbers", this);
+                        }
+                    }
+
+                    qint64 s64 = numberStr.toLongLong(&ok, base);
+                    if (ok
+                        && (s64 <= std::numeric_limits<qint32>::max())
+                        && (s64 >= std::numeric_limits<qint32>::min())) {
+                        return qint32(s64);
+                    } else if (ok) {
+                        return s64;
+                    } else {
+                        quint64 u64 = numberStr.toULongLong(&ok, base);
+                        if (ok)
+                            return u64;
+                    }
+                }
+            }
+        }
+        return { };
+    };
+
+    if (d->event.data.scalar.tag) {
+        auto tag = QByteArrayView(d->event.data.scalar.tag);
+        if (!tag.startsWith("tag:yaml.org,2002:"))
+            throw YamlParserException(this, "unsupported tag: %1").arg(QString::fromUtf8(tag));
+        tag.slice(18);
+
+        static const QHash<QByteArray, QMetaType::Type> knownTags = {
+            { "str",   QMetaType::QString },
+            { "int",   QMetaType::LongLong },
+            { "float", QMetaType::Double },
+            { "bool",  QMetaType::Bool },
+            { "null",  QMetaType::Nullptr }
+        };
+
+        switch (knownTags.value(tag, QMetaType::UnknownType)) {
+        case QMetaType::QString:
+            return scalar;
+        case QMetaType::LongLong:
+            if (QVariant v = scalarAsInt(); v.isValid())
+                return v;
+            throw YamlParserException(this, "expected an integer value");
+        case QMetaType::Double:
+            if (QVariant v = scalarAsFloat(); v.isValid())
+                return v;
+            else if (QVariant v = scalarAsKeyword(); (v.isValid() && (v.userType() == QMetaType::Double)))
+                return v;
+            throw YamlParserException(this, "expected a float value");
+        case QMetaType::Bool:
+            if (QVariant v = scalarAsKeyword(); (v.isValid() && (v.userType() == QMetaType::Bool)))
+                return v;
+            throw YamlParserException(this, "expected a boolean value");
+        case QMetaType::Nullptr:
+            if (QVariant v = scalarAsKeyword(); (v.isValid() && (v.userType() == QMetaType::Nullptr)))
+                return v;
+            throw YamlParserException(this, "expected a null value");
+        default:
+            throw YamlParserException(this, "unsupported tag: tag:yaml.org,2002:%1").arg(QString::fromUtf8(tag));
+        }
+    } else if (d->event.data.scalar.style == YAML_SINGLE_QUOTED_SCALAR_STYLE
+               || d->event.data.scalar.style == YAML_DOUBLE_QUOTED_SCALAR_STYLE) {
+        return scalar;
+    } else if (QVariant v = scalarAsKeyword(); v.isValid()) {
+        return v;
+    } else if (QVariant v = scalarAsInt(); v.isValid()) {
+        return v;
+    } else if (QVariant v = scalarAsFloat(); v.isValid()) {
+        return v;
+    } else {
+        return scalar;
     }
-    return scalar;
 }
 
 bool YamlParser::isMap() const
@@ -588,7 +770,7 @@ QString YamlParser::parseMapKey()
 QVariantMap YamlParser::parseMap()
 {
     if (!isMap())
-        throw YamlParserException(this, "Cannot parse non-map as map");
+        throw YamlParserException(this, "Cannot parse %1 as map").arg(mapEventNames({ d->event.type }));
 
     QVariantMap map;
     while (true) {
@@ -610,7 +792,7 @@ QVariantMap YamlParser::parseMap()
 QMap<QString, QString> YamlParser::parseStringMap()
 {
     if (!isMap())
-        throw YamlParserException(this, "Cannot parse non-map as map");
+        throw YamlParserException(this, "Cannot parse %1 as map").arg(mapEventNames({ d->event.type }));
 
     QMap<QString, QString> map;
     while (true) {
@@ -636,7 +818,7 @@ bool YamlParser::isList() const
 void YamlParser::parseList(const std::function<void()> &callback)
 {
     if (!isList())
-        throw YamlParserException(this, "Cannot parse non-list as list");
+        throw YamlParserException(this, "Cannot parse %1 as list").arg(mapEventNames({ d->event.type }));
 
     while (true) {
         nextEvent(); // read next value
@@ -763,7 +945,7 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
         throw YamlParserException(this, "Required fields are missing: %1").arg(fieldsMissing);
 }
 
-YamlParserException::YamlParserException(YamlParser *p, const char *errorString)
+YamlParserException::YamlParserException(const YamlParser *p, const char *errorString)
     : Exception(Error::Parse, "YAML parse error")
 {
     bool isProblem = p->d->parser.problem;

@@ -7,4 +7,4 @@ applications:
   documentDir: "${stdpath:TempLocation}/qtam-test/installer/docs"
 
 flags:
-  noSecurity: yes
+  noSecurity: true

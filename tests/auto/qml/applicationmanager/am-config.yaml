@@ -5,7 +5,7 @@ applications:
   builtinAppsManifestDir: "${CONFIG_DIR}/apps"
 
 ui:
-  fullscreen: no
+  fullscreen: false
 
 systemProperties:
   ignored: 42
@@ -24,7 +24,7 @@ systemProperties:
         level31: 'overwritten'
         level32: 'hidden'
   private:
-    booleanTest: on
+    booleanTest: true
     stringTest: "pelagicore"
     nullTest: ~
     intTest: -1
@@ -48,8 +48,8 @@ systemProperties:
 
 # development setup:
 flags:
-  noSecurity: yes
-  noUiWatchdog: yes
+  noSecurity: true
+  noUiWatchdog: true
 
 runtimes:
   qml:

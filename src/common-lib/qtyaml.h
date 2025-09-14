@@ -20,48 +20,37 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-namespace QtYaml {
-
-class Q_APPMANCOMMON_EXPORT ParseError
-{
-public:
-    ParseError() { }
-
-    QString errorString() const { return m_errorString; }
-
-    int line = -1;
-    int column = -1;
-
-    // QJsonParseError compatibility
-    int offset = -1;
-    QJsonParseError::ParseError error = QJsonParseError::NoError;
-
-    // not really public
-    ParseError(const QString &_errorString, int _line = -1, int _column = -1, int _offset = -1)
-        : line(_line)
-        , column(_column)
-        , offset(_offset)
-        , error(QJsonParseError::UnterminatedObject) // not really, but there are no suitable options
-        , m_errorString(_errorString)
-    { }
-
-private:
-    QString m_errorString;
-};
-
-enum YamlStyle { FlowStyle, BlockStyle };
-
-Q_APPMANCOMMON_EXPORT QByteArray yamlFromVariantDocuments(const QVector<QVariant> &maps, YamlStyle style = BlockStyle);
-
-} // namespace QtYaml
-
 class YamlParserPrivate;
 class YamlParserException;
+class YamlEmitterPrivate;
+
+
+enum class YamlVersion {
+    None = 0,
+    V1_1 = 1,
+    V1_2 = 2,
+};
+
+
+class Q_APPMANCOMMON_EXPORT YamlEmitter {
+public:
+    enum class Style { Flow, Block };
+
+    static QByteArray fromVariantDocuments(const QVector<QVariant> &maps,
+                                           Style style = Style::Block);
+    static QByteArray fromVariantDocuments(const QVector<QVariant> &maps, YamlVersion version,
+                                           Style style = Style::Block);
+};
+
 
 class Q_APPMANCOMMON_EXPORT YamlParser
 {
 public:
     YamlParser(const QByteArray &data, const QString &fileName = QString());
+    // 'parseVersion' is used for non-versioned documents only - you should not need to use this
+    // constructor except for parsing legacy YAML documents.
+    YamlParser(const QByteArray &data, YamlVersion parseVersion,
+               const QString &fileName = QString());
     ~YamlParser();
 
     QString sourceUrl() const;
@@ -127,13 +116,21 @@ public:
 
     void parseFields(const Fields &fields);
 
+#if QT_AM_VERSION < QT_VERSION_CHECK(6, 12, 0)
+    // for auto-test:
+    static void disableDeprecationWarnings();
+#endif
+
 private:
     Q_DISABLE_COPY_MOVE(YamlParser)
 
     QString parseMapKey();
+    static QVariant parseKeyword(const QString &str, YamlParser *parser,
+                                 YamlVersion parseVersion = YamlVersion::None);
 
     YamlParserPrivate *d;
     friend class YamlParserException;
+    friend class YamlEmitterPrivate;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(YamlParser::FieldTypes)
@@ -141,7 +138,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(YamlParser::FieldTypes)
 class Q_APPMANCOMMON_EXPORT YamlParserException : public Exception  // clazy:exclude=copyable-polymorphic
 {
 public:
-    explicit YamlParserException(YamlParser *p, const char *errorString);
+    explicit YamlParserException(const YamlParser *p, const char *errorString);
 };
 
 QT_END_NAMESPACE_AM

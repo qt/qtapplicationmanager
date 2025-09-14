@@ -508,7 +508,7 @@ bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const std::function<vo
 
         QVariantMap map = docs.at(1).toMap();
         manipulate(map);
-        yaml = QtYaml::yamlFromVariantDocuments({ docs.at(0), map });
+        yaml = YamlEmitter::fromVariantDocuments({ docs.at(0), map });
     }
 
     QFile infoYaml(QDir(tmp.path()).absoluteFilePath(u"info.yaml"_s));

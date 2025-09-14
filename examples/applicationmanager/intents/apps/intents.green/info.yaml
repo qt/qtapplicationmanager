@@ -17,4 +17,4 @@ intents:
 - id: broadcast/blink-window
   name:
     en: Blink Green
-  handleOnlyWhenRunning: yes
+  handleOnlyWhenRunning: true

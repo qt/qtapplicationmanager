@@ -3,4 +3,4 @@ formatType: am-configuration
 ---
 systemProperties:
   private:
-    nodbus: yes
+    nodbus: true

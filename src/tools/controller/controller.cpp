@@ -903,7 +903,7 @@ void showApplication(const QString &appId, bool asJson) noexcept(false)
 
     QVariant app = convertFromDBusVariant(reply.value());
     std::cout << (asJson ? QJsonDocument::fromVariant(app).toJson().constData()
-                         : QtYaml::yamlFromVariantDocuments({ app }).constData()) << '\n';
+                         : YamlEmitter::fromVariantDocuments({ app }).constData()) << '\n';
     qApp->quit();
 }
 
@@ -933,7 +933,7 @@ void showPackage(const QString &packageId, bool asJson) noexcept(false)
 
     QVariant package = convertFromDBusVariant(reply.value());
     std::cout << (asJson ? QJsonDocument::fromVariant(package).toJson().constData()
-                         : QtYaml::yamlFromVariantDocuments({ package }).constData()) << '\n';
+                                   : YamlEmitter::fromVariantDocuments({ package }).constData()) << '\n';
     qApp->quit();
 }
 
@@ -1177,7 +1177,7 @@ void showInstallationLocation(bool asJson) noexcept(false)
     dbus()->throwOnError();
 
     std::cout << (asJson ? QJsonDocument::fromVariant(location).toJson().constData()
-                         : QtYaml::yamlFromVariantDocuments({ location }).constData()) << '\n';
+                         : YamlEmitter::fromVariantDocuments({ location }).constData()) << '\n';
     qApp->quit();
 }
 
@@ -1355,7 +1355,7 @@ void showDevelopmentMode(bool asJson)
     QVariantMap out { { u"developmentMode"_s, devMode }, { u"developerCertificate"_s, devCert } };
 
     std::cout << (asJson ? QJsonDocument::fromVariant(out).toJson().constData()
-                         : QtYaml::yamlFromVariantDocuments({ out }).constData()) << '\n';
+                         : YamlEmitter::fromVariantDocuments({ out }).constData()) << '\n';
     qApp->quit();
 }
 

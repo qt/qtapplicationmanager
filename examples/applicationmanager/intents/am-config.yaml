@@ -16,6 +16,6 @@ ui:
 
 # development setup:
 flags:
-  noSecurity: yes
-  noUiWatchdog: yes
+  noSecurity: true
+  noUiWatchdog: true
   developmentMode: system

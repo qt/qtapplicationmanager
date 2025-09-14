@@ -23,7 +23,7 @@ applications:
       pluginPaths: [ e, f ]
       environmentVariables:
          foo: bar
-    supportsApplicationInterface: yes
+    supportsApplicationInterface: true
     capabilities:
       - app1.cap
     opengl:
@@ -56,7 +56,7 @@ applications:
       arguments: [ "-3", "-4" ]
       environmentVariables:
          bar: foo
-    supportsApplicationInterface: yes
+    supportsApplicationInterface: true
     capabilities:
       - app2.cap.1
       - app2.cap.2

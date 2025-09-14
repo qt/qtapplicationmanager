@@ -4,6 +4,7 @@ formatType: testfile
 dec: 10
 hex: 0x10
 oct: 010
+octNew: 0o10
 bin: 0b10
 float1: 10.10
 float2: 0.10
@@ -26,7 +27,7 @@ list-int:
 list-mixed:
 - 1
 - two
-- [yes, ~]
+- [Yes, ~]
 map1:
   a: 1
   b: two

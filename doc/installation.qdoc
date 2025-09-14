@@ -36,7 +36,7 @@ To build the application manager with all its features, the following components
 
 \list
     \li \b Qt 6.9.0 or higher.
-    \li \b libyaml 2.2 or higher.
+    \li \b libyaml 0.2.4 or higher.
     \li \b libarchive 3.5 or higher \e{- if you need the installer functionality}.
 \endlist
 

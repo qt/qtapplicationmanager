@@ -342,7 +342,7 @@ bool NativeRuntime::start()
         { u"QT_QPA_PLATFORM"_s, u"wayland"_s },
         { u"QT_IM_MODULE"_s, QString() },     // Applications should use wayland text input
         { u"QT_SCALE_FACTOR"_s, QString() },  // do not scale wayland clients
-        { u"AM_CONFIG"_s, QString::fromUtf8(QtYaml::yamlFromVariantDocuments({ config })) },
+        { u"AM_CONFIG"_s, QString::fromUtf8(YamlEmitter::fromVariantDocuments({ config })) },
         { u"QT_WAYLAND_SHELL_INTEGRATION"_s, u"xdg-shell"_s},
     };
 

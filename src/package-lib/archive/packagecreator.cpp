@@ -191,7 +191,7 @@ bool PackageCreatorPrivate::create()
 
         // Add the metadata header
 
-        if (!addVirtualFile(ar, u"--PACKAGE-HEADER--"_s, QtYaml::yamlFromVariantDocuments(QVector<QVariant> { headerFormat, m_metaData })))
+        if (!addVirtualFile(ar, u"--PACKAGE-HEADER--"_s, YamlEmitter::fromVariantDocuments(QVector<QVariant> { headerFormat, m_metaData })))
             throw ArchiveException(ar, "could not write '--PACKAGE-HEADER--' to archive");
 
         // Add all regular files
@@ -353,7 +353,7 @@ bool PackageCreatorPrivate::create()
             { u"digest"_s, QString::fromLatin1(m_digest.toHex()) },
         };
 
-        if (!addVirtualFile(ar, u"--PACKAGE-FOOTER--"_s, QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerFormat, footerData })))
+        if (!addVirtualFile(ar, u"--PACKAGE-FOOTER--"_s, YamlEmitter::fromVariantDocuments(QVector<QVariant> { footerFormat, footerData })))
             throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
 
         m_metaData.insert(footerData);
@@ -362,7 +362,7 @@ bool PackageCreatorPrivate::create()
             QVariantMap footerDevSig {
                 { u"developerSignature"_s, QString::fromLatin1(m_report.developerSignature().toBase64()) }
             };
-            if (!addVirtualFile(ar, u"--PACKAGE-FOOTER--"_s, QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerDevSig })))
+            if (!addVirtualFile(ar, u"--PACKAGE-FOOTER--"_s, YamlEmitter::fromVariantDocuments(QVector<QVariant> { footerDevSig })))
                 throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
 
             m_metaData.insert(footerDevSig);
@@ -371,7 +371,7 @@ bool PackageCreatorPrivate::create()
             QVariantMap footerStoreSig {
                 { u"storeSignature"_s, QString::fromLatin1(m_report.storeSignature().toBase64()) }
             };
-            if (!addVirtualFile(ar, u"--PACKAGE-FOOTER--"_s, QtYaml::yamlFromVariantDocuments(QVector<QVariant> { footerStoreSig })))
+            if (!addVirtualFile(ar, u"--PACKAGE-FOOTER--"_s, YamlEmitter::fromVariantDocuments(QVector<QVariant> { footerStoreSig })))
                 throw ArchiveException(ar, "could not add '--PACKAGE-FOOTER--' to archive");
 
             m_metaData.insert(footerStoreSig);

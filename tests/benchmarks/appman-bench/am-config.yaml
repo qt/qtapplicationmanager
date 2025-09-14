@@ -15,10 +15,10 @@ logging:
     - "am.bench*=true"
 
 ui:
-  fullscreen: no
+  fullscreen: false
   mainQml: "${CONFIG_DIR}/system-ui/main.qml"
 
 # development setup:
 flags:
-  noSecurity: yes
-  noUiWatchdog: yes
+  noSecurity: true
+  noUiWatchdog: true

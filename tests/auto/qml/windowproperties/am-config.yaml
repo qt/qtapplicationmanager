@@ -5,4 +5,4 @@ applications:
   builtinAppsManifestDir: "${CONFIG_DIR}/apps"
 
 flags:
-  noUiWatchdog: yes
+  noUiWatchdog: true

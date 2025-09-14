@@ -15,4 +15,4 @@ intents:
 - id: both
 - id: only1 # declared here, but no handler to provoke an error
 - id: broadcast/ping
-  handleOnlyWhenRunning: yes
+  handleOnlyWhenRunning: true

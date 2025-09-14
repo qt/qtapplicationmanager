@@ -9,7 +9,7 @@ runtimes:
     quitTime: 10000  # coin can be VERY slow
 
 flags:
-  developmentMode: yes
+  developmentMode: true
 
 containers:
   selection:
@@ -20,8 +20,8 @@ containers:
     networkSetupScript: ${CONFIG_DIR}/netscript.sh
     environmentFiles: [ '${CONFIG_DIR}/good.env', '${CONFIG_DIR}/bad.env' ]
 
-    # set to yes, if you build against a system or Installer Qt and the launcher cannot be found
-    bindMountHome: yes
+    # set to true, if you build against a system or Installer Qt and the launcher cannot be found
+    bindMountHome: true
     configuration:
     - symlink:
         usr/bin: [ '/bin', '/sbin' ]

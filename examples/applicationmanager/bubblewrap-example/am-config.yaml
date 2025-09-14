@@ -27,8 +27,8 @@ containers:
     # your network setup though:
     # networkSetupScript: 'sudo "${EXECUTABLE_DIR}/bubblewrap-network-setup.sh"'
 
-    # set to yes, if you build against a system or Installer Qt and the launcher cannot be found
-    bindMountHome: yes
+    # set to true, if you build against a system or Installer Qt and the launcher cannot be found
+    bindMountHome: true
     configuration:
     - symlink:
         usr/lib: '/lib'

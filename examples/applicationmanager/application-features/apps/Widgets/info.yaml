@@ -12,4 +12,4 @@ applications:
   runtimeParameters:
     environmentVariables:
       QT_WAYLAND_DISABLE_WINDOWDECORATION: "1"
-  supportsApplicationInterface: yes
+  supportsApplicationInterface: true

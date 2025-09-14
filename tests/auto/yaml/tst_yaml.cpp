@@ -6,6 +6,7 @@
 #include <QtCore>
 #include <QtTest>
 #include <QThreadPool>
+#include <QtLogging>
 
 #include "qtyaml.h"
 #include "configcache.h"
@@ -24,51 +25,95 @@ public:
     tst_Yaml();
 
 private Q_SLOTS:
+    void tests_data();
+    void tests();
+    void parser_data();
     void parser();
     void documentParser();
     void cache();
     void mergedCache();
     void parallel();
     void generate();
+    void emitter();
+
+private:
+    // version shortcuts for tests()
+    static constexpr int DEF = -1;
+    static constexpr int ALL = 0;
+    static constexpr int V11 = 1;
+    static constexpr int V12 = 2;
+
 };
 
+static QVariant vnull = QVariant::fromValue(nullptr);
 
 tst_Yaml::tst_Yaml()
-{ }
+{
+    auto verbose = qEnvironmentVariableIsSet("AM_VERBOSE_TEST");
+    qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(change by (un)setting $AM_VERBOSE_TEST)";
+    QLoggingCategory::setFilterRules(u"*.debug=%1"_s.arg(verbose ? "true" : "false"));
+
+    // remove this line to see all the YAML 1.1 deprecation warnings
+    YamlParser::disableDeprecationWarnings();
+}
+
+void tst_Yaml::parser_data()
+{
+    QTest::addColumn<QString>("file");
+    QTest::addColumn<bool>("yaml12");
+    QTest::newRow("Yaml 1.1") << u":/data/test.yaml"_s << false;
+    QTest::newRow("Yaml 1.2") << u":/data/test.yaml"_s << true;
+}
 
 void tst_Yaml::parser()
 {
-    static const QVariant vnull = QVariant::fromValue(nullptr);
+    QFETCH(QString, file);
+    QFETCH(bool, yaml12);
 
-    QVector<QPair<const char *, QVariant>> tests = {
-        { "dec", QVariant::fromValue<int>(10) },
-        { "hex", QVariant::fromValue<int>(16) },
-        { "bin", QVariant::fromValue<int>(2) },
-        { "oct", QVariant::fromValue<int>(8) },
-        { "float1", QVariant::fromValue<double>(10.1) },
-        { "float2", QVariant::fromValue<double>(.1) },
-        { "float3", QVariant::fromValue<double>(.1) },
-        { "number-separators", QVariant::fromValue<int>(1234567) },
+    struct TestData {
+        const char *m_name;
+        QVariant m_yaml11;
+        QVariant m_yaml12;
+
+        TestData(const char *name, const QVariant &yaml11)
+            : m_name(name), m_yaml11(yaml11), m_yaml12(yaml11) { }
+        TestData(const char *name, const QVariant &yaml11, const QVariant &yaml12)
+            : m_name(name), m_yaml11(yaml11), m_yaml12(yaml12) { }
+    };
+
+    std::array<TestData, 22> tests {{
+        { "dec", 10 },
+        { "hex", 16 },
+        { "bin", 2, u"0b10"_s },
+        { "oct", 8, 10 },
+        { "octNew", u"0o10"_s, 8 },
+        { "float1", 10.1 },
+        { "float2", .1 },
+        { "float3", .1 },
+        { "number-separators", 1234567, u"1_234_567"_s },
         { "bool-true", true },
-        { "bool-yes", true },
+        { "bool-yes", true, u"yes"_s },
         { "bool-false", false },
-        { "bool-no", false },
+        { "bool-no", false, u"no"_s },
         { "null-literal", vnull },
         { "null-tilde", vnull },
         { "null-empty", vnull },
-        { "string-unquoted", QVariant::fromValue<QString>(u"unquoted"_s) },
-        { "string-singlequoted", QVariant::fromValue<QString>(u"singlequoted"_s) },
-        { "string-doublequoted", QVariant::fromValue<QString>(u"doublequoted"_s) },
+        { "string-unquoted", u"unquoted"_s },
+        { "string-singlequoted", u"singlequoted"_s },
+        { "string-doublequoted", u"doublequoted"_s },
         { "list-int", QVariantList { 1, 2, 3 } },
-        { "list-mixed", QVariantList { 1, u"two"_s, QVariantList { true, vnull } } },
+        { "list-mixed", QVariantList { 1, u"two"_s, QVariantList { true, vnull } },
+                        QVariantList { 1, u"two"_s, QVariantList { u"Yes"_s, vnull } } },
         { "map1", QVariantMap { { u"a"_s, 1 }, { u"b"_s, u"two"_s },
                                 { u"c"_s, QVariantList { 1, 2, 3 } } } }
-    };
+    }};
 
     try {
-        QFile f(u":/data/test.yaml"_s);
+        QFile f(file);
         QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
         QByteArray ba = f.readAll();
+        if (yaml12)
+            ba.prepend("%YAML 1.2\n---\n");
         QVERIFY(!ba.isEmpty());
         YamlParser yp(ba, f.fileName());
         auto header = yp.parseHeader();
@@ -79,15 +124,15 @@ void tst_Yaml::parser()
         QVERIFY(yp.nextDocument());
 
         YamlParser::Fields fields;
-        for (const auto &pair : tests) {
+        for (const auto &[name, value11, value12] : tests) {
+            QVariant value = yaml12 ? value12 : value11;
             YamlParser::FieldType type = YamlParser::Scalar;
-            if (pair.second.metaType() == QMetaType::fromType<QVariantList>())
+            if (value.metaType() == QMetaType::fromType<QVariantList>())
                 type = YamlParser::List;
-            else if (pair.second.metaType() == QMetaType::fromType<QVariantMap>())
+            else if (value.metaType() == QMetaType::fromType<QVariantMap>())
                 type = YamlParser::Map;
-            QVariant value = pair.second;
 
-            fields.emplace_back(pair.first, true, type, [&yp, type, value]() {
+            fields.emplace_back(name, true, type, [&yp, type, value]() {
                 switch (type) {
                 case YamlParser::Scalar: {
                     QVERIFY(yp.isScalar());
@@ -204,7 +249,6 @@ void tst_Yaml::parser()
     }
 }
 
-static const QVariant vnull = QVariant::fromValue(nullptr);
 
 static const QVariantMap testHeaderDoc = {
     { u"formatVersion"_s, 42 }, { u"formatType"_s, u"testfile"_s }
@@ -215,6 +259,7 @@ static const QVariantMap testMainDoc = {
     { u"hex"_s, 16 },
     { u"bin"_s, 2 },
     { u"oct"_s, 8 },
+    { u"octNew"_s, u"0o10"_s },
     { u"float1"_s, 10.1 },
     { u"float2"_s, .1 },
     { u"float3"_s, .1 },
@@ -261,8 +306,8 @@ void tst_Yaml::documentParser()
         QCOMPARE(docs.size(), 2);
         QCOMPARE(docs.at(0).toMap().size(), 2);
 
-        QCOMPARE(testHeaderDoc, docs.at(0).toMap());
-        QCOMPARE(testMainDoc, docs.at(1).toMap());
+        QCOMPARE(docs.at(0).toMap(), testHeaderDoc);
+        QCOMPARE(docs.at(1).toMap(), testMainDoc);
 
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
@@ -478,6 +523,129 @@ void tst_Yaml::parallel()
     QCOMPARE(success.loadAcquire(), threadCount);
 }
 
+void tst_Yaml::tests_data()
+{
+    QTest::addColumn<QString>("yaml");
+    QTest::addColumn<int>("version");  // 0 = default, 1 = 1.1, 2 = 1.2
+    QTest::addColumn<bool>("valid");
+    QTest::addColumn<QVariant>("result"); // result or exception text when valid == false
+
+    auto V = [](QVariant v) { return v; };
+
+    QTest::newRow("no-1.1") << "no: yes" << V11 << false << V(u"Only strings are supported as mapping keys"_s);
+    QTest::newRow("no-1.2") << "no: yes" << V12 << true  << V(QVariantMap{{u"no"_s, u"yes"_s}});
+    QTest::newRow("no-def") << "no: yes" << DEF << false << V(u"Only strings are supported as mapping keys"_s);
+
+    QTest::newRow("bool-key")  << "true: a" << ALL << false << V(u"Only strings are supported as mapping keys"_s);
+    QTest::newRow("null-key")  << "~: a"    << ALL << false << V(u"Only strings are supported as mapping keys"_s);
+    QTest::newRow("+int-key")  << "1: a"    << ALL << false << V(u"Only strings are supported as mapping keys"_s);
+    QTest::newRow("-int-key")  << "-1: a"   << ALL << false << V(u"Only strings are supported as mapping keys"_s);
+    QTest::newRow("float-key") << ".1: a"   << ALL << false << V(u"Only strings are supported as mapping keys"_s);
+
+    QTest::newRow("quote-1") << R"('a''a')" << ALL << true << V(uR"(a'a)"_s);
+    QTest::newRow("quote-2") << R"('a"a')"  << ALL << true << V(uR"(a"a)"_s);
+    QTest::newRow("quote-3") << R"("a'a")"  << ALL << true << V(uR"(a'a)"_s);
+    QTest::newRow("quote-4") << R"("a\"a")" << ALL << true << V(uR"(a"a)"_s);
+
+    QTest::newRow("literal-str") << ">\n  a\n" << ALL << true << V(u"a\n"_s);
+    QTest::newRow("literal-int") << ">\n 42\n" << ALL << true << V(42);
+    QTest::newRow("folded-str")  << "|\n a\n b \"c\" 'd'\n e\n \n f\n   g\n \n " << ALL << true << V(u"a\nb \"c\" 'd'\ne\n\nf\n  g\n"_s);
+
+    QTest::newRow("tag-str-str") << "!!str str" << ALL << true << V(u"str"_s);
+    QTest::newRow("tag-str-int") << "!!str 42" << ALL << true << V(u"42"_s);
+    QTest::newRow("tag-str-bool") << "!!str true" << ALL << true << V(u"true"_s);
+    QTest::newRow("tag-str-null") << "!!str null" << ALL << true << V(u"null"_s);
+    QTest::newRow("tag-str-float") << "!!str .1" << ALL << true << V(u".1"_s);
+    QTest::newRow("tag-str-empty") << "!!str" << ALL << true << V(u""_s);
+
+    QTest::newRow("tag-int-str") << "!!int 'str'" << ALL << false << V(u"expected an integer value"_s);
+    QTest::newRow("tag-int-int") << "!!int 42" << ALL << true << V(42);
+    QTest::newRow("tag-int-intstr") << "!!int '42'" << ALL << true << V(42);
+    QTest::newRow("tag-int-bool") << "!!int false" << ALL << false << V(u"expected an integer value"_s);
+    QTest::newRow("tag-int-null") << "!!int ~" << ALL << false << V(u"expected an integer value"_s);
+    QTest::newRow("tag-int-float") << "!!int .1" << ALL << false << V(u"expected an integer value"_s);
+    QTest::newRow("tag-int-empty") << "!!int" << ALL << false << V(u"expected an integer value"_s);
+
+    QTest::newRow("tag-bool-int") << "!!bool 42" << ALL << false << V(u"expected a boolean value"_s);
+    QTest::newRow("tag-bool-boolstr") << "!!bool 'true'" << ALL << true << V(true);
+    QTest::newRow("tag-bool-str") << "!!bool 'str'" << ALL << false << V(u"expected a boolean value"_s);
+    QTest::newRow("tag-bool-bool") << "!!bool true" << ALL << true << V(true);
+    QTest::newRow("tag-bool-null") << "!!bool ~" << ALL << false << V(u"expected a boolean value"_s);
+    QTest::newRow("tag-bool-float") << "!!bool .1" << ALL << false << V(u"expected a boolean value"_s);
+    QTest::newRow("tag-bool-empty") << "!!bool" << ALL << false << V(u"expected a boolean value"_s);
+
+    QTest::newRow("tag-null-int") << "!!null 42" << ALL << false << V(u"expected a null value"_s);
+    QTest::newRow("tag-null-nullstr") << "!!null 'null'" << ALL << true << V(vnull);
+    QTest::newRow("tag-null-str") << "!!null 'str'" << ALL << false << V(u"expected a null value"_s);
+    QTest::newRow("tag-null-bool") << "!!null true" << ALL << false << V(u"expected a null value"_s);
+    QTest::newRow("tag-null-null") << "!!null ~" << ALL << true << V(vnull);
+    QTest::newRow("tag-null-float") << "!!null .1" << ALL << false << V(u"expected a null value"_s);
+    QTest::newRow("tag-null-empty") << "!!null" << ALL << true << V(vnull);
+
+    QTest::newRow("tag-float-int") << "!!float 42" << ALL << true << V(42.);
+    QTest::newRow("tag-float-floatstr") << "!!float '3.14'" << ALL << true << V(3.14);
+    QTest::newRow("tag-float-str") << "!!float 'str'" << ALL << false << V(u"expected a float value"_s);
+    QTest::newRow("tag-float-bool") << "!!float true" << ALL << false << V(u"expected a float value"_s);
+    QTest::newRow("tag-float-null") << "!!float ~" << ALL << false << V(u"expected a float value"_s);
+    QTest::newRow("tag-float-float") << "!!float .1" << ALL << true << V(.1);
+    QTest::newRow("tag-float-empty") << "!!float" << ALL << false << V(u"expected a float value"_s);
+
+    QTest::newRow("tag-xxx") << "!!xxx str" << ALL << false << V(u"unsupported tag: tag:yaml.org,2002:xxx"_s);
+}
+
+void tst_Yaml::tests()
+{
+    QFETCH(QString, yaml);
+    QFETCH(int, version);
+    QFETCH(bool, valid);
+    QFETCH(QVariant, result);
+
+    QVERIFY((version >= DEF) && (version <= V12));
+
+    if (version == DEF)
+        version = V11;
+
+    int beg = (version == ALL) ? V11 : version;
+    int end = (version == ALL) ? V12 : version;
+
+    for (int v = beg; v <= end; ++v) {
+        QByteArray yamlStr = yaml.toUtf8();
+
+         // we need a map to make it a document
+        if (yamlStr.contains(':'))
+            yamlStr.prepend("k:\n ");
+        else
+            yamlStr.prepend("k: ");
+
+        switch (v) {
+        case 0: break;
+        case 1: yamlStr.prepend("%YAML 1.1\n---\n"); break;
+        case 2: yamlStr.prepend("%YAML 1.2\n---\n"); break;
+        }
+
+        if (valid) {
+            QVector<QVariant> docs;
+            QVERIFY_THROWS_NO_EXCEPTION(docs = YamlParser::parseAllDocuments(yamlStr));
+            QVERIFY(docs.size() == 1);
+            QVERIFY(docs.at(0).userType() == QMetaType::QVariantMap);
+            QVariant value = docs.at(0).toMap().value(u"k"_s);
+            QCOMPARE(value, result);
+        } else {
+            // QVERIFY_THROWS_EXCEPTION does not give access to the what() the text
+            try {
+                auto docs = YamlParser::parseAllDocuments(yamlStr);
+                QString msg = u"Expected to throw an exception, but returned result: "_s
+                              + docs.at(0).toMap().value(u"k"_s).toString();
+                QFAIL(qPrintable(msg));
+            } catch (const Exception &e) {
+                QVERIFY2(e.errorString().contains(result.toString()), e.what());
+            } catch (...) {
+                QFAIL("Expected exception was thrown, but of incorrect type");
+            }
+        }
+    }
+}
+
 void tst_Yaml::generate()
 {
     QFile f(u":/data/tricky.yaml"_s);
@@ -485,26 +653,48 @@ void tst_Yaml::generate()
     QByteArray ba = f.readAll().replace('\r', "");
     QVERIFY(!ba.isEmpty());
 
-    QVector<QVariant> result;
-    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments("no: yes\n"));
-    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments("1: a\n"));
-    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments("-1: b\n"));
-    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments(".1: c\n"));
-    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments("a\'a"));
-    QVERIFY_THROWS_EXCEPTION(Exception, YamlParser::parseAllDocuments("a\"a"));
-    QVERIFY_THROWS_NO_EXCEPTION(result = YamlParser::parseAllDocuments("k: \"a'a\""));
-    QCOMPARE(result.value(0).toMap().value(u"k"_s).toString(), u"a'a"_s);
-    QVERIFY_THROWS_NO_EXCEPTION(result = YamlParser::parseAllDocuments("k: \"a\\\"a\""));
-    QCOMPARE(result.value(0).toMap().value(u"k"_s).toString(), u"a\"a"_s);
-    QVERIFY_THROWS_NO_EXCEPTION(result = YamlParser::parseAllDocuments("k: 'a''a'"));
-    QCOMPARE(result.value(0).toMap().value(u"k"_s).toString(), u"a'a"_s);
-
     QVector<QVariant> docs;
     QVERIFY_THROWS_NO_EXCEPTION(docs = YamlParser::parseAllDocuments(ba));
     QCOMPARE(docs.size(), 1);
 
-    QByteArray baGen = QtYaml::yamlFromVariantDocuments(docs);
+    QByteArray baGen = YamlEmitter::fromVariantDocuments(docs);
     QCOMPARE(ba, baGen);
+}
+
+void tst_Yaml::emitter()
+{
+    QVariantMap m {
+        { u"no"_s, false },
+        { u"on"_s, true },
+        { u"key"_s, u"value"_s }
+    };
+
+    auto yamlDef = YamlEmitter::fromVariantDocuments({m});
+    auto yamlV11 = YamlEmitter::fromVariantDocuments({m}, YamlVersion::V1_1);
+    auto yamlV12 = YamlEmitter::fromVariantDocuments({m}, YamlVersion::V1_2);
+
+#if QT_AM_VERSION < QT_VERSION_CHECK(6, 12, 0)
+    QCOMPARE(yamlV11, yamlDef);
+#else
+    QCOMPARE(ba2, bad);
+#endif
+
+    const QByteArray expectedV11 =
+        "%YAML 1.1\n"
+        "---\n"
+        "key: 'value'\n"
+        "'no': false\n"
+        "'on': true\n";
+
+    const QByteArray expectedV12 =
+        "%YAML 1.2\n"
+        "---\n"
+        "key: 'value'\n"
+        "no: false\n"
+        "on: true\n";
+
+    QCOMPARE(yamlV11, expectedV11);
+    QCOMPARE(yamlV12, expectedV12);
 }
 
 QTEST_GUILESS_MAIN(tst_Yaml)

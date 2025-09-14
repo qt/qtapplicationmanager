@@ -28,7 +28,6 @@ using namespace Qt::StringLiterals;
 
 
 QT_USE_NAMESPACE_AM
-using namespace QtYaml;
 
 class tst_ControllerTool : public QObject
 {

@@ -200,7 +200,7 @@ void InstallationReport::deserialize(QIODevice *from)
         QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(u"hmac"_s).toString().toLatin1());
         QByteArrayView hmacKey { privateHmacKeyData.data(), privateHmacKeyData.size() };
 
-        QByteArray out = QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle);
+        QByteArray out = YamlEmitter::fromVariantDocuments({ docs[0], docs[1] }, YamlEmitter::Style::Block);
         QByteArray hmacCalc= QMessageAuthenticationCode::hash(out, hmacKey, QCryptographicHash::Sha256);
 
         if (hmacFile != hmacCalc) {

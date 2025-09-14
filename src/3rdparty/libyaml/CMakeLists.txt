@@ -20,7 +20,7 @@ qt_internal_add_3rdparty_library(BundledLibYaml
         YAML_DECLARE_STATIC
     INCLUDE_DIRECTORIES
         include
-        win32
+        .
     PUBLIC_INCLUDE_DIRECTORIES
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )

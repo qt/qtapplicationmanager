@@ -5,11 +5,11 @@ applications:
   builtinAppsManifestDir: "${CONFIG_DIR}/apps"
 
 ui:
-  fullscreen: no
+  fullscreen: false
 
 flags:
-  noSecurity: yes
-  noUiWatchdog: yes
+  noSecurity: true
+  noUiWatchdog: true
 
 runtimes:
   qml:

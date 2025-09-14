@@ -16,17 +16,17 @@ logging:
     - "*.critical=true"
 
 ui:
-  fullscreen: no
+  fullscreen: false
   mainQml: "${CONFIG_DIR}/system-ui/main.qml"
 
 systemProperties:
   protected:
-    light: on
+    light: true
 
 # development setup:
 flags:
   developmentMode: system
-  noSecurity: yes
+  noSecurity: true
 
 watchdog:
   eventloop:

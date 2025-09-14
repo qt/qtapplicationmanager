@@ -265,7 +265,7 @@ void PackagingJob::execute() noexcept(false)
 
         QVariantMap md = creator.metaData();
         m_output = QString::fromUtf8(m_asJson ? QJsonDocument::fromVariant(md).toJson()
-                                              : QtYaml::yamlFromVariantDocuments({ md }));
+                                              : YamlEmitter::fromVariantDocuments({ md }));
         break;
     }
     case DeveloperSign:
@@ -394,7 +394,7 @@ void PackagingJob::execute() noexcept(false)
 
         QVariantMap md = creator.metaData();
         m_output = QString::fromUtf8(m_asJson ? QJsonDocument::fromVariant(md).toJson()
-                                              : QtYaml::yamlFromVariantDocuments({ md }));
+                                              : YamlEmitter::fromVariantDocuments({ md }));
         break;
     }
     default:

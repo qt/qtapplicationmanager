@@ -543,8 +543,12 @@ void Controller::updateSlowAnimationsForWindow(QQuickWindow *window)
 #else
             QObject::disconnect(*connection);
 #endif
-            QUnifiedTimer::instance()->setSpeedModifier(
-                ApplicationMain::instance()->slowAnimations() ? slowAnimationSpeed() : 1.0f);
+#if QT_VERSION < QT_VERSION_CHECK(6, 11, 0)
+            QUnifiedTimer::instance()->setSlowModeEnabled(ApplicationMain::instance()->slowAnimations());
+#else
+            QUnifiedTimer::instance()->setSpeedModifier(ApplicationMain::instance()->slowAnimations()
+                                                            ? slowAnimationSpeed() : 1.0f);
+#endif
             delete connection;
         }
     }, Qt::DirectConnection);
@@ -552,7 +556,11 @@ void Controller::updateSlowAnimationsForWindow(QQuickWindow *window)
 
 void Controller::updateSlowAnimations(bool isSlow)
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 11, 0)
+    QUnifiedTimer::instance()->setSlowModeEnabled(isSlow);
+#else
     QUnifiedTimer::instance()->setSpeedModifier(isSlow ? slowAnimationSpeed() : 1.0f);
+#endif
 
     for (auto it = m_allWindows.cbegin(); it != m_allWindows.cend(); ) {
         QPointer<QQuickWindow> window = *it;

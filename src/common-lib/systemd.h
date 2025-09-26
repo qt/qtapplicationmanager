@@ -42,6 +42,8 @@ private:
 
     int m_notifySocketFd = -1;
     bool m_notifySocketTriedToConnect = false;
+
+    friend class SystemdTest;
 };
 
 QT_END_NAMESPACE_AM

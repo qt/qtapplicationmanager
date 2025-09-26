@@ -26,6 +26,7 @@ add_subdirectory(architecture)
 add_subdirectory(yaml)
 
 if (LINUX)
+    add_subdirectory(systemd)
     add_subdirectory(systemreader)
     add_subdirectory(processreader)
     add_subdirectory(sudo)

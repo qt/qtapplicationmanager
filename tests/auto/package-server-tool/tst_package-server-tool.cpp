@@ -99,7 +99,8 @@ void tst_PackageServerTool::initTestCase()
     QVERIFY(m_psProcess.waitForReadyRead());
     QTest::qWait(500 * QtAM::timeoutFactor());
 
-    const auto err = QString::fromLocal8Bit(m_psProcess.readAllStandardError());
+    auto err = QString::fromLocal8Bit(m_psProcess.readAllStandardError());
+    err.replace(u"QML debugging is enabled. Only use this in a safe environment.\n"_s, u""_s);
     QCOMPARE(err, QString { });
     const auto outLines = QString::fromLocal8Bit(m_psProcess.readAllStandardOutput()).split(u'\n', Qt::SkipEmptyParts);
 

@@ -124,6 +124,7 @@ public:
         stdOut = m_ctrl->readAllStandardOutput();
         stdOutList = QString::fromLocal8Bit(stdOut).split(u'\n', Qt::SkipEmptyParts);
         stdErr = m_ctrl->readAllStandardError();
+        stdErr.replace("QML debugging is enabled. Only use this in a safe environment.\n", "");
         stdErrList = QString::fromLocal8Bit(stdErr).split(u'\n', Qt::SkipEmptyParts);
 
         if (exitStatus == QProcess::CrashExit)
@@ -242,7 +243,7 @@ void tst_ControllerTool::instances()
 {
     ControllerTool ctrl({ u"list-instances"_s });
     QVERIFY2(ctrl.call(), ctrl.failure);
-    QVERIFY(ctrl.stdErrList.isEmpty());
+    QVERIFY2(ctrl.stdErrList.isEmpty(), qPrintable(ctrl.stdErrList.join(u'\n')));
     QCOMPARE(ctrl.stdOutList, QStringList({ u"controller-test-id-0"_s }));
 }
 

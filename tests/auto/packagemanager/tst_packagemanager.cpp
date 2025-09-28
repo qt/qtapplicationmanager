@@ -13,6 +13,7 @@
 #include "package.h"
 #include "applicationinfo.h"
 #include "sudo.h"
+#include "logging.h"
 #include "utilities.h"
 #include "error.h"
 #include "private/packageutilities_p.h"
@@ -210,8 +211,7 @@ void tst_PackageManager::initTestCase()
         QSKIP("No test packages available in the data/ directory");
 
     bool verbose = qEnvironmentVariableIsSet("AM_VERBOSE_TEST");
-    if (!verbose)
-        QLoggingCategory::setFilterRules(u"am.installer.debug=false"_s);
+    QLoggingCategory::setFilterRules(u"am.*.debug=%1"_s.arg(verbose ? "true" : "false"));
     qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(change by (un)setting $AM_VERBOSE_TEST)";
 
     spyTimeout *= timeoutFactor();
@@ -441,7 +441,7 @@ void tst_PackageManager::packageInstallation()
     for (int pass = 1; pass <= lastPass; ++pass) {
         // this makes the results a bit ugly to look at, but it helps with debugging a lot
         if (pass > 1)
-            qInfo("Pass %d", pass);
+            qCDebug(LogSystem) << "Pass" << pass;
 
         // install (or update) the package
 

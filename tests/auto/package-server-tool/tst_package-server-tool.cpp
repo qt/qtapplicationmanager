@@ -69,9 +69,6 @@ void tst_PackageServerTool::initTestCase()
     if (!QDir(QString::fromLatin1(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
-    auto verbose = qEnvironmentVariableIsSet("AM_VERBOSE_TEST");
-    qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(change by (un)setting $AM_VERBOSE_TEST)";
-
     const QString psTool = findAppManTool(u"appman-package-server"_s);
     QVERIFY(!psTool.isEmpty());
 

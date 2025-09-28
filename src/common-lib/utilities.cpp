@@ -184,6 +184,9 @@ qreal slowAnimationSpeed()
 
 bool recursiveOperation(const QString &path, const std::function<bool (const QString &, RecursiveOperationType)> &operation)
 {
+    if (path.isEmpty() || !operation)
+        return false;
+
     QFileInfo pathInfo(path);
 
     if (pathInfo.isDir()) {

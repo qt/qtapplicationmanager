@@ -401,9 +401,9 @@ void WindowManager::setWatchdogTimeouts(std::chrono::milliseconds checkInterval,
     if (d->waylandCompositor)
         d->waylandCompositor->setWatchdogTimeouts(checkInterval, warnTimeout, killTimeout);
 #else
-    Q_UNUSED(checkInterval);
-    Q_UNUSED(warnTimeout);
-    Q_UNUSED(killTimeout);
+    Q_UNUSED(checkInterval)
+    Q_UNUSED(warnTimeout)
+    Q_UNUSED(killTimeout)
 #endif
 }
 
@@ -454,6 +454,8 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
         return QVariant::fromValue(win);
     case WMRoles::ContentState:
         return win->contentState();
+    default:
+        break;
     }
     return QVariant();
 }
@@ -955,6 +957,8 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
                     break;
                 case 'i':
                     result.append(appId);
+                    break;
+                default:
                     break;
                 }
                 percent = false;

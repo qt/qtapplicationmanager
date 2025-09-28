@@ -123,7 +123,6 @@ static void emitYaml(yaml_emitter_t *e, const QVariant &value, YamlStyle style) 
     yaml_event_t event;
 
     switch (value.metaType().id()) {
-    default:
     case QMetaType::UnknownType:
         emitYamlScalar(e, "~");
         break;
@@ -141,6 +140,7 @@ static void emitYaml(yaml_emitter_t *e, const QVariant &value, YamlStyle style) 
     case QMetaType::Double:
         emitYamlScalar(e, QByteArray::number(value.toDouble()));
         break;
+    default:
     case QMetaType::QString:
         emitYamlScalar(e, value.toString().toUtf8(), true);
         break;

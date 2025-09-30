@@ -67,8 +67,8 @@ endif()
 ## COVERAGE ###########################################################
 
 if(AM_COVERAGE)
-    if(NOT (LINUX AND (GCC OR CLANG)))
-        message(FATAL_ERROR "Coverage builds are only supported on Linux, using GCC or Clang.")
+    if(NOT (LINUX AND GCC))
+        message(FATAL_ERROR "Coverage builds are only supported on Linux, using GCC.")
         return()
     endif()
 
@@ -99,19 +99,47 @@ if(AM_COVERAGE)
         list(APPEND COVERAGE_DEPENDS tests/auto/install)
     endif()
 
+    set(GCOV_OPTIONS
+        --rc branch_coverage=1
+        --rc check_data_consistency=0
+        --ignore-errors mismatch
+        --ignore-errors unused
+    )
+
     add_custom_target(check_coverage
         COMMAND sh -c 'which lcov >/dev/null || { echo "The lcov tool is not available." && exit 2 \; }'
         COMMAND sh -c 'which genhtml >/dev/null || { echo "The genhtml tool is not available." && exit 2 \; }'
         COMMAND sh -c 'lcov --version | grep -q "^lcov: LCOV version 2\." || { echo "The lcov tool must be version 2." && exit 2 \; }'
         COMMAND find . \\\( -name \"*.gcov-info\" -o -name \"*.gcda\" \\\) -print0 | xargs -0 rm -f
-        COMMAND lcov -keep-going -c -i -d . --rc branch_coverage=1 --rc geninfo_auto_base=1 -o "${CMAKE_CURRENT_BINARY_DIR}/base.gcov-info"
+        COMMAND echo
+        COMMAND echo "=== Initializing from compile time coverage data"
+        COMMAND echo
+        COMMAND lcov -keep-going -c -i -d . --rc geninfo_auto_base=1 ${GCOV_OPTIONS} -o "${CMAKE_CURRENT_BINARY_DIR}/base.gcov-info"
+        COMMAND echo
+        COMMAND echo "=== Running tests"
+        COMMAND echo
         COMMAND ctest --test-dir tests/auto --verbose --repeat until-pass:3
-        COMMAND lcov -keep-going -c -d . --rc branch_coverage=1 --rc geninfo_auto_base=1 -o "${CMAKE_CURRENT_BINARY_DIR}/test.gcov-info"
-        COMMAND lcov -keep-going --rc branch_coverage=1 -o "${CMAKE_CURRENT_BINARY_DIR}/temp.gcov-info" `find . -name \"*.gcov-info\" | xargs -n1 echo -a`
-        COMMAND lcov -keep-going --rc branch_coverage=1 -o "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.gcov-info" -r temp.gcov-info ${GCOV_EXCLUDE}
+        COMMAND echo
+        COMMAND echo "=== Collecting runtime coverage data from tests"
+        COMMAND echo
+        COMMAND lcov -keep-going -c -d . --rc geninfo_auto_base=1 ${GCOV_OPTIONS} -o "${CMAKE_CURRENT_BINARY_DIR}/test.gcov-info"
+        COMMAND echo
+        COMMAND echo "=== Consolidating all coverage data"
+        COMMAND echo
+        COMMAND lcov -keep-going ${GCOV_OPTIONS} -o "${CMAKE_CURRENT_BINARY_DIR}/temp.gcov-info" `find . -name \"*.gcov-info\" | xargs -n1 echo -a`
+        COMMAND echo
+        COMMAND echo "=== Removing excluded files from coverage data"
+        COMMAND echo
+        COMMAND lcov -keep-going ${GCOV_OPTIONS} -o "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.gcov-info" -r temp.gcov-info ${GCOV_EXCLUDE}
+        COMMAND echo
+        COMMAND echo "=== Removing temporary coverage data"
+        COMMAND echo
         COMMAND rm -f base.gcov-info test.gcov-info temp.gcov-info
-        COMMAND genhtml -o coverage-report -s -f -t "${PROJECT_NAME}" --legend --branch-coverage --rc branch_coverage=1 --rc geninfo_unexecuted_blocks=1 --demangle-cpp "c++filt" ${PROJECT_NAME}.gcov-info
-        COMMAND echo \"\\n\\nCoverage info is available at file://`pwd`/coverage-report/index.html\\n\"
+        COMMAND echo
+        COMMAND echo "=== Generating coverage report"
+        COMMAND echo
+        COMMAND genhtml -o coverage-report -s -f -t "${PROJECT_NAME}" --legend --branch-coverage ${GCOV_OPTIONS} --demangle-cpp "c++filt" ${PROJECT_NAME}.gcov-info
+        COMMAND echo \"\\n\\nCoverage report is available at file://`pwd`/coverage-report/index.html\\n\"
 
         DEPENDS ${COVERAGE_DEPENDS}
         USES_TERMINAL

@@ -25,8 +25,10 @@
 #  include <csignal>
 #  include <cstdlib>
 #  include <csetjmp>
-#  if defined(Q_OS_MACOS) && defined(setjmp)
-#    undef setjmp // macOS defines this as a self-recursive macro in C++ mode
+#  if defined(Q_OS_DARWIN) // we want the real POSIX functions, not macros
+#    undef sigemptyset
+#    undef sigaddset
+#    undef setjmp
 #  endif
 #  include <cxxabi.h>
 #  include <pthread.h>
@@ -47,7 +49,7 @@
 #    include <execinfo.h>
 #    include <sys/syscall.h>
 #  endif
-#  if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+#  if defined(Q_OS_DARWIN)
 #    include <mach-o/dyld.h>
 #    define AM_PTHREAD_T_FMT "%p"
 #  elif defined(Q_OS_QNX)
@@ -393,10 +395,11 @@ static void initBacktraceUnix()
         crashHandler(buffer, chg()->stackFramesToIgnoreOnCrash);
 
         // SIGSTKFLT / SIGEMT as used by the watchdog will not dump core, but SIGABRT will
-        if ((sig <= 0) || (isWatchdogSig && chg()->dumpCoreOnWatchdogKill))
+        if (!UnixSignalHandler::isValidSignal(sig) || (isWatchdogSig && chg()->dumpCoreOnWatchdogKill))
             sig = SIGABRT;
+        UnixSignalHandler::instance()->resetToDefault(sig);
+
         logMsgF(Console, "\n > re-raising signal %d (%s)\n", sig, UnixSignalHandler::signalName(sig));
-        ::signal(sig, SIG_DFL);
         ::kill(::getpid(), sig); // prevent potential compiler optimizations for raise()
         // the process will be killed once we return from the signal handler
     });

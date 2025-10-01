@@ -11,7 +11,6 @@
 #include <QtCore/QAtomicInteger>
 
 #include <initializer_list>
-#include <list>
 #include <vector>
 #include <functional>
 #include <csignal>
@@ -36,8 +35,8 @@ public:
 
     static int watchdogSignal();
 
-    void resetToDefault(int sig);
-    void resetToDefault(std::initializer_list<int> sigs);
+    bool resetToDefault(int sig);
+    bool resetToDefault(std::initializer_list<int> sigs);
 
     std::vector<int> reinstallIfNeeded(std::initializer_list<int> sigs);
 
@@ -50,6 +49,8 @@ public:
     bool install(Type handlerType, std::initializer_list<int> sigs,
                  const std::function<void(int)> &handler);
 
+    static constexpr bool isValidSignal(int sig) { return ((sig > 0) && (sig < NSIG)); }
+
 private:
     UnixSignalHandler();
     static UnixSignalHandler *s_instance;
@@ -58,22 +59,19 @@ private:
 
     struct SigHandler
     {
-        SigHandler(int signal, bool qt, const std::function<void(int)> &handler);
+        explicit SigHandler(bool eventLoop, const std::function<void(int)> &handler)
+            : m_eventLoop(eventLoop), m_handler(handler) { }
 
-        int m_signal;
-        bool m_qt;
+        bool m_eventLoop;
         std::function<void(int)> m_handler;
-        mutable QAtomicInteger<bool> m_disabled;
     };
 
-    std::list<SigHandler> m_handlers; // we're using STL to avoid (accidental) implicit copies
-    int m_currentSignal = 0;
+    void deleteAfterGracePeriod(SigHandler *sh);
 
-    // 64 bits are currently enough to map all Linux signals
-    using am_sigmask_t = quint64;
+    QAtomicInteger<int> m_currentSignal = 0;
+    // NSIG = number of signals defined + 1 (also: signals are 1-based, so access is [sig-1])
+    std::array<QAtomicPointer<SigHandler>, NSIG - 1> m_handlers;
 
-    static am_sigmask_t am_sigmask(int sig);
-    QAtomicInteger<am_sigmask_t> m_resetSignalMask;
 #if defined(Q_OS_UNIX)
     std::array<int, 2> m_pipe = { -1, -1 };
 #elif defined(Q_OS_WIN)

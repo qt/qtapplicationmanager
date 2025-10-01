@@ -84,16 +84,14 @@ void PSPackages::initialize()
 #if defined(Q_OS_WINDOWS)
         if (!d->lockFilePath.isEmpty())
             ::DeleteFileW((LPCWSTR) d->lockFile->fileName().utf16());
-        ::raise(sig);
 #else
         if (!d->lockFilePath.isEmpty())
             ::unlink(d->lockFilePath.constData());
-
 #  if defined(QT_AM_COVERAGE)
         __gcov_dump();
 #  endif
-        ::kill(::getpid(), sig);
 #endif
+        ::raise(sig);
     });
 
     if (!dd.mkpath(PackagesDirName)) {

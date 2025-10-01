@@ -8,6 +8,7 @@
 
 #include <QSocketNotifier>
 #include <QCoreApplication>
+#include <QTimer>
 
 #include <cerrno>
 
@@ -15,20 +16,21 @@
 #  include <windows.h>
 #  include <synchapi.h>
 #else
+#  include <QtCore/private/qcore_unix_p.h>
 #  include <sys/mman.h>
+#  if defined(Q_OS_DARWIN) // we want the real POSIX functions, not macros
+#    undef sigemptyset
+#    undef sigaddset
+#  endif
 #endif
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_QNX)
 #  define AM_POSIX_SIGNALS
 #endif
 
-QT_BEGIN_NAMESPACE_AM
+using namespace std::chrono_literals;
 
-// sigmask() is not available on Windows
-UnixSignalHandler::am_sigmask_t UnixSignalHandler::am_sigmask(int sig)
-{
-    return ((am_sigmask_t(1)) << (((sig) - 1) % int(8 * sizeof(am_sigmask_t))));
-}
+QT_BEGIN_NAMESPACE_AM
 
 UnixSignalHandler *UnixSignalHandler::s_instance = nullptr;
 
@@ -42,11 +44,11 @@ UnixSignalHandler::UnixSignalHandler()
     stack_t sigstack;
     // ASAN and valgrind would report malloc() as a leak. In addition, we avoid the
     // signal stack being close to a possibly corrupted heap this way.
-    sigstack.ss_sp = mmap(nullptr, stackSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    sigstack.ss_sp = ::mmap(nullptr, stackSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
     if (sigstack.ss_sp != MAP_FAILED) {
         sigstack.ss_size = stackSize;
         sigstack.ss_flags = 0;
-        sigaltstack(&sigstack, nullptr);
+        ::sigaltstack(&sigstack, nullptr);
     } else {
         // this code runs before all other static constructors
         qWarning("WARNING: UnixSignalHandler failed to allocate memory for an alternate signal stack.");
@@ -65,9 +67,9 @@ const char *UnixSignalHandler::signalName(int sig)
 {
 #if defined(Q_OS_UNIX)
 #  if  defined(__GLIBC__) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ >= 32)
-    return sigdescr_np(sig);
+    return ::sigdescr_np(sig);
 #  else
-    return strsignal(sig); // not async-signal-safe
+    return ::strsignal(sig); // not async-signal-safe
 #  endif
 #else
     Q_UNUSED(sig)
@@ -88,18 +90,24 @@ int UnixSignalHandler::watchdogSignal()
 #endif
 }
 
-void UnixSignalHandler::resetToDefault(int sig)
+bool UnixSignalHandler::resetToDefault(int sig)
 {
-    auto sigs = { sig };
-    resetToDefault(sigs);
+    return resetToDefault({ sig });
 }
 
-void UnixSignalHandler::resetToDefault(std::initializer_list<int> sigs)
+bool UnixSignalHandler::resetToDefault(std::initializer_list<int> sigs)
 {
+    bool result = true;
     for (int sig : sigs) {
-        m_resetSignalMask |= am_sigmask(sig);
-        signal(sig, SIG_DFL);
+        if (!isValidSignal(sig)) {
+            result = false;
+            continue;
+        }
+        if (auto sh = m_handlers[sig - 1].fetchAndStoreRelease(nullptr))
+            deleteAfterGracePeriod(sh);
+        ::signal(sig, SIG_DFL);
     }
+    return result;
 }
 
 std::vector<int> UnixSignalHandler::reinstallIfNeeded(std::initializer_list<int> sigs)
@@ -108,102 +116,99 @@ std::vector<int> UnixSignalHandler::reinstallIfNeeded(std::initializer_list<int>
     // Returns the list of signals that had to be reinstalled
 
     std::vector<int> result;
-    QVector<int> reinstallSigs { sigs };
 
 #if defined(AM_POSIX_SIGNALS)
-    struct sigaction sigact;
-    sigset_t unblockSet;
-    sigemptyset(&unblockSet);
+    struct ::sigaction sigact;
+    ::sigset_t unblockSet;
+    ::sigemptyset(&unblockSet);
 #endif
 
-    // This is UB! We cannot guarantee that the signal handler is not currently executing and
-    // iterating over this list. In practice, this is a none-issue in the AM however, because this
-    // reinstall() call should only happen once during startup.
-    // To do it right, we would need a lock-free list structure for m_handlers.
+    for (int sig : sigs) {
+        if (!isValidSignal(sig))
+            continue;
 
-    for (const auto &h : std::as_const(m_handlers)) {
-        int sig = h.m_signal;
-        if (!h.m_disabled && reinstallSigs.contains(sig)) {
+        if (m_handlers[sig - 1].loadAcquire()) {
 #if defined(AM_POSIX_SIGNALS)
-            sigaddset(&unblockSet, sig);
+            ::sigaddset(&unblockSet, sig);
 
-            if ((sigaction(sig, nullptr, &sigact) < 0) || (sigact.sa_handler != &signalHandler)) {
+            if ((::sigaction(sig, nullptr, &sigact) < 0) || (sigact.sa_handler != &signalHandler)) {
                 sigact.sa_flags = SA_ONSTACK;
                 sigact.sa_handler = &signalHandler;
-                sigemptyset(&sigact.sa_mask);
-                sigaction(sig, &sigact, nullptr);
+                ::sigemptyset(&sigact.sa_mask);
+                ::sigaction(sig, &sigact, nullptr);
                 result.push_back(sig);
             }
 #else
-            if (signal(sig, &signalHandler) != &signalHandler)
+            if (::signal(sig, &signalHandler) != &signalHandler)
                 result.push_back(sig);
 #endif
         }
     }
 
 #if defined(AM_POSIX_SIGNALS)
-    sigprocmask(SIG_UNBLOCK, &unblockSet, nullptr);
+    ::sigprocmask(SIG_UNBLOCK, &unblockSet, nullptr);
 #endif
     return result;
 }
 
-bool UnixSignalHandler::install(Type handlerType, int sig, const std::function<void (int)> &handler)
-{
-    auto sigs = { sig };
-    return install(handlerType, sigs, handler);
-}
-
 void UnixSignalHandler::signalHandler(int sig)
 {
-    // this lambda is the low-level signal handler multiplexer
+    // this function is the low-level signal handler multiplexer
     auto that = UnixSignalHandler::instance();
+    if (!isValidSignal(sig))
+        return;
+    auto sh = that->m_handlers[sig - 1].loadAcquire();
+    if (!sh)
+        return;
     that->m_currentSignal = sig;
+    auto clearCurrentSignal = qScopeGuard([=]() { that->m_currentSignal = 0; });
 
-    for (const auto &h : std::as_const(that->m_handlers)) {
-        if ((h.m_signal == sig) && !h.m_disabled) {
-            if (!h.m_qt) {
-                h.m_handler(sig);
-            } else {
+    if (!sh->m_eventLoop) {
+        sh->m_handler(sig);
+    } else {
 #if defined(Q_OS_UNIX)
-                auto dummy = write(that->m_pipe[1], &sig, sizeof(int));
-                Q_UNUSED(dummy)
+        (void) qt_safe_write(that->m_pipe[1], &sig, sizeof(int));
 #elif defined(Q_OS_WIN)
-                // we're running in a separate thread now
-                that->m_winLock.lock();
-                that->m_signalsForEventLoop << sig;
-                that->m_winLock.unlock();
-                PulseEvent(that->m_winEvent->handle());
+        // we're running in a separate thread now
+        that->m_winLock.lock();
+        that->m_signalsForEventLoop << sig;
+        that->m_winLock.unlock();
+        ::PulseEvent(that->m_winEvent->handle());
 #endif
-            }
-        }
     }
-    if (that->m_resetSignalMask) {
-        // Someone called resetToDefault - now's a good time to handle it.
-        // We can not remove the entries in the list, because that would (a) allocate and (b)
-        // step on code that might be iterating over the list in the "Forwarded" handler.
+}
 
-        for (const auto &h : std::as_const(that->m_handlers)) {
-            if (that->m_resetSignalMask & am_sigmask(h.m_signal))
-                h.m_disabled = true;
-        }
-        that->m_resetSignalMask = 0;
-    }
-    that->m_currentSignal = 0;
+void UnixSignalHandler::deleteAfterGracePeriod(SigHandler *sh)
+{
+    // There could be a signal handler executing right now, so we need to delay the deletion
+    if (sh)
+        QTimer::singleShot(10min, this, [sh] { delete sh; });
 };
 
+bool UnixSignalHandler::install(Type handlerType, int sig, const std::function<void (int)> &handler)
+{
+    return install(handlerType, { sig }, handler);
+}
 
 bool UnixSignalHandler::install(Type handlerType, std::initializer_list<int> sigs,
                                 const std::function<void(int)> &handler)
 {
+    for (int sig : sigs) {
+        if (!isValidSignal(sig)) {
+            qCWarning(LogSystem) << "Unix signal number" << sig << "is invalid";
+            return false;
+        }
+    }
+
     if (m_currentSignal) {
-        // installing a signal handler from within a signal handler shouldn't be necessary
+        // installing a signal handler from within a signal handler is not supported
         return false;
     }
 
     if (handlerType == ForwardedToEventLoopHandler) {
 #if defined(Q_OS_UNIX)
         if ((m_pipe[0] == -1) && qApp) {
-            auto dummy = ::pipe(m_pipe.data());
+            auto dummy = qt_safe_pipe(m_pipe.data());
             Q_UNUSED(dummy)
 
             auto sn = new QSocketNotifier(m_pipe[0], QSocketNotifier::Read, this);
@@ -211,14 +216,16 @@ bool UnixSignalHandler::install(Type handlerType, std::initializer_list<int> sig
                 // this lambda is the "signal handler" multiplexer within the Qt event loop
                 int sig = 0;
 
-                if (read(m_pipe[0], &sig, sizeof(int)) != sizeof(int)) {
+                if (qt_safe_read(m_pipe[0], &sig, sizeof(int)) != sizeof(int)) {
                     qCWarning(LogSystem) << "Error reading from signal handler:" << strerror(errno);
                     return;
                 }
 
-                for (const auto &h : std::as_const(m_handlers)) {
-                    if (h.m_qt && (h.m_signal == sig) && !h.m_disabled)
-                        h.m_handler(sig);
+                if (isValidSignal(sig)) {
+                    if (auto sh = m_handlers[sig - 1].loadAcquire()) {
+                        if (sh->m_handler && sh->m_eventLoop)
+                            sh->m_handler(sig);
+                    }
                 }
             });
         }
@@ -229,10 +236,12 @@ bool UnixSignalHandler::install(Type handlerType, std::initializer_list<int> sig
             connect(m_winEvent, &QWinEventNotifier::activated, qApp, [this]() {
                 // this lambda is the "signal handler" multiplexer within the Qt event loop
                 m_winLock.lock();
-                for (const int &sig : std::as_const(m_signalsForEventLoop)) {
-                    for (const auto &h : std::as_const(m_handlers)) {
-                        if (h.m_qt && (h.m_signal == sig) && !h.m_disabled)
-                            h.m_handler(sig);
+                for (int sig : std::as_const(m_signalsForEventLoop)) {
+                    if (isValidSignal(sig)) {
+                        if (auto sh = m_handlers[sig - 1].loadAcquire()) {
+                            if (sh->m_handler && sh->m_eventLoop)
+                                sh->m_handler(sig);
+                        }
                     }
                 }
                 m_signalsForEventLoop.clear();
@@ -246,39 +255,35 @@ bool UnixSignalHandler::install(Type handlerType, std::initializer_list<int> sig
 #endif
     }
 
-    // This is UB! We cannot guarantee that the signal handler is not currently executing and
-    // iterating over this list. In practice, this is a none-issue in the AM however, because all
-    // install() calls are done right at startup time.
-    // To do it right, we would need a lock-free list structure for m_handlers.
-    for (int sig : sigs)
-        m_handlers.emplace_back(sig, handlerType == ForwardedToEventLoopHandler, handler);
+    for (int sig : sigs) {
+        auto *sh = new SigHandler(handlerType == ForwardedToEventLoopHandler, handler);
+
+        if (auto *shExisting = m_handlers[sig - 1].fetchAndStoreRelease(sh)) {
+            qCDebug(LogSystem) << "Replacing existing signal handler for signal" << sig;
+            deleteAfterGracePeriod(shExisting);
+        }
+    }
 
 #if defined(AM_POSIX_SIGNALS)
-    struct sigaction sigact;
+    struct ::sigaction sigact;
     sigact.sa_flags = SA_ONSTACK;
     sigact.sa_handler = &signalHandler;
 
-    sigemptyset(&sigact.sa_mask);
-    sigset_t unblockSet;
-    sigemptyset(&unblockSet);
+    ::sigemptyset(&sigact.sa_mask);
+    ::sigset_t unblockSet;
+    ::sigemptyset(&unblockSet);
 
     for (int sig : sigs) {
-        sigaddset(&unblockSet, sig);
-        sigaction(sig, &sigact, nullptr);
-        m_resetSignalMask &= ~am_sigmask(sig); // cancel unfinished reset
+        ::sigaddset(&unblockSet, sig);
+        ::sigaction(sig, &sigact, nullptr);
     }
-    sigprocmask(SIG_UNBLOCK, &unblockSet, nullptr);
+    ::sigprocmask(SIG_UNBLOCK, &unblockSet, nullptr);
 #else
     for (int sig : sigs)
-        signal(sig, &signalHandler);
+        ::signal(sig, &signalHandler);
 #endif
     return true;
 }
-
-UnixSignalHandler::SigHandler::SigHandler(int signal, bool qt, const std::function<void (int)> &handler)
-    : m_signal(signal), m_qt(qt), m_handler(handler)
-{ }
-
 
 QT_END_NAMESPACE_AM
 

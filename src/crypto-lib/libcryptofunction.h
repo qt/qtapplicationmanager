@@ -57,6 +57,7 @@ protected:
 
 private:
     static QLibrary *s_library;
+    static bool s_isMacOSLibreSSL;
     bool m_tried = false;
 };
 

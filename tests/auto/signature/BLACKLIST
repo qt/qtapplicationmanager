@@ -1,6 +1,3 @@
-[check]
-macos-13
-macos-14
 [crossPlatform:Legacy-SHA1]
 # RHEL compiles OpenSSL without legacy algorithms
 rhel

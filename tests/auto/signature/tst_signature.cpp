@@ -45,7 +45,6 @@ private:
     QByteArray m_p7Hash;
     QString m_p7OpenSsl;
     QString m_p7WinCrypt;
-    QString m_p7SecurityFramework;
 
     QVariantMap m_caInfo;
     QVariantMap m_devcaInfo;
@@ -59,7 +58,6 @@ tst_Signature::tst_Signature()
     m_p7Hash = "p7Hash\n";
     m_p7OpenSsl = u":/signature-openssl.p7"_s;
     m_p7WinCrypt = u":/signature-wincrypt.p7"_s;
-    m_p7SecurityFramework = u":/signature-securityframework.p7"_s;
 }
 
 void tst_Signature::parseInfo(const QByteArray &opensslInfo, QVariantMap &info)
@@ -80,7 +78,6 @@ void tst_Signature::parseInfo(const QByteArray &opensslInfo, QVariantMap &info)
 
 void tst_Signature::initTestCase()
 {
-
     QFile s(u":/signing.p12"_s);
     QVERIFY(s.open(QIODevice::ReadOnly));
     m_signingP12 = s.readAll();
@@ -119,8 +116,6 @@ void tst_Signature::initTestCase()
         nativeFile = m_p7OpenSsl;
 #elif defined(Q_OS_WINDOWS)
         nativeFile = m_p7WinCrypt;
-#elif defined(Q_OS_MACOS)
-        nativeFile = m_p7SecurityFramework;
 #else
         static_assert(false);
 #endif
@@ -210,7 +205,6 @@ void tst_Signature::crossPlatform_data()
     QTest::addColumn<QString>("p7File");
     QTest::newRow("OpenSSL") << m_p7OpenSsl;
     QTest::newRow("WinCrypt") << m_p7WinCrypt;
-    QTest::newRow("SecurityFramework") << m_p7SecurityFramework;
     QTest::newRow("Legacy-SHA1") << u":/signature-legacy-sha1.p7"_s;
 }
 

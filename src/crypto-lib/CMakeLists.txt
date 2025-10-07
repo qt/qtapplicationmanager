@@ -24,17 +24,7 @@ qt_internal_extend_target(AppManCryptoPrivate CONDITION WIN32
         crypt32
 )
 
-qt_internal_extend_target(AppManCryptoPrivate CONDITION MACOS
-    SOURCES
-        signature_macos.cpp
-    LIBRARIES
-        Qt::CorePrivate
-    PUBLIC_LIBRARIES
-        ${FWCoreFoundation}
-        ${FWSecurity}
-)
-
-qt_internal_extend_target(AppManCryptoPrivate CONDITION (UNIX AND NOT MACOS)
+qt_internal_extend_target(AppManCryptoPrivate CONDITION UNIX
     SOURCES
         libcryptofunction.cpp libcryptofunction.h
         signature_openssl.cpp

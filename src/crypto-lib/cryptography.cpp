@@ -20,6 +20,7 @@
 #endif
 
 #if defined(Q_OS_MACOS)
+#  include <QVersionNumber>
 #  include <QtCore/private/qcore_mac_p.h>
 #  include <Security/SecBase.h>
 #  include <Availability.h>

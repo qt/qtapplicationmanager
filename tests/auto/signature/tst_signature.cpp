@@ -192,7 +192,13 @@ void tst_Signature::basicCheck()
 
     AM_VERIFY_THROWS_EXCEPTION(u"Failed to verify", s.verify(signature, QByteArrayList()));
     AM_VERIFY_THROWS_EXCEPTION(u"not load", s.verify(signature, QByteArrayList() << m_signingP12));
-    AM_VERIFY_THROWS_EXCEPTION(u"not read", s.verify(hash, QByteArrayList() << m_signingP12));
+#if defined(Q_OS_WINDOWS)
+    // Windows reads and verifies the PKCS#7 data in one function call
+    const QString brokenSigError = u"ASN1 bad tag"_s;
+#else
+    const QString brokenSigError = u"not read"_s;
+#endif
+    AM_VERIFY_THROWS_EXCEPTION(brokenSigError, s.verify(hash, QByteArrayList() << m_signingP12));
 
     Signature s4 { QByteArray() };
     AM_VERIFY_THROWS_EXCEPTION(u"cannot sign an empty hash value", s4.create(m_signingP12, m_signingPassword));

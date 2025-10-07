@@ -14,9 +14,9 @@ add_subdirectory(wayland-extensions)
 add_subdirectory(dbus-interfaces)
 add_subdirectory(common-lib)
 add_subdirectory(application-lib)
+add_subdirectory(crypto-lib)
 
 if(QT_FEATURE_am_installer)
-    add_subdirectory(crypto-lib)
     add_subdirectory(package-lib)
 endif()
 

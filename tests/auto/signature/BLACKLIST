@@ -1,12 +1,6 @@
-[crossPlatform]
-# QTBUG-109756
-# QTQAINFRA-6106
-rhel-9.0
-rhel-9.2
-rhel-9.4
-
 [check]
 macos-13
 macos-14
-macos-15 # QTBUG-130554
-macos-26
+[crossPlatform:Legacy-SHA1]
+# RHEL compiles OpenSSL without legacy algorithms
+rhel

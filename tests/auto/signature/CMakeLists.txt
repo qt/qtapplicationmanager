@@ -18,9 +18,13 @@ qt_internal_add_resource(tst_signature "signature_testdata"
         "signature-openssl.p7"
         "signature-securityframework.p7"
         "signature-wincrypt.p7"
+        "signature-legacy-sha1.p7"
         "signing-no-key.p12"
         "signing.p12"
         "verifying.crt"
+        "root-ca.info"
+        "dev-ca.info"
+        "dev.info"
 )
 
 qt_internal_extend_target(tst_signature CONDITION TARGET Qt::DBus

@@ -21,7 +21,7 @@ emailAddress = info@pelagicore.com
 
 subjectKeyIdentifier= hash
 basicConstraints    = CA:FALSE
-keyUsage            = nonRepudiation, digitalSignature, keyEncipherment
+keyUsage            = nonRepudiation, digitalSignature, keyEncipherment, encipherOnly
 #subjectAltName      = @alternate_names
 
 ####################################################################

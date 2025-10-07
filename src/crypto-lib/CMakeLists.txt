@@ -5,6 +5,7 @@ qt_internal_add_module(AppManCryptoPrivate
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        certificate.h certificate.cpp
         cryptography.cpp cryptography.h
         signature.cpp signature.h signature_p.h
     PUBLIC_LIBRARIES
@@ -37,7 +38,7 @@ qt_internal_extend_target(AppManCryptoPrivate CONDITION (UNIX AND NOT MACOS)
     SOURCES
         libcryptofunction.cpp libcryptofunction.h
         signature_openssl.cpp
-    DEFINES
+    PUBLIC_DEFINES
         QT_AM_USE_LIBCRYPTO
     PUBLIC_LIBRARIES
         Qt::Network

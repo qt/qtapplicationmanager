@@ -173,34 +173,74 @@ void InstallationTask::execute()
         if (!m_foundInfo || !m_foundIcon)
             throw Exception(Error::Package, "package did not contain a valid info.yaml and icon file");
 
-        QByteArrayList chainOfTrust = m_pm->caCertificates();
-
         if (!m_pm->allowInstallationOfUnsignedPackages()) {
-            if (!m_extractor->installationReport().storeSignature().isEmpty()) {
+            bool hasStoreSignature = !m_extractor->installationReport().storeSignature().isEmpty();
+
+            // Step 1: verify the store signature (optional, if in dev mode)
+            if (hasStoreSignature) {
                 // normal package from the store
                 QByteArray sigDigest = m_extractor->installationReport().digest();
-                bool sigOk = false;
 
-                if (Signature(sigDigest).verify(m_extractor->installationReport().storeSignature(), chainOfTrust)) {
-                    sigOk = true;
-                } else if (!m_pm->hardwareId().isEmpty()) {
-                    // did not verify - if we have a hardware-id, try to verify with it
-                    sigDigest = QMessageAuthenticationCode::hash(sigDigest, m_pm->hardwareId().toUtf8(), QCryptographicHash::Sha256);
-                    if (Signature(sigDigest).verify(m_extractor->installationReport().storeSignature(), chainOfTrust))
-                        sigOk = true;
+                Signature storeSig(sigDigest);
+                storeSig.requireRevocationCheck(m_pm->certificateRevocationLists());
+                storeSig.requireKeyUsage(Certificate::KeyUsage::Store);
+                storeSig.requireIssuerFingerprint(Signature::FingerprintHash::Sha256,
+                                                  m_pm->issuerCertificateFingerprintsStore());
+
+                try {
+                    (void) storeSig.verify(m_extractor->installationReport().storeSignature(),
+                                           m_pm->caCertificatesCommon() + m_pm->caCertificatesStore());
+                } catch (const Exception &e) {
+                    if (!m_pm->hardwareId().isEmpty()) {
+                        // did not verify - if we have a hardware-id, try to verify with it
+                        sigDigest = QMessageAuthenticationCode::hash(sigDigest, m_pm->hardwareId().toUtf8(), QCryptographicHash::Sha256);
+                        Signature storeHwidSig(sigDigest);
+                        storeHwidSig.requireRevocationCheck(m_pm->certificateRevocationLists());
+                        storeHwidSig.requireKeyUsage(Certificate::KeyUsage::Store);
+                        storeHwidSig.requireIssuerFingerprint(Signature::FingerprintHash::Sha256,
+                                                              m_pm->issuerCertificateFingerprintsStore());
+
+                        try {
+                            (void) storeHwidSig.verify(m_extractor->installationReport().storeSignature(),
+                                                       m_pm->caCertificatesCommon() + m_pm->caCertificatesStore());
+                        } catch (const Exception &e) {
+                            throw Exception(Error::Package, "could not verify the package's store signature (with hardware-id): %1")
+                                .arg(e.errorString());
+                        }
+                    } else {
+                        throw Exception(Error::Package, "could not verify the package's store signature: %1")
+                            .arg(e.errorString());
+                    }
                 }
-                if (!sigOk)
-                    throw Exception(Error::Package, "could not verify the package's store signature");
-            } else if (!m_extractor->installationReport().developerSignature().isEmpty()) {
-                // developer package - needs a device in dev mode
-                if (!m_pm->developmentMode())
-                    throw Exception(Error::Package, "cannot install development packages on consumer devices");
-
-                if (!Signature(m_extractor->installationReport().digest()).verify(m_extractor->installationReport().developerSignature(), chainOfTrust))
-                    throw Exception(Error::Package, "could not verify the package's developer signature");
-
             } else {
-                throw Exception(Error::Package, "cannot install unsigned packages");
+                if (!m_pm->developmentMode())
+                    throw Exception(Error::Package, "cannot install packages without store signature on consumer devices");
+            }
+
+            // Step 2: verify the developer signature (required)
+            if (!m_extractor->installationReport().developerSignature().isEmpty()) {
+                if (!hasStoreSignature)
+                    Q_ASSERT(m_pm->developmentMode());
+
+                Signature devSig(m_extractor->installationReport().digest());
+                devSig.requireRevocationCheck(m_pm->certificateRevocationLists());
+                devSig.requireKeyUsage(Certificate::KeyUsage::Developer);
+                devSig.requirePackageId(m_packageId);
+                devSig.requireIssuerFingerprint(Signature::FingerprintHash::Sha256,
+                                                m_pm->issuerCertificateFingerprintsDeveloper());
+
+                try {
+                    (void) devSig.verify(m_extractor->installationReport().developerSignature(),
+                                         m_pm->caCertificatesCommon() + m_pm->caCertificatesDeveloper());
+                } catch (const Exception &e) {
+                    throw Exception(Error::Package, "could not verify the package's developer signature: %1")
+                        .arg(e.errorString());
+                }
+            } else {
+                if (hasStoreSignature)
+                    throw Exception(Error::Package, "cannot install packages with only a store signature");
+                else
+                    throw Exception(Error::Package, "cannot install unsigned packages");
             }
         }
 

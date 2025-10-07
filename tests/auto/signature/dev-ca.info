@@ -1,0 +1,7 @@
+sha1 Fingerprint=C8:CC:6A:6D:BB:50:74:A5:62:B9:CC:51:AF:35:69:F0:EA:0A:B5:36
+notBefore=Oct 20 12:43:07 2025 GMT
+notAfter=Oct 18 12:43:07 2035 GMT
+serial=01
+issuer=C=DE, O=Pelagicore AG, OU=IT, CN=Pelagicore ROOT CA, emailAddress=info@pelagicore.com
+subject=C=DE, O=Pelagicore AG, OU=Developer Relations, CN=Pelagicore Developer CA
+sha256 Fingerprint=DB:1B:58:27:59:E5:37:0E:09:CE:46:44:30:7E:84:17:CF:D8:8A:1E:E0:A6:8A:1A:D0:96:9F:9F:EE:D2:78:B8

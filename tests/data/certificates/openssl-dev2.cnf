@@ -21,12 +21,8 @@ emailAddress = dev2@developer2.com
 subjectKeyIdentifier= hash
 basicConstraints    = CA:FALSE
 keyUsage            = nonRepudiation, digitalSignature, keyEncipherment
-#subjectAltName      = @alternate_names
+subjectAltName      = @alternate_names
 
 ####################################################################
-#[ alternate_names ]
-#
-#DNS.1       = example.com
-#DNS.2       = www.example.com
-#DNS.3       = mail.example.com
-#DNS.4       = ftp.example.com
+[ alternate_names ]
+URI.1 = "qtam://packageid/test-pkg"

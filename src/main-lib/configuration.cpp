@@ -514,7 +514,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 21;
+    return 22;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -542,7 +542,12 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.logging.rules
         & cd.logging.messagePattern
         & cd.logging.useAMConsoleLogger
-        & cd.installer.caCertificates
+        & cd.installer.caCertificates.common
+        & cd.installer.caCertificates.developer
+        & cd.installer.caCertificates.store
+        & cd.installer.issuerCertificateFingerprints.developer
+        & cd.installer.issuerCertificateFingerprints.store
+        & cd.installer.certificateRevocationLists
         & cd.dbus.policies
         & cd.dbus.registrations
         & cd.quicklaunch.idleLoad
@@ -620,7 +625,12 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(logging.rules);
     MERGE_FIELD(logging.messagePattern);
     MERGE_FIELD(logging.useAMConsoleLogger);
-    MERGE_FIELD(installer.caCertificates);
+    MERGE_FIELD(installer.caCertificates.common);
+    MERGE_FIELD(installer.caCertificates.developer);
+    MERGE_FIELD(installer.caCertificates.store);
+    MERGE_FIELD(installer.issuerCertificateFingerprints.developer);
+    MERGE_FIELD(installer.issuerCertificateFingerprints.store);
+    MERGE_FIELD(installer.certificateRevocationLists);
     MERGE_FIELD(dbus.policies);
     MERGE_FIELD(dbus.registrations);
     MERGE_FIELD(quicklaunch.idleLoad);
@@ -803,8 +813,28 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                      { "disable", false, YamlParser::Scalar, [&]() {
                           qCDebug(LogDeployment) << "ignoring 'installer/disable'";
                           (void) yp.parseBool(); } },
-                     { "caCertificates", false, YamlParser::Scalar | YamlParser::List, [&]() {
-                          cd.installer.caCertificates = yp.parseStringOrStringList(); } },
+                     { "certificateRevocationLists", false, YamlParser::Scalar, [&]() {
+                          cd.installer.certificateRevocationLists = yp.parseStringOrStringList(); } },
+                     { "caCertificates", false, YamlParser::Scalar | YamlParser::List | YamlParser::Map, [&]() {
+                          if (!yp.isMap()) { // legacy format
+                              cd.installer.caCertificates.common = yp.parseStringOrStringList();
+                          } else {
+                              yp.parseFields({
+                                  { "common", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                                       cd.installer.caCertificates.common = yp.parseStringOrStringList(); } },
+                                  { "developer", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                                       cd.installer.caCertificates.developer = yp.parseStringOrStringList(); } },
+                                  { "store", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                                       cd.installer.caCertificates.store = yp.parseStringOrStringList(); } },
+                              });
+                          } } },
+                     { "issuerCertificateFingerprints", false, YamlParser::Map, [&]() {
+                          yp.parseFields({
+                              { "developer", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                                   cd.installer.issuerCertificateFingerprints.developer = yp.parseStringOrStringList(); } },
+                              { "store", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                                   cd.installer.issuerCertificateFingerprints.store = yp.parseStringOrStringList(); } },
+                          }); } }
                  }); } },
             { "quicklaunch", false, YamlParser::Map, [&]() {
                  yp.parseFields({

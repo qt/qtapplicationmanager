@@ -110,6 +110,10 @@ static constexpr const char *s_defaultSystemUiDltDescription = "Qt Application M
     \li \c WDOG
     \li Watchdog messages
 \row
+    \li \c am.crypto
+    \li \c CRYP
+    \li Cryptography sub-system messages
+\row
     \li \c general
     \li \c GEN
     \li Used for DLT logging only and enabled by default. Categories that have no context ID
@@ -135,6 +139,7 @@ QDLT_LOGGING_CATEGORY(LogCache, "am.cache", "CACH", "Cache sub-system messages")
 QDLT_LOGGING_CATEGORY(LogDBus, "am.dbus", "DBUS", "D-Bus related messages")
 QDLT_LOGGING_CATEGORY(LogWatchdog, "am.wd", "WDOG", "Watchdog messages")
 QDLT_LOGGING_CATEGORY(LogStartupTimer, "am.startup", "STTI", "StartupTimer messages")
+QDLT_LOGGING_CATEGORY(LogCrypto, "am.crypto", "CRYP", "Cryptography sub-system messages")
 QDLT_LOGGING_CATEGORY(LogGeneral, "general", "GEN", "Messages without dedicated context ID (fallback)")
 QDLT_FALLBACK_CATEGORY(LogGeneral)
 // AXIVION ENABLE Qt-NonPodGlobalStatic

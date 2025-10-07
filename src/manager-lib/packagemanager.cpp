@@ -765,9 +765,34 @@ QString PackageManager::architecture() const
     return Architecture::identify(QCoreApplication::applicationFilePath());
 }
 
-QByteArrayList PackageManager::caCertificates() const
+QByteArrayList PackageManager::caCertificatesCommon() const
 {
-    return d->chainOfTrust;
+    return d->caCertificatesCommon;
+}
+
+QByteArrayList PackageManager::caCertificatesDeveloper() const
+{
+    return d->caCertificatesDeveloper;
+}
+
+QByteArrayList PackageManager::caCertificatesStore() const
+{
+    return d->caCertificatesStore;
+}
+
+QByteArrayList PackageManager::certificateRevocationLists() const
+{
+    return d->certificateRevocationLists;
+}
+
+QStringList PackageManager::issuerCertificateFingerprintsDeveloper() const
+{
+    return d->issuerCertificateFingerprintsDeveloper;
+}
+
+QStringList PackageManager::issuerCertificateFingerprintsStore() const
+{
+    return d->issuerCertificateFingerprintsStore;
 }
 
 void PackageManager::removeRecursive(const QString &path) noexcept(false)
@@ -781,9 +806,36 @@ void PackageManager::removeRecursive(const QString &path) noexcept(false)
     }
 }
 
-void PackageManager::setCACertificates(const QByteArrayList &chainOfTrust)
+void PackageManager::loadCertificates(const QStringList &common, const QStringList &developer,
+                                      const QStringList &store, const QStringList &crls)
 {
-    d->chainOfTrust = chainOfTrust;
+    auto loadCerts = [](const QStringList &certFiles, const char *type) {
+        QByteArrayList cas;
+        for (const auto &certFile : certFiles) {
+            ensureSafePermissions(certFile);
+
+            QFile f(certFile);
+            if (Q_UNLIKELY(!f.open(QFile::ReadOnly)))
+                throw Exception(f, "could not open %1 file").arg(type);
+            QByteArray cert = f.readAll();
+            if (Q_UNLIKELY(cert.isEmpty()))
+                throw Exception(f, "%1 file is empty").arg(type);
+            cas << cert;
+        }
+        return cas;
+    };
+
+    d->caCertificatesCommon = loadCerts(common, "common CA certificate");
+    d->caCertificatesDeveloper = loadCerts(developer, "developer CA certificate");
+    d->caCertificatesStore = loadCerts(store, "store CA certificate");
+    d->certificateRevocationLists = loadCerts(crls, "CRL");
+}
+
+void PackageManager::setIssuerCertificateFingerprints(const QStringList &developer,
+                                                      const QStringList &store)
+{
+    d->issuerCertificateFingerprintsDeveloper = developer;
+    d->issuerCertificateFingerprintsStore = store;
 }
 
 static QVariantMap locationMap(const QString &path)

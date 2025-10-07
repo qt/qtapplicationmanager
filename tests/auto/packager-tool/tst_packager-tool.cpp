@@ -60,7 +60,9 @@ private:
     QString m_devCertificate;
     QString m_storePassword;
     QString m_storeCertificate;
-    QStringList m_caFiles;
+    QStringList m_commonCaFiles;
+    QStringList m_devCaFiles;
+    QStringList m_storeCaFiles;
     QString m_hardwareId;
 };
 
@@ -94,23 +96,18 @@ void tst_PackagerTool::initTestCase()
 
     // crypto stuff - we need to load the root CA and developer CA certificates
 
-    QFile devcaFile(QString::fromLatin1(AM_TESTDATA_DIR "certificates/devca.crt"));
-    QFile caFile(QString::fromLatin1(AM_TESTDATA_DIR "certificates/ca.crt"));
-    QVERIFY2(devcaFile.open(QIODevice::ReadOnly), qPrintable(devcaFile.errorString()));
-    QVERIFY2(caFile.open(QIODevice::ReadOnly), qPrintable(devcaFile.errorString()));
+    QString devcaFile = u"" AM_TESTDATA_DIR "certificates/devca.crt"_s;
+    QString caFile = u"" AM_TESTDATA_DIR "certificates/ca.crt"_s;
 
-    QByteArrayList chainOfTrust;
-    chainOfTrust << devcaFile.readAll() << caFile.readAll();
-    QVERIFY(!chainOfTrust.at(0).isEmpty());
-    QVERIFY(!chainOfTrust.at(1).isEmpty());
-    m_pm->setCACertificates(chainOfTrust);
+    QVERIFY_THROWS_NO_EXCEPTION(m_pm->loadCertificates({ caFile }, { devcaFile }, { }));
 
-    m_caFiles << devcaFile.fileName() << caFile.fileName();
+    m_commonCaFiles << caFile;
+    m_devCaFiles << devcaFile;
 
     m_devPassword = u"password"_s;
-    m_devCertificate = QString::fromLatin1(AM_TESTDATA_DIR "certificates/dev1.p12");
+    m_devCertificate = u"" AM_TESTDATA_DIR "certificates/dev1.p12"_s;
     m_storePassword = u"password"_s;
-    m_storeCertificate = QString::fromLatin1(AM_TESTDATA_DIR "certificates/store.p12");
+    m_storeCertificate = u"" AM_TESTDATA_DIR "certificates/store.p12"_s;
 
     RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager(u"qml"_s));
 }
@@ -245,11 +242,11 @@ void tst_PackagerTool::test()
     // verify
     QVERIFY2(packagerCheck(PackagingJob::developerVerify(
                                pathTo("test.dev-signed.ampkg"),
-                               m_caFiles), errorString), qPrintable(errorString));
+                               m_commonCaFiles + m_devCaFiles), errorString), qPrintable(errorString));
 
     QVERIFY2(packagerCheck(PackagingJob::storeVerify(
                                pathTo("test.store-signed.ampkg"),
-                               m_caFiles,
+                               m_commonCaFiles + m_storeCaFiles,
                                m_hardwareId), errorString), qPrintable(errorString));
 
     // now that we have it, see if the package actually installs correctly

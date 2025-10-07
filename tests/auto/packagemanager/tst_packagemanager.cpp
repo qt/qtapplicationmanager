@@ -273,21 +273,13 @@ void tst_PackageManager::initTestCase()
 
     // crypto stuff - we need to load the root CA and developer CA certificates
 
-    QFile devcaFile(QString::fromLatin1(AM_TESTDATA_DIR "certificates/devca.crt"));
-    QFile storecaFile(QString::fromLatin1(AM_TESTDATA_DIR "certificates/store.crt"));
-    QFile caFile(QString::fromLatin1(AM_TESTDATA_DIR "certificates/ca.crt"));
-    QVERIFY2(devcaFile.open(QIODevice::ReadOnly), qPrintable(devcaFile.errorString()));
-    QVERIFY2(storecaFile.open(QIODevice::ReadOnly), qPrintable(storecaFile.errorString()));
-    QVERIFY2(caFile.open(QIODevice::ReadOnly), qPrintable(caFile.errorString()));
+    QString devcaFile = u"" AM_TESTDATA_DIR "certificates/devca.crt"_s;
+    QString storecaFile = u"" AM_TESTDATA_DIR "certificates/store.crt"_s;
+    QString caFile = u"" AM_TESTDATA_DIR "certificates/ca.crt"_s;
 
-    QByteArrayList chainOfTrust;
-    chainOfTrust << devcaFile.readAll() << caFile.readAll();
-    QVERIFY(!chainOfTrust.at(0).isEmpty());
-    QVERIFY(!chainOfTrust.at(1).isEmpty());
-    m_pm->setCACertificates(chainOfTrust);
+    m_pm->loadCertificates({ caFile }, { devcaFile }, { storecaFile });
 
     // we do not require valid store signatures for this test run
-
     m_pm->setDevelopmentMode(true);
 
     // make sure we have a valid runtime available. The important part is
@@ -361,13 +353,13 @@ void tst_PackageManager::packageInstallation_data()
             << true << false << true << true << nomd << "";
     QTest::newRow("no-store-signed") \
             << "test.ampkg" << ""
-            << false << true << false << false << nomd << "cannot install unsigned packages";
+            << false << true << false << false << nomd << "packages without store signatures cannot be installed unless development mode is enabled";
     QTest::newRow("no-store-but-dev-signed") \
             << "test-dev-signed.ampkg" << ""
-            << false << true << false << false << nomd << "cannot install development packages on consumer devices";
-    QTest::newRow("store-signed") \
+            << false << true << false << false << nomd << "packages without store signatures cannot be installed unless development mode is enabled";
+    QTest::newRow("store-signed-only") \
             << "test-store-signed.ampkg" << ""
-            << false << true << true << false << nomd << "";
+            << false << true << false << false << nomd << "cannot install packages with only a store signature";
     QTest::newRow("extra-metadata") \
             << "test-extra.ampkg" << ""
             << false << false << true << false << extramd << "";
@@ -400,7 +392,7 @@ void tst_PackageManager::packageInstallation_data()
             << false << false << false << false << nomd << "~.*the identifier \\(:invalid\\) is not a valid package-id: must consist of printable ASCII characters only, except any of .*";
     QTest::newRow("invalid-footer-signature") \
             << "test-invalid-footer-signature.ampkg" << ""
-            << true << false << false << false << nomd << "could not verify the package's developer signature";
+            << true << false << false << false << nomd << "~could not verify the package's developer signature:.*";
     QTest::newRow("no-icon") \
             << "test-no-icon.ampkg" << ""
             << false << false << true << false << nomd << "";

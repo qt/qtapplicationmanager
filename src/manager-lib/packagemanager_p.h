@@ -39,7 +39,12 @@ public:
     QString error;
 
     QString hardwareId;
-    QByteArrayList chainOfTrust;
+    QByteArrayList caCertificatesCommon;
+    QByteArrayList caCertificatesDeveloper;
+    QByteArrayList caCertificatesStore;
+    QByteArrayList certificateRevocationLists;
+    QStringList issuerCertificateFingerprintsDeveloper;
+    QStringList issuerCertificateFingerprintsStore;
     bool cleanupBrokenInstallationsDone = false;
 
 #if QT_CONFIG(am_installer)

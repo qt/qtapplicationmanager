@@ -175,9 +175,15 @@ PSPackage *PSPackages::scan(const QString &filePath)
         if (report.developerSignature().isEmpty()) {
             throw Exception("no developer signature");
         } else {
-            Signature sig(report.digest());
-            if (!sig.verify(report.developerSignature(), d->cfg->developerVerificationCaCertificates))
-                throw Exception("invalid developer signature (\"%1\")").arg(sig.errorString());
+            try {
+                Signature sig(report.digest());
+                sig.requireKeyUsage(Certificate::KeyUsage::Developer);
+                sig.requirePackageId(report.packageId());
+
+                (void) sig.verify(report.developerSignature(), d->cfg->developerVerificationCaCertificates);
+            } catch (const Exception &e) {
+                throw Exception("invalid developer signature (\"%1\")").arg(e.errorString());
+            }
         }
     }
 
@@ -356,11 +362,15 @@ void PSPackages::storeSign(PSPackage *sp, const QString &hardwareId, QIODevice *
     }
 
     Signature sig(sigDigest);
-    QByteArray signature = sig.create(d->cfg->storeSignCertificate, d->cfg->storeSignPassword.toUtf8());
+    sig.requireKeyUsage(Certificate::KeyUsage::Store);
 
-    if (signature.isEmpty())
-        throw Exception("could not create store signature: %1").arg(sig.errorString());
-    report.setStoreSignature(signature);
+    try {
+        QByteArray signature = sig.create(d->cfg->storeSignCertificate,
+                                          d->cfg->storeSignPassword.toUtf8());
+        report.setStoreSignature(signature);
+    } catch (const Exception &e) {
+        throw Exception("could not create store signature: %1").arg(e.errorString());
+    }
 
     PackageCreator pc(tempDir.path(), destination, report);
     if (!pc.create())

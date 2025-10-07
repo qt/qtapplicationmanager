@@ -63,7 +63,16 @@ struct ConfigurationData
     } logging;
 
     struct {
-        QStringList caCertificates;
+        struct {
+            QStringList common;
+            QStringList developer;
+            QStringList store;
+        } caCertificates;
+        struct {
+            QStringList developer;
+            QStringList store;
+        } issuerCertificateFingerprints;
+        QStringList certificateRevocationLists;
     } installer;
 
     struct {

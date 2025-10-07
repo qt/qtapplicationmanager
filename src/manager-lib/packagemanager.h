@@ -104,7 +104,10 @@ public:
     QString hardwareId() const;
     void setHardwareId(const QString &hwId);
     QString architecture() const;
-    void setCACertificates(const QByteArrayList &chainOfTrust);
+    void loadCertificates(const QStringList &common, const QStringList &developer,
+                          const QStringList &store, const QStringList &crls = { });
+    void setIssuerCertificateFingerprints(const QStringList &developer,
+                                          const QStringList &store);
 
     void cleanupBrokenInstallations() noexcept(false);
 
@@ -179,7 +182,12 @@ private:
     void registerApplicationsAndIntentsOfPackage(Package *package);
     void unregisterApplicationsAndIntentsOfPackage(Package *package);
     static void registerQmlTypes();
-    QByteArrayList caCertificates() const;
+    QByteArrayList caCertificatesCommon() const;
+    QByteArrayList caCertificatesDeveloper() const;
+    QByteArrayList caCertificatesStore() const;
+    QByteArrayList certificateRevocationLists() const;
+    QStringList issuerCertificateFingerprintsDeveloper() const;
+    QStringList issuerCertificateFingerprintsStore() const;
 
     // this honors the useSudoForDirectoryRemoval flag
     void removeRecursive(const QString &path) noexcept(false);

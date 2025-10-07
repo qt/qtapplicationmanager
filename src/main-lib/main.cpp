@@ -646,19 +646,13 @@ void Main::setupInstaller(const Configuration *cfg) noexcept(false)
         m_packageManager->setAllowInstallationOfUnsignedPackages(true);
 
     if (!cfg->yaml.flags.noSecurity) {
-        QByteArrayList caCertificateList;
-        caCertificateList.reserve(cfg->yaml.installer.caCertificates.size());
+        m_packageManager->loadCertificates(cfg->yaml.installer.caCertificates.common,
+                                           cfg->yaml.installer.caCertificates.developer,
+                                           cfg->yaml.installer.caCertificates.store,
+                                           cfg->yaml.installer.certificateRevocationLists);
 
-        for (const auto &caFile : cfg->yaml.installer.caCertificates) {
-            QFile f(caFile);
-            if (Q_UNLIKELY(!f.open(QFile::ReadOnly)))
-                throw Exception(f, "could not open CA-certificate file");
-            QByteArray cert = f.readAll();
-            if (Q_UNLIKELY(cert.isEmpty()))
-                throw Exception(f, "CA-certificate file is empty");
-            caCertificateList << cert;
-        }
-        m_packageManager->setCACertificates(caCertificateList);
+        m_packageManager->setIssuerCertificateFingerprints(cfg->yaml.installer.issuerCertificateFingerprints.developer,
+                                                           cfg->yaml.installer.issuerCertificateFingerprints.store);
     }
 
     m_packageManager->enableInstaller();

@@ -45,6 +45,7 @@ qt_internal_add_module(AppManManagerPrivate
         Qt::QuickPrivate
         Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
+        Qt::AppManCryptoPrivate
         Qt::AppManIntentClientPrivate
         Qt::AppManIntentServerPrivate
         Qt::AppManMonitorPrivate

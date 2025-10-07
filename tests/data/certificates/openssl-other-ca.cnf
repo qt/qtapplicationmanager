@@ -67,4 +67,4 @@ subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid,issuer
 
 basicConstraints = CA:FALSE
-keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment, decipherOnly

@@ -38,8 +38,20 @@ logging:
   useAMConsoleLogger: 'auto'
 
 installer:
-  disable: true # ignored as of 6.8
-  caCertificates: [ cert3 ]
+  caCertificates:
+    common:
+    - cert3
+    developer:
+    - dev_cert1
+    - dev_cert2
+    store:
+    - store_cert1
+    - store_cert2
+  issuerCertificateFingerprints:
+    developer:
+    - fp_dev
+    store:
+    - fp_store
 
 dbus:
   iface1:

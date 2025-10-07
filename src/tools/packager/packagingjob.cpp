@@ -302,12 +302,16 @@ void PackagingJob::execute() noexcept(false)
                 m_output = u"no developer signature"_s;
                 m_resultCode = 1;
             } else {
-                Signature sig(report.digest());
-                if (!sig.verify(report.developerSignature(), certificates)) {
-                    m_output = u"invalid developer signature ("_s + sig.errorString() + u")"_s;
+                try {
+                    Signature sig(report.digest());
+                    sig.requireKeyUsage(Certificate::KeyUsage::Developer);
+                    sig.requirePackageId(report.packageId());
+                    auto result = sig.verify(report.developerSignature(), certificates);
+                    m_output = u"valid developer signature\n\n"_s
+                               + QString::fromUtf8(QJsonDocument::fromVariant(result.signer.toVariant()).toJson());
+                } catch (const Exception &e) {
+                    m_output = u"invalid developer signature ("_s + e.errorString() + u")"_s;
                     m_resultCode = 2;
-                } else {
-                    m_output = u"valid developer signature"_s;
                 }
             }
             break; // done with DeveloperVerify
@@ -317,18 +321,21 @@ void PackagingJob::execute() noexcept(false)
                 m_output = u"no store signature"_s;
                 m_resultCode = 1;
             } else {
-                QByteArray sigDigest = report.digest();
-                if (!m_hardwareId.isEmpty())
-                    sigDigest = QMessageAuthenticationCode::hash(sigDigest, m_hardwareId.toUtf8(), QCryptographicHash::Sha256);
+                try {
+                    QByteArray sigDigest = report.digest();
+                    if (!m_hardwareId.isEmpty())
+                        sigDigest = QMessageAuthenticationCode::hash(sigDigest, m_hardwareId.toUtf8(),
+                                                                     QCryptographicHash::Sha256);
 
-                Signature sig(sigDigest);
-                if (!sig.verify(report.storeSignature(), certificates)) {
-                    m_output = u"invalid store signature ("_s + sig.errorString() + u")"_s;
+                    Signature sig(sigDigest);
+                    sig.requireKeyUsage(Certificate::KeyUsage::Store);
+                    auto result = sig.verify(report.storeSignature(), certificates);
+                    m_output = u"valid store signature\n\n"_s
+                               + QString::fromUtf8(QJsonDocument::fromVariant(result.signer.toVariant()).toJson());
+                } catch (const Exception &e) {
+                    m_output = u"invalid store signature ("_s + e.errorString() + u")"_s;
                     m_resultCode = 2;
-                } else {
-                    m_output = u"valid store signature"_s;
                 }
-
             }
             break; // done with StoreVerify
         }
@@ -346,24 +353,26 @@ void PackagingJob::execute() noexcept(false)
         if (certificates.size() != 1)
             throw Exception(Error::Package, "cannot sign packages with more than one certificate");
 
-        if (m_mode == DeveloperSign) {
-            Signature sig(report.digest());
-            QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8());
+        try {
+            if (m_mode == DeveloperSign) {
+                Signature sig(report.digest());
+                sig.requireKeyUsage(Certificate::KeyUsage::Developer);
+                sig.requirePackageId(report.packageId());
+                QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8());
+                report.setDeveloperSignature(signature);
+            } else if (m_mode == StoreSign) {
+                QByteArray sigDigest = report.digest();
+                if (!m_hardwareId.isEmpty())
+                    sigDigest = QMessageAuthenticationCode::hash(sigDigest, m_hardwareId.toUtf8(),
+                                                                 QCryptographicHash::Sha256);
 
-            if (signature.isEmpty())
-                throw Exception(Error::Package, "could not create signature: %1").arg(sig.errorString());
-            report.setDeveloperSignature(signature);
-        } else if (m_mode == StoreSign) {
-            QByteArray sigDigest = report.digest();
-            if (!m_hardwareId.isEmpty())
-                sigDigest = QMessageAuthenticationCode::hash(sigDigest, m_hardwareId.toUtf8(), QCryptographicHash::Sha256);
-
-            Signature sig(sigDigest);
-            QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8());
-
-            if (signature.isEmpty())
-                throw Exception(Error::Package, "could not create signature: %1").arg(sig.errorString());
-            report.setStoreSignature(signature);
+                Signature sig(sigDigest);
+                sig.requireKeyUsage(Certificate::KeyUsage::Store);
+                QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8());
+                report.setStoreSignature(signature);
+            }
+        } catch (const Exception &e) {
+            throw Exception(Error::Package, "could not create signature: %1").arg(e.errorString());
         }
 
         if (!creator.create())

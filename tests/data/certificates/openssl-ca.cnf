@@ -67,3 +67,10 @@ authorityKeyIdentifier=keyid,issuer
 
 basicConstraints = CA:FALSE
 keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+
+[ store_signing_req ]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer
+
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment, encipherOnly

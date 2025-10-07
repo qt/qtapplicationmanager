@@ -129,9 +129,17 @@ qt_feature("am-widgets-support" PUBLIC
     DISABLE INPUT_widgets_support STREQUAL 'no'
 )
 
+qt_feature("am-legacy-certificates" PUBLIC
+    LABEL "Support legacy packaging certificates"
+    AUTODETECT OFF
+    ENABLE INPUT_legacy-certificates STREQUAL 'yes'
+    DISABLE INPUT_legacy-certificates STREQUAL 'no'
+)
+
 qt_configure_add_summary_section(NAME "Qt Application Manager")
 qt_configure_add_summary_entry(ARGS "am-system-libyaml")
 qt_configure_add_summary_entry(ARGS "am-system-libarchive")
+qt_configure_add_summary_entry(ARGS "am-legacy-certificates")
 qt_configure_add_summary_entry(ARGS "am-tools-only")
 
 if (NOT QT_FEATURE_am_tools_only)

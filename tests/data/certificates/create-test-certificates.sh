@@ -38,24 +38,16 @@ fi
 echo " * Using openssl at ${SSL_BIN_PATH:-`which openssl`}"
 
 # try to execute and extract the major version number
-SSL_VERSION=$(${SSL_BIN_PATH}openssl version 2>/dev/null || true)
-SSL_MAJOR=$(echo "$SSL_VERSION" | cut -d' ' -f 2 | cut -d'.' -f 1)
-if [ -z "$SSL_VERSION" ] || [ -z "$SSL_MAJOR" ] || ! [ "$SSL_MAJOR" -eq "$SSL_MAJOR" ] 2>/dev/null; then
+SSL_VERSION=$(${SSL_BIN_PATH}openssl version 2>/dev/null | cut -d' ' -f2 || true)
+if [ -z "$SSL_VERSION" ]; then
   echo -e "$R Failed$W to run or parse the output of$G openssl version$W".
   exit 1
 fi
 
-echo " * Version ${SSL_MAJOR}: ${SSL_VERSION}"
+echo " * Version: ${SSL_VERSION}"
 echo
 
 SSL_PKCS12_EXTRA=''
-if [ "${SSL_MAJOR}" -ge 3 ]; then
-  # if we don't do this, then macOS' SecurityFramework cannot load the PKCS#12 files
-  if [ "$isMac" = "1" ]; then
-    SSL_PKCS12_EXTRA="-legacy"
-    echo " * using -legacy mode for PKCS#12 files for SecurityFramework compatibility"
-  fi
-fi
 
 runSSL()
 {
@@ -88,7 +80,7 @@ echo '01' > serial.txt
 
 info "Generating, signing and exporting the store certificate"
 runSSL req -config openssl-store.cnf -newkey rsa:2048 -nodes -keyout store-priv.key -out store.csr
-runSSL ca -batch -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out store.crt -infiles store.csr
+runSSL ca -batch -config openssl-ca.cnf -policy signing_policy -extensions store_signing_req -out store.crt -infiles store.csr
 runSSL pkcs12 ${SSL_PKCS12_EXTRA} -export -password pass:password -out store.p12 -inkey store-priv.key -nodes -in store.crt -name "Pelagicore App Store"
 
 info "Generating the developer sub-CA"
@@ -114,8 +106,8 @@ info "Generating the \"other\" CA"
 runSSL req -config openssl-other-ca.cnf -x509 -days 3650 -new -newkey rsa:2048 -nodes -keyout other-ca-priv.key -out other-ca.crt
 touch other-index.txt
 echo '01' > other-serial.txt
-# the double // is needed to get around MSYS hardwired path replacement
-runSSL req -config openssl-other-ca.cnf -batch -subj '//C=DE/ST=Foo/L=Bar/CN=www.other.com' -newkey rsa:2048 -nodes -keyout other-priv.key -out other.csr
+# the double // in subj is needed to get around MSYS hardwired path replacement
+runSSL req -config openssl-other-ca.cnf -batch -addext "subjectAltName=URI:qtam://packageid/*" -subj '//C=DE/ST=Foo/L=Bar/CN=www.other.com' -newkey rsa:2048 -nodes -keyout other-priv.key -out other.csr
 runSSL ca -batch -config openssl-other-ca.cnf -policy signing_policy -extensions signing_req -out other.crt -infiles other.csr
 runSSL pkcs12 ${SSL_PKCS12_EXTRA} -export -out other.p12 -password pass:password -inkey other-priv.key -nodes -certfile other-ca.crt -in other.crt -name "Other Certificate"
 

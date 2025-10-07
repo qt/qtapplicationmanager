@@ -9,6 +9,8 @@
 #include <QtCore/QByteArray>
 #include <QtAppManCommon/global.h>
 
+#include "certificate.h"
+
 QT_BEGIN_NAMESPACE_AM
 
 class SignaturePrivate;
@@ -19,10 +21,30 @@ public:
     explicit Signature(const QByteArray &hash);
     ~Signature();
 
-    QByteArray create(const QByteArray &signingCertificatePkcs12, const QByteArray &signingCertificatePassword);
-    bool verify(const QByteArray &signaturePkcs7, const QByteArrayList &chainOfTrust);
+    QByteArray create(const QByteArray &signingCertificatePkcs12,
+                      const QByteArray &signingCertificatePassword) noexcept(false);
 
-    QString errorString() const;
+    struct VerificationResult
+    {
+        //TODO: Even though the issuers are a list, I have not yet found a way to return the
+        // complete chain of issuers for all the backends. All do support the direct issuer, though.
+
+        Certificate signer;
+        QList<Certificate> issuers;
+        bool isValid() const { return signer.isValid() && !issuers.isEmpty() && issuers.constFirst().isValid(); }
+    };
+
+    VerificationResult verify(const QByteArray &signaturePkcs7,
+                              const QByteArrayList &chainOfTrust) noexcept(false);
+
+    enum class FingerprintHash {
+        Sha256 = 1
+    };
+
+    void requireKeyUsage(Certificate::KeyUsages keyUsages);
+    void requirePackageId(const QString &packageId);
+    void requireIssuerFingerprint(FingerprintHash hash, const QStringList &fingerprints); // hex-encoded "01:23:34:..."
+    void requireRevocationCheck(const QByteArrayList &crls);
 
 private:
     SignaturePrivate *d;

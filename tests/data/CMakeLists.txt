@@ -6,6 +6,15 @@ if (NOT QT_FEATURE_am_installer)
     return()
 endif()
 
+if (DEFINED ENV{QT_AM_DISABLE_PACKAGE_GENERATION}) # for Coin
+    message(WARNING "Test package generation is disabled via $QT_AM_DISABLE_PACKAGE_GENERATION")
+    return()
+endif()
+if (QNX OR ANDROID OR IOS)
+    message(WARNING "Test package generation is not supported on QNX, Android and iOS")
+    return()
+endif()
+
 set(TEST_DATA_FILES
     binaries/README.md
     binaries/android-elf.so.zz

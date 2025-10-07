@@ -36,6 +36,15 @@ instructions:
       condition: property
       property: features
       contains_value: Packaging
+  # disable package generation on QEMU, because the openssl host tool is 1.1, but the target
+  # libs are 3.x: https://codereview.qt-project.org/c/qt/qt5/+/502441
+  - type: EnvironmentVariable
+    variableName: QT_AM_DISABLE_PACKAGE_GENERATION
+    variableValue: "1"
+    enable_if:
+      condition: property
+      property: target.osVersion
+      equals_value: "QEMU"
   # Enable Axivion_analysis for Qt
   - type: EnvironmentVariable
     variableName: AXIVION_ANALYSIS

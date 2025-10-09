@@ -131,6 +131,8 @@ void SharedMain::setupQmlDebugging(bool qmlDebugging)
                                       "Re-enabling it for the QML Debugger interface to work correctly.";
             QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
         }
+        // make it easy to check this from the watchdog
+        qApp->setProperty("_am_qmlDebugging", true);
 #else
         qCWarning(LogSystem) << "The --qml-debug/-qmljsdebugger options are ignored, "
                                 "because Qt was built without support for QML Debugging!";

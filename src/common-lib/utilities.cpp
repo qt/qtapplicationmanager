@@ -348,6 +348,9 @@ void validateIdForFilesystemUsage(const QString &id)  noexcept(false)
 
 bool isDebuggerAttached(qint64 pid)
 {
+    if (qApp->property("_am_qmlDebugging").toBool())
+        return true;
+
     bool debuggerAttached = false;
 
 #if defined(Q_OS_LINUX)

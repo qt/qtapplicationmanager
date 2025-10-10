@@ -6,7 +6,7 @@
 \ingroup cmake-macros-qtapplicationmanager
 
 \title qt_am_add_systemui_wrapper
-\target qt6_am_add_systemui_wrapper
+\keyword qt6_am_add_systemui_wrapper
 
 \brief Creates a basic wrapper script to run a System UI using the appman binary.
 

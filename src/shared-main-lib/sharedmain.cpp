@@ -101,6 +101,7 @@ void SharedMain::initialize()
         setenv("XDG_RUNTIME_DIR", QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toLocal8Bit(), 1);
 #endif
 
+    registerDBusTypes();
     ensureLibDBusIsAvailable();
 }
 

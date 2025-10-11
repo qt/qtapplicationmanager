@@ -27,26 +27,107 @@
 
 using namespace Qt::StringLiterals;
 
+#if defined(QT_DBUS_LIB)
+
+namespace {
+
+// QVariant() [undefined] and QVariant(nullptr) [null] are common, but cannot be mapped to any
+// standard D-Bus type. We did abuse uchar(0) for null in the past, but using dedicated types is
+// cleaner and less error prone.
+
+class DBusNull
+{
+public:
+    DBusNull() = default;
+    DBusNull(const DBusNull &) = default;
+};
+
+void operator<<(QDBusArgument &arg, const DBusNull &) // ((y)y) 0x0000
+{
+    arg << std::tuple<std::tuple<uchar>, uchar>{ 0x00, 0x00 };
+}
+
+void operator>>(const QDBusArgument &arg, DBusNull &)
+{
+    std::tuple<std::tuple<uchar>, uchar> t; arg >> t;
+    Q_ASSERT((t == std::tuple<std::tuple<uchar>, uchar>{ 0x00, 0x00 }));
+}
+
+class DBusInvalid
+{
+public:
+    DBusInvalid() = default;
+    DBusInvalid(const DBusInvalid &) = default;
+};
+
+void operator<<(QDBusArgument &arg, const DBusInvalid &) // (y(y)) 0xffff
+{
+    arg << std::tuple<uchar, std::tuple<uchar>>{ 0xff, 0xff };
+}
+
+void operator>>(const QDBusArgument &arg, DBusInvalid &)
+{
+    std::tuple<uchar, std::tuple<uchar>> t; arg >> t;
+    Q_ASSERT((t == std::tuple<uchar, std::tuple<uchar>>{ 0xff, 0xff }));
+}
+
+// QUrl is also common and has no native D-Bus type. We map it to a byte-array inside a
+
+// structure, inside a structure and store the encoded URL there.
+// We could register QUrl directly, but this could interfere with user code that registers QUrl
+// as well.
+
+class DBusUrl
+{
+public:
+    DBusUrl() = default;
+    DBusUrl(const QUrl &url) : m_url(url) { }
+
+    QUrl m_url;
+};
+
+
+void operator<<(QDBusArgument &arg, const DBusUrl &url) // ((ay))
+{
+    arg << std::tuple<std::tuple<QByteArray>>{ url.m_url.toEncoded() };
+}
+
+void operator>>(const QDBusArgument &arg, DBusUrl &url)
+{
+    std::tuple<std::tuple<QByteArray>> t; arg >> t;
+    url.m_url = QUrl::fromEncoded(std::get<0>(std::get<0>(t)));
+}
+
+} // anonymous namespace
+
+Q_DECLARE_METATYPE(DBusNull)
+Q_DECLARE_METATYPE(DBusInvalid)
+Q_DECLARE_METATYPE(DBusUrl)
+
+#endif // QT_DBUS_LIB
 
 QT_BEGIN_NAMESPACE_AM
 
 QVariant convertToDBusVariant(const QVariant &variant)
 {
-#if !defined(QT_QML_LIB)
+#if !defined(QT_DBUS_LIB)
     return variant;
 #else
     int type = variant.userType();
 
-    if (type == qMetaTypeId<QJSValue>()) {
+    if (type == QMetaType::UnknownType) { // JS "undefined" / CPP Invalid
+        return QVariant::fromValue(DBusInvalid { });
+    } else if (type == QMetaType::UnknownType) { // JS and CPP null
+        return QVariant::fromValue(DBusNull { });
+    } else if (type == QMetaType::QUrl) { // QtDBus does not register QUrl
+        return QVariant::fromValue(DBusUrl { variant.value<QUrl>() });
+#if defined(QT_QML_LIB)
+    } else if (type == qMetaTypeId<QJSValue>()) {
         return convertToDBusVariant(variant.value<QJSValue>().toVariant());
-    } else if (type == QMetaType::QUrl) {
-        return QVariant(variant.toUrl().toString());
+#endif
     } else if (type == QMetaType::QVariant) {
         // got a matryoshka variant
         return convertToDBusVariant(variant.value<QVariant>());
-    } else if ((type == QMetaType::UnknownType) || (type == QMetaType::Nullptr)) {
-        // we cannot send QVariant::Invalid and null values via DBus, so we abuse BYTE(0) for this purpose
-        return QVariant::fromValue<uchar>(0);
     } else if (type == QMetaType::QVariantList) {
         QVariantList outList;
         QVariantList inList = variant.toList();
@@ -72,9 +153,12 @@ QVariant convertFromDBusVariant(const QVariant &variant)
 #else
     int type = variant.userType();
 
-    if (type == QMetaType::UChar && variant.value<uchar>() == 0) {
-        // we cannot send QVariant::Invalid via DBus, so we abuse BYTE(0) for this purpose
+    if (type == qMetaTypeId<DBusInvalid>()) {
         return QVariant();
+    } else if (type == qMetaTypeId<DBusNull>()) {
+        return QVariant::fromValue(nullptr);
+    } else if (type == qMetaTypeId<DBusUrl>()) {
+        return QUrl(variant.value<DBusUrl>().m_url);
     } else if (type == qMetaTypeId<QDBusVariant>()) {
         QDBusVariant dbusVariant = variant.value<QDBusVariant>();
         return convertFromDBusVariant(dbusVariant.variant()); // just to be on the safe side
@@ -110,6 +194,26 @@ QVariant convertFromDBusVariant(const QVariant &variant)
             dbusArg.endMap();
             return vm;
         }
+        case QDBusArgument::StructureType: {
+            // this is really stupid, but QDBusMetaType::signatureToType() does not work for
+            // complex types, although it has all the information (in a private list...)
+            const auto sig = dbusArg.currentSignature();
+            for (int meta : { qMetaTypeId<DBusNull>(), qMetaTypeId<DBusInvalid>(),
+                             qMetaTypeId<DBusUrl>(),
+                             int(QMetaType::QDate), int(QMetaType::QTime), int(QMetaType::QDateTime),
+                             int(QMetaType::QRect), int(QMetaType::QRectF),
+                             int(QMetaType::QSize), int(QMetaType::QSizeF),
+                             int(QMetaType::QPoint), int(QMetaType::QPointF),
+                             int(QMetaType::QLine), int(QMetaType::QLineF) }) {
+                auto metaSig = QString::fromLatin1(QDBusMetaType::typeToSignature(QMetaType(meta)));
+                if (sig == metaSig) {
+                    auto variant = QVariant::fromMetaType(QMetaType { meta });
+                    if (QDBusMetaType::demarshall(dbusArg, QMetaType { meta }, variant.data()))
+                        return convertFromDBusVariant(variant);
+                }
+            }
+            Q_FALLTHROUGH();
+        }
         default:
             return QVariant();
         }
@@ -136,9 +240,11 @@ void registerDBusTypes()
 #if defined(QT_DBUS_LIB)
     static bool once = false;
     if (!once) {
-        qDBusRegisterMetaType<QUrl>();
         qDBusRegisterMetaType<QMap<QString, QDBusUnixFileDescriptor>>();
-        qDBusRegisterMetaType<QtAM::UnixFdMap>();
+        qDBusRegisterMetaType<DBusInvalid>();
+        qDBusRegisterMetaType<DBusNull>();
+        qDBusRegisterMetaType<DBusUrl>();
+
         once = true;
     }
 #endif
@@ -191,56 +297,3 @@ void ensureLibDBusIsAvailable()
 }
 
 QT_END_NAMESPACE_AM
-
-#if defined(QT_DBUS_LIB)
-QT_BEGIN_NAMESPACE
-
-QDBusArgument &operator<<(QDBusArgument &argument, const QUrl &url)
-{
-    argument.beginStructure();
-    argument << QString::fromLatin1(url.toEncoded());
-    argument.endStructure();
-    return argument;
-}
-
-const QDBusArgument &operator>>(const QDBusArgument &argument, QUrl &url)
-{
-    QString s;
-    argument.beginStructure();
-    argument >> s;
-    argument.endStructure();
-    url = QUrl::fromEncoded(s.toLatin1());
-    return argument;
-}
-
-QDBusArgument &operator<<(QDBusArgument &argument, const QtAM::UnixFdMap &fdMap)
-{
-    argument.beginMap(qMetaTypeId<QString>(), qMetaTypeId<QDBusUnixFileDescriptor>());
-    for (auto it = fdMap.cbegin(); it != fdMap.cend(); ++it) {
-        argument.beginMapEntry();
-        argument << it.key();
-        argument << it.value();
-        argument.endMapEntry();
-    }
-    argument.endMap();
-    return argument;
-}
-
-const QDBusArgument &operator>>(const QDBusArgument &argument, QtAM::UnixFdMap &fdMap)
-{
-    argument.beginMap();
-    fdMap.clear();
-    while (!argument.atEnd()) {
-        QString key;
-        QDBusUnixFileDescriptor value;
-        argument.beginMapEntry();
-        argument >> key >> value;
-        argument.endMapEntry();
-        fdMap.insert(key, value);
-    }
-    argument.endMap();
-    return argument;
-}
-
-QT_END_NAMESPACE
-#endif

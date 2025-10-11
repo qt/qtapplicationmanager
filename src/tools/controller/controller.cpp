@@ -712,7 +712,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
         reply = isDebug ? dbus()->manager()->debugApplication(appId, debugWrapper, documentUrl)
                         : dbus()->manager()->startApplication(appId, documentUrl);
     } else {
-        UnixFdMap fdMap;
+        QMap<QString, QDBusUnixFileDescriptor> fdMap;
         for (auto it = stdRedirections.cbegin(); it != stdRedirections.cend(); ++it)
             fdMap.insert(it.key(), QDBusUnixFileDescriptor(it.value()));
 

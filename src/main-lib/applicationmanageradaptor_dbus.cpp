@@ -120,12 +120,15 @@ bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QStrin
     return debugApplication(id, debugWrapper, QString());
 }
 
-bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QString &debugWrapper, const QString &documentUrl)
+bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QString &debugWrapper,
+                                                 const QString &documentUrl)
 {
-    return debugApplication(id, debugWrapper, UnixFdMap(), documentUrl);
+    return debugApplication(id, debugWrapper, { }, documentUrl);
 }
 
-bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QString &debugWrapper, const QtAM::UnixFdMap &redirections, const QString &documentUrl)
+bool ApplicationManagerAdaptor::debugApplication(const QString &id, const QString &debugWrapper,
+                                                 const QMap<QString, QDBusUnixFileDescriptor> &redirections,
+                                                 const QString &documentUrl)
 {
     QT_AM_AUTHENTICATE_DBUS(bool)
 
@@ -196,10 +199,12 @@ bool ApplicationManagerAdaptor::startApplication(const QString &id)
 
 bool ApplicationManagerAdaptor::startApplication(const QString &id, const QString &documentUrl)
 {
-    return startApplication(id, UnixFdMap(), documentUrl);
+    return startApplication(id, { }, documentUrl);
 }
 
-bool ApplicationManagerAdaptor::startApplication(const QString &id, const QtAM::UnixFdMap &redirections, const QString &documentUrl)
+bool ApplicationManagerAdaptor::startApplication(const QString &id,
+                                                 const QMap<QString, QDBusUnixFileDescriptor> &redirections,
+                                                 const QString &documentUrl)
 {
     QT_AM_AUTHENTICATE_DBUS(bool)
 

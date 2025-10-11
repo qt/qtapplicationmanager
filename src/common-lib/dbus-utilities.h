@@ -9,16 +9,6 @@
 #include <QtAppManCommon/global.h>
 #include <QtCore/QVariant>
 
-#if defined(QT_DBUS_LIB)
-#  include <QtDBus/QDBusUnixFileDescriptor>
-
-QT_BEGIN_NAMESPACE_AM
-typedef QMap<QString, QDBusUnixFileDescriptor> UnixFdMap;
-QT_END_NAMESPACE_AM
-Q_DECLARE_METATYPE(QtAM::UnixFdMap)
-#endif
-
-
 QT_BEGIN_NAMESPACE_AM
 
 QVariant convertToDBusVariant(const QVariant &variant);

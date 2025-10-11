@@ -912,8 +912,6 @@ void Main::showWindow()
 void Main::setupDBus(const Configuration *cfg)
 {
 #if defined(QT_DBUS_LIB) && QT_CONFIG(am_external_dbus_interfaces)
-    registerDBusTypes();
-
     DBusPolicy::createInstance([](qint64 pid) { return ApplicationManager::instance()->identifyAllApplications(pid); },
                                [](const QString &appId) { return ApplicationManager::instance()->capabilities(appId); });
 

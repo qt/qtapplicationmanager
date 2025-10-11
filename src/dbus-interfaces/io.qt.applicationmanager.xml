@@ -44,7 +44,7 @@
       <arg type="b" direction="out"/>
       <arg name="id" type="s" direction="in"/>
       <arg name="redirections" type="a{sh}" direction="in"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QtAM::UnixFdMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QMap&lt;QString,QDBusUnixFileDescriptor&gt;"/>
       <arg name="documentUrl" type="s" direction="in"/>
     </method>
     <method name="startApplication">
@@ -61,7 +61,7 @@
       <arg name="id" type="s" direction="in"/>
       <arg name="debugWrapper" type="s" direction="in"/>
       <arg name="redirections" type="a{sh}" direction="in"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="QtAM::UnixFdMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="QMap&lt;QString, QDBusUnixFileDescriptor&gt;"/>
       <arg name="documentUrl" type="s" direction="in"/>
     </method>
     <method name="debugApplication">

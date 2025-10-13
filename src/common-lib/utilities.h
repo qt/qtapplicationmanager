@@ -126,6 +126,10 @@ void validateIdForFilesystemUsage(const QString &id) noexcept(false);
 // returns true if the specified process is being debugged (pid == 0 denotes the current process)
 bool isDebuggerAttached(qint64 pid = 0);
 
+// return if the file or directory is - at max - writable by the current user or root
+void ensureSafePermissions(const QString &path) noexcept(false);
+void ensureSafePermissions(const QFileInfo &fi) noexcept(false);
+
 QT_END_NAMESPACE_AM
 
 #endif // UTILITIES_H

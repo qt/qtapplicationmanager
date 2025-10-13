@@ -391,4 +391,46 @@ bool isDebuggerAttached(qint64 pid)
     return debuggerAttached;
 }
 
+void ensureSafePermissions(const QString &path) noexcept(false)
+{
+    ensureSafePermissions(QFileInfo(path));
+}
+
+void ensureSafePermissions(const QFileInfo &fi) noexcept(false)
+{
+#if defined(Q_OS_LINUX)
+    if (fi.isNativePath()) {
+        uid_t owner = fi.ownerId();
+        gid_t group = fi.groupId();
+        auto mode = fi.permissions();
+        static uid_t currentUser = ::getuid();
+        static gid_t currentGroup = ::getgid();
+
+        if (mode & QFileDevice::WriteOther)
+            throw Exception("%1 is world-writable").arg(fi.filePath());
+
+        if ((mode & QFileDevice::WriteGroup) && !((group == 0) || (group == currentGroup))) {
+            static QSet<gid_t> currentGroups = []() {
+                std::array<gid_t, NGROUPS_MAX> groupsArray;
+                int groupsArraySize = ::getgroups(NGROUPS_MAX, groupsArray.data());
+                if (groupsArraySize < 0)
+                    throw Exception("could not get the supplementary groups of the current user");
+                return QSet<gid_t> { groupsArray.cbegin(), groupsArray.cbegin() + groupsArraySize };
+            }();
+
+            if (!currentGroups.contains(group)) {
+                throw Exception("%1 is group-writable by the unrelated group %2")
+                    .arg(fi.filePath()).arg(fi.group());
+            }
+        }
+        if ((mode & QFileDevice::WriteOwner) && !((owner == 0) || (owner == currentUser))) {
+            throw Exception("%1 is user-writable by the unrelated user %2")
+                .arg(fi.filePath()).arg(fi.owner());
+        }
+    }
+#else
+    Q_UNUSED(fi);
+#endif
+}
+
 QT_END_NAMESPACE_AM

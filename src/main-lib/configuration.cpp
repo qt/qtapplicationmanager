@@ -373,63 +373,27 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     timer.start();
 #endif
 
-    static auto checkPermissions = [](const QFileInfo &fi) -> bool {
-#if defined(Q_OS_LINUX)
-        if (fi.isNativePath()) {
-            uid_t owner = fi.ownerId();
-            gid_t group = fi.groupId();
-            auto mode = fi.permissions();
-            static uid_t currentUser = ::getuid();
-            static gid_t currentGroup = ::getgid();
-
-            if (mode & QFileDevice::WriteOther) {
-                qCWarning(LogDeployment) << "Ignoring configuration file" << fi.filePath()
-                                         << "as it is world-writable.";
-                return false;
-            }
-            if ((mode & QFileDevice::WriteGroup) && !((group == 0) || (group == currentGroup))) {
-                static QSet<gid_t> currentGroups = []() {
-                    std::array<gid_t, NGROUPS_MAX> groupsArray;
-                    int groupsArraySize = ::getgroups(NGROUPS_MAX, groupsArray.data());
-                    if (groupsArraySize < 0) {
-                        qCWarning(LogSystem) << "Could not get the supplementary groups of the current user.";
-                        groupsArraySize = 0;
-                    }
-                    return QSet<gid_t> { groupsArray.cbegin(), groupsArray.cbegin() + groupsArraySize };
-                }();
-
-                if (!currentGroups.contains(group)) {
-                    qCWarning(LogDeployment) << "Ignoring configuration file" << fi.filePath()
-                                             << "as it is group-writable by the unrelated group" << fi.group();
-                    return false;
-                }
-            }
-            if ((mode & QFileDevice::WriteOwner) && !((owner == 0) || (owner == currentUser))) {
-                qCWarning(LogDeployment) << "Ignoring configuration file" << fi.filePath()
-                                         << "as it is user-writable by the unrelated user" << fi.owner();
-                return false;
-            }
-        }
-#else
-        Q_UNUSED(fi);
-#endif
-        return true;
-    };
-
     const QStringList rawConfigFilePaths = d->clp.values(u"config-file"_s);
     QStringList configFilePaths;
     configFilePaths.reserve(rawConfigFilePaths.size());
+
+    auto checkConfigFile = [&](const QFileInfo &cf) {
+        try {
+            ensureSafePermissions(cf);
+            configFilePaths << cf.filePath();
+        } catch (const Exception &e) {
+            qCWarning(LogDeployment) << "Ignoring configuration file:" << e.errorString();
+        }
+    };
+
     for (const auto &path : rawConfigFilePaths) {
         QFileInfo pathInfo(path);
         if (pathInfo.isDir()) {
             const auto entries = QDir(path).entryInfoList({ u"*.yaml"_s }, QDir::Files, QDir::Name);
-            for (const auto &entry : entries) {
-                if (checkPermissions(entry))
-                    configFilePaths << entry.filePath();
-            }
+            for (const auto &entry : entries)
+                checkConfigFile(entry);
         } else {
-            if (checkPermissions(pathInfo))
-                configFilePaths << path;
+            checkConfigFile(pathInfo);
         }
     }
 

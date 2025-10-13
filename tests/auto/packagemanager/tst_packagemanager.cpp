@@ -22,6 +22,8 @@
 #include "packageutilities.h"
 
 #include "../error-checking.h"
+#include "../devmode.h"
+
 
 using namespace Qt::StringLiterals;
 
@@ -29,47 +31,6 @@ QT_USE_NAMESPACE_AM
 
 
 static int spyTimeout = 5000; // shorthand for specifying QSignalSpy timeouts
-
-// RAII to reset the global attribute
-class AllowInstallations
-{
-public:
-    enum Type {
-        AllowUnsigned,
-        RequireDevSigned,
-        RequireStoreSigned
-    };
-
-    AllowInstallations(Type t)
-        : m_oldUnsigned(PackageManager::instance()->allowInstallationOfUnsignedPackages())
-        , m_oldDevMode(PackageManager::instance()->developmentMode())
-    {
-        switch (t) {
-        case AllowUnsigned:
-            PackageManager::instance()->setAllowInstallationOfUnsignedPackages(true);
-            PackageManager::instance()->setDevelopmentMode(false);
-            break;
-        case RequireDevSigned:
-            PackageManager::instance()->setAllowInstallationOfUnsignedPackages(false);
-            PackageManager::instance()->setDevelopmentMode(true);
-            break;
-        case RequireStoreSigned:
-            PackageManager::instance()->setAllowInstallationOfUnsignedPackages(false);
-            PackageManager::instance()->setDevelopmentMode(false);
-            break;
-        }
-    }
-    ~AllowInstallations()
-    {
-        PackageManager::instance()->setAllowInstallationOfUnsignedPackages(m_oldUnsigned);
-        PackageManager::instance()->setDevelopmentMode(m_oldDevMode);
-    }
-private:
-    bool m_oldUnsigned;
-    bool m_oldDevMode;
-
-    Q_DISABLE_COPY_MOVE(AllowInstallations)
-};
 
 class tst_PackageManager : public QObject
 {
@@ -280,7 +241,7 @@ void tst_PackageManager::initTestCase()
     m_pm->loadCertificates({ caFile }, { devcaFile }, { storecaFile });
 
     // we do not require valid store signatures for this test run
-    m_pm->setDevelopmentMode(true);
+    m_pm->setDevelopmentMode(PackageManager::DevelopmentMode::System);
 
     // make sure we have a valid runtime available. The important part is
     // that we have a runtime called "native" - the functionality does not matter.
@@ -421,9 +382,9 @@ void tst_PackageManager::packageInstallation()
     QString installationDir = m_pm->installationLocation().value(u"path"_s).toString();
     QString documentDir = m_pm->documentLocation().value(u"path"_s).toString();
 
-    AllowInstallations allow(storeSigned ? AllowInstallations::RequireStoreSigned
-                                         : (devSigned ? AllowInstallations::RequireDevSigned
-                                                      : AllowInstallations::AllowUnsigned));
+    DevMode devMode(storeSigned ? PackageManager::DevelopmentMode::Disabled
+                                : PackageManager::DevelopmentMode::System,
+                    !storeSigned && !devSigned);
 
     QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     QString instReport = dataDir.absoluteFilePath(u"installation-reports/test-pkg.yaml"_s);
@@ -437,8 +398,8 @@ void tst_PackageManager::packageInstallation()
 
         // install (or update) the package
 
-        QUrl url = QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/")
-                                       + (pass == 1 ? packageName : updatePackageName));
+        QString url = AM_TESTDATA_DIR u"packages/" + (pass == 1 ? packageName : updatePackageName);
+
         QString taskId = m_pm->startPackageInstallation(url);
         QVERIFY(!taskId.isEmpty());
         m_pm->acknowledgePackageInstallation(taskId);
@@ -577,7 +538,7 @@ void tst_PackageManager::simulateErrorConditions()
     if (testUpdate) {
         // the check will run when updating a package, so we need to install it first
 
-        taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
+        taskId = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
         QVERIFY(!taskId.isEmpty());
         m_pm->acknowledgePackageInstallation(taskId);
         QVERIFY(m_finishedSpy->wait(spyTimeout));
@@ -589,7 +550,7 @@ void tst_PackageManager::simulateErrorConditions()
     for (const auto &f : beforeStart)
         QVERIFY(f());
 
-    taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
+    taskId = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
 
     const auto afterStart = functions.values("after-start");
     for (const auto &f : afterStart)
@@ -631,7 +592,7 @@ void tst_PackageManager::cancelPackageInstallation()
 {
     QFETCH(bool, expectedResult);
 
-    QString taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
+    QString taskId = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
     QVERIFY(!taskId.isEmpty());
 
     if (isDataTag("before-started-signal")) {
@@ -670,12 +631,12 @@ void tst_PackageManager::cancelPackageInstallation()
 
 void tst_PackageManager::parallelPackageInstallation()
 {
-    QString task1Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
+    QString task1Id = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
     QVERIFY(!task1Id.isEmpty());
     QVERIFY(m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout));
     QCOMPARE(m_blockingUntilInstallationAcknowledgeSpy->first()[0].toString(), task1Id);
 
-    QString task2Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/other-test-dev-signed.ampkg")));
+    QString task2Id = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/other-test-dev-signed.ampkg"_s);
     QVERIFY(!task2Id.isEmpty());
     m_pm->acknowledgePackageInstallation(task2Id);
     QVERIFY(m_finishedSpy->wait(spyTimeout));
@@ -691,12 +652,12 @@ void tst_PackageManager::parallelPackageInstallation()
 
 void tst_PackageManager::doublePackageInstallation()
 {
-    QString task1Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
+    QString task1Id = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
     QVERIFY(!task1Id.isEmpty());
     QVERIFY(m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout));
     QCOMPARE(m_blockingUntilInstallationAcknowledgeSpy->first()[0].toString(), task1Id);
 
-    QString task2Id = m_pm->startPackageInstallation(QUrl::fromLocalFile(QString::fromLatin1(AM_TESTDATA_DIR "packages/test-dev-signed.ampkg")));
+    QString task2Id = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
     QVERIFY(!task2Id.isEmpty());
     m_pm->acknowledgePackageInstallation(task2Id);
     QVERIFY(m_failedSpy->wait(spyTimeout));

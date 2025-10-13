@@ -37,3 +37,8 @@ if (LINUX)
         add_subdirectory(package-server-tool)
     endif()
 endif()
+
+add_custom_target("Test-Header-Files" SOURCES
+    error-checking.h
+    devmode.h
+)

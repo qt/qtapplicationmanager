@@ -200,6 +200,12 @@ void Main::setup(const Configuration *cfg) noexcept(false)
 {
     StartupTimer::instance()->checkpoint("after configuration parsing");
 
+    qCInfo(LogSystem) << "Development mode:" <<
+        ((cfg->yaml.flags.developmentMode == ConfigurationData::Flags::DevelopmentMode::Application)
+             ? "enabled (application mode)"
+             : ((cfg->yaml.flags.developmentMode == ConfigurationData::Flags::DevelopmentMode::System)
+                    ? "enabled (system mode)" : "disabled"));
+
     CrashHandler::setCrashActionConfiguration(cfg->yaml.crashAction.printBacktrace,
                                               cfg->yaml.crashAction.printQmlStack,
                                               cfg->yaml.crashAction.waitForGdbAttach.count(),
@@ -555,8 +561,20 @@ void Main::setupSingletons(const Configuration *cfg) noexcept(false)
 
     if (cfg->yaml.flags.noSecurity)
         m_applicationManager->setSecurityChecksEnabled(false);
-    if (cfg->yaml.flags.developmentMode)
-        m_packageManager->setDevelopmentMode(true);
+
+    // map the enums - they are the same, but live in different layers
+    const auto pmDevMode = [](auto configDevMode) {
+        switch (configDevMode) {
+        default:
+        case ConfigurationData::Flags::DevelopmentMode::Disabled:
+            return PackageManager::DevelopmentMode::Disabled;
+        case ConfigurationData::Flags::DevelopmentMode::System:
+            return PackageManager::DevelopmentMode::System;
+        case ConfigurationData::Flags::DevelopmentMode::Application:
+            return PackageManager::DevelopmentMode::Application;
+        }
+    }(cfg->yaml.flags.developmentMode);
+    m_packageManager->setDevelopmentMode(pmDevMode);
 
     m_applicationManager->setSystemProperties(m_systemProperties.at(SP_SystemUi));
     m_applicationManager->setContainerSelectionConfiguration(cfg->yaml.containers.selection);
@@ -656,6 +674,9 @@ void Main::setupInstaller(const Configuration *cfg) noexcept(false)
     }
 
     m_packageManager->enableInstaller();
+
+    // no changes possible to the PM configuration anymore after this point in non-developer builds
+    m_packageManager->lockConfiguration();
 
     StartupTimer::instance()->checkpoint("after installer setup");
 #else

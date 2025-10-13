@@ -250,6 +250,8 @@ enum Command {
     ShowInstallationLocation,
     ListInstances,
     InjectIntentRequest,
+    SetDeveloperCertificate,
+    ShowDevelopmentMode,
 };
 
 // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
@@ -258,21 +260,24 @@ static struct {
     const char *name;
     const char *description;
 } commandTable[] = {
-    { StartApplication, "start-application", "Start an application." },
-    { DebugApplication, "debug-application", "Debug an application." },
-    { StopApplication,  "stop-application",  "Stop an application." },
-    { StopAllApplications,  "stop-all-applications",  "Stop all applications." },
-    { ListApplications, "list-applications", "List all installed applications." },
-    { ShowApplication,  "show-application",  "Show application meta-data." },
-    { ListPackages,     "list-packages",     "List all installed packages." },
-    { ShowPackage,      "show-package",      "Show package meta-data." },
-    { InstallPackage,   "install-package",   "Install a package." },
-    { RemovePackage,    "remove-package",    "Remove a package." },
+    { StartApplication,          "start-application",           "Start an application." },
+    { DebugApplication,          "debug-application",           "Debug an application." },
+    { StopApplication,           "stop-application",            "Stop an application." },
+    { StopAllApplications,       "stop-all-applications",       "Stop all applications." },
+    { ListApplications,          "list-applications",           "List all installed applications." },
+    { ShowApplication,           "show-application",            "Show application meta-data." },
+    { ListPackages,              "list-packages",               "List all installed packages." },
+    { ShowPackage,               "show-package",                "Show package meta-data." },
+    { InstallPackage,            "install-package",             "Install a package." },
+    { RemovePackage,             "remove-package",              "Remove a package." },
     { ListInstallationTasks,     "list-installation-tasks",     "List all active installation tasks." },
     { CancelInstallationTask,    "cancel-installation-task",    "Cancel an active installation task." },
     { ShowInstallationLocation,  "show-installation-location",  "Show details for installation location." },
-    { ListInstances,    "list-instances",    "List all named application manager instances." },
+    { ListInstances,             "list-instances",              "List all named application manager instances." },
     { InjectIntentRequest,       "inject-intent-request",       "Inject an intent request for testing." },
+    { SetDeveloperCertificate,   "set-developer-certificate",   "Set the developer certificate for development mode." },
+    { ShowDevelopmentMode,       "show-development-mode",       "Show the current development mode status." },
+    { NoCommand,                 nullptr,                       nullptr }
 };
 
 static Command command(QCommandLineParser &clp)
@@ -314,6 +319,8 @@ static void listInstances() noexcept(false);
 static void injectIntentRequest(const QString &intentId, bool isBroadcast,
                                 const QString &applicationId, const QString &requestingApplicationId,
                                 const QString &jsonParameters) noexcept(false);
+static void setDeveloperCertificate(const QString &pkcs12Path, const QString &pkcs12Password) noexcept(false);
+static void showDevelopmentMode(bool asJson = false) noexcept(false);
 
 
 class ThrowingApplication : public QCoreApplication // clazy:exclude=missing-qobject-macro
@@ -595,7 +602,7 @@ int main(int argc, char *argv[])
             a.runLater(listInstances);
             break;
 
-        case InjectIntentRequest:
+        case InjectIntentRequest: {
             clp.addPositionalArgument(u"intent-id"_s, u"The id of the intent."_s);
             clp.addPositionalArgument(u"parameters"_s, u"The optional parameters for this request."_s, u"[json-parameters]"_s);
             clp.addOption({ u"requesting-application-id"_s, u"Fake the requesting application id."_s, u"id"_s, u":sysui:"_s });
@@ -622,6 +629,30 @@ int main(int argc, char *argv[])
 
             a.runLater(std::bind(injectIntentRequest, clp.positionalArguments().at(1),
                                  isBroadcast, requestingAppId, appId, jsonParams));
+            break;
+        }
+        case SetDeveloperCertificate:
+            clp.addPositionalArgument(u"certificate"_s, u"PKCS#12 certificate file."_s);
+            clp.addPositionalArgument(u"password"_s,    u"Password for the PKCS#12 certificate."_s);
+            clp.process(a);
+
+            if (clp.positionalArguments().size() != 3)
+                clp.showHelp(1);
+
+            a.runLater(std::bind(setDeveloperCertificate,
+                                 clp.positionalArguments().at(1),
+                                 clp.positionalArguments().at(2)));
+            break;
+
+        case ShowDevelopmentMode:
+            clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
+            clp.process(a);
+
+            if (clp.positionalArguments().size() > 1)
+                clp.showHelp(1);
+
+            a.runLater(std::bind(showDevelopmentMode,
+                                 clp.isSet(u"json"_s)));
             break;
         }
 
@@ -1189,6 +1220,37 @@ void injectIntentRequest(const QString &intentId, bool isBroadcast,
         fprintf(stdout, "%s\n", qPrintable(jsonResult));
     }
 
+    qApp->quit();
+}
+
+void setDeveloperCertificate(const QString &pkcs12Path, const QString &pkcs12Password)
+{
+    dbus()->connectToPackager();
+
+    QFile cf(pkcs12Path);
+    if (!cf.open(QIODevice::ReadOnly))
+        throw Exception(cf, "could not open certificate file");
+    QByteArray pkcs12Data = cf.readAll();
+
+    auto reply = dbus()->packager()->setDeveloperCertificate(pkcs12Data, pkcs12Password.toUtf8());
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception("failed to call setDeveloperCertificate via DBus: %1").arg(reply.error().message());
+
+    qApp->exit(reply.value() ? 0 : 1);
+}
+
+void showDevelopmentMode(bool asJson)
+{
+    dbus()->connectToPackager();
+
+    QString devMode = dbus()->packager()->developmentMode();
+    QVariant devCert = convertFromDBusVariant(dbus()->packager()->developerCertificate().variant());
+
+    QVariantMap out { { u"developmentMode"_s, devMode }, { u"developerCertificate"_s, devCert } };
+
+    fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(out).toJson().constData()
+                                    : QtYaml::yamlFromVariantDocuments({ out }).constData());
     qApp->quit();
 }
 

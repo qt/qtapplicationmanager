@@ -99,8 +99,8 @@ private:
 QMutex InstallationTask::s_serializeFinishInstallation { };
 
 InstallationTask::InstallationTask(const QString &installationPath, const QString &documentPath,
-                                   const QUrl &sourceUrl, QObject *parent)
-    : AsynchronousTask(parent)
+                                   const QUrl &sourceUrl, Origin origin, QObject *parent)
+    : AsynchronousTask(origin, parent)
     , m_pm(PackageManager::instance())
     , m_installationPath(installationPath)
     , m_documentPath(documentPath)
@@ -178,6 +178,9 @@ void InstallationTask::execute()
 
             // Step 1: verify the store signature (optional, if in dev mode)
             if (hasStoreSignature) {
+                if (origin() == Origin::ApplicationDeveloper)
+                    throw Exception("packages with store signatures cannot be installed via appman-controller when the development mode is set to 'application'");
+
                 // normal package from the store
                 QByteArray sigDigest = m_extractor->installationReport().digest();
 
@@ -213,14 +216,26 @@ void InstallationTask::execute()
                     }
                 }
             } else {
-                if (!m_pm->developmentMode())
-                    throw Exception(Error::Package, "cannot install packages without store signature on consumer devices");
+                if (m_pm->developmentMode() == PackageManager::DevelopmentMode::Disabled)
+                    throw Exception(Error::Package, "packages without store signatures cannot be installed unless development mode is enabled");
             }
 
             // Step 2: verify the developer signature (required)
             if (!m_extractor->installationReport().developerSignature().isEmpty()) {
-                if (!hasStoreSignature)
-                    Q_ASSERT(m_pm->developmentMode());
+                // Install packages from the store normally, but packages with just a dev
+                // signature have to match the current developer certificate
+                if (!hasStoreSignature) {
+                    // This is just a safeguard for future refactoring.
+                    Q_ASSERT(m_pm->developmentMode() != PackageManager::DevelopmentMode::Disabled);
+
+                    if (m_pm->developmentMode() == PackageManager::DevelopmentMode::Application) {
+                        const auto cert = m_pm->developerCertificate();
+                        if (!cert.matchPackageId(m_packageId)) {
+                            throw Exception(Error::Package, "the package's id (%1) does not match the currently set developer certificate (%2)")
+                                .arg(m_packageId).arg(cert.subjectAlternativeNames());
+                        }
+                    }
+                }
 
                 Signature devSig(m_extractor->installationReport().digest());
                 devSig.requireRevocationCheck(m_pm->certificateRevocationLists());
@@ -230,8 +245,17 @@ void InstallationTask::execute()
                                                 m_pm->issuerCertificateFingerprintsDeveloper());
 
                 try {
-                    (void) devSig.verify(m_extractor->installationReport().developerSignature(),
-                                         m_pm->caCertificatesCommon() + m_pm->caCertificatesDeveloper());
+                    auto result = devSig.verify(m_extractor->installationReport().developerSignature(),
+                                                m_pm->caCertificatesCommon() + m_pm->caCertificatesDeveloper());
+
+                    if (!hasStoreSignature) { // we still allow store installations while in dev mode
+                        if (m_pm->developmentMode() == PackageManager::DevelopmentMode::Application) {
+                            if (!m_pm->developerCertificate().isValid())
+                                throw Exception(Error::Package, "the development mode is set to 'application', but there is no developer certificate set");
+                            else if (m_pm->developerCertificate() != result.signer)
+                                throw Exception(Error::Package, "the package's developer signature does not match the currently set developer certificate");
+                        }
+                    }
                 } catch (const Exception &e) {
                     throw Exception(Error::Package, "could not verify the package's developer signature: %1")
                         .arg(e.errorString());

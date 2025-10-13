@@ -69,7 +69,7 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.yaml.ui.importPaths, {});
     QCOMPARE(c.yaml.ui.pluginPaths, {});
     QCOMPARE(c.yaml.flags.noSecurity, false);
-    QCOMPARE(c.yaml.flags.developmentMode, false);
+    QCOMPARE(c.yaml.flags.developmentMode, {});
     QCOMPARE(c.yaml.flags.allowUnsignedPackages, false);
     QCOMPARE(c.yaml.flags.allowUnknownUiClients, false);
     QCOMPARE(c.yaml.flags.forceSingleProcess, false);
@@ -165,7 +165,7 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.yaml.ui.importPaths, QStringList({ pwd.absoluteFilePath(u"ip1"_s), pwd.absoluteFilePath(u"ip2"_s) }));
     QCOMPARE(c.yaml.ui.pluginPaths, QStringList({ u"pp1"_s, u"pp2"_s }));
     QCOMPARE(c.yaml.flags.noSecurity, true);
-    QCOMPARE(c.yaml.flags.developmentMode, true);
+    QCOMPARE(c.yaml.flags.developmentMode, ConfigurationData::Flags::DevelopmentMode::System);
     QCOMPARE(c.yaml.flags.allowUnsignedPackages, true);
     QCOMPARE(c.yaml.flags.allowUnknownUiClients, true);
     QCOMPARE(c.yaml.flags.forceSingleProcess, true);
@@ -291,7 +291,7 @@ void tst_Configuration::mergedConfig()
                 pwd.absoluteFilePath(u"ip3"_s) }));
     QCOMPARE(c.yaml.ui.pluginPaths, QStringList({ u"pp1"_s, u"pp2"_s, u"pp3"_s }));
     QCOMPARE(c.yaml.flags.noSecurity, true);
-    QCOMPARE(c.yaml.flags.developmentMode, true);
+    QCOMPARE(c.yaml.flags.developmentMode, ConfigurationData::Flags::DevelopmentMode::System);
     QCOMPARE(c.yaml.flags.allowUnsignedPackages, true);
     QCOMPARE(c.yaml.flags.allowUnknownUiClients, true);
     QCOMPARE(c.yaml.flags.forceSingleProcess, true);
@@ -428,7 +428,7 @@ void tst_Configuration::commandLineConfig()
                 << "-v"
                 << "--slow-animations"
                 << "--no-security"
-                << "--development-mode"
+                << "--development-mode" << "application"
                 << "--no-ui-watchdog"
                 << "--no-dlt-logging"
                 << "--force-single-process"
@@ -476,7 +476,7 @@ void tst_Configuration::commandLineConfig()
                                             pwd.absoluteFilePath(u"ip-cl2"_s) }));
     QCOMPARE(c.yaml.ui.pluginPaths, {});
     QCOMPARE(c.yaml.flags.noSecurity, true);
-    QCOMPARE(c.yaml.flags.developmentMode, true);
+    QCOMPARE(c.yaml.flags.developmentMode, ConfigurationData::Flags::DevelopmentMode::Application);
     QCOMPARE(c.yaml.flags.forceSingleProcess, true);
     QCOMPARE(c.yaml.flags.forceMultiProcess, true);
     QCOMPARE(c.yaml.logging.rules, QStringList({ u"cl-lr1"_s, u"cl-lr2"_s }));

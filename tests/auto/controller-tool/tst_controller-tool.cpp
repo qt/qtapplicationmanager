@@ -21,6 +21,7 @@
 #include "qml-utilities.h"
 #include "qtyaml.h"
 #include <QtAppManMain/configuration.h>
+#include "../devmode.h"
 
 using namespace Qt::StringLiterals;
 
@@ -56,7 +57,6 @@ private:
     Configuration *m_config = nullptr;
     bool m_mainSetupDone = false;
 };
-
 
 class ControllerTool
 {
@@ -210,7 +210,6 @@ void tst_ControllerTool::initTestCase()
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
     }
-    PackageManager::instance()->setAllowInstallationOfUnsignedPackages(true);
 }
 
 void tst_ControllerTool::cleanupTestCase()
@@ -290,9 +289,18 @@ void tst_ControllerTool::packages()
 {
     {
         ControllerTool ctrl({ u"list-packages"_s });
+        QVERIFY(!ctrl.call());
+        QVERIFY(ctrl.stdErr.contains("Development mode is disabled"));
+    }
+
+    DevMode devMode(PackageManager::DevelopmentMode::System);
+
+    {
+        ControllerTool ctrl({ u"list-packages"_s });
         QVERIFY2(ctrl.call(), ctrl.failure);
         QCOMPARE(ctrl.stdOutList, QStringList({ u"controller-pkg"_s }));
     }
+
     {
         ControllerTool ctrl({ u"show-package"_s, u"controller-pkg"_s });
         QVERIFY2(ctrl.call(), ctrl.failure);
@@ -334,6 +342,8 @@ void tst_ControllerTool::installationLocation()
 
 void tst_ControllerTool::installCancel()
 {
+    DevMode devMode(PackageManager::DevelopmentMode::System, true);
+
     ControllerTool install({ u"install-package"_s,
                             QString::fromLatin1(AM_TESTDATA_DIR "packages/test.ampkg") });
     QVERIFY2(install.start(), install.failure);
@@ -365,6 +375,8 @@ void tst_ControllerTool::installCancel()
 
 void tst_ControllerTool::installRemove()
 {
+    DevMode devMode(PackageManager::DevelopmentMode::System, true);
+
     {
         ControllerTool ctrl({ u"install-package"_s, u"-a"_s,
                              QString::fromLatin1(AM_TESTDATA_DIR "packages/test.ampkg") });
@@ -407,8 +419,7 @@ void tst_ControllerTool::startStop()
 
 void tst_ControllerTool::injectIntent()
 {
-    auto oldDevMode = PackageManager::instance()->developmentMode();
-    PackageManager::instance()->setDevelopmentMode(true);
+    DevMode devMode(PackageManager::DevelopmentMode::System);
 
     ControllerTool ctrl({ u"inject-intent-request"_s, u"--requesting-application-id"_s,
         u":sysui:"_s, u"--application-id"_s, u":sysui:"_s, u"inject-intent"_s, u"{ }"_s, });
@@ -421,8 +432,6 @@ void tst_ControllerTool::injectIntent()
         { u"status"_s, u"ok"_s },
     });
     QCOMPARE(vm, expected);
-
-    PackageManager::instance()->setDevelopmentMode(oldDevMode);
 }
 
 

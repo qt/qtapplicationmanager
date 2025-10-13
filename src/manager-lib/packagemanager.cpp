@@ -39,7 +39,9 @@
 #  endif
 #endif
 
+#include <QSettings>
 #include <memory>
+#include <signature.h>
 
 using namespace Qt::StringLiterals;
 
@@ -309,12 +311,41 @@ PackageManager *PackageManager::instance()
 
 void PackageManager::enableInstaller()
 {
+    if (isConfigurationLocked())
+        return;
+
     d->enableInstaller = QT_CONFIG(am_installer);
 
     if (d->enableInstaller) {
         QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
         if (!dataDir.mkpath(u"installation-reports"_s))
             throw Exception("could not create directory for installation-reports: \'%1\'").arg(dataDir.absoluteFilePath(u"installation-reports"_s));
+
+        if (d->developmentMode == DevelopmentMode::Application) {
+            const QString iniFile = dataDir.absoluteFilePath(u"development-mode.ini"_s);
+            if (QFile::exists(iniFile)) {
+                try {
+                    ensureSafePermissions(iniFile);
+
+                    QSettings devMode(iniFile, QSettings::IniFormat);
+                    d->developerSignature = devMode.value(u"developerSignature"_s).toByteArray();
+
+                    Signature s("developmentMode");
+                    s.requireKeyUsage(Certificate::KeyUsage::Developer);
+                    s.requireRevocationCheck(d->certificateRevocationLists);
+                    auto result = s.verify(d->developerSignature, d->caCertificatesCommon + d->caCertificatesDeveloper);
+                    d->developerCertificate = result.signer;
+                } catch (const Exception &e) {
+                    // we could not load the file, so try to get rid of it to at least start over
+                    QFile::remove(iniFile);
+                    d->developerSignature.clear();
+                    d->developerCertificate = { };
+
+                    qCWarning(LogInstaller) << "Restoring the last used developer-certificate failed:"
+                                            << e.errorString();
+                }
+            }
+        }
     }
 }
 
@@ -693,21 +724,66 @@ bool PackageManager::installationEnabled() const
     return d->enableInstaller;
 }
 
+void PackageManager::setDeveloperCertificate(const QByteArray &pkcs12Data, const QByteArray &pkcs12Password)
+{
+    if (developmentMode() != PackageManager::DevelopmentMode::Application)
+        throw Exception("Cannot set developer certificate when development mode is not 'Application'");
+
+    Certificate signer;
+    QByteArray signature;
+
+    if (!pkcs12Data.isEmpty()) {
+        Signature s("developmentMode");
+        s.requireKeyUsage(Certificate::KeyUsage::Developer);
+        signature = s.create(pkcs12Data, pkcs12Password);
+
+        s.requireRevocationCheck(d->certificateRevocationLists);
+        const auto result = s.verify(signature, d->caCertificatesCommon + d->caCertificatesDeveloper);
+        signer = result.signer;
+
+        if (result.signer.packageIds().isEmpty())
+            throw Exception("Developer certificates that are not bound to package IDs are not allowed");
+    }
+    if ((signature == d->developerSignature) && (signer == d->developerCertificate))
+        return;
+
+    d->developerSignature = signature;
+    d->developerCertificate = signer;
+    emit developerCertificateChanged();
+
+    QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    QSettings devMode(dataDir.absoluteFilePath(u"development-mode.ini"_s), QSettings::IniFormat);
+    devMode.setValue(u"developerSignature"_s, d->developerSignature);
+}
+
 /*!
-    \qmlproperty bool PackageManager::developmentMode
+    \qmlproperty enum PackageManager::developmentMode
     \readonly
 
     This readonly property reflects the \l{development-mode}{\c developmentMode} setting in the
     configuration file.
+
+    The possible values are:
+    \list
+    \li PackageManager.Disabled - The development mode is disabled.
+    \li PackageManager.System - The development mode is enabled with full system access.
+    \li PackageManager.Application - A reduced development mode is enabled for 3rd party application developers.
+    \endlist
 */
-bool PackageManager::developmentMode() const
+PackageManager::DevelopmentMode PackageManager::developmentMode() const
 {
     return d->developmentMode;
 }
 
-void PackageManager::setDevelopmentMode(bool enable)
+void PackageManager::setDevelopmentMode(DevelopmentMode mode)
 {
-    d->developmentMode = enable;
+    if (!isConfigurationLocked())
+        d->developmentMode = mode;
+}
+
+Certificate PackageManager::developerCertificate() const
+{
+    return d->developerCertificate;
 }
 
 /*!
@@ -724,12 +800,14 @@ bool PackageManager::allowInstallationOfUnsignedPackages() const
 
 void PackageManager::setAllowInstallationOfUnsignedPackages(bool enable)
 {
-    d->allowInstallationOfUnsignedPackages = enable;
+    if (!isConfigurationLocked())
+        d->allowInstallationOfUnsignedPackages = enable;
 }
 
 void PackageManager::setUseSudoForDirectoryRemoval(bool enable)
 {
-    d->useSudoForDirectoryRemoval = enable;
+    if (!isConfigurationLocked())
+        d->useSudoForDirectoryRemoval = enable;
 }
 
 /*!
@@ -748,7 +826,8 @@ QString PackageManager::hardwareId() const
 
 void PackageManager::setHardwareId(const QString &hwId)
 {
-    d->hardwareId = hwId;
+    if (!isConfigurationLocked())
+        d->hardwareId = hwId;
 }
 
 /*!
@@ -809,6 +888,9 @@ void PackageManager::removeRecursive(const QString &path) noexcept(false)
 void PackageManager::loadCertificates(const QStringList &common, const QStringList &developer,
                                       const QStringList &store, const QStringList &crls)
 {
+    if (isConfigurationLocked())
+        return;
+
     auto loadCerts = [](const QStringList &certFiles, const char *type) {
         QByteArrayList cas;
         for (const auto &certFile : certFiles) {
@@ -834,8 +916,36 @@ void PackageManager::loadCertificates(const QStringList &common, const QStringLi
 void PackageManager::setIssuerCertificateFingerprints(const QStringList &developer,
                                                       const QStringList &store)
 {
-    d->issuerCertificateFingerprintsDeveloper = developer;
-    d->issuerCertificateFingerprintsStore = store;
+    if (!isConfigurationLocked()) {
+        d->issuerCertificateFingerprintsDeveloper = developer;
+        d->issuerCertificateFingerprintsStore = store;
+    }
+}
+
+void PackageManager::lockConfiguration()
+{
+    d->configurationIsLocked = true;
+}
+
+#if defined(QT_BUILD_INTERNAL)
+QT_END_NAMESPACE_AM
+static bool configurationIsForceUnlocked = false;
+
+// for auto-tests only
+void qtam_PackageManager_forceUnlockConfiguration()
+{
+    configurationIsForceUnlocked = true;
+}
+QT_BEGIN_NAMESPACE_AM
+#endif
+
+bool PackageManager::isConfigurationLocked() const
+{
+#if defined(QT_BUILD_INTERNAL)
+    if (configurationIsForceUnlocked)
+        return false;
+#endif
+    return d->configurationIsLocked;
 }
 
 static QVariantMap locationMap(const QString &path)
@@ -1114,16 +1224,17 @@ QVariantMap PackageManager::installedPackageExtraSignedMetaData(const QString &p
     return QVariantMap();
 }
 
-/*! \internal
-  Type safe convenience function, since DBus does not like QUrl
-*/
-QString PackageManager::startPackageInstallation(const QUrl &sourceUrl)
+QString PackageManager::startPackageInstallationInternal(const QUrl &sourceUrl, bool fromApplicationDeveloper)
 {
-    AM_TRACE(LogInstaller, sourceUrl)
+    AM_TRACE(LogInstaller, sourceUrl, fromApplicationDeveloper)
 
 #if QT_CONFIG(am_installer)
-    if (d->enableInstaller)
-        return enqueueTask(new InstallationTask(d->installationPath, d->documentPath, sourceUrl));
+    if (d->enableInstaller) {
+        auto task = new InstallationTask(d->installationPath, d->documentPath, sourceUrl,
+                                         fromApplicationDeveloper ? AsynchronousTask::Origin::ApplicationDeveloper
+                                                                  : AsynchronousTask::Origin::System);
+        return enqueueTask(task);
+    }
 #endif
     return QString();
 }
@@ -1151,15 +1262,7 @@ QString PackageManager::startPackageInstallation(const QUrl &sourceUrl)
 */
 QString PackageManager::startPackageInstallation(const QString &sourceUrl)
 {
-    QUrl url(sourceUrl);
-    if (url.scheme().isEmpty()
-#if defined(Q_OS_WINDOWS)
-        || (url.scheme().size() == 1) // "c:" is not a protocol
-#endif
-    ) {
-        url = QUrl::fromLocalFile(sourceUrl);
-    }
-    return startPackageInstallation(url);
+    return startPackageInstallationInternal(QUrl::fromUserInput(sourceUrl));
 }
 
 /*!
@@ -1189,6 +1292,25 @@ void PackageManager::acknowledgePackageInstallation(const QString &taskId)
 #endif
 }
 
+QString PackageManager::removePackageInternal(const QString &packageId, bool keepDocuments,
+                                              bool force, bool fromApplicationDeveloper)
+{
+    AM_TRACE(LogInstaller, packageId, keepDocuments, force, fromApplicationDeveloper)
+
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller) {
+        if (fromId(packageId)) {
+            auto task = new DeinstallationTask(packageId, d->installationPath,
+                                               d->documentPath, force, keepDocuments,
+                                               fromApplicationDeveloper ? AsynchronousTask::Origin::ApplicationDeveloper
+                                                                        : AsynchronousTask::Origin::System);
+            return enqueueTask(task);
+        }
+    }
+#endif
+    return QString();
+}
+
 /*!
     \qmlmethod string PackageManager::removePackage(string packageId, bool keepDocuments, bool force)
 
@@ -1207,19 +1329,25 @@ void PackageManager::acknowledgePackageInstallation(const QString &taskId)
 */
 QString PackageManager::removePackage(const QString &packageId, bool keepDocuments, bool force)
 {
-    AM_TRACE(LogInstaller, packageId, keepDocuments, force)
-
-#if QT_CONFIG(am_installer)
-    if (d->enableInstaller) {
-        if (fromId(packageId)) {
-            return enqueueTask(new DeinstallationTask(packageId, d->installationPath,
-                                                      d->documentPath, force, keepDocuments));
-        }
-    }
-#endif
-    return QString();
+    return removePackageInternal(packageId, keepDocuments, force);
 }
 
+AsynchronousTask *PackageManager::taskFromId(const QString &taskId) const
+{
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller) {
+        const auto allTasks = d->allTasks();
+
+        for (AsynchronousTask *task : allTasks) {
+            if (task && (task->id() == taskId))
+                return task;
+        }
+    }
+#else
+    Q_UNUSED(taskId)
+#endif
+    return nullptr;
+}
 
 /*!
     \qmlmethod enumeration PackageManager::taskState(string taskId)
@@ -1231,18 +1359,8 @@ QString PackageManager::removePackage(const QString &packageId, bool keepDocumen
 */
 AsynchronousTask::TaskState PackageManager::taskState(const QString &taskId) const
 {
-#if QT_CONFIG(am_installer)
-    if (d->enableInstaller) {
-        const auto allTasks = d->allTasks();
-
-        for (const AsynchronousTask *task : allTasks) {
-            if (task && (task->id() == taskId))
-                return task->state();
-        }
-    }
-#else
-    Q_UNUSED(taskId)
-#endif
+    if (auto *task = taskFromId(taskId))
+        return task->state();
     return AsynchronousTask::Invalid;
 }
 
@@ -1258,19 +1376,9 @@ AsynchronousTask::TaskState PackageManager::taskState(const QString &taskId) con
 */
 QString PackageManager::taskPackageId(const QString &taskId) const
 {
-#if QT_CONFIG(am_installer)
-    if (d->enableInstaller) {
-        const auto allTasks = d->allTasks();
-
-        for (const AsynchronousTask *task : allTasks) {
-            if (task && (task->id() == taskId))
-                return task->packageId();
-        }
-    }
-#else
-    Q_UNUSED(taskId)
-#endif
-    return QString();
+    if (auto *task = taskFromId(taskId))
+        return task->packageId();
+    return { };
 }
 
 /*!
@@ -1305,30 +1413,23 @@ bool PackageManager::cancelTask(const QString &taskId)
     AM_TRACE(LogInstaller, taskId)
 
 #if QT_CONFIG(am_installer)
-    if (d->enableInstaller) {
+    if (auto *task = taskFromId(taskId)) {
         // incoming tasks can be forcefully canceled right away
-        for (AsynchronousTask *task : std::as_const(d->incomingTaskList)) {
-            if (task->id() == taskId) {
-                task->forceCancel();
-                task->deleteLater();
+        if (d->incomingTaskList.contains(task)) {
+            task->forceCancel();
+            task->deleteLater();
 
-                handleFailure(task);
+            handleFailure(task);
 
-                d->incomingTaskList.removeOne(task);
-                triggerExecuteNextTask();
-                return true;
-            }
+            d->incomingTaskList.removeOne(task);
+            triggerExecuteNextTask();
+            return true;
         }
 
         // the active task and async tasks might be in a state where cancellation is not possible,
         // so we have to ask them nicely
-        if (d->activeTask && d->activeTask->id() == taskId)
-            return d->activeTask->cancel();
-
-        for (AsynchronousTask *task : std::as_const(d->installationTaskList)) {
-            if (task->id() == taskId)
-                return task->cancel();
-        }
+        if ((task == d->activeTask) || d->installationTaskList.contains(task))
+            return task->cancel();
     }
 #endif
     return false;

@@ -12,9 +12,10 @@ using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-AsynchronousTask::AsynchronousTask(QObject *parent)
+AsynchronousTask::AsynchronousTask(Origin origin, QObject *parent)
     : QThread(parent)
-    , m_id(QUuid::createUuid().toString())
+    , m_id(QUuid::createUuidV7().toString())
+    , m_origin(origin)
 {
     static int once = qRegisterMetaType<AsynchronousTask::TaskState>();
     Q_UNUSED(once)
@@ -39,6 +40,12 @@ void AsynchronousTask::setState(AsynchronousTask::TaskState state)
         locker.unlock();
         emit stateChanged(state);
     }
+}
+
+AsynchronousTask::Origin AsynchronousTask::origin() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_origin;
 }
 
 Error AsynchronousTask::errorCode() const

@@ -11,6 +11,7 @@
 
 #include <QtAppManCommon/error.h>
 
+
 QT_BEGIN_NAMESPACE_AM
 
 class AsynchronousTask : public QThread
@@ -33,12 +34,20 @@ public:
     };
     Q_ENUM(TaskState)
 
-    AsynchronousTask(QObject *parent = nullptr);
+    enum class Origin {
+        ApplicationDeveloper,
+        System
+    };
+    Q_ENUM(Origin)
+
+    AsynchronousTask(Origin origin, QObject *parent = nullptr);
 
     QString id() const;
 
     TaskState state() const;
     void setState(TaskState state);
+
+    Origin origin() const;
 
     Error errorCode() const;
     QString errorString() const;
@@ -65,9 +74,10 @@ protected:
 
     QString m_id;
     QString m_packageId;
+    QString m_errorString;
     TaskState m_state = Queued;
     Error m_errorCode = Error::None;
-    QString m_errorString;
+    Origin m_origin = Origin::ApplicationDeveloper;
 };
 
 

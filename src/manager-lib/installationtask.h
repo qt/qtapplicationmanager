@@ -31,7 +31,7 @@ class InstallationTask : public AsynchronousTask
     Q_OBJECT
 public:
     InstallationTask(const QString &installationPath, const QString &documentPath,
-                     const QUrl &sourceUrl, QObject *parent = nullptr);
+                     const QUrl &sourceUrl, Origin origin, QObject *parent = nullptr);
     ~InstallationTask() override;
 
     void acknowledge();

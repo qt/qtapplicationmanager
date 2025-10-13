@@ -11,6 +11,7 @@
 #include <QtAppManCommon/global.h>
 #include <QtAppManApplication/packageinfo.h>
 #include <QtAppManManager/asynchronoustask.h>
+#include <QtAppManCrypto/signature.h>
 
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -51,7 +52,8 @@ class PackageManager : public QAbstractListModel
     // these are const on purpose - these should never change in a running system
     Q_PROPERTY(bool installationEnabled READ installationEnabled CONSTANT FINAL REVISION(6, 10))
     Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT FINAL)
-    Q_PROPERTY(bool developmentMode READ developmentMode CONSTANT FINAL)
+    Q_PROPERTY(DevelopmentMode developmentMode READ developmentMode CONSTANT FINAL)
+    Q_PROPERTY(Certificate developerCertificate READ developerCertificate NOTIFY developerCertificateChanged FINAL)
     Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT FINAL)
     Q_PROPERTY(QString architecture READ architecture CONSTANT FINAL)
 
@@ -67,6 +69,13 @@ public:
         UseCache,
         RecreateCache
     };
+
+    enum class DevelopmentMode {
+        Disabled,
+        System,
+        Application
+    };
+    Q_ENUM(DevelopmentMode)
 
     ~PackageManager() override;
     static PackageManager *createInstance(PackageDatabase *packageDatabase,
@@ -96,8 +105,10 @@ public:
     bool isReady() const;
 
     bool installationEnabled() const;
-    bool developmentMode() const;
-    void setDevelopmentMode(bool enable);
+    DevelopmentMode developmentMode() const;
+    void setDevelopmentMode(DevelopmentMode mode);
+    Certificate developerCertificate() const;
+    void setDeveloperCertificate(const QByteArray &pkcs12Data, const QByteArray &pkcs12Password) ;
     bool allowInstallationOfUnsignedPackages() const;
     void setAllowInstallationOfUnsignedPackages(bool enable);
     void setUseSudoForDirectoryRemoval(bool enable);
@@ -108,6 +119,9 @@ public:
                           const QStringList &store, const QStringList &crls = { });
     void setIssuerCertificateFingerprints(const QStringList &developer,
                                           const QStringList &store);
+
+    void lockConfiguration();
+    bool isConfigurationLocked() const;
 
     void cleanupBrokenInstallations() noexcept(false);
 
@@ -125,9 +139,12 @@ public:
     Q_SCRIPTABLE QVariantMap installedPackageExtraSignedMetaData(const QString &packageId) const;
 
     // all QString return values are task-ids
-    QString startPackageInstallation(const QUrl &sourceUrl);
+    QString startPackageInstallationInternal(const QUrl &sourceUrl,
+                                             bool fromApplicationDeveloper = false);
     Q_SCRIPTABLE QString startPackageInstallation(const QString &sourceUrl);
     Q_SCRIPTABLE void acknowledgePackageInstallation(const QString &taskId);
+    QString removePackageInternal(const QString &id, bool keepDocuments, bool force,
+                                  bool fromApplicationDeveloper = false);
     Q_SCRIPTABLE QString removePackage(const QString &id, bool keepDocuments, bool force = false);
 
     Q_SCRIPTABLE QtAM::AsynchronousTask::TaskState taskState(const QString &taskId) const;
@@ -140,6 +157,9 @@ public:
     Q_SCRIPTABLE bool validateDnsName(const QString &name, int minimumParts = 1);
 
     PackageManagerInternalSignals internalSignals;
+
+    // necessary for the D-Bus adaptors to distinguish between busses
+    AsynchronousTask *taskFromId(const QString &taskId) const;
 
 Q_SIGNALS:
     Q_SCRIPTABLE void readyChanged(bool b);
@@ -162,6 +182,7 @@ Q_SIGNALS:
                                                const QVariantMap &packageExtraMetaData,
                                                const QVariantMap &packageExtraSignedMetaData);
     Q_SCRIPTABLE void taskBlockingUntilInstallationAcknowledge(const QString &taskId);
+    Q_SCRIPTABLE void developerCertificateChanged();
 
 protected:
     Package *startingPackageInstallation(PackageInfo *info);

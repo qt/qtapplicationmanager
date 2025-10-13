@@ -208,6 +208,20 @@ public:
     }
 };
 
+static ConfigurationData::Flags::DevelopmentMode parseDevelopmentModeEnum(const QString &devMode)
+{
+    static const QHash<QString, ConfigurationData::Flags::DevelopmentMode> devModeMap = {
+        { u"disabled"_s,    ConfigurationData::Flags::DevelopmentMode::Disabled },
+        { u"system"_s,      ConfigurationData::Flags::DevelopmentMode::System },
+        { u"application"_s, ConfigurationData::Flags::DevelopmentMode::Application }
+    };
+
+    if (auto it = devModeMap.constFind(devMode.toLower()); it != devModeMap.cend())
+        return it.value();
+    else
+        throw Exception("got %1, but expected one of %2").arg(devMode).arg(devModeMap.keys());
+}
+
 
 Configuration::Configuration(const QStringList &defaultConfigFilePaths,
                              const QString &buildConfigFilePath,
@@ -281,7 +295,7 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     d->clp.addOption({ { u"v"_s, u"verbose"_s },  u"Verbose output."_s });
     d->clp.addOption({ u"slow-animations"_s,      u"Run all animations in slow motion."_s });
     d->clp.addOption({ u"no-security"_s,          u"Disables all security related checks (dev only!)"_s });
-    d->clp.addOption({ u"development-mode"_s,     u"Enable development mode, allowing installation of dev-signed packages."_s });
+    d->clp.addOption({ u"development-mode"_s,     u"Enable development mode, allowing installation of dev-signed packages."_s, u"disabled|system|application"_s });
     d->clp.addOption({ u"disable-watchdog"_s,     u"Disables all watchdogs, useful for debugging."_s });
     d->clp.addOption({ u"no-dlt-logging"_s,       u"Disables logging using automotive DLT."_s });
     d->clp.addOption({ u"force-single-process"_s, u"Forces single-process mode even on a wayland enabled build."_s });
@@ -464,13 +478,20 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         configIfSet(u"installation-dir"_s,     clcd.applications.installationDir);
         configIfSet(u"document-dir"_s,         clcd.applications.documentDir);
         configIfSet(u"no-security"_s,          clcd.flags.noSecurity);
-        configIfSet(u"development-mode"_s,     clcd.flags.developmentMode);
         configIfSet(u"force-single-process"_s, clcd.flags.forceSingleProcess);
         configIfSet(u"force-multi-process"_s,  clcd.flags.forceMultiProcess);
         configIfSet(u"logging-rule"_s,         clcd.logging.rules);
 
         if (d->clp.isSet(u"no-fullscreen"_s))
             clcd.ui.fullscreen = false;
+
+        if (auto devMode = d->clp.value(u"development-mode"_s); !devMode.isEmpty()) {
+            try {
+                clcd.flags.developmentMode = parseDevelopmentModeEnum(devMode);
+            } catch (const Exception &e) {
+                throw Exception("Invalid argument for --development-mode: %1").arg(e.errorString());
+            }
+        }
 
         ConfigurationPrivate::merge(clcd, d->data);
 
@@ -514,7 +535,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 22;
+    return 23;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -937,7 +958,22 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                      { "noSecurity", false, YamlParser::Scalar, [&]() {
                           cd.flags.noSecurity = yp.parseBool(); } },
                      { "developmentMode", false, YamlParser::Scalar, [&]() {
-                          cd.flags.developmentMode = yp.parseBool(); } },
+                          auto v = yp.parseScalar();
+                          if (v.userType() == QMetaType::Bool) {
+                              //TODO: bump the format version and get rid of other legacy things?
+                              auto devMode = v.toBool() ? ConfigurationData::Flags::DevelopmentMode::System
+                                                        : ConfigurationData::Flags::DevelopmentMode::Disabled;
+                              qCDebug(LogDeployment) << "please update 'flags.developmentMode' to the new enum value"
+                                                     << (v.toBool() ? u"system"_s : u"disabled"_s);
+                              cd.flags.developmentMode = devMode;
+                          } else {
+                              try {
+                                  cd.flags.developmentMode = parseDevelopmentModeEnum(v.toString());
+                              } catch (const Exception &e) {
+                                  throw YamlParserException(&yp, "invalid value for 'flags.developmentMode': %1")
+                                      .arg(e.errorString());
+                              }
+                          } } },
                      { "noUiWatchdog", false, YamlParser::Scalar, [&]() {
                           qCDebug(LogDeployment) << "ignoring 'flags/noUiWatchdog'";
                           (void) yp.parseBool(); } },

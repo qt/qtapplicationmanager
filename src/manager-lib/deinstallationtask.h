@@ -18,7 +18,7 @@ class DeinstallationTask : public AsynchronousTask
 
 public:
     DeinstallationTask(const QString &packageId, const QString &installationPath, const QString &documentPath,
-                       bool forceDeinstallation, bool keepDocuments, QObject *parent = nullptr);
+                       bool forceDeinstallation, bool keepDocuments, Origin origin, QObject *parent = nullptr);
 
     bool cancel() override;
 

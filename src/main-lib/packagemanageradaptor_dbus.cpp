@@ -42,6 +42,12 @@ static QString taskStateToString(AsynchronousTask::TaskState state)
     return QString::fromUtf8(cstr);
 }
 
+static QString developmentModeToString(PackageManager::DevelopmentMode mode)
+{
+    const char *cstr = QMetaEnum::fromType<PackageManager::DevelopmentMode>().valueToKey(quint64(mode));
+    return QString::fromUtf8(cstr);
+}
+
 
 PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
     : QDBusAbstractAdaptor(parent)
@@ -115,9 +121,14 @@ int PackageManagerAdaptor::count() const
     return PackageManager::instance()->count();
 }
 
-bool PackageManagerAdaptor::developmentMode() const
+QString PackageManagerAdaptor::developmentMode() const
 {
-    return PackageManager::instance()->developmentMode();
+    return developmentModeToString(PackageManager::instance()->developmentMode());
+}
+
+QDBusVariant PackageManagerAdaptor::developerCertificate() const
+{
+    return QDBusVariant(convertToDBusVariant(PackageManager::instance()->developerCertificate().toVariant()));
 }
 
 QString PackageManagerAdaptor::hardwareId() const
@@ -277,4 +288,16 @@ bool PackageManagerAdaptor::validateDnsName(const QString &name, int minimumPart
 {
     QT_AM_AUTHENTICATE_DBUS(bool)
     return PackageManager::instance()->validateDnsName(name, minimumParts);
+}
+
+bool PackageManagerAdaptor::setDeveloperCertificate(const QByteArray &pkcs12Data, const QByteArray &pkcs12Password)
+{
+    QT_AM_AUTHENTICATE_DBUS(bool)
+    try {
+        PackageManager::instance()->setDeveloperCertificate(pkcs12Data, pkcs12Password);
+        return true;
+    } catch (const Exception &e) {
+        DBusContextAdaptor::sendErrorReply(this, u"Failed to set developer certificate: %1"_s.arg(e.errorString()));
+        return false;
+    }
 }

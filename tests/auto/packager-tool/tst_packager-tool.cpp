@@ -20,6 +20,7 @@
 #include "sudo.h"
 
 #include "../error-checking.h"
+#include "../devmode.h"
 
 using namespace Qt::StringLiterals;
 
@@ -51,7 +52,7 @@ private:
     bool createCode(QTemporaryDir &tmp);
     void createDummyFile(QTemporaryDir &tmp, const QString &fileName, const char *data);
 
-    void installPackage(const QString &filePath);
+    void installPackage(const QString &filePath, bool allowUnsigned = false);
 
     PackageManager *m_pm = nullptr;
     QTemporaryDir m_workDir;
@@ -329,9 +330,7 @@ void tst_PackagerTool::iconFileName()
 
     // see if the package installs correctly
 
-    m_pm->setAllowInstallationOfUnsignedPackages(true);
-    installPackage(pathTo("test-foobar-icon.ampkg"));
-    m_pm->setAllowInstallationOfUnsignedPackages(false);
+    installPackage(pathTo("test-foobar-icon.ampkg"), true);
 
     QDir checkDir(pathTo("internal-0"));
     QVERIFY(checkDir.cd(u"test-pkg"_s));
@@ -403,19 +402,17 @@ void tst_PackagerTool::createDummyFile(QTemporaryDir &tmp, const QString &fileNa
     QCOMPARE(written, static_cast<qint64>(strlen(data)));
 }
 
-void tst_PackagerTool::installPackage(const QString &filePath)
+void tst_PackagerTool::installPackage(const QString &filePath, bool allowUnsigned)
 {
     QSignalSpy finishedSpy(m_pm, &PackageManager::taskFinished);
 
-    m_pm->setDevelopmentMode(true); // allow packages without store signature
+    DevMode devMode(PackageManager::DevelopmentMode::System, allowUnsigned);
 
-    QString taskId = m_pm->startPackageInstallation(QUrl::fromLocalFile(filePath));
+    QString taskId = m_pm->startPackageInstallation(filePath);
     m_pm->acknowledgePackageInstallation(taskId);
 
     QVERIFY(finishedSpy.wait(2 * spyTimeout));
     QCOMPARE(finishedSpy.first()[0].toString(), taskId);
-
-    m_pm->setDevelopmentMode(false);
 }
 
 QTEST_GUILESS_MAIN(tst_PackagerTool)

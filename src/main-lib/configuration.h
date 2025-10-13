@@ -120,11 +120,15 @@ struct ConfigurationData
 
     QVariantMap systemProperties;
 
-    struct {
+    struct Flags {
         bool forceSingleProcess = false;
         bool forceMultiProcess = false;
         bool noSecurity = false;
-        bool developmentMode = false;
+        enum class DevelopmentMode {
+            Disabled,
+            System,
+            Application
+        } developmentMode = DevelopmentMode::Disabled;
         bool allowUnsignedPackages = false;
         bool allowUnknownUiClients = false;
     } flags;
@@ -147,7 +151,7 @@ public:
                   bool onlyOnePositionalArgument = true);
 
     virtual ~Configuration();
-    virtual void parseWithArguments(const QStringList &arguments);
+    virtual void parseWithArguments(const QStringList &arguments) noexcept(false);
     QVariant buildConfig() const;
 
     // all command line arguments that do not map to YAML fields

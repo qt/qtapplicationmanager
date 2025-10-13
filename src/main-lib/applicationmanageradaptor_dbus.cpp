@@ -269,9 +269,9 @@ QString ApplicationManagerAdaptor::sendIntentRequestAs(const QString &requesting
     QDBusContext *dbusContext = DBusContextAdaptor::dbusContextFor(this);
     dbusContext->setDelayedReply(true);
 
-    if (!PackageManager::instance()->developmentMode()) {
+    if (PackageManager::instance()->developmentMode() != PackageManager::DevelopmentMode::System) {
         dbusContext->sendErrorReply(QDBusError::Failed,
-                                    u"Only supported if 'developmentMode' is active"_s);
+                                    u"Only supported if 'developmentMode' is 'system'"_s);
         return { };
     }
 
@@ -329,9 +329,9 @@ void ApplicationManagerAdaptor::broadcastIntentRequestAs(const QString &requesti
 
     QDBusContext *dbusContext = DBusContextAdaptor::dbusContextFor(this);
 
-    if (!PackageManager::instance()->developmentMode()) {
+    if (PackageManager::instance()->developmentMode() != PackageManager::DevelopmentMode::System) {
         dbusContext->sendErrorReply(QDBusError::Failed,
-                                    u"Only supported if 'developmentMode' is active"_s);
+                                    u"Only supported if 'developmentMode' is 'system'"_s);
         return;
     }
 

@@ -15,6 +15,7 @@
 #include <QtAppManApplication/packagedatabase.h>
 #include <QtAppManManager/asynchronoustask.h>
 #include <QtAppManCommon/global.h>
+#include <QtAppManCrypto/signature.h>
 #include <QtAppManCommon/private/qtappman_common-config_p.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -29,9 +30,12 @@ public:
     QMap<Package *, PackageInfo *> pendingPackageInfoUpdates;  // AXIVION Line Qt-QMapWithPointerKey: package is locked
 
     bool enableInstaller = false;
-    bool developmentMode = false;
+    PackageManager::DevelopmentMode developmentMode = PackageManager::DevelopmentMode::Disabled;
+    Certificate developerCertificate;
+    QByteArray developerSignature;
     bool allowInstallationOfUnsignedPackages = false;
     bool useSudoForDirectoryRemoval = false;
+    bool configurationIsLocked = false;
 
     QString installationPath;
     QString documentPath;

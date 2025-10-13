@@ -18,8 +18,8 @@ QT_BEGIN_NAMESPACE_AM
 
 DeinstallationTask::DeinstallationTask(const QString &packageId, const QString &installationPath,
                                        const QString &documentPath, bool forceDeinstallation,
-                                       bool keepDocuments, QObject *parent)
-    : AsynchronousTask(parent)
+                                       bool keepDocuments, Origin origin, QObject *parent)
+    : AsynchronousTask(origin, parent)
     , m_installationPath(installationPath)
     , m_documentPath(documentPath)
     , m_keepDocuments(keepDocuments)

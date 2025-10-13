@@ -18,6 +18,7 @@
 #include "startuptimer.h"
 #include "utilities.h"
 #include <QtAppManMain/configuration.h>
+#include "../devmode.h"
 
 using namespace Qt::StringLiterals;
 
@@ -143,8 +144,6 @@ void tst_Main::initMain(const QString &mainQml)
 
     main->setup(config);
     mainSetupDone = true;
-
-    PackageManager::instance()->setAllowInstallationOfUnsignedPackages(true);
 }
 
 void tst_Main::destroyMain()
@@ -189,9 +188,14 @@ void tst_Main::installPackage(const QString &pkgPath)
             packageManager->acknowledgePackageInstallation(taskId);
     });
 
+    DevMode devMode(PackageManager::DevelopmentMode::System, true);
+
     QSignalSpy finishedSpy(packageManager, &PackageManager::taskFinished);
-    packageManager->startPackageInstallation(QUrl::fromLocalFile(pkgPath));
-    QTRY_VERIFY_WITH_TIMEOUT(finishedSpy.count() == 1, m_spyTimeout);
+    QSignalSpy failedSpy(packageManager, &PackageManager::taskFailed);
+    packageManager->startPackageInstallation(pkgPath);
+    QTRY_VERIFY2_WITH_TIMEOUT(finishedSpy.count() == 1,
+                              qPrintable(failedSpy.value(0).value(2).toString()),
+                              m_spyTimeout);
 }
 
 void tst_Main::removePackage(const QString &id)
@@ -213,6 +217,8 @@ void tst_Main::removePackage(const QString &id)
 void tst_Main::installAndRemoveUpdateForBuiltIn()
 {
     initMain();
+
+    DevMode devMode(PackageManager::DevelopmentMode::System, true);
 
     auto appMan = ApplicationManager::instance();
     QCOMPARE(appMan->count(), 2);

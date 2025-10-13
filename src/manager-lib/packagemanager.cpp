@@ -1184,10 +1184,16 @@ QVariantMap PackageManager::get(const QString &packageId) const
 */
 qint64 PackageManager::installedPackageSize(const QString &packageId) const
 {
-    if (Package *package = fromId(packageId)) {
-        if (const InstallationReport *report = package->info()->installationReport())
-            return static_cast<qint64>(report->diskSpaceUsed());
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller) {
+        if (Package *package = fromId(packageId)) {
+            if (const InstallationReport *report = package->info()->installationReport())
+                return static_cast<qint64>(report->diskSpaceUsed());
+        }
     }
+#else
+    Q_UNUSED(packageId)
+#endif
     return -1;
 }
 
@@ -1200,11 +1206,17 @@ qint64 PackageManager::installedPackageSize(const QString &packageId) const
 */
 QVariantMap PackageManager::installedPackageExtraMetaData(const QString &packageId) const
 {
-    if (Package *package = fromId(packageId)) {
-        if (const InstallationReport *report = package->info()->installationReport())
-            return report->extraMetaData();
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller) {
+        if (Package *package = fromId(packageId)) {
+            if (const InstallationReport *report = package->info()->installationReport())
+                return report->extraMetaData();
+        }
     }
-    return QVariantMap();
+#else
+    Q_UNUSED(packageId)
+#endif
+    return { };
 }
 
 /*!
@@ -1217,11 +1229,17 @@ QVariantMap PackageManager::installedPackageExtraMetaData(const QString &package
 */
 QVariantMap PackageManager::installedPackageExtraSignedMetaData(const QString &packageId) const
 {
-    if (Package *package = fromId(packageId)) {
-        if (const InstallationReport *report = package->info()->installationReport())
-            return report->extraSignedMetaData();
+#if QT_CONFIG(am_installer)
+    if (d->enableInstaller) {
+        if (Package *package = fromId(packageId)) {
+            if (const InstallationReport *report = package->info()->installationReport())
+                return report->extraSignedMetaData();
+        }
     }
-    return QVariantMap();
+#else
+    Q_UNUSED(packageId)
+#endif
+    return { };
 }
 
 QString PackageManager::startPackageInstallationInternal(const QUrl &sourceUrl, bool fromApplicationDeveloper)

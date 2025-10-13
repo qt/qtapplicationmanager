@@ -25,8 +25,8 @@ public:
     bool registerOnDBus(QDBusConnection conn, const QString &path);
     bool isRegistered() const;
 
-    static QDBusContext *dbusContextFor(QDBusAbstractAdaptor *adaptor);
-    static void sendErrorReply(QDBusAbstractAdaptor *adaptor, const QString &errorString);
+    static QDBusContext *dbusContextFor(const QDBusAbstractAdaptor *adaptor);
+    static void sendErrorReply(const QDBusAbstractAdaptor *adaptor, const QString &errorString);
 
     template<typename T>
     T *generatedAdaptor() { return qobject_cast<T *>(m_adaptor); }
@@ -46,14 +46,6 @@ protected:
 private:
     explicit DBusContextAdaptor(QObject *realObject);
 };
-
-
-#define QT_AM_AUTHENTICATE_DBUS(RETURN_TYPE) \
-do { \
-    if (!DBusPolicy::instance()->check(this, __FUNCTION__)) \
-        return RETURN_TYPE(); \
-} while (false);
-
 
 QT_END_NAMESPACE_AM
 

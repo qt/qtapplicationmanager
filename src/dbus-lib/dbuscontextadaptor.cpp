@@ -22,12 +22,12 @@ DBusContextAdaptor::DBusContextAdaptor(QObject *realObject)
     : QObject(realObject)
 { }
 
-QDBusContext *QtAM::DBusContextAdaptor::dbusContextFor(QDBusAbstractAdaptor *adaptor)
+QDBusContext *QtAM::DBusContextAdaptor::dbusContextFor(const QDBusAbstractAdaptor *adaptor)
 {
     return adaptor ? qobject_cast<DBusContextAdaptor *>(adaptor->parent()) : nullptr;
 }
 
-void DBusContextAdaptor::sendErrorReply(QDBusAbstractAdaptor *adaptor, const QString &errorString)
+void DBusContextAdaptor::sendErrorReply(const QDBusAbstractAdaptor *adaptor, const QString &errorString)
 {
     if (auto *ctxt = dbusContextFor(adaptor))
         ctxt->sendErrorReply(QDBusError::Failed, errorString);

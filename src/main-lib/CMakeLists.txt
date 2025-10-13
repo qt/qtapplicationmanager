@@ -52,6 +52,7 @@ if (TARGET Qt::DBus AND QT_FEATURE_am_external_dbus_interfaces)
             applicationmanageradaptor_dbus.cpp
             notificationmanageradaptor_dbus.cpp
             windowmanageradaptor_dbus.cpp
+            adaptorchecks_dbus.h adaptorchecks_dbus.cpp
         PUBLIC_LIBRARIES
             Qt::DBus
             Qt::AppManDBusPrivate

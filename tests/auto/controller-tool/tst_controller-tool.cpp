@@ -133,10 +133,8 @@ public:
             failure = "appman-controller returned an error code: " + QByteArray::number(exitCode);
 
         // enable for debugging
-//        if (!failure.isEmpty()) {
-//            qWarning() << "STDOUT" << stdOut;
-//            qWarning() << "STDERR" << stdErr;
-//        }
+        // if (!failure.isEmpty()) {  qWarning() << "STDOUT" << stdOut << "\nSTDERR" << stdErr; }
+
         m_started = false;
         return failure.isEmpty();
     }
@@ -167,10 +165,12 @@ void tst_ControllerTool::initTestCase()
     auto verbose = qEnvironmentVariableIsSet("AM_VERBOSE_TEST");
     qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(change by (un)setting $AM_VERBOSE_TEST)";
 
-    m_argc = 2;
+    m_argc = 4;
     m_argv = new char * [size_t(m_argc) + 1];
     m_argv[0] = qstrdup("tst_controller-tool");
     m_argv[1] = qstrdup("--no-cache");
+    m_argv[2] = qstrdup("--development-mode");
+    m_argv[3] = qstrdup("system");
     m_argv[m_argc] = nullptr;
 
     m_main = new Main(m_argc, m_argv);  // QCoreApplication saves a reference to argc!
@@ -289,14 +289,6 @@ void tst_ControllerTool::packages()
 {
     {
         ControllerTool ctrl({ u"list-packages"_s });
-        QVERIFY(!ctrl.call());
-        QVERIFY(ctrl.stdErr.contains("Development mode is disabled"));
-    }
-
-    DevMode devMode(PackageManager::DevelopmentMode::System);
-
-    {
-        ControllerTool ctrl({ u"list-packages"_s });
         QVERIFY2(ctrl.call(), ctrl.failure);
         QCOMPARE(ctrl.stdOutList, QStringList({ u"controller-pkg"_s }));
     }
@@ -396,11 +388,13 @@ void tst_ControllerTool::startStop()
         ControllerTool ctrl({ u"start-application"_s, app->id() });
         QVERIFY2(ctrl.call(), ctrl.failure);
     }
+
     QTRY_VERIFY(app->runState() == Am::Running);
     {
         ControllerTool ctrl({ u"stop-application"_s, app->id() });
         QVERIFY2(ctrl.call(), ctrl.failure);
     }
+
     QTRY_VERIFY(app->runState() == Am::NotRunning);
     {
         // debug-application does not work in single-process mode
@@ -419,8 +413,6 @@ void tst_ControllerTool::startStop()
 
 void tst_ControllerTool::injectIntent()
 {
-    DevMode devMode(PackageManager::DevelopmentMode::System);
-
     ControllerTool ctrl({ u"inject-intent-request"_s, u"--requesting-application-id"_s,
         u":sysui:"_s, u"--application-id"_s, u":sysui:"_s, u"inject-intent"_s, u"{ }"_s, });
     QVERIFY2(ctrl.call(), ctrl.failure);

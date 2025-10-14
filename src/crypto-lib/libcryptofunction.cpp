@@ -10,9 +10,6 @@
 
 #include "libcryptofunction.h"
 
-// we want at least openssl 1.0.1 or 1.1.0
-#define QT_AM_MINIMUM_OPENSSL10_VERSION 0x1000100fL
-#define QT_AM_MINIMUM_OPENSSL11_VERSION 0x1010000fL
 #define QT_AM_MINIMUM_OPENSSL30_VERSION 0x3000000fL
 
 QT_BEGIN_NAMESPACE_AM
@@ -22,7 +19,6 @@ QT_BEGIN_NAMESPACE_AM
 
 static QT_AM_LIBCRYPTO_FUNCTION(SSLeay, unsigned long(*)(), 0);
 static QT_AM_LIBCRYPTO_FUNCTION(OPENSSL_add_all_algorithms_noconf, void(*)());
-static QT_AM_LIBCRYPTO_FUNCTION(ERR_load_crypto_strings, void(*)());
 
 static QT_AM_LIBCRYPTO_FUNCTION(OpenSSL_version_num, unsigned long(*)(), 0);
 static QT_AM_LIBCRYPTO_FUNCTION(OPENSSL_init_crypto, int(*)(uint64_t, void *), 0);
@@ -34,10 +30,8 @@ static QT_AM_LIBCRYPTO_FUNCTION(OSSL_PROVIDER_load, OSSL_PROVIDER *(*)(OSSL_LIB_
 // AXIVION ENABLE Qt-NonPodGlobalStatic
 
 QLibrary *Cryptography::LibCryptoFunctionBase::s_library = nullptr;
-bool Cryptography::LibCryptoFunctionBase::s_isOpenSSL11 = false;
-bool Cryptography::LibCryptoFunctionBase::s_isOpenSSL30 = false;
 
-bool Cryptography::LibCryptoFunctionBase::initialize(bool loadOpenSsl3LegacyProvider)
+bool Cryptography::LibCryptoFunctionBase::initialize()
 {
     if (s_library)
         return true;
@@ -70,32 +64,14 @@ bool Cryptography::LibCryptoFunctionBase::initialize(bool loadOpenSsl3LegacyProv
             version = am_SSLeay(); // 1.0
 
         if (version > 0) {
-            if (version >= QT_AM_MINIMUM_OPENSSL11_VERSION) {
-                s_isOpenSSL11 = true;
-
-                if (version >= QT_AM_MINIMUM_OPENSSL30_VERSION) {
-                    s_isOpenSSL30 = true;
-
-                    if (loadOpenSsl3LegacyProvider) {
-                        // openSSL 3.0 might need the legacy provider to read old PKCS12 certs
-                        auto legacyLoaded = am_OSSL_PROVIDER_load(nullptr, "legacy");
-                        auto defaultLoaded = am_OSSL_PROVIDER_load(nullptr, "default");
-                        if (!legacyLoaded || !defaultLoaded)
-                            qCritical("Loaded libcrypto version 3, but couldn't load the 'legacy provider' as requested");
-                    }
-                }
-
+            if (version >= QT_AM_MINIMUM_OPENSSL30_VERSION) {
                 return (am_OPENSSL_init_crypto(4 /*OPENSSL_INIT_ADD_ALL_CIPHERS*/
                                                | 8 /*OPENSSL_INIT_ADD_ALL_DIGESTS*/
                                                | 2 /*OPENSSL_INIT_LOAD_CRYPTO_STRINGS*/,
                                                nullptr) == 1);
-            } else if (version >= QT_AM_MINIMUM_OPENSSL10_VERSION) {
-                am_OPENSSL_add_all_algorithms_noconf();
-                am_ERR_load_crypto_strings();
-                return true;
             } else {
                 qCritical("Loaded libcrypto (%s), but the version is too old: 0x%08lx (minimum supported version is: 0x%08lx)",
-                          qPrintable(s_library->fileName()), version, QT_AM_MINIMUM_OPENSSL10_VERSION);
+                          qPrintable(s_library->fileName()), version, QT_AM_MINIMUM_OPENSSL30_VERSION);
             }
         } else {
             qCritical("Could not get version information from libcrypto: neither of the symbols 'SSLeay' or 'OpenSSL_version_num' were found");

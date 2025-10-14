@@ -54,13 +54,6 @@ private:
 
 tst_Signature::tst_Signature()
 {
-    // OpenSSL3 changed a few defaults and it will not accept old PKCS12 certificates
-    // anymore. Regenerating "signing.p12" doesn't help, because the macOS/iOS
-    // SecurityFramework cannot deal with the new algorithms used by OpenSSL3.
-    // The only way out for this cross-platform test case is to enable the so called
-    // "legacy provider" in OpenSSL3 and continue testing with the old certificate.
-    Cryptography::enableOpenSsl3LegacyProvider();
-
     m_createNativeSignature = qEnvironmentVariableIsSet("AM_CREATE_SIGNATURE_FILE");
 
     m_p7Hash = "p7Hash\n";

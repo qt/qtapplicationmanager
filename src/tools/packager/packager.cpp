@@ -71,9 +71,6 @@ static Command command(QCommandLineParser &clp)
 
 int main(int argc, char *argv[])
 {
-    // enable OpenSSL3 to load old certificates
-    Cryptography::enableOpenSsl3LegacyProvider();
-
     QCoreApplication::setApplicationName(u"Qt ApplicationManager Packager"_s);
     QCoreApplication::setOrganizationName(u"QtProject"_s);
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);

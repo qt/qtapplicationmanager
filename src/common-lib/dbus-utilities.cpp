@@ -117,7 +117,7 @@ QVariant convertToDBusVariant(const QVariant &variant)
 
     if (type == QMetaType::UnknownType) { // JS "undefined" / CPP Invalid
         return QVariant::fromValue(DBusInvalid { });
-    } else if (type == QMetaType::UnknownType) { // JS and CPP null
+    } else if (type == QMetaType::Nullptr) { // JS and CPP null
         return QVariant::fromValue(DBusNull { });
     } else if (type == QMetaType::QUrl) { // QtDBus does not register QUrl
         return QVariant::fromValue(DBusUrl { variant.value<QUrl>() });

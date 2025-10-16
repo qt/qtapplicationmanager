@@ -906,17 +906,16 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
 
     All parts are optional, so if you specify an empty string, the call will create a screenshot
     of every screen.
-    If you specify an \c application-id (which can also contain wildcards for matching multiple
-    applications), a screenshot will be made for each window of this (these) application(s).
+    If you specify an \c application-id, a screenshot will be made for each window of this application.
     If only specific windows of one or more applications should be used to create screenshots, you
     can specify a \c window-property selector, which will only select windows that have a matching
     WindowManager::windowProperty.
     Adding a \c screen-id will restrict the creation of screenshots to the the specified screen.
 
     Here is an example, creating screenshots of all windows on the second screen, that have the
-    window-property \c type set to \c cluster and written by Pelagicore:
+    window-property \c type set to \c cluster:
     \badcode
-    com.pelagicore.*[type=cluster]:1
+    [type=cluster]:1
     \endcode
 
     Returns \c true on success and \c false otherwise.
@@ -997,11 +996,17 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
     } else {
         // app without System UI
 
-        // filter out alias and apps not matching appId (if set)
-        QVector<Application *> apps = ApplicationManager::instance()->applications();
-        apps.removeIf([appId](const Application *app) {
-            return app->isAlias() || (!appId.isEmpty() && (appId != app->id()));
-        });
+        // either all apps or a specific one
+        QVector<Application *> apps;
+        if (!appId.isEmpty()) {
+            if (auto *app = ApplicationManager::instance()->application(appId))
+                apps << app;
+        } else {
+            apps = ApplicationManager::instance()->applications();
+        }
+
+        if (apps.isEmpty())
+            return false;
 
         auto grabbers = new QList<QSharedPointer<const QQuickItemGrabResult>>;
 

@@ -124,6 +124,7 @@ static void emitYaml(yaml_emitter_t *e, const QVariant &value, YamlStyle style) 
 
     switch (value.metaType().id()) {
     case QMetaType::UnknownType:
+    case QMetaType::Nullptr:
         emitYamlScalar(e, "~");
         break;
     case QMetaType::Bool:

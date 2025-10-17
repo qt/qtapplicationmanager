@@ -718,6 +718,13 @@ The following conditions are handled:
             saved: see \c{man 5 core}. If set to \c false, Unix core dumps are completely disabled.
             (default: true)
     \row
+        \li \c dumpCoreOnWatchdogKill
+        \li bool
+        \li The application manager's watchdog uses \c SIGSTKFLT / \c SIGEMT to kill unresponsive
+            applications, but these signals do not generate core dumps. Setting this option to
+            \c true re-raises these signals as \c SIGABRT to allow the system to dump core.
+            (default: false)
+    \row
         \li \c waitForGdbAttach
         \li duration
         \li Specifies a \l{Time Duration Values}{time duration} with seconds precision: it is the

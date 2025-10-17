@@ -209,6 +209,7 @@ void Main::setup(const Configuration *cfg) noexcept(false)
                                               cfg->yaml.crashAction.printQmlStack,
                                               cfg->yaml.crashAction.waitForGdbAttach.count(),
                                               cfg->yaml.crashAction.dumpCore,
+                                              cfg->yaml.crashAction.dumpCoreOnWatchdogKill,
                                               cfg->yaml.crashAction.stackFramesToIgnore.onCrash,
                                               cfg->yaml.crashAction.stackFramesToIgnore.onException);
     setupQmlDebugging(cfg->qmlDebugging());

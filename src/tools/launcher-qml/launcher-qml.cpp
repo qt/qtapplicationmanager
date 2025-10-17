@@ -115,6 +115,7 @@ int main(int argc, char *argv[])
                                                   ca.value(u"printQmlStack"_s, true).toBool(),
                                                   ca.value(u"waitForGdbAttach"_s, 0).toInt(),
                                                   ca.value(u"dumpCore"_s, true).toBool(),
+                                                  ca.value(u"dumpCoreOnWatchdogKill"_s, false).toBool(),
                                                   ca_sfti.value(u"onCrash"_s, -1).toInt(),
                                                   ca_sfti.value(u"onException"_s, -1).toInt());
         // the verbose flag has already been factored into the rules:

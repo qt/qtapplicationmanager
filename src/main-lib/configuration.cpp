@@ -535,7 +535,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 23;
+    return 24;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -595,6 +595,7 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.crashAction.printQmlStack
         & cd.crashAction.waitForGdbAttach
         & cd.crashAction.dumpCore
+        & cd.crashAction.dumpCoreOnWatchdogKill
         & cd.crashAction.stackFramesToIgnore.onCrash
         & cd.crashAction.stackFramesToIgnore.onException
         & cd.systemProperties
@@ -678,6 +679,7 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(crashAction.printQmlStack);
     MERGE_FIELD(crashAction.waitForGdbAttach);
     MERGE_FIELD(crashAction.dumpCore);
+    MERGE_FIELD(crashAction.dumpCoreOnWatchdogKill);
     MERGE_FIELD(crashAction.stackFramesToIgnore.onCrash);
     MERGE_FIELD(crashAction.stackFramesToIgnore.onException);
     MERGE_FIELD(systemProperties);
@@ -1002,6 +1004,8 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                           cd.crashAction.waitForGdbAttach = yp.parseDurationAsSec(u"s"); } },
                      { "dumpCore", false, YamlParser::Scalar, [&]() {
                           cd.crashAction.dumpCore = yp.parseBool(); } },
+                     { "dumpCoreOnWatchdogKill", false, YamlParser::Scalar, [&]() {
+                          cd.crashAction.dumpCoreOnWatchdogKill = yp.parseBool(); } },
                      { "stackFramesToIgnore", false, YamlParser::Map, [&]() {
                           yp.parseFields({
                               { "onCrash", false, YamlParser::Scalar, [&]() {

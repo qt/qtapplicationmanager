@@ -98,6 +98,7 @@ struct CrashHandlerGlobal
     bool printBacktrace = true;
     bool printQmlStack = true;
     bool dumpCore = true;
+    bool dumpCoreOnWatchdogKill = false;
     int waitForGdbAttach = 0;
     int stackFramesToIgnoreOnCrash = // Make the backtrace start where the signal interrupted the normal program flow
 #if defined(Q_OS_MACOS)
@@ -131,6 +132,7 @@ Q_GLOBAL_STATIC(CrashHandlerGlobal, chg);
 
 void CrashHandler::setCrashActionConfiguration(bool printBacktrace, bool printQmlStack,
                                                int waitForGdbAttach, bool dumpCore,
+                                               bool dumpCoreOnWatchdogKill,
                                                int stackFramesToIgnoreOnCrash,
                                                int stackFramesToIgnoreOnException)
 {
@@ -138,6 +140,7 @@ void CrashHandler::setCrashActionConfiguration(bool printBacktrace, bool printQm
     chg()->printQmlStack = printQmlStack;
     chg()->waitForGdbAttach = waitForGdbAttach * timeoutFactor();
     chg()->dumpCore = dumpCore;
+    chg()->dumpCoreOnWatchdogKill = dumpCoreOnWatchdogKill;
     if (stackFramesToIgnoreOnCrash >= 0)
         chg()->stackFramesToIgnoreOnCrash = stackFramesToIgnoreOnCrash;
     if (stackFramesToIgnoreOnException >= 0)
@@ -379,18 +382,21 @@ static void initBacktraceUnix()
                                            [](int sig) {
         UnixSignalHandler::instance()->resetToDefault(sig);
         char buffer[256];
-        if (sig == UnixSignalHandler::watchdogSignal())
+        bool isWatchdogSig = (sig == UnixSignalHandler::watchdogSignal());
+        if (isWatchdogSig)
             snprintf(buffer, sizeof(buffer), "killed by watchdog (signal %d)", sig);
         else
             snprintf(buffer, sizeof(buffer), "uncaught signal %d (%s)", sig, UnixSignalHandler::signalName(sig));
 
         crashHandler(buffer, chg()->stackFramesToIgnoreOnCrash);
 
-        if (sig <= 0) // better safe than sorry
+        // SIGSTKFLT / SIGEMT as used by the watchdog will not dump core, but SIGABRT will
+        if ((sig <= 0) || (isWatchdogSig && chg()->dumpCoreOnWatchdogKill))
             sig = SIGABRT;
         logMsgF(Console, "\n > re-raising signal %d (%s)\n", sig, UnixSignalHandler::signalName(sig));
-        signal(sig, SIG_DFL);
-        raise(sig);  // raising the signal will kill the process, once we return from the signal handler
+        ::signal(sig, SIG_DFL);
+        ::kill(::getpid(), sig); // prevent potential compiler optimizations for raise()
+        // the process will be killed once we return from the signal handler
     });
 
     std::set_terminate([]() {

@@ -16,8 +16,8 @@ QT_BEGIN_NAMESPACE_AM
 namespace CrashHandler {
 
 void setCrashActionConfiguration(bool printBacktrace, bool printQmlStack, int waitForGdbAttach,
-                                 bool dumpCore, int stackFramesToIgnoreOnCrash,
-                                 int stackFramesToIgnoreOnException);
+                                 bool dumpCore, bool dumpCoreOnWatchdogKill,
+                                 int stackFramesToIgnoreOnCrash, int stackFramesToIgnoreOnException);
 void setQmlEngine(QQmlEngine *engine);
 
 }

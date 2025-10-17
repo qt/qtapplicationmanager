@@ -112,6 +112,7 @@ struct ConfigurationData
         bool printQmlStack = true;
         std::chrono::seconds waitForGdbAttach { 0 };
         bool dumpCore = true;
+        bool dumpCoreOnWatchdogKill = false;
         struct {
             int onCrash = -1;
             int onException = -1;

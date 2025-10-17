@@ -9,4 +9,7 @@ qt_internal_add_test(tst_controller-tool
         Qt::DBus
         Qt::Network
         Qt::AppManMainPrivate
+    BUILTIN_TESTDATA
+    TESTDATA
+        BLACKLIST
 )

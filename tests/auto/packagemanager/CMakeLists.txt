@@ -11,6 +11,7 @@ qt_internal_add_test(tst_packagemanager
         Qt::AppManCommonPrivate
         Qt::AppManManagerPrivate
         Qt::AppManPackagePrivate
+    BUILTIN_TESTDATA
     TESTDATA
         BLACKLIST
 )

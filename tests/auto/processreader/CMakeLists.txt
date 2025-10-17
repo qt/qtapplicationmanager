@@ -1,10 +1,13 @@
 
 qt_internal_add_test(tst_processreader
+    EXCEPTIONS
     SOURCES
         ../error-checking.h
         tst_processreader.cpp
     DEFINES
         AM_TESTDATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../../data/"
+        QTEST_THROW_ON_FAIL
+        QTEST_THROW_ON_SKIP
     LIBRARIES
         Qt::Network
         Qt::AppManApplicationPrivate
@@ -12,9 +15,4 @@ qt_internal_add_test(tst_processreader
         Qt::AppManManagerPrivate
         Qt::AppManMonitorPrivate
         Qt::AppManWindowPrivate
-)
-
-qt_internal_extend_target(tst_processreader CONDITION TARGET Qt::DBus
-    LIBRARIES
-        Qt::DBus
 )

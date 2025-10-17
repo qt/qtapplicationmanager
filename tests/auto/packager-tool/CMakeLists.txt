@@ -1,11 +1,14 @@
 
 qt_internal_add_test(tst_packager-tool
+    EXCEPTIONS
     SOURCES
         ../../../src/tools/packager/packagingjob.cpp
         ../error-checking.h
         tst_packager-tool.cpp
     DEFINES
         AM_TESTDATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../../data/"
+        QTEST_THROW_ON_FAIL
+        QTEST_THROW_ON_SKIP
     INCLUDE_DIRECTORIES
         ../../../src/tools/packager
     LIBRARIES
@@ -15,9 +18,4 @@ qt_internal_add_test(tst_packager-tool
         Qt::AppManCryptoPrivate
         Qt::AppManManagerPrivate
         Qt::AppManPackagePrivate
-)
-
-qt_internal_extend_target(tst_packager-tool CONDITION TARGET Qt::DBus
-    LIBRARIES
-        Qt::DBus
 )

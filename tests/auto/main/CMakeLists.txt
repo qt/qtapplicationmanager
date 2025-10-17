@@ -1,10 +1,13 @@
 
 qt_internal_add_test(tst_main
+    EXCEPTIONS
     SOURCES
         ../error-checking.h
         tst_main.cpp
     DEFINES
         AM_TESTDATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../../data/"
+        QTEST_THROW_ON_FAIL
+        QTEST_THROW_ON_SKIP
     LIBRARIES
         Qt::Network
         Qt::AppManApplicationPrivate
@@ -12,16 +15,7 @@ qt_internal_add_test(tst_main
         Qt::AppManIntentServerPrivate
         Qt::AppManMainPrivate
         Qt::AppManManagerPrivate
-)
-
-qt_internal_add_resource(tst_main "main_testdata"
-    PREFIX
-        "/foo"
-    FILES
-        "dummy.qml"
-)
-
-qt_internal_extend_target(tst_main CONDITION TARGET Qt::DBus
-    LIBRARIES
-        Qt::DBus
+    BUILTIN_TESTDATA
+    TESTDATA
+        dummy.qml
 )

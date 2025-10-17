@@ -336,8 +336,8 @@ void tst_Main::mainQmlFile_data()
     QTest::newRow("invalid-qrc-dir") << ":/foo" << "Invalid main QML file specified: :/foo";
 
     QTest::newRow("valid-native") << QFINDTESTDATA("dummy.qml") << "";
-    QTest::newRow("valid-qrc-file") << ":/foo/dummy.qml" << "";
-    QTest::newRow("valid-qrc-url") << "qrc:///foo/dummy.qml" << "";
+    QTest::newRow("valid-qrc-file") << ":/dummy.qml" << "";
+    QTest::newRow("valid-qrc-url") << "qrc:///dummy.qml" << "";
 
     // Passes unchecked:
     QTest::newRow("https") << "https://www.qt.io/foo/bar.qml" << "";

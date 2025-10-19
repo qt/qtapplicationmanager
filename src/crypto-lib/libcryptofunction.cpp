@@ -11,6 +11,8 @@
 #  include <QVersionNumber>
 #endif
 
+#include "exception.h"
+#include "logging.h"
 #include "libcryptofunction.h"
 
 using namespace Qt::StringLiterals;
@@ -36,10 +38,10 @@ static QT_AM_LIBCRYPTO_FUNCTION(ASN1_STRING_length, int (*)(const void *), 0);
 QLibrary *Cryptography::LibCryptoFunctionBase::s_library = nullptr;
 bool Cryptography::LibCryptoFunctionBase::s_isMacOSLibreSSL = false;
 
-bool Cryptography::LibCryptoFunctionBase::initialize()
+void Cryptography::LibCryptoFunctionBase::initialize()
 {
     if (s_library)
-        return true;
+        return;
 
     static const std::pair<QString, int> libNameAndVersion =
 #if defined(Q_OS_WINDOWS)
@@ -53,23 +55,25 @@ bool Cryptography::LibCryptoFunctionBase::initialize()
         { u"crypto"_s, 3 };
 #endif
 
-    // Loading libcrypto is a mess, since distros are not creating links for libcrypto.so.1
-    // anymore. In order to not duplicate a lot of bad hacks, we simply let QtNetwork do the
-    // dirty work.
-    if (!QSslSocket::supportsSsl())
-        return false;
+    try {
+        // Loading libcrypto is a mess, since distros are not creating links for libcrypto.so.1
+        // anymore. In order to not duplicate a lot of bad hacks, we simply let QtNetwork do the
+        // dirty work.
+        if (!QSslSocket::supportsSsl())
+            throw Exception("Qt was compiled without TLS support");
 
-    s_library = new QLibrary(libNameAndVersion.first, libNameAndVersion.second);
-    bool ok = s_library->load();
+        s_library = new QLibrary(libNameAndVersion.first, libNameAndVersion.second);
+        bool loadOk = s_library->load();
 #if !defined(Q_OS_MACOS)
-    if (!ok) {
-        s_library->setFileNameAndVersion(libNameAndVersion.first, QString());
-        ok = s_library->load();
-    }
+        if (!loadOk) {
+            s_library->setFileNameAndVersion(libNameAndVersion.first, QString());
+            loadOk = s_library->load();
+        }
 #endif
-    if (ok) {
-        unsigned long version = 0;
+        if (!loadOk)
+            throw Exception("Could not find a suitable libcrypto: %1").arg(s_library->errorString());
 
+        unsigned long version = 0;
         if (am_OpenSSL_version_num.functionPointer())
             version = am_OpenSSL_version_num();  // 1.1 and 3.x
         else if (am_SSLeay.functionPointer())
@@ -78,50 +82,56 @@ bool Cryptography::LibCryptoFunctionBase::initialize()
         static const unsigned long MinimumOpenSslVersion = 0x3000000f;
         static const unsigned long LibreSslVersion       = 0x20000000; // libressl always reports 2.0.0
 
-        if (version > 0) {
-            if (version >= MinimumOpenSslVersion) {
-                return (am_OPENSSL_init_crypto(4 /*OPENSSL_INIT_ADD_ALL_CIPHERS*/
-                                                   | 8 /*OPENSSL_INIT_ADD_ALL_DIGESTS*/
-                                                   | 2 /*OPENSSL_INIT_LOAD_CRYPTO_STRINGS*/,
-                                               nullptr) == 1);
-            } else if (version == LibreSslVersion) {
-#if defined(Q_OS_MACOS)
-                static const QVersionNumber MinimumLibresslVersion(3, 3, 6);
-                QVersionNumber libresslVersion;
+        if (version <= 0)
+            throw Exception("Could not get version information from libcrypto: neither of the symbols 'SSLeay' or 'OpenSSL_version_num' were found");
 
-                if (auto *libresslVersionStr = am_OpenSSL_version(0 /*OPENSSL_VERSION*/)) {
-                    if (qstrncmp(libresslVersionStr, "LibreSSL ", 9) == 0) {
-                        libresslVersion = QVersionNumber::fromString(libresslVersionStr + 9);
-                        if (libresslVersion >= MinimumLibresslVersion) {
-                            s_isMacOSLibreSSL = true;
-                            return (am_OPENSSL_init_crypto(4 /*OPENSSL_INIT_ADD_ALL_CIPHERS*/
-                                                               | 8 /*OPENSSL_INIT_ADD_ALL_DIGESTS*/
-                                                               | 2 /*OPENSSL_INIT_LOAD_CRYPTO_STRINGS*/,
-                                                           nullptr) == 1);
-                        }
-                    }
-                }
-                qCritical("Loaded libcrypto (%s) from LibreSSL, but the version is too old: %s (minimum supported version is: %s)",
-                          qPrintable(s_library->fileName()), qPrintable(libresslVersion.toString()),
-                          qPrintable(MinimumLibresslVersion.toString()));
-#else
-                qCritical("Loaded libcrypto (%s) from LibreSSL, but this is only supported on macOS",
-                          qPrintable(s_library->fileName()));
-#endif
-            } else {
-                qCritical("Loaded libcrypto (%s), but the version is too old: 0x%08lx (minimum supported version is: 0x%08lx)",
-                          qPrintable(s_library->fileName()), version, MinimumOpenSslVersion);
+        if (version >= MinimumOpenSslVersion) {
+            if (!am_OPENSSL_init_crypto(4 /*OPENSSL_INIT_ADD_ALL_CIPHERS*/
+                                            | 8 /*OPENSSL_INIT_ADD_ALL_DIGESTS*/
+                                            | 2 /*OPENSSL_INIT_LOAD_CRYPTO_STRINGS*/,
+                                        nullptr)) {
+                throw Exception("Failed to initialize libcrypto");
             }
-        } else {
-            qCritical("Could not get version information from libcrypto: neither of the symbols 'SSLeay' or 'OpenSSL_version_num' were found");
+            return;
+
+        } else if (version == LibreSslVersion) {
+#if defined(Q_OS_MACOS)
+            static const QVersionNumber MinimumLibresslVersion(3, 3, 6);
+
+            const char *libresslVersionStr = am_OpenSSL_version(0 /*OPENSSL_VERSION*/);
+            if (!libresslVersionStr || (qstrncmp(libresslVersionStr, "LibreSSL ", 9) != 0)) {
+                throw Exception("Loaded libcrypto (%1) from LibreSSL, but the version info is invalid: %2")
+                    .arg(s_library->fileName()).arg(libresslVersionStr);
+            }
+
+            auto libresslVersion = QVersionNumber::fromString(libresslVersionStr + 9);
+            if (libresslVersion < MinimumLibresslVersion) {
+                throw Exception("Loaded libcrypto (%1) from LibreSSL, but the version is too old: %2 (minimum supported version is: %3)")
+                    .arg(s_library->fileName()).arg(libresslVersion.toString())
+                    .arg(MinimumLibresslVersion.toString());
+            }
+            s_isMacOSLibreSSL = true;
+            if (!am_OPENSSL_init_crypto(4 /*OPENSSL_INIT_ADD_ALL_CIPHERS*/
+                                            | 8 /*OPENSSL_INIT_ADD_ALL_DIGESTS*/
+                                            | 2 /*OPENSSL_INIT_LOAD_CRYPTO_STRINGS*/,
+                                        nullptr)) {
+                throw Exception("Failed to initialize libcrypto from LibreSSL");
+            }
+            return;
+#else
+            throw Exception("Loaded libcrypto (%1) from LibreSSL, but this is only supported on macOS")
+                      .arg(s_library->fileName());
+#endif
         }
+        throw Exception("Loaded libcrypto (%1), but the version is too old: 0x%2 (minimum supported version is: 0x%3")
+            .arg(s_library->fileName()).arg(version, 8, 16, u'0').arg(MinimumOpenSslVersion, 8, 16, u'0');
+
+    } catch (const Exception &e) {
         s_library->unload();
-    } else {
-        qCritical("Could not find a suitable libcrypto: %s", qPrintable(s_library->errorString()));
+        delete s_library;
+        s_library = nullptr;
+        qCFatal(LogCrypto).noquote() << e.errorString();
     }
-    delete s_library;
-    s_library = nullptr;
-    return false;
 }
 
 Cryptography::LibCryptoFunctionBase::LibCryptoFunctionBase(const char *symbol)

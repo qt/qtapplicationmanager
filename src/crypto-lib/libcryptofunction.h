@@ -45,7 +45,7 @@ public:
 class LibCryptoFunctionBase
 {
 public:
-    static bool initialize();
+    static void initialize();
 
 protected:
     LibCryptoFunctionBase(const char *symbol);

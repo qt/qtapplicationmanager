@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:cryptography
 
-#include <QMutex>
+#include <mutex>
 
 #include "global.h"
 #include "cryptography.h"
@@ -18,38 +18,17 @@
 #  include "ntsecapi.h"
 #  undef SystemFunction036
 #endif
-
 #if defined(Q_OS_MACOS)
 #  include <QVersionNumber>
-#  include <QtCore/private/qcore_mac_p.h>
-#  include <Security/SecBase.h>
-#  include <Availability.h>
 #endif
-
 #if defined(QT_AM_USE_LIBCRYPTO)
 #  include "libcryptofunction.h"
-
-QT_BEGIN_NAMESPACE_AM
-
-Q_GLOBAL_STATIC(QMutex, initMutex)
-static bool openSslInitialized = false;
-
-// clazy:excludeall=non-pod-global-static
-// AXIVION DISABLE Qt-NonPodGlobalStatic
-
-static QT_AM_LIBCRYPTO_FUNCTION(ERR_error_string_n, void(*)(unsigned long, char *, size_t));
-
-// AXIVION ENABLE Qt-NonPodGlobalStatic
-
-QT_END_NAMESPACE_AM
-
 #endif
+
 
 using namespace Qt::StringLiterals;
 
-
 QT_BEGIN_NAMESPACE_AM
-
 
 QByteArray Cryptography::generateRandomBytes(int size)
 {
@@ -72,61 +51,12 @@ QByteArray Cryptography::generateRandomBytes(int size)
     return result;
 }
 
-
 void Cryptography::initialize()
 {
 #if defined(QT_AM_USE_LIBCRYPTO)
-    QMutexLocker locker(initMutex());
-    if (!openSslInitialized) {
-        if (!LibCryptoFunctionBase::initialize())
-            qFatal("Could not load libcrypto");
-        openSslInitialized = true;
-    }
+    static std::once_flag once;
+    std::call_once(once, []() { LibCryptoFunctionBase::initialize(); });
 #endif
-}
-
-QString Cryptography::errorString(qint64 osCryptoError, const char *errorDescription)
-{
-    QString result;
-    if (errorDescription && *errorDescription) {
-        result = QString::fromLatin1(errorDescription);
-        result.append(u": "_s);
-    }
-
-#if defined(QT_AM_USE_LIBCRYPTO)
-    if (osCryptoError) {
-        char msg[512];
-        msg[sizeof(msg) - 1] = 0;
-
-        //void ERR_error_string_n(unsigned long e, char *buf, size_t len);
-        am_ERR_error_string_n(static_cast<unsigned long>(osCryptoError), msg, sizeof(msg) - 1);
-        result.append(QString::fromLocal8Bit(msg));
-    }
-#elif defined(Q_OS_WIN)
-    if (osCryptoError) {
-        LPWSTR msg = nullptr;
-        FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                       nullptr, osCryptoError, 0, (LPWSTR) &msg, 0, nullptr);
-        // remove potential \r\n at the end
-        result.append(QString::fromWCharArray(msg).trimmed());
-        HeapFree(GetProcessHeap(), 0, msg);
-    }
-#elif defined(Q_OS_MACOS)
-    if (osCryptoError) {
-#  if QT_MACOS_IOS_PLATFORM_SDK_EQUAL_OR_ABOVE(100300, 110300)
-        if (__builtin_available(macOS 10.3, iOS 12.3, *)) {
-            QCFType<CFStringRef> msg = SecCopyErrorMessageString(qint32(osCryptoError), nullptr);
-            result.append(QString::fromCFString(msg));
-        }
-#  else
-        result.append(QString::number(osCryptoError));
-#  endif
-    }
-#else
-    Q_UNUSED(osCryptoError)
-#endif
-
-    return result;
 }
 
 QT_END_NAMESPACE_AM

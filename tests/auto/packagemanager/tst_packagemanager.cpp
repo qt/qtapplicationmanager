@@ -232,13 +232,13 @@ void tst_PackageManager::initTestCase()
     m_finishedSpy = new QSignalSpy(m_pm, &PackageManager::taskFinished);
     m_failedSpy = new QSignalSpy(m_pm, &PackageManager::taskFailed);
 
-    // crypto stuff - we need to load the root CA and developer CA certificates
+    QString rootcaFile  = AM_TESTDATA_DIR u"certificates/root-ca/root-ca.crt"_s;
+    QString devcaFile   = AM_TESTDATA_DIR u"certificates/dev-ca/dev-ca.crt"_s;
+    QString storecaFile = AM_TESTDATA_DIR u"certificates/store-ca/store-ca.crt"_s;
 
-    QString devcaFile = u"" AM_TESTDATA_DIR "certificates/devca.crt"_s;
-    QString storecaFile = u"" AM_TESTDATA_DIR "certificates/store.crt"_s;
-    QString caFile = u"" AM_TESTDATA_DIR "certificates/ca.crt"_s;
-
-    m_pm->loadCertificates({ caFile }, { devcaFile }, { storecaFile });
+    // no CRLs set on purpose to test verification without CRLs at all
+    QVERIFY_THROWS_NO_EXCEPTION(m_pm->loadCertificates({ rootcaFile }, { devcaFile },
+                                                       { storecaFile }, { }));
 
     // we do not require valid store signatures for this test run
     m_pm->setDevelopmentMode(PackageManager::DevelopmentMode::System);

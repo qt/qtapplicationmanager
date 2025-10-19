@@ -22,12 +22,15 @@ set(TEST_DATA_FILES
     binaries/macos-universal.zz
     binaries/windows-pe.exe.zz
     certificates/create-test-certificates.sh
-    certificates/openssl-ca.cnf
-    certificates/openssl-dev1.cnf
-    certificates/openssl-dev2.cnf
-    certificates/openssl-devca.cnf
-    certificates/openssl-other-ca.cnf
+    certificates/openssl-root-ca.cnf
+    certificates/openssl-dev-1.cnf
+    certificates/openssl-dev-2.cnf
+    certificates/openssl-dev-revoked.cnf
+    certificates/openssl-dev-expired.cnf
+    certificates/openssl-dev-ca.cnf
     certificates/openssl-store.cnf
+    certificates/openssl-store-ca.cnf
+    certificates/openssl-other-ca.cnf
     create-test-packages.sh
     icon.png
     info.yaml

@@ -211,6 +211,7 @@ int main(int argc, char *argv[])
 
         case DevVerifyPackage:
             clp.addOption({ u"verbose"_s, u"Print details regarding the verification to stdout."_s });
+            clp.addOption({ u"crl"_s, u"CRL file to use during verification."_s, u"file"_s });
             clp.addPositionalArgument(u"package"_s,      u"File name of the signed package (input)."_s);
             clp.addPositionalArgument(u"certificates"_s, u"The developer's CA certificate file(s)."_s, u"certificates..."_s);
             clp.process(a);
@@ -219,7 +220,8 @@ int main(int argc, char *argv[])
                 clp.showHelp(1);
 
             p.reset(PackagingJob::developerVerify(clp.positionalArguments().at(1),
-                                                  clp.positionalArguments().mid(2)));
+                                                  clp.positionalArguments().mid(2),
+                                                  clp.values(u"crl"_s)));
             break;
 
         case StoreSignPackage:
@@ -245,6 +247,7 @@ int main(int argc, char *argv[])
 
         case StoreVerifyPackage:
             clp.addOption({ u"verbose"_s, u"Print details regarding the verification to stdout."_s });
+            clp.addOption({ u"crl"_s, u"CRL file to use during verification."_s, u"file"_s });
             clp.addPositionalArgument(u"package"_s,      u"File name of the signed package (input)."_s);
             clp.addPositionalArgument(u"certificates"_s, u"Store CA certificate file(s)."_s, u"certificates..."_s);
             clp.addPositionalArgument(u"hardware-id"_s,  u"Unique hardware id to which this package was bound."_s);
@@ -255,6 +258,7 @@ int main(int argc, char *argv[])
 
             p.reset(PackagingJob::storeVerify(clp.positionalArguments().at(1),
                                               clp.positionalArguments().mid(2, clp.positionalArguments().size() - 3),
+                                              clp.values(u"crl"_s),
                                               *--clp.positionalArguments().cend()));
             break;
 

@@ -13,55 +13,46 @@ default_crl_days= 30            # how long before next CRL
 default_md      = sha256        # use public key default MD
 preserve        = no            # keep passed DN ordering
 
-x509_extensions = ca_extensions # The extensions to add to the cert
+x509_extensions = store_ca_extensions # The extensions to add to the cert
 
 email_in_dn = no                # Don't concat the email in the DN
 copy_extensions = copy          # Required to copy SANs from CSR to cert
 
-base_dir    = .
-certificate = $base_dir/devca.crt      # The CA certifcate
-private_key = $base_dir/devca-priv.key # The CA private key
-new_certs_dir = $base_dir           # Location for new certs after signing
-database    = $base_dir/dev-index.txt   # Database index file
-serial      = $base_dir/dev-serial.txt  # The current serial number
+base_dir    = ./store-ca
+certificate = $base_dir/store-ca.crt      # The CA certifcate
+private_key = $base_dir/store-ca-priv.key # The CA private key
+new_certs_dir = $base_dir/new-certs       # Location for new certs after signing
+database    = $base_dir/index.txt         # Database index file
+serial      = $base_dir/serial.txt        # The current serial number
+crlnumber   = $base_dir/crlnumber.txt
+crl         = $base_dir/store-ca.crl
 
 unique_subject  = yes               # Set to 'no' to allow creation of
                                     # several certificates with same subject.
 ####################################################################
 [ req ]
 prompt              = no
-distinguished_name  = store_distinguished_name
-req_extensions      = store_req_extensions
+distinguished_name  = store_ca_distinguished_name
+req_extensions      = store_ca_req_extensions
 string_mask         = utf8only
-x509_extensions     = ca_extensions # The extensions to add to the cert
-
 
 ####################################################################
-[ store_distinguished_name ]
+[ store_ca_distinguished_name ]
 C = DE
 O = Pelagicore AG
 OU = Developer Relations
-CN = Pelagicore Developer CA
+CN = Pelagicore AppStore CA
 emailAddress = info@pelagicore.com
 
 ####################################################################
-[ store_req_extensions ]
+[ store_ca_req_extensions ]
 
 subjectKeyIdentifier= hash
 basicConstraints    = CA:FALSE
 keyUsage            = nonRepudiation, digitalSignature, keyEncipherment
-#subjectAltName      = @alternate_names
 
 ####################################################################
-#[ alternate_names ]
-#
-#DNS.1       = example.com
-#DNS.2       = www.example.com
-#DNS.3       = mail.example.com
-#DNS.4       = ftp.example.com
-
-####################################################################
-[ ca_extensions ]
+[ store_ca_extensions ]
 
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid:always, issuer
@@ -83,5 +74,5 @@ emailAddress            = optional
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid,issuer
 
-#basicConstraints = CA:FALSE
-keyUsage = nonRepudiation, digitalSignature, keyEncipherment, decipherOnly
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment, encipherOnly

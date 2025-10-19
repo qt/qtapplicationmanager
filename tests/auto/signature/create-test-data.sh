@@ -8,8 +8,8 @@ echo "Recreating test data"
 
 certdir="../../data/certificates/"
 
-if [ ! -f $certdir/dev1.p12 ]; then
-  if [ -n "$BUILD_DIR" ] && [ -f "$BUILD_DIR/tests/data/certificates/dev1.p12" ]; then
+if [ ! -f $certdir/dev-certs/dev-1.p12 ]; then
+  if [ -n "$BUILD_DIR" ] && [ -f "$BUILD_DIR/tests/data/certificates/dev-certs/dev-1.p12" ]; then
     certdir="$BUILD_DIR/tests/data/certificates/"
   else
     echo "Please generate test certificates in $certdir first or set"
@@ -18,20 +18,20 @@ if [ ! -f $certdir/dev1.p12 ]; then
   fi
 fi
 
-cp $certdir/dev1.p12 signing.p12
+cp $certdir/dev-certs/dev-1.p12 signing.p12
 openssl pkcs12 -export -out signing-no-key.p12 -password pass:password \
-               -inkey $certdir/dev1-priv.key -certfile $certdir/ca.crt \
-               -in $certdir/dev1.crt -name "Developer 1 Certificate (no key)" -nokeys
-cat $certdir/ca.crt $certdir/devca.crt >verifying.crt
-openssl x509 -in $certdir/dev1.crt -noout -fingerprint -sha1 -dates \
+               -inkey $certdir/dev-certs/dev-1-priv.key -certfile $certdir/root-ca/root-ca.crt \
+               -in $certdir/dev-certs/dev-1.crt -name "Developer 1 Certificate (no key)" -nokeys
+cat $certdir/root-ca/root-ca.crt $certdir/dev-ca/dev-ca.crt >verifying.crt
+openssl x509 -in $certdir/dev-certs/dev-1.crt -noout -fingerprint -sha1 -dates \
              -serial -issuer -subject >dev.info
-openssl x509 -in $certdir/dev1.crt -noout -fingerprint -sha256 >>dev.info
-openssl x509 -in $certdir/ca.crt -noout -fingerprint -sha1 -dates \
+openssl x509 -in $certdir/dev-certs/dev-1.crt -noout -fingerprint -sha256 >>dev.info
+openssl x509 -in $certdir/root-ca/root-ca.crt -noout -fingerprint -sha1 -dates \
              -serial -issuer -subject >root-ca.info
-openssl x509 -in $certdir/ca.crt -noout -fingerprint -sha256 >>root-ca.info
-openssl x509 -in $certdir/devca.crt -noout -fingerprint -sha1 -dates \
+openssl x509 -in $certdir/root-ca/root-ca.crt -noout -fingerprint -sha256 >>root-ca.info
+openssl x509 -in $certdir/dev-ca/dev-ca.crt -noout -fingerprint -sha1 -dates \
              -serial -issuer -subject >dev-ca.info
-openssl x509 -in $certdir/devca.crt -noout -fingerprint -sha256 >>dev-ca.info
-openssl cms -sign -signer $certdir/dev1.crt -md sha1 -binary -outform DER \
+openssl x509 -in $certdir/dev-ca/dev-ca.crt -noout -fingerprint -sha256 >>dev-ca.info
+openssl cms -sign -signer $certdir/dev-certs/dev-1.crt -md sha1 -binary -outform DER \
             -in <(echo "p7Hash" | base64 - | tr -d '\n') \
-            -inkey $certdir/dev1-priv.key -out signature-legacy-sha1.p7
+            -inkey $certdir/dev-certs/dev-1-priv.key -out signature-legacy-sha1.p7

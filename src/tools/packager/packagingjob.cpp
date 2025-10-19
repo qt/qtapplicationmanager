@@ -70,12 +70,14 @@ PackagingJob *PackagingJob::developerSign(const QString &sourceName, const QStri
     return p;
 }
 
-PackagingJob *PackagingJob::developerVerify(const QString &sourceName, const QStringList &certificateFiles)
+PackagingJob *PackagingJob::developerVerify(const QString &sourceName, const QStringList &certificateFiles,
+                                            const QStringList crlFiles)
 {
     PackagingJob *p = new PackagingJob();
     p->m_mode = DeveloperVerify;
     p->m_sourceName = sourceName;
     p->m_certificateFiles = certificateFiles;
+    p->m_crlFiles = crlFiles;
     return p;
 }
 
@@ -94,12 +96,14 @@ PackagingJob *PackagingJob::storeSign(const QString &sourceName, const QString &
     return p;
 }
 
-PackagingJob *PackagingJob::storeVerify(const QString &sourceName, const QStringList &certificateFiles, const QString &hardwareId)
+PackagingJob *PackagingJob::storeVerify(const QString &sourceName, const QStringList &certificateFiles,
+                                        const QStringList &crlFiles, const QString &hardwareId)
 {
     PackagingJob *p = new PackagingJob();
     p->m_mode = StoreVerify;
     p->m_sourceName = sourceName;
     p->m_certificateFiles = certificateFiles;
+    p->m_crlFiles = crlFiles;
     p->m_hardwareId = hardwareId;
     return p;
 }
@@ -284,6 +288,16 @@ void PackagingJob::execute() noexcept(false)
             certificates << cf.readAll();
         }
 
+        // read CRLs
+        QByteArrayList crls;
+        crls.reserve(m_crlFiles.count());
+        for (const QString &crl : std::as_const(m_crlFiles)) {
+            QFile cf(crl);
+            if (!cf.open(QIODevice::ReadOnly))
+                throw Exception(cf, "could not open CRL file");
+            crls << cf.readAll();
+        }
+
         // create temporary dir for extraction
         QTemporaryDir tmp;
         if (!tmp.isValid())
@@ -306,6 +320,7 @@ void PackagingJob::execute() noexcept(false)
                     Signature sig(report.digest());
                     sig.requireKeyUsage(Certificate::KeyUsage::Developer);
                     sig.requirePackageId(report.packageId());
+                    sig.requireRevocationCheck(crls);
                     auto result = sig.verify(report.developerSignature(), certificates);
                     m_output = u"valid developer signature\n\n"_s
                                + QString::fromUtf8(QJsonDocument::fromVariant(result.signer.toVariant()).toJson());
@@ -329,6 +344,7 @@ void PackagingJob::execute() noexcept(false)
 
                     Signature sig(sigDigest);
                     sig.requireKeyUsage(Certificate::KeyUsage::Store);
+                    sig.requireRevocationCheck(crls);
                     auto result = sig.verify(report.storeSignature(), certificates);
                     m_output = u"valid store signature\n\n"_s
                                + QString::fromUtf8(QJsonDocument::fromVariant(result.signer.toVariant()).toJson());

@@ -68,10 +68,11 @@ QByteArray Signature::create(const QByteArray &signingCertificatePkcs12,
 
     QByteArray sig = d->create(signingCertificatePkcs12, signingCertificatePassword,
                                [this](const Certificate &signer) { d->checkCertificate(signer, { }); });
-//        // very useful while debugging
-//        QFile f(QDir::home().absoluteFilePath("sig.der"));
-//        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
-//            f.write(sig);
+    // very useful while debugging
+    // static int counter = 0;
+    // QFile f(QDir::home().absoluteFilePath(u"sig%1.der"_s.arg(++counter)));
+    // if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    //     f.write(sig);
     return sig;
 }
 

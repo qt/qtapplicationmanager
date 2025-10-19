@@ -1,0 +1,28 @@
+HOME            = .
+RANDFILE        = $ENV::HOME/.rnd
+
+####################################################################
+[ req ]
+prompt              = no
+distinguished_name  = dev2_distinguished_name
+req_extensions      = dev2_req_extensions
+string_mask         = utf8only
+
+####################################################################
+[ dev2_distinguished_name ]
+C = DE
+O = Developer 2 AG
+CN = Developer 2
+emailAddress = dev2@developer2.com
+
+####################################################################
+[ dev2_req_extensions ]
+
+subjectKeyIdentifier= hash
+basicConstraints    = CA:FALSE
+keyUsage            = nonRepudiation, digitalSignature, keyEncipherment, decipherOnly
+subjectAltName      = @dev2_package_ids
+
+####################################################################
+[ dev2_package_ids ]
+URI.1 = "qtam://packageid/test-pkg"

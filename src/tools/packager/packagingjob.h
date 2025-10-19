@@ -24,13 +24,14 @@ public:
     static PackagingJob *developerSign(const QString &sourceName, const QString &destinationName,
                                        const QString &certificateFile, const QString &passPhrase,
                                        bool asJson = false);
-    static PackagingJob *developerVerify(const QString &sourceName, const QStringList &certificateFiles);
+    static PackagingJob *developerVerify(const QString &sourceName, const QStringList &certificateFiles,
+                                         const QStringList crlFiles);
 
     static PackagingJob *storeSign(const QString &sourceName, const QString &destinationName,
                                    const QString &certificateFile, const QString &passPhrase,
                                    const QString &hardwareId, bool asJson = false);
     static PackagingJob *storeVerify(const QString &sourceName, const QStringList &certificateFiles,
-                                     const QString &hardwareId);
+                                     const QStringList &crlFiles, const QString &hardwareId);
 
     void execute() noexcept(false);
 
@@ -59,6 +60,7 @@ private:
     QString m_destinationName; // create and signing only
     QString m_sourceDir; // create only
     QStringList m_certificateFiles;
+    QStringList m_crlFiles;
     QString m_passphrase;  // sign only
     QString m_hardwareId; // store sign/verify only
     QVariantMap m_extraMetaData;

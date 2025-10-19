@@ -4,25 +4,26 @@ RANDFILE        = $ENV::HOME/.rnd
 ####################################################################
 [ req ]
 prompt              = no
-distinguished_name  = store_distinguished_name
-req_extensions      = store_req_extensions
+distinguished_name  = dev_revoked_distinguished_name
+req_extensions      = dev_revoked_req_extensions
 string_mask         = utf8only
 
 ####################################################################
-[ store_distinguished_name ]
+[ dev_revoked_distinguished_name ]
 C = DE
-O = Developer 2 AG
-CN = Developer 2
-emailAddress = dev2@developer2.com
+O = Revoked Developer
+CN = Revoked Developer
+emailAddress = revoked@developer.com
 
 ####################################################################
-[ store_req_extensions ]
+[ dev_revoked_req_extensions ]
 
 subjectKeyIdentifier= hash
 basicConstraints    = CA:FALSE
 keyUsage            = nonRepudiation, digitalSignature, keyEncipherment
-subjectAltName      = @alternate_names
+subjectAltName      = @dev_revoked_package_ids
 
 ####################################################################
-[ alternate_names ]
-URI.1 = "qtam://packageid/test-pkg"
+[ dev_revoked_package_ids ]
+URI.1 = "qtam://packageid/other-*"
+URI.2 = "qtam://packageid/test-pkg"

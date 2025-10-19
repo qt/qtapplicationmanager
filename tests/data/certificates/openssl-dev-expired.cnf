@@ -1,0 +1,29 @@
+HOME            = .
+RANDFILE        = $ENV::HOME/.rnd
+
+####################################################################
+[ req ]
+prompt              = no
+distinguished_name  = dev_expired_distinguished_name
+req_extensions      = dev_expired_req_extensions
+string_mask         = utf8only
+
+####################################################################
+[ dev_expired_distinguished_name ]
+C = DE
+O = Expired Developer
+CN = Expired Developer
+emailAddress = expired@developer.com
+
+####################################################################
+[ dev_expired_req_extensions ]
+
+subjectKeyIdentifier= hash
+basicConstraints    = CA:FALSE
+keyUsage            = nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName      = @dev_expired_package_ids
+
+####################################################################
+[ dev_expired_package_ids ]
+URI.1 = "qtam://packageid/other-*"
+URI.2 = "qtam://packageid/test-pkg"

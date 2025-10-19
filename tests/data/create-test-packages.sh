@@ -91,19 +91,22 @@ info "Create package"
 packager create-package "$dst/test.ampkg" "$src"
 
 info "Dev-sign package"
-packager dev-sign-package --verbose "$dst/test.ampkg" "$dst/test-dev-signed.ampkg" certificates/dev1.p12 password
+packager dev-sign-package --verbose "$dst/test.ampkg" "$dst/test-dev-signed.ampkg" certificates/dev-certs/dev-1.p12 password
 
 info "Dev-verify package"
-packager dev-verify-package --verbose "$dst/test-dev-signed.ampkg" certificates/devca.crt certificates/ca.crt
+packager dev-verify-package --verbose "$dst/test-dev-signed.ampkg" certificates/dev-ca/dev-ca.crt certificates/root-ca/root-ca.crt
 
 info "Store-sign package"
-packager store-sign-package --verbose "$dst/test.ampkg" "$dst/test-store-signed.ampkg" certificates/store.p12 password "foobar"
+packager store-sign-package --verbose "$dst/test.ampkg" "$dst/test-store-signed.ampkg" certificates/store-certs/store.p12 password "foobar"
 
 info "Store-verify package"
-packager store-verify-package --verbose "$dst/test-store-signed.ampkg" certificates/ca.crt "foobar"
+packager store-verify-package --verbose "$dst/test-store-signed.ampkg" certificates/store-ca/store-ca.crt certificates/root-ca/root-ca.crt "foobar"
 
 info "Store-sign dev package"
-packager store-sign-package --verbose "$dst/test-dev-signed.ampkg" "$dst/test-store-dev-signed.ampkg" certificates/store.p12 password "foobar"
+packager store-sign-package --verbose "$dst/test-dev-signed.ampkg" "$dst/test-store-dev-signed.ampkg" certificates/store-certs/store.p12 password "foobar"
+
+info "Store-verify dev package"
+packager store-verify-package --verbose "$dst/test-store-dev-signed.ampkg" certificates/store-ca/store-ca.crt certificates/root-ca/root-ca.crt "foobar"
 
 info "Create package with extra meta-data"
 cat >"$tmp/exmd" <<EOT
@@ -128,7 +131,7 @@ packager create-package "$dst/test-extra.ampkg" "$src" \
   -s '{ "sfoo": "sbar" }' -s '{ "sfoo2": "sbar2" }' -S "$src/../exmds" -S "$src/../exmds2"
 
 info "Dev-sign package with extra meta-data"
-packager dev-sign-package --verbose "$dst/test-extra.ampkg" "$dst/test-extra-dev-signed.ampkg" certificates/dev1.p12 password
+packager dev-sign-package --verbose "$dst/test-extra.ampkg" "$dst/test-extra-dev-signed.ampkg" certificates/dev-certs/dev-1.p12 password
 
 ### v2 packages for testing updates
 
@@ -139,7 +142,7 @@ info "Create update package"
 packager create-package "$dst/test-update.ampkg" "$src"
 
 info "Dev-sign update package"
-packager dev-sign-package --verbose "$dst/test-update.ampkg" "$dst/test-update-dev-signed.ampkg" certificates/dev2.p12 password
+packager dev-sign-package --verbose "$dst/test-update.ampkg" "$dst/test-update-dev-signed.ampkg" certificates/dev-certs/dev-2.p12 password
 
 echo "test" >"$src/test"
 cp "info.yaml" "$src"
@@ -154,7 +157,7 @@ info "Create other package"
 packager create-package "$dst/other-test.ampkg" "$src"
 
 info "Dev-sign other package"
-packager dev-sign-package --verbose "$dst/other-test.ampkg" "$dst/other-test-dev-signed.ampkg" certificates/dev1.p12 password
+packager dev-sign-package --verbose "$dst/other-test.ampkg" "$dst/other-test-dev-signed.ampkg" certificates/dev-certs/dev-1.p12 password
 
 rm "$src/other"
 echo "test" >"$src/test"
@@ -230,7 +233,7 @@ tar -C "$src" -cf "$dst/test-invalid-footer-digest.ampkg" -- --PACKAGE-HEADER-- 
 mv "$src"/--PACKAGE-FOOTER--{.orig,}
 
 info "Create a package with an invalid signature"
-packager dev-sign-package --verbose "$dst/test.ampkg" "$dst/test-invalid-footer-signature.ampkg" certificates/other.p12 password
+packager dev-sign-package --verbose "$dst/test.ampkg" "$dst/test-invalid-footer-signature.ampkg" certificates/other-certs/other.p12 password
 
 info "Create a package with an invalid entry path"
 touch "$src/../invalid-path"

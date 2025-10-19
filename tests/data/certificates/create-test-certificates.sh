@@ -8,22 +8,13 @@
 set -e
 
 # check basic requirement
-[ ! -e openssl-ca.cnf ] && { echo "Please cd to the tests/data/certificates directory before running this script"; exit 1; }
+[ ! -e openssl-root-ca.cnf ] && { echo "Please cd to the tests/data/certificates directory before running this script"; exit 1; }
 
 . ../utilities.sh
 
-rm -f index.txt* serial.txt*
-rm -f dev-index.txt* dev-serial.txt*
-rm -f ca-priv.key ca.crt
-rm -f store.csr store.crt store-priv.key store.p12
-rm -f devca.csr devca.crt devca-priv.key
-rm -f dev1.csr dev1.crt dev1-priv.key dev1.p12
-rm -f dev2.csr dev2.crt dev2-priv.key dev2.p12
-rm -f 01.pem 02.pem
-rm -f other-index.txt* other-serial.txt*
-rm -f other-ca-priv.key other-ca.crt
-rm -f other.csr other.crt other-priv.key other.p12
-
+for i in root dev store other; do
+  rm -rf $i-ca $i-certs
+done
 
 echo "OpenSSL installation check:"
 
@@ -47,8 +38,6 @@ fi
 echo " * Version: ${SSL_VERSION}"
 echo
 
-SSL_PKCS12_EXTRA=''
-
 runSSL()
 {
   set +e
@@ -70,46 +59,68 @@ runSSL()
 
 echo "Generating test certificates:"
 
+for i in root dev store other; do
+  mkdir -p $i-ca/new-certs
+  touch $i-ca/index.txt
+  echo '01' > $i-ca/serial.txt
+  echo '01' > $i-ca/crlnumber.txt
+  mkdir $i-certs
+done
+
 info "Generating root CA"
-# generate self-signed CA cert
 # the -days parameter is needed due to an openssl bug: having -x509 on the
 # command-line makes it ignore the the default_days option in the config file
-runSSL req -config openssl-ca.cnf -days 3650 -x509 -new  -newkey rsa:2048 -nodes -keyout ca-priv.key -out ca.crt
-touch index.txt
-echo '01' > serial.txt
-
-info "Generating, signing and exporting the store certificate"
-runSSL req -config openssl-store.cnf -newkey rsa:2048 -nodes -keyout store-priv.key -out store.csr
-runSSL ca -batch -config openssl-ca.cnf -policy signing_policy -extensions store_signing_req -out store.crt -infiles store.csr
-runSSL pkcs12 ${SSL_PKCS12_EXTRA} -export -password pass:password -out store.p12 -inkey store-priv.key -nodes -in store.crt -name "Pelagicore App Store"
+runSSL req -config openssl-root-ca.cnf -x509 -new -days 3650 -newkey rsa:2048 -nodes -keyout root-ca/root-ca-priv.key -out root-ca/root-ca.crt
 
 info "Generating the developer sub-CA"
-runSSL req -config openssl-devca.cnf -newkey rsa:2048 -nodes -keyout devca-priv.key -out devca.csr
-runSSL ca -batch -config openssl-ca.cnf -policy signing_policy -extensions ca_extensions -out devca.crt -infiles devca.csr
-touch dev-index.txt
-echo '01' > dev-serial.txt
+runSSL req -config openssl-dev-ca.cnf -newkey rsa:2048 -nodes -keyout dev-ca/dev-ca-priv.key -out dev-ca/dev-ca.csr
+runSSL ca -batch -config openssl-root-ca.cnf -policy signing_policy -extensions root_ca_extensions -out dev-ca/dev-ca.crt -infiles dev-ca/dev-ca.csr
+
+info "Generating the store sub-CA"
+runSSL req -config openssl-store-ca.cnf -newkey rsa:2048 -nodes -keyout store-ca/store-ca-priv.key -out store-ca/store-ca.csr
+runSSL ca -batch -config openssl-root-ca.cnf -policy signing_policy -extensions root_ca_extensions -out store-ca/store-ca.crt -infiles store-ca/store-ca.csr
 
 info "Generating, signing and exporting the developer certificate #1"
-runSSL req -config openssl-dev1.cnf -newkey rsa:2048 -nodes -keyout dev1-priv.key -out dev1.csr
-runSSL ca -batch -config openssl-devca.cnf -policy signing_policy -extensions signing_req -out dev1.crt -infiles dev1.csr
-runSSL pkcs12 ${SSL_PKCS12_EXTRA} -export -out dev1.p12 -password pass:password -inkey dev1-priv.key -nodes -certfile devca.crt -in dev1.crt -name "Developer 1 Certificate"
+runSSL req -config openssl-dev-1.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-1-priv.key -out dev-certs/dev-1.csr
+runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-1.crt -infiles dev-certs/dev-1.csr
+runSSL pkcs12 -export -out dev-certs/dev-1.p12 -password pass:password -inkey dev-certs/dev-1-priv.key -nodes -in dev-certs/dev-1.crt -name "Developer 1 Certificate"
 
 info "Generating, signing and exporting the developer certificate #2"
-runSSL req -config openssl-dev2.cnf -newkey rsa:2048 -nodes -keyout dev2-priv.key -out dev2.csr
-runSSL ca -batch -config openssl-devca.cnf -policy signing_policy -extensions signing_req -out dev2.crt -infiles dev2.csr
-runSSL pkcs12 ${SSL_PKCS12_EXTRA} -export -out dev2.p12 -password pass:password -inkey dev2-priv.key -nodes -certfile devca.crt -in dev2.crt -name "Developer 2 Certificate"
+runSSL req -config openssl-dev-2.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-2-priv.key -out dev-certs/dev-2.csr
+runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-2.crt -infiles dev-certs/dev-2.csr
+runSSL pkcs12 -export -out dev-certs/dev-2.p12 -password pass:password -inkey dev-certs/dev-2-priv.key -nodes -in dev-certs/dev-2.crt -name "Developer 2 Certificate"
+
+info "Generating, signing and exporting the \"revoked\" developer certificate"
+runSSL req -config openssl-dev-revoked.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-revoked-priv.key -out dev-certs/dev-revoked.csr
+runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-revoked.crt -infiles dev-certs/dev-revoked.csr
+runSSL pkcs12 -export -out dev-certs/dev-revoked.p12 -password pass:password -inkey dev-certs/dev-revoked-priv.key -nodes -in dev-certs/dev-revoked.crt -name "Revoked Developer"
+runSSL ca -config openssl-dev-ca.cnf -crl_reason keyCompromise -revoke dev-certs/dev-revoked.crt
+
+info "Generating, signing and exporting the \"expired\" developer certificate"
+runSSL req -config openssl-dev-expired.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-expired-priv.key -out dev-certs/dev-expired.csr
+runSSL ca -startdate 20250101000000Z -enddate 20250131235959Z -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-expired.crt -infiles dev-certs/dev-expired.csr
+runSSL pkcs12 -export -out dev-certs/dev-expired.p12 -password pass:password -inkey dev-certs/dev-expired-priv.key -nodes -in dev-certs/dev-expired.crt -name "Expired Developer"
+
+info "Generating, signing and exporting the store certificate"
+runSSL req -config openssl-store.cnf -newkey rsa:2048 -nodes -keyout store-certs/store-priv.key -out store-certs/store.csr
+runSSL ca -batch -config openssl-store-ca.cnf -policy signing_policy -extensions signing_req -out store-certs/store.crt -infiles store-certs/store.csr
+runSSL pkcs12 -export -password pass:password -out store-certs/store.p12 -inkey store-certs/store-priv.key -nodes -in store-certs/store.crt -name "Pelagicore App Store"
+
 
 info "Generating the \"other\" CA"
-# generate self-signed CA cert
-# the -days parameter is needed due to an openssl bug: having -x509 on the
-# command-line makes it ignore the the default_days option in the config
-runSSL req -config openssl-other-ca.cnf -x509 -days 3650 -new -newkey rsa:2048 -nodes -keyout other-ca-priv.key -out other-ca.crt
-touch other-index.txt
-echo '01' > other-serial.txt
+runSSL req -config openssl-other-ca.cnf -x509 -new -days 3650 -newkey rsa:2048 -nodes -keyout other-ca/other-ca-priv.key -out other-ca/other-ca.crt
+
+info "Generating signing and exporting the \"other\" certificate"
 # the double // in subj is needed to get around MSYS hardwired path replacement
-runSSL req -config openssl-other-ca.cnf -batch -addext "subjectAltName=URI:qtam://packageid/*" -subj '//C=DE/ST=Foo/L=Bar/CN=www.other.com' -newkey rsa:2048 -nodes -keyout other-priv.key -out other.csr
-runSSL ca -batch -config openssl-other-ca.cnf -policy signing_policy -extensions signing_req -out other.crt -infiles other.csr
-runSSL pkcs12 ${SSL_PKCS12_EXTRA} -export -out other.p12 -password pass:password -inkey other-priv.key -nodes -certfile other-ca.crt -in other.crt -name "Other Certificate"
+runSSL req -config openssl-other-ca.cnf -batch -addext "subjectAltName=URI:qtam://packageid/*" -subj '//C=DE/ST=Foo/L=Bar/CN=www.other.com' -newkey rsa:2048 -nodes -keyout other-certs/other-priv.key -out other-certs/other.csr
+runSSL ca -batch -config openssl-other-ca.cnf -policy signing_policy -extensions signing_req -out other-certs/other.crt -infiles other-certs/other.csr
+# this one includes the other-ca.crt root CA on purpose
+runSSL pkcs12 -export -out other-certs/other.p12 -password pass:password -inkey other-certs/other-priv.key -nodes -certfile other-ca/other-ca.crt -in other-certs/other.crt -name "Other Certificate"
+
+info "Exporting all CRLs"
+for i in root dev store other; do
+  runSSL ca -batch -config openssl-$i-ca.cnf -gencrl -crldays 365 -out $i-ca/$i-ca.crl
+done
 
 echo -e "$G All test certificates have been created successfully$W"
 echo

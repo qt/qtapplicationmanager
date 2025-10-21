@@ -100,6 +100,14 @@ public:
         }
     }
 
+    inline void throwOnError()
+    {
+        for (auto *iface : std::initializer_list<const QDBusAbstractInterface *>{ m_manager, m_packager }) {
+            if (iface && iface->lastError().isValid())
+                throw Exception("D-Bus error on %1: %2").arg(iface->interface(), iface->lastError().message());
+        }
+    }
+
     Q_SIGNAL void disconnected(QString reason);
 
 private:
@@ -1087,6 +1095,8 @@ void showInstallationLocation(bool asJson) noexcept(false)
     dbus()->connectToPackager();
 
     auto installationLocation = dbus()->packager()->installationLocation();
+    dbus()->throwOnError();
+
     fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(installationLocation).toJson().constData()
                                    : QtYaml::yamlFromVariantDocuments({ installationLocation }).constData());
     qApp->quit();
@@ -1245,7 +1255,9 @@ void showDevelopmentMode(bool asJson)
     dbus()->connectToPackager();
 
     QString devMode = dbus()->packager()->developmentMode();
+    dbus()->throwOnError();
     QVariant devCert = convertFromDBusVariant(dbus()->packager()->developerCertificate().variant());
+    dbus()->throwOnError();
 
     QVariantMap out { { u"developmentMode"_s, devMode }, { u"developerCertificate"_s, devCert } };
 

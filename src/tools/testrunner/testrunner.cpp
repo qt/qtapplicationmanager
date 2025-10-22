@@ -16,6 +16,7 @@
 #include <qlogging.h>
 #include <QtTest/qtestsystem.h>
 #include <QtTest/private/qtestcrashhandler_p.h>
+#include <QtTest/private/qtestlog_p.h>
 #include <QtQuickTest/private/quicktest_p.h>
 #include <QtQuickTest/private/quicktestresult_p.h>
 #include "configuration.h"
@@ -75,6 +76,10 @@ void TestRunner::setup(Configuration *cfg)
     QTest::qtest_qParseArgs(argc, argv.data(), false /*no qml options*/);
 
     qputenv("QT_QTESTLIB_RUNNING", "1");
+    if (QTestLog::verboseLevel() >= 1) {
+        qputenv("AM_VERBOSE_TEST", "1");
+        cfg->setForceVerbose(true);
+    }
 
     // Register the test object and application manager test add-on
     qApp->setProperty("_am_buildConfig", cfg->buildConfig());
@@ -86,10 +91,11 @@ void TestRunner::setup(Configuration *cfg)
         return AmTest::instance();
     });
 
-    qInfo().nospace().noquote() << "Verbose mode is " << (cfg->verbose() ? "on" : "off")
-                                << " (change by (un)setting $AM_VERBOSE_TEST)\n TEST: " << testFile
-                                << " in " << (cfg->yaml.flags.forceMultiProcess ? "multi" : "single")
-                                << "-process mode";
+    qInfo() << "Verbose mode:" << (cfg->verbose() ? "on" : "off")
+            << "(change with $AM_VERBOSE_TEST or the -v1/-v2 options)";
+    qInfo().nospace().noquote()
+        << "Test: " << testFile << " in " << (cfg->yaml.flags.forceMultiProcess ? "multi" : "single")
+        << "-process mode";
 }
 
 int TestRunner::exec(QQmlEngine *qmlEngine)

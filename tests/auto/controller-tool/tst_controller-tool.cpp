@@ -22,6 +22,7 @@
 #include "qtyaml.h"
 #include <QtAppManMain/configuration.h>
 #include "../devmode.h"
+#include "../error-checking.h"
 
 using namespace Qt::StringLiterals;
 
@@ -162,9 +163,6 @@ void tst_ControllerTool::initTestCase()
     if (!QDir(QString::fromLatin1(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
-    auto verbose = qEnvironmentVariableIsSet("AM_VERBOSE_TEST");
-    qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(change by (un)setting $AM_VERBOSE_TEST)";
-
     m_argc = 4;
     m_argv = new char * [size_t(m_argc) + 1];
     m_argv[0] = qstrdup("tst_controller-tool");
@@ -194,7 +192,8 @@ void tst_ControllerTool::initTestCase()
 
     m_config = new Configuration({ QFINDTESTDATA("am-config.yaml") }, QString());
     m_config->parseWithArguments(QCoreApplication::arguments());
-    if (verbose)
+
+    if (amVerboseTest())
         m_config->setForceVerbose(true);
 
     try {
@@ -426,7 +425,6 @@ void tst_ControllerTool::injectIntent()
     QCOMPARE(vm, expected);
 }
 
-
-QTEST_APPLESS_MAIN(tst_ControllerTool)
+QT_AM_VERBOSE_TEST_MAIN(tst_ControllerTool)
 
 #include "tst_controller-tool.moc"

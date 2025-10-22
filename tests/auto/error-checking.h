@@ -20,4 +20,26 @@
     } \
 } while (false)
 
+namespace {
+[[maybe_unused]] bool amVerboseTest()
+{
+    static bool verbose = [] {
+        bool v = qEnvironmentVariableIsSet("AM_VERBOSE_TEST");
+        qInfo() << "Verbose mode:" << (v ? "on" : "off") << "(change with $AM_VERBOSE_TEST or the -v1/-v2 options)";
+        return v;
+    }();
+    return verbose;
+}
+}
+
+#define QT_AM_VERBOSE_TEST_MAIN(TestObject, ...) \
+    QTEST_MAIN_WRAPPER(TestObject, \
+    __VA_ARGS__ \
+    for (int i = 1; i < argc; ++i) { \
+        if ((qstrlen(argv[i]) == 3) && (argv[i][0] == '-') && (argv[i][1] == 'v') \
+            && ((argv[i][2] == '1') || (argv[i][2] == '2'))) { \
+            qputenv("AM_VERBOSE_TEST", "1"); break; \
+        } \
+     })
+
 #endif // ERROR_CHECKING_H

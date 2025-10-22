@@ -171,9 +171,8 @@ void tst_PackageManager::initTestCase()
     if (!QDir(QString::fromLatin1(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
-    bool verbose = qEnvironmentVariableIsSet("AM_VERBOSE_TEST");
+    auto verbose = amVerboseTest();
     QLoggingCategory::setFilterRules(u"am.*.debug=%1"_s.arg(verbose ? "true" : "false"));
-    qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(change by (un)setting $AM_VERBOSE_TEST)";
 
     spyTimeout *= timeoutFactor();
 
@@ -761,21 +760,13 @@ void tst_PackageManager::compareVersions()
     }
 }
 
-static tst_PackageManager *tstPackageManager = nullptr;
-
-int main(int argc, char **argv)
-{
-    try {
-        Sudo::forkServer(Sudo::DropPrivilegesPermanently);
-        tst_PackageManager::startedSudoServer = true;
-    } catch (const Exception &e) {
-        tst_PackageManager::sudoServerError = e.errorString();
-    }
-
-    QCoreApplication a(argc, argv);
-    tstPackageManager = new tst_PackageManager(&a);
-
-    return QTest::qExec(tstPackageManager, argc, argv);
-}
+QT_AM_VERBOSE_TEST_MAIN(tst_PackageManager, \
+    try { \
+        Sudo::forkServer(Sudo::DropPrivilegesPermanently); \
+        tst_PackageManager::startedSudoServer = true; \
+    } catch (const Exception &e) { \
+        tst_PackageManager::sudoServerError = e.errorString(); \
+    } \
+    QTEST_QAPP_SETUP(QCoreApplication))
 
 #include "tst_packagemanager.moc"

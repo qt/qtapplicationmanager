@@ -19,6 +19,7 @@
 #include "utilities.h"
 #include <QtAppManMain/configuration.h>
 #include "../devmode.h"
+#include "../error-checking.h"
 
 using namespace Qt::StringLiterals;
 
@@ -57,7 +58,6 @@ private:
     Main *main = nullptr;
     bool mainSetupDone = false;
     Configuration *config = nullptr;
-    bool m_verbose = false;
     int m_spyTimeout;
     QString m_tempDirPath;
 };
@@ -77,9 +77,6 @@ void tst_Main::initTestCase()
 {
     if (!QDir(QString::fromLatin1(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
-
-    m_verbose = qEnvironmentVariableIsSet("AM_VERBOSE_TEST");
-    qInfo() << "Verbose mode is" << (m_verbose ? "on" : "off") << "(change by (un)setting $AM_VERBOSE_TEST)";
 }
 
 void tst_Main::copyRecursively(const QString &sourcePath, const QString &destPath)
@@ -137,7 +134,7 @@ void tst_Main::initMain(const QString &mainQml)
     main = new Main(argc, argv);
     config = new Configuration({ QFINDTESTDATA("am-config.yaml") }, QString());
     config->parseWithArguments(QCoreApplication::arguments());
-    if (m_verbose)
+    if (amVerboseTest())
         config->setForceVerbose(true);
 
     main->setup(config);
@@ -387,6 +384,6 @@ void tst_Main::startupTimer()
     QVERIFY(report.contains("after QML engine instantiation"));
 }
 
-QTEST_APPLESS_MAIN(tst_Main)
+QT_AM_VERBOSE_TEST_MAIN(tst_Main)
 
 #include "tst_main.moc"

@@ -25,7 +25,7 @@ public:
                                       const std::function<QStringList(const QString &)> &capabilitiesForApplicationId);
 
     bool add(const QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap &yamlFragment);
-    bool check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &function);
+    void check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &function) noexcept(false);
 
 private:
     Q_DISABLE_COPY_MOVE(DBusPolicy)

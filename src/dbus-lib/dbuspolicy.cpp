@@ -92,76 +92,77 @@ bool DBusPolicy::add(const QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap 
 }
 
 
-bool DBusPolicy::check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &function)
+void DBusPolicy::check(const QDBusAbstractAdaptor *dbusAdaptor, const QByteArray &function)
 {
 #if !defined(Q_OS_UNIX)
     Q_UNUSED(dbusAdaptor)
     Q_UNUSED(function)
-    return true;
 #else
-    if (!dbusAdaptor)
-        return false;
-    QDBusContext *dbusContext = qobject_cast<DBusContextAdaptor *>(dbusAdaptor->parent());
-    if (!dbusContext)
-        return false;
-    if (!dbusContext->calledFromDBus())
-        return false;
+    Q_ASSERT(dbusAdaptor);
+    QDBusContext *dbusContext = dbusAdaptor ? qobject_cast<DBusContextAdaptor *>(dbusAdaptor->parent())
+                                            : nullptr;
+    Q_ASSERT(dbusContext);
+
+    if (!dbusAdaptor || !dbusContext || !dbusContext->calledFromDBus())
+        throw Exception("cannot evalutate policy without a valid D-Bus context");
 
     auto ia = m_policies.constFind(dbusAdaptor);
     if (ia == m_policies.cend())
-        return false;
+        return; // no policy for interface
 
     auto ip = (*ia).find(function);
     if (ip == (*ia).cend())
-        return true;
+        return; // no policy for the function
 
-    try {
-        uint pid = uint(-1);
+    uint cachedCallerPid = 0;
+    auto callerPid = [&] {
+        if (!cachedCallerPid)
+            cachedCallerPid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
+        return cachedCallerPid;
+    };
 
-        if (!ip->m_capabilities.isEmpty()) {
-            if (!m_capabilitiesForApplicationId || !m_applicationIdsForPid)
-                return false;
+    int checksDone = 0; // the default is 'deny', so we need to keep track of 'allow' rules
 
-            pid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
+    if (!ip->m_capabilities.isEmpty()) {
+        Q_ASSERT(m_capabilitiesForApplicationId);
+        Q_ASSERT(m_applicationIdsForPid);
 
-            const QStringList apps = m_applicationIdsForPid(pid);
-            if (apps.size() > 1)
-                throw Exception("multiple apps per pid are not supported");
-            const QString appId = !apps.isEmpty() ? apps.constFirst() : QString();
-            const QStringList appCaps = m_capabilitiesForApplicationId(appId);
-            bool match = false;
-            for (const QString &cap : ip->m_capabilities)
-                match = match && std::binary_search(appCaps.cbegin(), appCaps.cend(), cap);
-            if (!match)
-                throw Exception("insufficient capabilities");
-        }
-        if (!ip->m_executables.isEmpty()) {
-#  if defined(Q_OS_LINUX)
-            if (pid == uint(-1))
-                pid = dbusContext->connection().interface()->servicePid(dbusContext->message().service());
-            QString executable = QFileInfo(u"/proc/"_s + QString::number(pid) + u"/exe"_s).symLinkTarget();
-            if (executable.isEmpty())
-                throw Exception("cannot get executable");
-            if (std::binary_search(ip->m_executables.cbegin(), ip->m_executables.cend(), executable))
-                throw Exception("executable blocked");
-#  else
-            throw Exception("the executables policy is not supported on this platform");
-#  endif // defined(Q_OS_LINUX)
-        }
-        if (!ip->m_uids.isEmpty()) {
-            uint uid = dbusContext->connection().interface()->serviceUid(dbusContext->message().service());
-            if (std::binary_search(ip->m_uids.cbegin(), ip->m_uids.cend(), uid))
-                throw Exception("uid blocked");
-        }
+        if (!m_capabilitiesForApplicationId || !m_applicationIdsForPid)
+            throw Exception("cannot evaluate capabilities policy without application manager integration");
 
-        return true;
-
-    } catch (const Exception &e) {
-        dbusContext->sendErrorReply(QDBusError::AccessDenied, u"Protected function call (%1)"_s.arg(e.errorString()));
-        return false;
+        const QStringList apps = m_applicationIdsForPid(callerPid());
+        if (apps.size() > 1)
+            throw Exception("multiple apps per pid (%1) are not supported").arg(callerPid());
+        const QString appId = !apps.isEmpty() ? apps.constFirst() : QString();
+        const QStringList appCaps = m_capabilitiesForApplicationId(appId);
+        bool match = false;
+        for (const QString &cap : ip->m_capabilities)
+            match = match && std::binary_search(appCaps.cbegin(), appCaps.cend(), cap);
+        if (!match)
+            throw Exception("application '%1' has insufficient capabilities").arg(appId);
+        ++checksDone;
     }
+    if (!ip->m_executables.isEmpty()) {
+#  if defined(Q_OS_LINUX)
+        QString executable = QFileInfo(u"/proc/"_s + QString::number(callerPid()) + u"/exe"_s).symLinkTarget();
+        if (executable.isEmpty())
+            throw Exception("cannot get executable for pid '%1'").arg(callerPid());
+        if (std::binary_search(ip->m_executables.cbegin(), ip->m_executables.cend(), executable))
+            throw Exception("executable '%1' is denied").arg(executable);
+        ++checksDone;
+#  else
+        throw Exception("the executables policy is not supported on this platform");
+#  endif // defined(Q_OS_LINUX)
+    }
+    if (!ip->m_uids.isEmpty()) {
+        uint uid = dbusContext->connection().interface()->serviceUid(dbusContext->message().service());
+        if (std::binary_search(ip->m_uids.cbegin(), ip->m_uids.cend(), uid))
+            throw Exception("uid '%1' is denied").arg(uid);
+        ++checksDone;
+    }
+    if (!checksDone)
+        throw Exception("denied");
 #endif // !defined(Q_OS_UNIX)
-
 }
 
 QT_END_NAMESPACE_AM

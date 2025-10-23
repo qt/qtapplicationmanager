@@ -30,8 +30,13 @@ void checkDBusAccessPrivate(const QDBusAbstractAdaptor *a, const char *function)
                 throw Exception("Developer certificate is not set");
             break;
         }
-    } else if (!DBusPolicy::instance()->check(a, function)) {
-        throw Exception(u"Function %1 is blocked by policy"_s.arg(QString::fromLatin1(function)));
+    } else {
+        try {
+            DBusPolicy::instance()->check(a, function);
+        } catch (const Exception &e) {
+            throw Exception("Function %1 is not accessible: %2")
+                .arg(QString::fromLatin1(function)).arg(e.errorString());
+        }
     }
 }
 

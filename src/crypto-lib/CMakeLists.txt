@@ -6,7 +6,6 @@ qt_internal_add_module(AppManCryptoPrivate
     INTERNAL_MODULE
     SOURCES
         certificate.h certificate.cpp
-        cryptography.cpp cryptography.h
         signature.cpp signature.h signature_p.h
     PUBLIC_LIBRARIES
         Qt::Core

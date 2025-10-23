@@ -6,7 +6,6 @@
 
 #include "signature.h"
 #include "signature_p.h"
-#include "cryptography.h"
 #include "exception.h"
 #include "logging.h"
 
@@ -21,7 +20,6 @@ Signature::Signature(const QByteArray &hash)
     // This is what can be supported easily cross-platform without diving
     // deeply into low-level PKCS7 APIs.
     d->hash = hash.toBase64();
-    Cryptography::initialize();
 }
 
 Signature::~Signature()

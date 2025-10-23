@@ -8,7 +8,6 @@
 
 #include "global.h"
 #include "signature.h"
-#include "cryptography.h"
 #include "exception.h"
 
 using namespace Qt::StringLiterals;

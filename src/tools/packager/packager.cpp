@@ -18,7 +18,6 @@
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/qtyaml.h>
 #include <QtAppManCommon/utilities.h>
-#include <QtAppManCrypto/cryptography.h>
 #include <QtAppManPackage/packageutilities.h>
 #include "packagingjob.h"
 

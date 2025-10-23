@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:cryptography
 
+#include <mutex>
+
 #include <QLibrary>
 #include <QString>
 #include <QSslSocket>
@@ -35,10 +37,16 @@ static QT_AM_LIBCRYPTO_FUNCTION(ASN1_STRING_length, int (*)(const void *), 0);
 
 // AXIVION ENABLE Qt-NonPodGlobalStatic
 
-QLibrary *Cryptography::LibCryptoFunctionBase::s_library = nullptr;
-bool Cryptography::LibCryptoFunctionBase::s_isMacOSLibreSSL = false;
+QLibrary *LibCryptoFunctionBase::s_library = nullptr;
+bool LibCryptoFunctionBase::s_isMacOSLibreSSL = false;
 
-void Cryptography::LibCryptoFunctionBase::initialize()
+void LibCryptoFunctionBase::initialize()
+{
+    static std::once_flag once;
+    std::call_once(once, &LibCryptoFunctionBase::loadLibCrypto);
+}
+
+void LibCryptoFunctionBase::loadLibCrypto()
 {
     if (s_library)
         return;
@@ -134,7 +142,7 @@ void Cryptography::LibCryptoFunctionBase::initialize()
     }
 }
 
-Cryptography::LibCryptoFunctionBase::LibCryptoFunctionBase(const char *symbol)
+LibCryptoFunctionBase::LibCryptoFunctionBase(const char *symbol)
     : m_symbol(symbol)
 { }
 
@@ -166,7 +174,7 @@ static int libressl_ASN1_TIME_to_tm(const void *asn1Time, struct ::tm *tm)
 }
 #endif
 
-void Cryptography::LibCryptoFunctionBase::resolve()
+void LibCryptoFunctionBase::resolve()
 {
     if (!m_tried) {
         if (!s_library) {

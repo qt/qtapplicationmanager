@@ -7,7 +7,6 @@
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/console.h>
 #include <QtAppManPackage/packageutilities.h>
-#include <QtAppManCrypto/cryptography.h>
 
 #include "psconfiguration.h"
 #include "pspackages.h"

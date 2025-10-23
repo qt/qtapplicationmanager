@@ -7,7 +7,6 @@
 #include <memory>
 
 #include "exception.h"
-#include "cryptography.h"
 #include "libcryptofunction.h"
 #include "signature_p.h"
 
@@ -315,6 +314,8 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
                                     const QByteArray &signingCertificatePassword,
                                     const std::function<void(const Certificate &)> &checkCertificate)
 {
+    LibCryptoFunctionBase::initialize();
+
     auto pkcs12Data = reinterpret_cast<const unsigned char *>(signingCertificatePkcs12.constData());
     OpenSslPointer<PKCS12> pkcs12(am_d2i_PKCS12(nullptr, &pkcs12Data, signingCertificatePkcs12.size()));
     if (!pkcs12)
@@ -366,6 +367,8 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
 Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signaturePkcs7,
                                                        const QByteArrayList &chainOfTrust)
 {
+    LibCryptoFunctionBase::initialize();
+
     auto signatureData = reinterpret_cast<const unsigned char *>(signaturePkcs7.constData());
     OpenSslPointer<PKCS7> signature(am_d2i_PKCS7(nullptr, &signatureData, signaturePkcs7.size()));
     if (!signature)

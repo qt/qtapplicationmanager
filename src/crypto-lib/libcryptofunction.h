@@ -21,8 +21,6 @@ namespace std {
 
 QT_BEGIN_NAMESPACE_AM
 
-namespace Cryptography {
-
 template <typename R> class LibCryptoResult
 {
 public:
@@ -56,6 +54,8 @@ protected:
     void (*m_functionPtr)() = nullptr;
 
 private:
+    static void loadLibCrypto();
+
     static QLibrary *s_library;
     static bool s_isMacOSLibreSSL;
     bool m_tried = false;
@@ -95,9 +95,7 @@ public:
     }
 };
 
-#define QT_AM_LIBCRYPTO_FUNCTION(f, typeof_f, ...) Cryptography::LibCryptoFunction<typeof_f> am_ ## f(#f, ##__VA_ARGS__)
-
-}
+#define QT_AM_LIBCRYPTO_FUNCTION(f, typeof_f, ...) LibCryptoFunction<typeof_f> am_ ## f(#f, ##__VA_ARGS__)
 
 QT_END_NAMESPACE_AM
 

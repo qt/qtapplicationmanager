@@ -24,7 +24,6 @@ qt_internal_add_module(AppManApplicationMainPrivate
         Qt::Gui
         Qt::Qml
         Qt::Quick
-        Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
         Qt::AppManIntentClientPrivate
         Qt::AppManSharedMainPrivate

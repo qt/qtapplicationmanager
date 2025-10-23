@@ -27,7 +27,6 @@ class Controller : public QObject
 
 public:
     Controller(ApplicationMain *am, bool quickLaunched);
-    Controller(ApplicationMain *am, bool quickLaunched, const QPair<QString, QString> &directLoad);
 
 public Q_SLOTS:
     void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,

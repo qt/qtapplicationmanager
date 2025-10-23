@@ -39,9 +39,6 @@
 #include "utilities.h"
 #include "exception.h"
 #include "crashhandler.h"
-#include "yamlpackagescanner.h"
-#include "packageinfo.h"
-#include "applicationinfo.h"
 #include "startupinterface.h"
 #include "dbus-utilities.h"
 #include "startuptimer.h"
@@ -96,16 +93,13 @@ int main(int argc, char *argv[])
         clp.addHelpOption();
         clp.addOption({ u"qml-debug"_s,   u"Enables QML debugging and profiling."_s });
         clp.addOption({ u"quicklaunch"_s, u"Starts the launcher in the quicklaunching mode."_s });
-        clp.addOption({ u"directload"_s , u"The info.yaml to start (you can add '@<appid>' to start a specific app within the package, instead of the first one)."_s, u"info.yaml"_s });
         clp.process(*am);
 
         bool quicklaunched = clp.isSet(u"quicklaunch"_s);
         if (quicklaunched)
             ProcessTitle::setTitle("[quicklaunch]");
 
-        QString directLoadManifest = clp.value(u"directload"_s);
-        if (directLoadManifest.isEmpty())
-            am->loadConfiguration();
+        am->loadConfiguration();
 
         Systemd::instance()->setExtraJournalFields(am->extraJournalFields());
 
@@ -131,24 +125,10 @@ int main(int argc, char *argv[])
 
         StartupTimer::instance()->checkpoint("after basic initialization");
 
-        if (!directLoadManifest.isEmpty()) {
-            QString directLoadAppId;
-            qsizetype appPos = directLoadManifest.indexOf(u"@"_s);
-            if (appPos > 0) {
-                directLoadAppId = directLoadManifest.mid(appPos + 1);
-                directLoadManifest.truncate(appPos);
-            }
+        am->setupDBusConnections();
+        StartupTimer::instance()->checkpoint("after dbus initialization");
+        controller.reset(new Controller(am.get(), quicklaunched));
 
-            QFileInfo fi(directLoadManifest);
-            if (!fi.exists() || fi.fileName() != u"info.yaml"_s)
-                throw Exception("--directload needs a valid info.yaml file as parameter");
-            directLoadManifest = fi.absoluteFilePath();
-            controller.reset(new Controller(am.get(), quicklaunched, qMakePair(directLoadManifest, directLoadAppId)));
-        } else {
-            am->setupDBusConnections();
-            StartupTimer::instance()->checkpoint("after dbus initialization");
-            controller.reset(new Controller(am.get(), quicklaunched));
-        }
     } catch (const std::exception &e) {
         qCCritical(LogQmlRuntime) << "ERROR:" << e.what();
         ApplicationMain::errorExit();
@@ -160,10 +140,6 @@ int main(int argc, char *argv[])
 }
 
 Controller::Controller(ApplicationMain *am, bool quickLaunched)
-    : Controller(am, quickLaunched, qMakePair(QString{}, QString{}))
-{ }
-
-Controller::Controller(ApplicationMain *am, bool quickLaunched, const QPair<QString, QString> &directLoad)
     : QObject(am)
     , m_quickLaunched(quickLaunched)
 {
@@ -215,43 +191,12 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched, const QPair<QStr
 
     StartupTimer::instance()->checkpoint("after application config initialization");
 
-    if (directLoad.first.isEmpty()) {
-        am->connectDBusInterfaces(true);
+    am->connectDBusInterfaces(true);
 
-        connect(am, &ApplicationMain::startApplication,
-                this, &Controller::startApplication);
+    connect(am, &ApplicationMain::startApplication,
+            this, &Controller::startApplication);
 
-        StartupTimer::instance()->checkpoint("after D-Bus connections");
-    } else {
-        QMetaObject::invokeMethod(this, [this, directLoad]() {
-            PackageInfo *pi;
-            try {
-                pi = YamlPackageScanner().scan(directLoad.first);
-            } catch (const Exception &e) {
-                qCCritical(LogQmlRuntime) << "Could not parse info.yaml file:" << e.what();
-                QCoreApplication::exit(20);
-                return;
-            }
-            const auto apps = pi->applications();
-            const ApplicationInfo *a = apps.constFirst();
-            if (!directLoad.second.isEmpty()) {
-                auto it = std::find_if(apps.cbegin(), apps.cend(),
-                                       [appId = directLoad.second](ApplicationInfo *appInfo) -> bool {
-                    return (appInfo->id() == appId);
-                });
-                if (it == apps.end()) {
-                    qCCritical(LogQmlRuntime) << "Could not find the requested application id"
-                                              << directLoad.second << "within the info.yaml file";
-                    QCoreApplication::exit(21);
-                    return;
-                }
-                a = *it;
-            }
-
-            startApplication(QFileInfo(directLoad.first).absolutePath(), a->codeFilePath(),
-                             QString(), QString(), a->toVariantMap(), QVariantMap());
-        }, Qt::QueuedConnection);
-    }
+    StartupTimer::instance()->checkpoint("after D-Bus connections");
 
     if (quickLaunched) {
         const QString quicklaunchQml = m_configuration.value((u"quicklaunchQml"_s)).toString();

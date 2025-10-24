@@ -1,10 +1,9 @@
 
 qt_internal_add_module(AppManApplicationMainPrivate
-    CONFIG_MODULE_NAME appman_application_main
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        qtappmanapplicationmainglobal.h
         applicationmain.cpp applicationmain.h
         dbusapplicationinterfaceimpl.cpp dbusapplicationinterfaceimpl.h
         dbusnotificationimpl.cpp dbusnotificationimpl.h

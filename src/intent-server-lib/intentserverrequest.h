@@ -12,14 +12,14 @@
 #include <QtCore/QUuid>
 #include <QtCore/QVector>
 #include <QtCore/QPointer>
-#include <QtAppManCommon/global.h>
+#include <QtAppManIntentServer/qtappmanintentserverglobal.h>
 #include <QtAppManIntentServer/intent.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 class IntentServer;
 
-class IntentServerRequest : public QObject
+class Q_APPMANINTENTSERVER_EXPORT IntentServerRequest : public QObject
 {
     Q_OBJECT
 

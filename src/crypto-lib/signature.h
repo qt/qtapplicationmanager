@@ -7,7 +7,7 @@
 
 #include <QtCore/QString>
 #include <QtCore/QByteArray>
-#include <QtAppManCommon/global.h>
+#include <QtAppManCrypto/qtappmancryptoglobal.h>
 
 #include "certificate.h"
 
@@ -15,7 +15,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class SignaturePrivate;
 
-class Signature
+class Q_APPMANCRYPTO_EXPORT Signature
 {
 public:
     explicit Signature(const QByteArray &hash);

@@ -8,14 +8,14 @@
 
 #include <QtCore/QPointer>
 #include <QtAppManSharedMain/frametimerimpl.h>
-#include <QtAppManCommon/global.h>
+#include <QtAppManWindow/qtappmanwindowglobal.h>
 
 
 QT_FORWARD_DECLARE_CLASS(QWaylandQuickSurface)
 
 QT_BEGIN_NAMESPACE_AM
 
-class SystemFrameTimerImpl : public FrameTimerImpl
+class Q_APPMANWINDOW_EXPORT SystemFrameTimerImpl : public FrameTimerImpl
 {
 public:
     SystemFrameTimerImpl(FrameTimer *frameTimer);

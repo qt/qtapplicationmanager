@@ -1,10 +1,9 @@
 
 qt_internal_add_module(AppManWindowPrivate
-    CONFIG_MODULE_NAME appman_window
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        qtappmanwindowglobal.h
         inprocesswindow.cpp inprocesswindow.h
         systemframetimerimpl.cpp systemframetimerimpl.h
         window.cpp window.h

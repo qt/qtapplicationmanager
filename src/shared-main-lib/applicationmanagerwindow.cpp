@@ -597,6 +597,8 @@ ApplicationManagerWindowAttached::ApplicationManagerWindowAttached(QObject *atta
     }
 }
 
+ApplicationManagerWindowAttached::~ApplicationManagerWindowAttached()
+{ }
 
 void ApplicationManagerWindowAttached::reconnect(ApplicationManagerWindow *newWin)
 {

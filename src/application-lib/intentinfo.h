@@ -11,7 +11,7 @@
 #include <QtCore/QVariantMap>
 #include <QtCore/QVector>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplication/qtappmanapplicationglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QDataStream)
 
@@ -20,7 +20,7 @@ QT_BEGIN_NAMESPACE_AM
 class YamlPackageScanner;
 class PackageInfo;
 
-class IntentInfo
+class Q_APPMANAPPLICATION_EXPORT IntentInfo
 {
 public:
     IntentInfo(PackageInfo *packageInfo);

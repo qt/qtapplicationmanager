@@ -940,7 +940,7 @@ QT_END_NAMESPACE_AM
 static bool configurationIsForceUnlocked = false;
 
 // for auto-tests only
-void qtam_PackageManager_forceUnlockConfiguration()
+Q_AUTOTEST_EXPORT void qtam_PackageManager_forceUnlockConfiguration()
 {
     configurationIsForceUnlocked = true;
 }

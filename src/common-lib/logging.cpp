@@ -10,12 +10,11 @@
 #include <QMutexLocker>
 #include <QThread>
 
-#include "global.h"
 #include "logging.h"
 #include "console.h"
 #include "colorprint.h"
 #include "systemd.h"
-#include "qtappman_common-config_p.h"
+#include "qtappmancommon-config_p.h"
 
 #include <cstdio>
 

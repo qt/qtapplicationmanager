@@ -10,12 +10,12 @@
 
 #include <QtCore/QObject>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 #include <QtAppManMonitor/systemreader.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class MemoryStatus : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT MemoryStatus : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(quint64 totalMemory READ totalMemory CONSTANT FINAL)

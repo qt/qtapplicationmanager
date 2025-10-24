@@ -6,13 +6,13 @@
 #ifndef QMLLOGGER_H
 #define QMLLOGGER_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 #include <QtCore/QObject>
 #include <QtQml/QQmlEngine>
 
 QT_BEGIN_NAMESPACE_AM
 
-class QmlLogger : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT QmlLogger : public QObject
 {
     Q_OBJECT
 

@@ -7,7 +7,7 @@
 #include <QtCore/QSortFilterProxyModel>
 #include <QtQml/QJSValue>
 #include <QtQml/QQmlParserStatus>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QJSEngine);
 
@@ -16,7 +16,7 @@ QT_BEGIN_NAMESPACE_AM
 class NotificationModelPrivate;
 class Notification;
 
-class NotificationModel : public QSortFilterProxyModel, public QQmlParserStatus
+class Q_APPMANMANAGER_EXPORT NotificationModel : public QSortFilterProxyModel, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus) Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)

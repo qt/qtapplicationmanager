@@ -6,7 +6,7 @@
 #ifndef DEBUGWRAPPER_H
 #define DEBUGWRAPPER_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 #include <QtCore/QStringList>
 #include <QtCore/QMap>
@@ -15,11 +15,13 @@ QT_BEGIN_NAMESPACE_AM
 
 namespace DebugWrapper {
 
-bool parseSpecification(const QString &debugWrapperSpecification, QStringList &resultingCommand,
-                        QMap<QString, QString> &resultingEnvironment);
+Q_APPMANMANAGER_EXPORT bool parseSpecification(const QString &debugWrapperSpecification,
+                                               QStringList &resultingCommand,
+                                               QMap<QString, QString> &resultingEnvironment);
 
-QStringList substituteCommand(const QStringList &debugWrapperCommand, const QString &program,
-                              const QStringList &arguments);
+Q_APPMANMANAGER_EXPORT QStringList substituteCommand(const QStringList &debugWrapperCommand,
+                                                     const QString &program,
+                                                     const QStringList &arguments);
 
 }
 

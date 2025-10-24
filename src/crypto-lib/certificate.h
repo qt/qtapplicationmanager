@@ -6,7 +6,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QVariant>
 #include <QtCore/QDateTime>
-#include <QtAppManCommon/global.h>
+#include <QtAppManCrypto/qtappmancryptoglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -16,7 +16,7 @@ class CertificateParser;
 // It does NOT encapsulate the actual DER/ASN1 encoded certificate blob.
 // For more information on the fields, see RFC 5280.
 
-class Certificate
+class Q_APPMANCRYPTO_EXPORT Certificate
 {
     Q_GADGET
     Q_PROPERTY(bool valid READ isValid CONSTANT)

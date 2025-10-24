@@ -6,15 +6,15 @@
 #ifndef PROCESSTITLE_H
 #define PROCESSTITLE_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 #include <QtCore/QByteArrayView>
 
 QT_BEGIN_NAMESPACE_AM
 
 namespace ProcessTitle {
 
-void setTitle(QByteArrayView title);
-const char *title();
+Q_APPMANCOMMON_EXPORT void setTitle(QByteArrayView title);
+Q_APPMANCOMMON_EXPORT const char *title();
 
 }
 

@@ -2,12 +2,10 @@
 include(QtAppManHelpers)
 
 qt_internal_add_module(AppManManagerPrivate
-    CONFIG_MODULE_NAME appman_manager
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
-        ../plugin-interfaces/containerinterface.h
+        qtappmanmanagerglobal.h
         abstractcontainer.cpp abstractcontainer.h
         abstractruntime.cpp abstractruntime.h
         amnamespace.h

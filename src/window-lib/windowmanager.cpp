@@ -15,7 +15,7 @@
 #include <QQmlComponent>
 #include <private/qabstractanimation_p.h>
 #include <QLocalServer>
-#include "global.h"
+#include <QtAppManCommon/qtappmancommon-config.h>
 
 #if QT_CONFIG(am_multi_process)
 #  include "waylandcompositor.h"

@@ -20,7 +20,7 @@ QT_BEGIN_NAMESPACE_AM
 class ApplicationInterfaceImpl;
 class InProcessSurfaceItem;
 
-class QmlInProcRuntimeManager : public AbstractRuntimeManager
+class Q_APPMANMANAGER_EXPORT QmlInProcRuntimeManager : public AbstractRuntimeManager
 {
     Q_OBJECT
 public:
@@ -33,7 +33,7 @@ public:
 };
 
 
-class QmlInProcRuntime : public AbstractRuntime
+class Q_APPMANMANAGER_EXPORT QmlInProcRuntime : public AbstractRuntime
 {
     Q_OBJECT
 

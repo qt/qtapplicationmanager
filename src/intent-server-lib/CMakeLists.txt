@@ -1,10 +1,9 @@
 
 qt_internal_add_module(AppManIntentServerPrivate
-    CONFIG_MODULE_NAME appman_intent_server
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        qtappmanintentserverglobal.h
         intent.cpp intent.h
         intentmodel.cpp intentmodel.h
         intentserver.cpp intentserver.h

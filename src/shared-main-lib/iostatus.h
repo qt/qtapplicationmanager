@@ -6,7 +6,7 @@
 #ifndef IOSTATUS_H
 #define IOSTATUS_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 
 #include <QtCore/QHash>
 #include <QtCore/QObject>
@@ -17,7 +17,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class IoStatus : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT IoStatus : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QStringList deviceNames READ deviceNames WRITE setDeviceNames NOTIFY deviceNamesChanged FINAL)

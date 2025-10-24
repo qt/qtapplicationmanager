@@ -7,7 +7,7 @@
 #define ERROR_H
 
 #include <QtCore/QDebug>
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 

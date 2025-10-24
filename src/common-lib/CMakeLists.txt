@@ -6,11 +6,10 @@ endif()
 qt_find_package(WrapBacktrace PROVIDED_TARGETS WrapBacktrace::WrapBacktrace)
 
 qt_internal_add_module(AppManCommonPrivate
-    CONFIG_MODULE_NAME appman_common
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        qtappmancommonglobal.h
         architecture.cpp architecture.h
         colorprint.h colorprint.cpp
         configcache.cpp configcache.h configcache_p.h

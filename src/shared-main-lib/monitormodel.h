@@ -7,7 +7,7 @@
 #define MONITORMODEL_H
 
 #include <QtCore/QAbstractListModel>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 #include <QtQml/qqmllist.h>
 #include <QtCore/QList>
 #include <QtCore/QStringList>
@@ -15,7 +15,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class MonitorModel : public QAbstractListModel
+class Q_APPMANSHAREDMAIN_EXPORT MonitorModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(QQmlListProperty<QObject> dataSources READ dataSources NOTIFY dataSourcesChanged FINAL)

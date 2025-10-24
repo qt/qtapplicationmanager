@@ -7,7 +7,7 @@
 #include <functional>
 #include <QtGui/QColor>
 #include <QtGui/QWindow>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QQuickItem)
 QT_FORWARD_DECLARE_CLASS(QQuickWindow)
@@ -18,7 +18,7 @@ class ApplicationManagerWindow;
 class ApplicationManagerWindowAttached;
 
 
-class ApplicationManagerWindowImpl
+class Q_APPMANSHAREDMAIN_EXPORT ApplicationManagerWindowImpl
 {
 public:
     static void setFactory(const std::function<ApplicationManagerWindowImpl *(ApplicationManagerWindow *)> &factory);
@@ -90,7 +90,7 @@ private:
 };
 
 
-class ApplicationManagerWindowAttachedImpl
+class Q_APPMANSHAREDMAIN_EXPORT ApplicationManagerWindowAttachedImpl
 {
 public:
     static void setFactory(const std::function<ApplicationManagerWindowAttachedImpl *(ApplicationManagerWindowAttached *, QQuickItem *)> &factory);
@@ -98,7 +98,7 @@ public:
     static ApplicationManagerWindowAttachedImpl *create(ApplicationManagerWindowAttached *window,
                                                         QQuickItem *attacheeItem);
 
-    virtual ~ApplicationManagerWindowAttachedImpl() = default;
+    virtual ~ApplicationManagerWindowAttachedImpl();
 
     ApplicationManagerWindowAttached *amWindowAttached() const;
     QQuickItem *attacheeItem() const;

@@ -7,13 +7,13 @@
 #define AMNAMESPACE_H
 
 #include <QtCore/QObject>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 // a namespace with Q_NAMESPACE would be better suited, but this leads to weird issues with the
 // enums when used as Q_PROPERTY types and accessed from QML
-class Am : public QObject
+class Q_APPMANMANAGER_EXPORT Am : public QObject
 {
     Q_OBJECT
 

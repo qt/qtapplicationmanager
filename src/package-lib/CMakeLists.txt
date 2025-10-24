@@ -2,11 +2,10 @@
 qt_find_package(WrapLibArchive PROVIDED_TARGETS WrapLibArchive::WrapLibArchive)
 
 qt_internal_add_module(AppManPackagePrivate
-    CONFIG_MODULE_NAME appman_package
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        qtappmanpackageglobal.h
         packagecreator.cpp packagecreator.h packagecreator_p.h
         packageextractor.cpp packageextractor.h packageextractor_p.h
         packageutilities.cpp packageutilities.h packageutilities_p.h

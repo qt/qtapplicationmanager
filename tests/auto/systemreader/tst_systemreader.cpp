@@ -16,23 +16,29 @@ class tst_SystemReader : public QObject
 {
     Q_OBJECT
 
-public:
-    tst_SystemReader();
-
 private Q_SLOTS:
+    void initTestCase();
+
     void cgroupProcessInfo();
     void memoryReaderReadUsedValue();
     void memoryReaderGroupLimit();
 };
 
-tst_SystemReader::tst_SystemReader()
+void tst_SystemReader::initTestCase()
 {
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("Not a developer build");
+#else
     g_systemRootDir = u":/root"_s;
+#endif
 }
 
 void tst_SystemReader::cgroupProcessInfo()
 {
-    auto map = fetchCGroupProcessInfo(1234);
+    QMap<QByteArray, QByteArray> map;
+#if defined(QT_BUILD_INTERNAL)
+    map = fetchCGroupProcessInfo(1234);
+#endif
     QCOMPARE(map["memory"], QByteArray("/system.slice/run-u5853.scope"));
 }
 

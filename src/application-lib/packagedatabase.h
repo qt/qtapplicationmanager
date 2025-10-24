@@ -5,7 +5,7 @@
 #ifndef PACKAGEDATABASE_H
 #define PACKAGEDATABASE_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplication/qtappmanapplicationglobal.h>
 #include <QtCore/QVector>
 #include <QtCore/QString>
 
@@ -17,7 +17,7 @@ class PackageInfo;
 class FileSystemMountWatcher;
 
 
-class PackageDatabase : public QObject
+class Q_APPMANAPPLICATION_EXPORT PackageDatabase : public QObject
 {
     Q_OBJECT
 

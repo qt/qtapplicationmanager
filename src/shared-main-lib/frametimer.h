@@ -11,7 +11,7 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 #include <limits>
 
 
@@ -19,7 +19,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class FrameTimerImpl;
 
-class FrameTimer : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT FrameTimer : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(qreal averageFps READ averageFps NOTIFY updated FINAL)

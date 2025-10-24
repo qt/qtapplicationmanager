@@ -11,6 +11,7 @@
 #include <functional>
 
 #include <QtAppManCommon/error.h>
+#include <QtAppManPackage/qtappmanpackageglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QUrl)
 QT_FORWARD_DECLARE_CLASS(QDir)
@@ -21,7 +22,7 @@ class PackageExtractorPrivate;
 class InstallationReport;
 
 
-class PackageExtractor : public QObject
+class Q_APPMANPACKAGE_EXPORT PackageExtractor : public QObject
 {
     Q_OBJECT
 

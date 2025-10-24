@@ -13,7 +13,7 @@
 #include <QtCore/QVariantMap>
 #include <QtCore/QVector>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplication/qtappmanapplicationglobal.h>
 #include <QtAppManCommon/openglconfiguration.h>
 #include <QtAppManCommon/watchdogconfiguration.h>
 
@@ -23,7 +23,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class PackageInfo;
 
-class ApplicationInfo
+class Q_APPMANAPPLICATION_EXPORT ApplicationInfo
 {
 public:
     ApplicationInfo(PackageInfo *packageInfo);

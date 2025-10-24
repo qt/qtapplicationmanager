@@ -10,7 +10,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QUuid>
 #include <QtCore/QVariantMap>
-#include <QtAppManCommon/global.h>
+#include <QtAppManIntentClient/qtappmanintentclientglobal.h>
 
 
 QT_BEGIN_NAMESPACE_AM
@@ -18,7 +18,7 @@ QT_BEGIN_NAMESPACE_AM
 class IntentClient;
 class IntentClientRequest;
 
-class IntentClientSystemInterface : public QObject
+class Q_APPMANINTENTCLIENT_EXPORT IntentClientSystemInterface : public QObject
 {
     Q_OBJECT
 

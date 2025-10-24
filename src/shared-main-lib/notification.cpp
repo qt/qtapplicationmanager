@@ -5,7 +5,6 @@
 
 #include "notification.h"
 #include "notificationimpl.h"
-#include "global.h"
 
 using namespace Qt::StringLiterals;
 

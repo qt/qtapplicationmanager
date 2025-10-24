@@ -20,7 +20,7 @@ QT_FORWARD_DECLARE_CLASS(QCryptographicHash)
 QT_BEGIN_NAMESPACE_AM
 
 
-class PackageExtractorPrivate : public QObject
+class Q_APPMANPACKAGE_EXPORT PackageExtractorPrivate : public QObject
 {
     Q_OBJECT
 

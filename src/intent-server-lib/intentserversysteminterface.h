@@ -10,14 +10,14 @@
 #include <QtCore/QVariantMap>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
-#include <QtAppManCommon/global.h>
+#include <QtAppManIntentServer/qtappmanintentserverglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 class IntentServer;
 class IntentServerRequest;
 
-class IntentServerSystemInterface : public QObject
+class Q_APPMANINTENTSERVER_EXPORT IntentServerSystemInterface : public QObject
 {
     Q_OBJECT
 

@@ -8,7 +8,7 @@
 #include <QtCore/QSharedPointer>
 #include <QtGui/QColor>
 #include <QtQml/QQmlComponent>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 #include <QtAppManSharedMain/applicationmanagerwindowimpl.h>
 
 
@@ -21,7 +21,7 @@ class QmlInProcRuntime;
 class ApplicationManagerWindow;
 
 
-class QmlInProcApplicationManagerWindowImpl : public ApplicationManagerWindowImpl
+class Q_APPMANMANAGER_EXPORT QmlInProcApplicationManagerWindowImpl : public ApplicationManagerWindowImpl
 {
 public:
     QmlInProcApplicationManagerWindowImpl(ApplicationManagerWindow *window);
@@ -110,7 +110,7 @@ private:
 };
 
 
-class QmlInProcApplicationManagerWindowAttachedImpl : public ApplicationManagerWindowAttachedImpl
+class Q_APPMANMANAGER_EXPORT QmlInProcApplicationManagerWindowAttachedImpl : public ApplicationManagerWindowAttachedImpl
 {
 public:
     QmlInProcApplicationManagerWindowAttachedImpl(ApplicationManagerWindowAttached *windowAttached,

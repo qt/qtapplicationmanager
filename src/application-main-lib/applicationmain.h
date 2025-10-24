@@ -9,7 +9,7 @@
 #include <QtCore/QUrl>
 #include <QtCore/QPointer>
 #include <QtCore/QVector>
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplicationMain/qtappmanapplicationmainglobal.h>
 #include <QtAppManCommon/openglconfiguration.h>
 #include <QtAppManCommon/watchdogconfiguration.h>
 #include <QtAppManSharedMain/sharedmain.h>
@@ -36,7 +36,7 @@ class Notification;
 class ApplicationInterfaceImpl;
 
 
-class ApplicationMain : public ApplicationMainBase, public SharedMain
+class Q_APPMANAPPLICATIONMAIN_EXPORT ApplicationMain : public ApplicationMainBase, public SharedMain
 {
     Q_OBJECT
 public:

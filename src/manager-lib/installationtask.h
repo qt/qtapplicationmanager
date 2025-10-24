@@ -26,7 +26,7 @@ class PackageManager;
 class PackageExtractor;
 
 
-class InstallationTask : public AsynchronousTask
+class Q_APPMANMANAGER_EXPORT InstallationTask : public AsynchronousTask
 {
     Q_OBJECT
 public:

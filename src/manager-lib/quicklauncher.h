@@ -9,7 +9,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QPair>
 #include <QtCore/QVector>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QChronoTimer)
 
@@ -19,7 +19,7 @@ class AbstractContainer;
 class AbstractRuntime;
 class CpuReader;
 
-class QuickLauncher : public QObject
+class Q_APPMANMANAGER_EXPORT QuickLauncher : public QObject
 {
     Q_OBJECT
 

@@ -13,7 +13,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>
 #include <QtCore/QIODevice>
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -28,7 +28,7 @@ public:
     void merge(T *to, const T *from) { *to = *from; }
 };
 
-class AbstractConfigCache
+class Q_APPMANCOMMON_EXPORT AbstractConfigCache
 {
 public:
     enum Option {

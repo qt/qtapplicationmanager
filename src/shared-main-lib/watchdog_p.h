@@ -19,7 +19,7 @@ QT_FORWARD_DECLARE_CLASS(QQuickWindow)
 
 QT_BEGIN_NAMESPACE_AM
 
-class WatchdogPrivate : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT WatchdogPrivate : public QObject
 {
     Q_OBJECT
 

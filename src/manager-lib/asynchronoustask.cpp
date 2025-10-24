@@ -5,7 +5,7 @@
 
 #include <QUuid>
 
-#include "global.h"
+#include "qtappmanmanagerglobal.h"
 #include "asynchronoustask.h"
 
 using namespace Qt::StringLiterals;

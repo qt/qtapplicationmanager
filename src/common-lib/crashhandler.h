@@ -6,7 +6,7 @@
 #ifndef CRASHHANDLER_H
 #define CRASHHANDLER_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManShared/qtappmansharedglobal.h>
 #include <QtCore/QVariantMap>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -15,10 +15,12 @@ QT_BEGIN_NAMESPACE_AM
 
 namespace CrashHandler {
 
-void setCrashActionConfiguration(bool printBacktrace, bool printQmlStack, int waitForGdbAttach,
-                                 bool dumpCore, bool dumpCoreOnWatchdogKill,
-                                 int stackFramesToIgnoreOnCrash, int stackFramesToIgnoreOnException);
-void setQmlEngine(QQmlEngine *engine);
+Q_APPMANSHARED_EXPORT void setCrashActionConfiguration(bool printBacktrace, bool printQmlStack,
+                                                       int waitForGdbAttach, bool dumpCore,
+                                                       bool dumpCoreOnWatchdogKill,
+                                                       int stackFramesToIgnoreOnCrash,
+                                                       int stackFramesToIgnoreOnException);
+Q_APPMANSHARED_EXPORT void setQmlEngine(QQmlEngine *engine);
 
 }
 

@@ -8,7 +8,6 @@
 #include <QJSEngine>
 #include <QJSValueList>
 
-#include "global.h"
 #include "logging.h"
 #include "applicationmanager.h"
 #include "applicationmodel.h"

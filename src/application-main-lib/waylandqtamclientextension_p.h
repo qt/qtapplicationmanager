@@ -10,7 +10,7 @@
 #include <QtWaylandClient/QWaylandClientExtensionTemplate>
 #include "private/qwayland-qtam-extension.h"
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplicationMain/qtappmanapplicationmainglobal.h>
 
 //
 //  W A R N I N G
@@ -27,7 +27,7 @@ QT_FORWARD_DECLARE_CLASS(QWindow)
 
 QT_BEGIN_NAMESPACE_AM
 
-class WaylandQtAMClientExtension : public QWaylandClientExtensionTemplate<WaylandQtAMClientExtension>,
+class Q_APPMANAPPLICATIONMAIN_EXPORT WaylandQtAMClientExtension : public QWaylandClientExtensionTemplate<WaylandQtAMClientExtension>,
         public ::QtWayland::qtam_extension
 {
     Q_OBJECT

@@ -16,7 +16,6 @@
 
 #include <yaml.h>
 
-#include "global.h"
 #include "qtyaml.h"
 #include "exception.h"
 

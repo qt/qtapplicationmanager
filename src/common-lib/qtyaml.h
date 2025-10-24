@@ -15,14 +15,14 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 #include <QtAppManCommon/exception.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 namespace QtYaml {
 
-class ParseError
+class Q_APPMANCOMMON_EXPORT ParseError
 {
 public:
     ParseError() { }
@@ -51,14 +51,14 @@ private:
 
 enum YamlStyle { FlowStyle, BlockStyle };
 
-QByteArray yamlFromVariantDocuments(const QVector<QVariant> &maps, YamlStyle style = BlockStyle);
+Q_APPMANCOMMON_EXPORT QByteArray yamlFromVariantDocuments(const QVector<QVariant> &maps, YamlStyle style = BlockStyle);
 
 } // namespace QtYaml
 
 class YamlParserPrivate;
 class YamlParserException;
 
-class YamlParser
+class Q_APPMANCOMMON_EXPORT YamlParser
 {
 public:
     YamlParser(const QByteArray &data, const QString &fileName = QString());
@@ -138,7 +138,7 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(YamlParser::FieldTypes)
 
-class YamlParserException : public Exception  // clazy:exclude=copyable-polymorphic
+class Q_APPMANCOMMON_EXPORT YamlParserException : public Exception  // clazy:exclude=copyable-polymorphic
 {
 public:
     explicit YamlParserException(YamlParser *p, const char *errorString);

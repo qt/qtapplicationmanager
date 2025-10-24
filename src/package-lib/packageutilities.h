@@ -6,7 +6,7 @@
 #ifndef PACKAGEUTILITIES_H
 #define PACKAGEUTILITIES_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManPackage/qtappmanpackageglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 

@@ -4,13 +4,13 @@
 #ifndef GLOBALRUNTIMECONFIGURATION_H
 #define GLOBALRUNTIMECONFIGURATION_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 #include <QtAppManCommon/openglconfiguration.h>
 #include <QtAppManCommon/watchdogconfiguration.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class GlobalRuntimeConfiguration
+class Q_APPMANMANAGER_EXPORT GlobalRuntimeConfiguration
 {
 public:
     OpenGLConfiguration openGLConfiguration;

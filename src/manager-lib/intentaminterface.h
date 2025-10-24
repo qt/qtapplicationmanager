@@ -12,7 +12,7 @@
 #include <QtCore/QVariantMap>
 #include <QtCore/QList>
 #include <QtCore/QUrl>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 #if QT_CONFIG(am_multi_process)
 #  include <QtDBus/QDBusConnection>
@@ -33,13 +33,13 @@ class PackageManager;
 class IntentServerRequest;
 
 namespace IntentAMImplementation {
-IntentServer *createIntentServerAndClientInstance(PackageManager *packageManager, int disambiguationTimeout,
-                                                  int startApplicationTimeout, int replyFromApplicationTimeout,
-                                                  int replyFromSystemTimeout);
+Q_APPMANMANAGER_EXPORT IntentServer *createIntentServerAndClientInstance(PackageManager *packageManager, int disambiguationTimeout,
+                                                                         int startApplicationTimeout, int replyFromApplicationTimeout,
+                                                                         int replyFromSystemTimeout);
 }
 
 // the server side
-class IntentServerAMImplementation : public IntentServerSystemInterface
+class Q_APPMANMANAGER_EXPORT IntentServerAMImplementation : public IntentServerSystemInterface
 {
     Q_OBJECT
 
@@ -63,7 +63,7 @@ private:
 };
 
 // the in-process client side
-class IntentClientAMImplementation : public IntentClientSystemInterface
+class Q_APPMANMANAGER_EXPORT IntentClientAMImplementation : public IntentClientSystemInterface
 {
     Q_OBJECT
 
@@ -82,7 +82,7 @@ private:
 };
 
 // each instance represents one server->client connection
-class IntentServerIpcConnection : public QObject
+class Q_APPMANMANAGER_EXPORT IntentServerIpcConnection : public QObject
 {
     Q_OBJECT
 
@@ -115,7 +115,7 @@ protected:
 };
 
 // ... derived for in-process clients
-class IntentServerInProcessIpcConnection : public IntentServerIpcConnection
+class Q_APPMANMANAGER_EXPORT IntentServerInProcessIpcConnection : public IntentServerIpcConnection
 {
     Q_OBJECT
 
@@ -137,7 +137,7 @@ private:
 #if QT_CONFIG(am_multi_process)
 
 // ... derived for P2P DBus clients
-class IntentServerDBusIpcConnection : public IntentServerIpcConnection, public QDBusContext
+class Q_APPMANMANAGER_EXPORT IntentServerDBusIpcConnection : public IntentServerIpcConnection, public QDBusContext
 {
     Q_OBJECT
 
@@ -166,7 +166,7 @@ private:
 #endif // QT_CONFIG(am_multi_process)
 
 // server-side IntentHandlers
-class IntentServerHandler : public AbstractIntentHandler
+class Q_APPMANMANAGER_EXPORT IntentServerHandler : public AbstractIntentHandler
 {
     Q_OBJECT
     // The following properties cannot be changed after construction (hence, also no real 'changed'

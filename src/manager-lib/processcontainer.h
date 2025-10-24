@@ -16,7 +16,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class MemoryWatcher;
 
-class ProcessContainerManager : public AbstractContainerManager
+class Q_APPMANMANAGER_EXPORT ProcessContainerManager : public AbstractContainerManager
 {
     Q_OBJECT
 public:
@@ -32,7 +32,7 @@ public:
 };
 
 
-class HostProcess : public AbstractContainerProcess
+class Q_APPMANMANAGER_EXPORT HostProcess : public AbstractContainerProcess
 {
     Q_OBJECT
 
@@ -60,7 +60,7 @@ private:
     QVector<int> m_stdioRedirections;
 };
 
-class ProcessContainer : public AbstractContainer
+class Q_APPMANMANAGER_EXPORT ProcessContainer : public AbstractContainer
 {
     Q_OBJECT
 

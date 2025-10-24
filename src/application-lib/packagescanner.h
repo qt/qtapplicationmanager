@@ -6,7 +6,7 @@
 #ifndef PACKAGESCANNER_H
 #define PACKAGESCANNER_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplication/qtappmanapplicationglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QIODevice)
 
@@ -14,7 +14,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class PackageInfo;
 
-class PackageScanner
+class Q_APPMANAPPLICATION_EXPORT PackageScanner
 {
 public:
     virtual ~PackageScanner() = default;

@@ -10,7 +10,7 @@
 QT_USE_NAMESPACE_AM
 
 #if defined(QT_BUILD_INTERNAL)
-extern void qtam_PackageManager_forceUnlockConfiguration();
+Q_AUTOTEST_EXPORT extern void qtam_PackageManager_forceUnlockConfiguration();
 #endif
 
 class DevMode

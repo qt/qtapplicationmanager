@@ -12,7 +12,7 @@
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtCore/QVariantMap>
-#include <QtAppManCommon/global.h>
+#include <QtAppManIntentClient/qtappmanintentclientglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -20,7 +20,7 @@ class IntentClientRequest;
 
 // This base class is used in 2 derived classes, each in a different QML namespace.
 // Having the common signals here does work, but messes up the code model in Creator.
-class AbstractIntentHandler : public QObject, public QQmlParserStatus
+class Q_APPMANINTENTCLIENT_EXPORT AbstractIntentHandler : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
@@ -39,7 +39,7 @@ protected:
     Q_DISABLE_COPY_MOVE(AbstractIntentHandler)
 };
 
-class IntentHandler : public AbstractIntentHandler
+class Q_APPMANINTENTCLIENT_EXPORT IntentHandler : public AbstractIntentHandler
 {
     Q_OBJECT
     Q_PROPERTY(QStringList intentIds READ intentIds WRITE setIntentIds NOTIFY intentIdsChanged FINAL)

@@ -6,7 +6,7 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManMain/qtappmanmainglobal.h>
 #include <QtCore/QStringList>
 #include <QtCore/QVariantMap>
 #include <QtCore/QVector>
@@ -21,7 +21,7 @@ QT_BEGIN_NAMESPACE_AM
 
 // IMPORTANT: if you add/remove/change anything in this struct, you also have to adjust the
 //            dataStreamVersion(), serialize() and merge() functions in the cpp file!
-struct ConfigurationData
+struct Q_APPMANMAIN_EXPORT ConfigurationData
 {
     QString instanceId;
 
@@ -143,7 +143,7 @@ struct ConfigurationData
 
 class ConfigurationPrivate;
 
-class Configuration
+class Q_APPMANMAIN_EXPORT Configuration
 {
 public:
     Configuration(const QStringList &defaultConfigFilePaths = { },

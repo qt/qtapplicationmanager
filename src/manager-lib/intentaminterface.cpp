@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:communication-protocol
 
-#include "global.h"
+#include "qtappmanmanagerglobal.h"
 #if QT_CONFIG(am_multi_process)
 #  include <QDBusMessage>
 #  include <QDBusConnection>

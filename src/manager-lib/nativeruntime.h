@@ -30,7 +30,7 @@ class Notification;
 class NativeRuntime;
 
 
-class NativeRuntimeManager : public AbstractRuntimeManager
+class Q_APPMANMANAGER_EXPORT NativeRuntimeManager : public AbstractRuntimeManager
 {
     Q_OBJECT
 public:
@@ -42,7 +42,7 @@ public:
     AbstractRuntime *create(AbstractContainer *container, Application *app) override;
 };
 
-class NativeRuntime : public AbstractRuntime
+class Q_APPMANMANAGER_EXPORT NativeRuntime : public AbstractRuntime
 {
     Q_OBJECT
 

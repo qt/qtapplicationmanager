@@ -14,7 +14,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class AsynchronousTask : public QThread
+class Q_APPMANMANAGER_EXPORT AsynchronousTask : public QThread
 {
     Q_OBJECT
 

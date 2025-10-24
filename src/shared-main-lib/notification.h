@@ -10,14 +10,14 @@
 #include <QtCore/QUrl>
 #include <QtCore/QVariantMap>
 #include <QtQml/QQmlParserStatus>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 class NotificationImpl;
 
 
-class Notification : public QObject, public QQmlParserStatus
+class Q_APPMANSHAREDMAIN_EXPORT Notification : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)

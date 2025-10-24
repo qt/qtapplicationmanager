@@ -6,12 +6,12 @@
 
 #include <cstdio>
 #include <QtCore/QByteArray>
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 
 
 QT_BEGIN_NAMESPACE_AM
 
-class ColorPrint
+class Q_APPMANCOMMON_EXPORT ColorPrint
 {
 public:
     explicit ColorPrint(FILE *stream, bool colorSupport);
@@ -65,7 +65,7 @@ public:
         return *this;
     }
 
-    struct repeat
+    struct Q_APPMANCOMMON_EXPORT repeat
     {
         explicit repeat(qsizetype count, char character);
         void operator()(ColorPrint &cp) const;
@@ -75,7 +75,7 @@ public:
         char m_character;
     };
 
-    struct subString
+    struct Q_APPMANCOMMON_EXPORT subString
     {
         explicit subString(const char *string, qsizetype size);
         void operator()(ColorPrint &cp) const;

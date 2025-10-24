@@ -11,7 +11,6 @@
 #include <QFile>
 #include <QFileInfo>
 
-#include "global.h"
 #include "qtyaml.h"
 #include "exception.h"
 #include "logging.h"

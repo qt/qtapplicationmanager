@@ -16,7 +16,6 @@
 #include "sudo.h"
 #include "utilities.h"
 #include "exception.h"
-#include "global.h"
 
 #include <errno.h>
 

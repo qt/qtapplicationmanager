@@ -12,7 +12,7 @@
 #include <QtCore/QSharedPointer>
 #include <QtCore/QVariantMap>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 #include <QtAppManManager/amnamespace.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -26,7 +26,7 @@ class AbstractRuntime;
 class AbstractContainer;
 class InProcessSurfaceItem;
 
-class AbstractRuntimeManager : public QObject
+class Q_APPMANMANAGER_EXPORT AbstractRuntimeManager : public QObject
 {
     Q_OBJECT
 
@@ -52,7 +52,7 @@ private:
     static QList<AbstractRuntime *> s_allRuntimes;
 };
 
-class RuntimeSignaler : public QObject
+class Q_APPMANMANAGER_EXPORT RuntimeSignaler : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:
@@ -63,7 +63,7 @@ Q_SIGNALS:
 
 };
 
-class AbstractRuntime : public QObject
+class Q_APPMANMANAGER_EXPORT AbstractRuntime : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QtAM::AbstractContainer *container READ container CONSTANT FINAL)

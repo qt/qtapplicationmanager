@@ -13,7 +13,7 @@ class IoQtApplicationManagerIntentInterfaceInterface;
 
 QT_BEGIN_NAMESPACE_AM
 
-class IntentClientDBusImplementation : public IntentClientSystemInterface
+class Q_APPMANAPPLICATIONMAIN_EXPORT IntentClientDBusImplementation : public IntentClientSystemInterface
 {
     Q_OBJECT
 public:

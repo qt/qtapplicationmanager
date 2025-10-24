@@ -10,6 +10,7 @@
 #include <QtCore/QPointer>
 #include <QtQml/QQmlParserStatus>
 
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 #include <QtAppManSharedMain/applicationinterfaceimpl.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -17,7 +18,7 @@ QT_BEGIN_NAMESPACE_AM
 class QmlInProcRuntime;
 class Notification;
 
-class QmlInProcApplicationInterfaceImpl : public ApplicationInterfaceImpl
+class Q_APPMANMANAGER_EXPORT QmlInProcApplicationInterfaceImpl : public ApplicationInterfaceImpl
 {
 public:
     QmlInProcApplicationInterfaceImpl(QmlInProcRuntime *runtime);

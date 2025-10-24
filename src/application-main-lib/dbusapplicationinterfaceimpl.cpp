@@ -15,7 +15,6 @@
 #include <QThread>
 #include <QElapsedTimer>
 
-#include "global.h"
 #include "applicationmain.h"
 #include "applicationinterface.h"
 #include "dbusapplicationinterfaceimpl.h"

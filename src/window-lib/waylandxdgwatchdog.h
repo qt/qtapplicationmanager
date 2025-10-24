@@ -12,7 +12,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QSet>
 #include <QtCore/QTimer>
-#include <QtAppManCommon/global.h>
+#include <QtAppManWindow/qtappmanwindowglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QWaylandClient)
 QT_FORWARD_DECLARE_CLASS(QWaylandCompositor)
@@ -22,7 +22,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class AbstractRuntime;
 
-class WaylandXdgWatchdog : public QObject
+class Q_APPMANWINDOW_EXPORT WaylandXdgWatchdog : public QObject
 {
     Q_OBJECT
 public:

@@ -14,7 +14,6 @@
 
 #include "packageutilities.h"
 #include "packageutilities_p.h"
-#include "global.h"
 #include "logging.h"
 
 using namespace Qt::StringLiterals;

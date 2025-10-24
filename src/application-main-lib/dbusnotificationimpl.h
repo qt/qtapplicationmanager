@@ -6,14 +6,14 @@
 #ifndef DBUSNOTIFICATIONIMPL_H
 #define DBUSNOTIFICATIONIMPL_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplicationMain/qtappmanapplicationmainglobal.h>
 #include <QtAppManSharedMain/notificationimpl.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 class ApplicationMain;
 
-class DBusNotificationImpl : public NotificationImpl
+class Q_APPMANAPPLICATIONMAIN_EXPORT DBusNotificationImpl : public NotificationImpl
 {
 public:
     DBusNotificationImpl(Notification *notification, ApplicationMain *applicationMain);

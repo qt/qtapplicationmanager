@@ -10,11 +10,11 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QMap>
 #include <QtCore/QReadWriteLock>
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class Systemd
+class Q_APPMANCOMMON_EXPORT Systemd
 {
 public:
     Q_DISABLE_COPY_MOVE(Systemd)

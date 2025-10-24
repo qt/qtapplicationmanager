@@ -6,7 +6,7 @@
 #ifndef CONFIGURATION_P_H
 #define CONFIGURATION_P_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManMain/qtappmanmainglobal.h>
 #include <QtCore/QCommandLineParser>
 
 #include "configuration.h"

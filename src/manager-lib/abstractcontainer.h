@@ -11,7 +11,7 @@
 #include <QtCore/QVariantMap>
 #include <QtCore/QVector>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 #include <QtAppManManager/amnamespace.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -19,7 +19,7 @@ QT_BEGIN_NAMESPACE_AM
 class Application;
 class AbstractContainer;
 
-class AbstractContainerManager : public QObject
+class Q_APPMANMANAGER_EXPORT AbstractContainerManager : public QObject
 {
     Q_OBJECT
 public:
@@ -42,7 +42,7 @@ private:
     QVariantMap m_configuration;
 };
 
-class AbstractContainerProcess : public QObject
+class Q_APPMANMANAGER_EXPORT AbstractContainerProcess : public QObject
 {
     Q_OBJECT
 
@@ -60,7 +60,7 @@ Q_SIGNALS:
     void stateChanged(QtAM::Am::RunState newState);
 };
 
-class AbstractContainer : public QObject
+class Q_APPMANMANAGER_EXPORT AbstractContainer : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString controlGroup READ controlGroup WRITE setControlGroup NOTIFY controlGroupChanged FINAL)

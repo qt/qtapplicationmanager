@@ -14,7 +14,7 @@
 #include <QtCore/QPair>
 #include <QtCore/QElapsedTimer>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManIntentClient/qtappmanintentclientglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -24,7 +24,7 @@ class IntentClientSystemInterface;
 
 /* internal interface used by IntentRequest and IntentHandler */
 
-class IntentClient : public QObject
+class Q_APPMANINTENTCLIENT_EXPORT IntentClient : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString systemUiId READ systemUiId CONSTANT REVISION(2, 1) FINAL)

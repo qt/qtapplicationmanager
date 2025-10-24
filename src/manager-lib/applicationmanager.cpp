@@ -22,7 +22,6 @@
 #  define write(a, b, c) _write(a, b, static_cast<unsigned int>(c))
 #endif
 
-#include "global.h"
 #include "applicationinfo.h"
 #include "installationreport.h"
 #include "logging.h"

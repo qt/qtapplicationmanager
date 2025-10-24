@@ -10,7 +10,7 @@
 #include <QtCore/QVariant>
 #include "private/qwayland-server-qtam-extension.h"
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManWindow/qtappmanwindowglobal.h>
 
 //
 //  W A R N I N G

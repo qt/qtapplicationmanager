@@ -1,10 +1,9 @@
 
 qt_internal_add_module(AppManMonitorPrivate
-    CONFIG_MODULE_NAME appman_monitor
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        qtappmanmonitorglobal.h
         processreader.cpp processreader.h
         systemreader.cpp systemreader.h
     PUBLIC_LIBRARIES

@@ -9,7 +9,6 @@
 #include <QMetaObject>
 #include <QScopedValueRollback>
 
-#include "global.h"
 #include "logging.h"
 #include "application.h"
 #include "applicationmanager.h"

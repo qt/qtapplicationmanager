@@ -10,11 +10,11 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class ScopedDirectoryCreator
+class Q_APPMANMANAGER_EXPORT ScopedDirectoryCreator
 {
 public:
     ScopedDirectoryCreator();
@@ -33,7 +33,7 @@ private:
     bool m_taken = false;
 };
 
-class ScopedRenamer
+class Q_APPMANMANAGER_EXPORT ScopedRenamer
 {
 public:
     enum Mode {

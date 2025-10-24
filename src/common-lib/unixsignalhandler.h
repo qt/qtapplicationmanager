@@ -6,7 +6,7 @@
 #ifndef UNIXSIGNALHANDLER_H
 #define UNIXSIGNALHANDLER_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 #include <QtCore/QObject>
 #include <QtCore/QAtomicInteger>
 
@@ -25,7 +25,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class UnixSignalHandler : public QObject
+class Q_APPMANCOMMON_EXPORT UnixSignalHandler : public QObject
 {
     Q_OBJECT
 

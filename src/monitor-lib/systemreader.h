@@ -10,7 +10,7 @@
 #include <QtCore/QPair>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QObject>
-#include <QtAppManCommon/global.h>
+#include <QtAppManMonitor/qtappmanmonitorglobal.h>
 
 #include <memory>
 
@@ -21,7 +21,7 @@ QT_FORWARD_DECLARE_CLASS(QSocketNotifier)
 
 QT_BEGIN_NAMESPACE_AM
 
-class CpuReader
+class Q_APPMANMONITOR_EXPORT CpuReader
 {
 public:
     CpuReader();
@@ -37,7 +37,7 @@ private:
     Q_DISABLE_COPY_MOVE(CpuReader)
 };
 
-class GpuVendor {
+class Q_APPMANMONITOR_EXPORT GpuVendor {
 public:
     enum Vendor {
         Undefined = 0, // didn't try to determine the vendor yet
@@ -53,7 +53,7 @@ private:
 
 class GpuTool;
 
-class GpuReader
+class Q_APPMANMONITOR_EXPORT GpuReader
 {
 public:
     GpuReader();
@@ -69,7 +69,7 @@ private:
 };
 
 
-class MemoryReader
+class Q_APPMANMONITOR_EXPORT MemoryReader
 {
 public:
     MemoryReader();
@@ -92,7 +92,7 @@ private:
     Q_DISABLE_COPY_MOVE(MemoryReader)
 };
 
-class IoReader
+class Q_APPMANMONITOR_EXPORT IoReader
 {
 public:
     IoReader(const char *device);
@@ -109,7 +109,7 @@ private:
     Q_DISABLE_COPY_MOVE(IoReader)
 };
 
-class MemoryThreshold : public QObject
+class Q_APPMANMONITOR_EXPORT MemoryThreshold : public QObject
 {
     Q_OBJECT
 
@@ -144,7 +144,7 @@ private:
 #endif
 };
 
-class MemoryWatcher : public QObject
+class Q_APPMANMONITOR_EXPORT MemoryWatcher : public QObject
 {
     Q_OBJECT
 public:
@@ -171,11 +171,11 @@ private:
 #if defined(Q_OS_LINUX)
 // Parses the file /proc/$PID/cgroup, returning a map groupName->path
 // eg: map["memory"] == "/user.slice"
-QMap<QByteArray, QByteArray> fetchCGroupProcessInfo(qint64 pid);
+Q_AUTOTEST_EXPORT QMap<QByteArray, QByteArray> fetchCGroupProcessInfo(qint64 pid);
 
 // Where the filesystem root directory is located. This exists solely to enable testing.
 // In production it's naturally "/"
-extern QString g_systemRootDir;
+Q_AUTOTEST_EXPORT extern QString g_systemRootDir;
 #endif
 
 QT_END_NAMESPACE_AM

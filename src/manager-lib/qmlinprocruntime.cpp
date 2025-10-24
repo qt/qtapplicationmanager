@@ -23,7 +23,6 @@
 #include "qmlinprocruntime.h"
 #include "qmlinprocapplicationinterfaceimpl.h"
 #include "abstractcontainer.h"
-#include "global.h"
 #include "utilities.h"
 #include "qml-utilities.h"
 

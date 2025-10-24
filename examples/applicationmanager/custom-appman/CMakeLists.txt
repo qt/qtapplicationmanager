@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(custom-appman LANGUAGES CXX)
 
-find_package(Qt6 COMPONENTS AppManMainPrivate)
+find_package(Qt6 COMPONENTS AppManSystemUIPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -17,7 +17,7 @@ target_compile_definitions(custom-appman PRIVATE
 )
 
 target_link_libraries(custom-appman PRIVATE
-    Qt::AppManMainPrivate
+    Qt::AppManSystemUIPrivate
 )
 
 install(TARGETS custom-appman

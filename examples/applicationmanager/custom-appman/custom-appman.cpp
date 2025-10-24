@@ -5,14 +5,14 @@
 
 #if 0
 
-#include <QtAppManMain/mainmacro.h>
+#include <QtAppManSystemUI/mainmacro.h>
 
 QT_AM_MAIN()
 
 #else
 
-#include <QtAppManMain/main.h>
-#include <QtAppManMain/configuration.h>
+#include <QtAppManSystemUI/main.h>
+#include <QtAppManSystemUI/configuration.h>
 
 using namespace Qt::StringLiterals;
 

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(application-features LANGUAGES CXX)
 
-find_package(Qt6 COMPONENTS AppManMainPrivate)
+find_package(Qt6 COMPONENTS AppManSystemUIPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
 if(QT_KNOWN_POLICY_QTP0004)
@@ -28,7 +28,7 @@ qt_add_qml_module(application-features
 )
 
 target_link_libraries(application-features PRIVATE
-    Qt::AppManMainPrivate
+    Qt::AppManSystemUIPrivate
 )
 
 ## Apps ##

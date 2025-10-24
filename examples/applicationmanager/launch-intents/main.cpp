@@ -1,7 +1,7 @@
 // Copyright (C) 2024 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-#include <QtAppManMain/mainmacro.h>
+#include <QtAppManSystemUI/mainmacro.h>
 
 using namespace Qt::StringLiterals;
 

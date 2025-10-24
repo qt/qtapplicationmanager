@@ -5,7 +5,7 @@
 
 #include <QtCore/QtCore>
 
-#include <QtAppManMain/configuration.h>
+#include <QtAppManSystemUI/configuration.h>
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/global.h>
 

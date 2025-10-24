@@ -12,10 +12,10 @@
 #include <QtAppManCommon/unixsignalhandler.h>
 #include <QtAppManPackage/packagecreator.h>
 #include <QtAppManPackage/packageextractor.h>
-#include <QtAppManApplication/yamlpackagescanner.h>
-#include <QtAppManApplication/packageinfo.h>
-#include <QtAppManApplication/installationreport.h>
-#include <QtAppManCrypto/signature.h>
+#include <QtAppManPackage/yamlpackagescanner.h>
+#include <QtAppManPackage/packageinfo.h>
+#include <QtAppManPackage/installationreport.h>
+#include <QtAppManPackage/signature.h>
 
 #include "pspackages.h"
 #include "pspackages_p.h"

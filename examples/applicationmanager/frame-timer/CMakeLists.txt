@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(frame-timer LANGUAGES CXX)
 
-find_package(Qt6 COMPONENTS AppManMainPrivate)
+find_package(Qt6 COMPONENTS AppManSystemUIPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
 if(QT_KNOWN_POLICY_QTP0004)
@@ -26,7 +26,7 @@ qt_add_qml_module(frame-timer
 )
 
 target_link_libraries(frame-timer PRIVATE
-    Qt::AppManMainPrivate
+    Qt::AppManSystemUIPrivate
 )
 
 ## Apps ##

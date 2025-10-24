@@ -8,7 +8,7 @@
 \ingroup qtappman
 \brief Qt Application Manager specific CMake functionality.
 
-The QtAppManMainPrivate package provides the following CMake functions:
+The QtAppManSystemUIPrivate package provides the following CMake functions:
 
 \section3 Commands
 \annotatedlist cmake-macros-qtapplicationmanager

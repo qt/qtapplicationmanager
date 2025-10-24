@@ -13,17 +13,17 @@ add_custom_target("DBus-Interface-XMLs" SOURCES
 # with the existing xml files though, as there are manual edits necessary.
 if (TARGET Qt::DBus)
     qt_generate_dbus_interface(
-        ${CMAKE_SOURCE_DIR}/src/manager-lib/applicationmanager.h
+        ${CMAKE_SOURCE_DIR}/src/systemui/applicationmanager.h
         ${CMAKE_CURRENT_BINARY_DIR}/io.qt.applicationmanager.xml.regen
         OPTIONS -a -t "QtAM::Am::RunState=u" -t "QtAM::UnixFdMap=a{sh}"
     )
     qt_generate_dbus_interface(
-        ${CMAKE_SOURCE_DIR}/src/manager-lib/packagemanager.h
+        ${CMAKE_SOURCE_DIR}/src/systemui/packagemanager.h
         ${CMAKE_CURRENT_BINARY_DIR}/io.qt.packagemanager.xml.regen
         OPTIONS -a -t "QtAM::AsynchronousTask::TaskState=s"
     )
     qt_generate_dbus_interface(
-        ${CMAKE_SOURCE_DIR}/src/window-lib/windowmanager.h
+        ${CMAKE_SOURCE_DIR}/src/systemui/window/windowmanager.h
         ${CMAKE_CURRENT_BINARY_DIR}/io.qt.windowmanager.xml.regen
         OPTIONS -a
     )

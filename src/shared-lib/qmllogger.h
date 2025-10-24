@@ -1,0 +1,28 @@
+// Copyright (C) 2021 The Qt Company Ltd.
+// Copyright (C) 2019 Luxoft Sweden AB
+// Copyright (C) 2018 Pelagicore AG
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
+
+#ifndef QMLLOGGER_H
+#define QMLLOGGER_H
+
+#include <QtAppManShared/qtappmansharedglobal.h>
+#include <QtCore/QObject>
+#include <QtQml/QQmlEngine>
+
+QT_BEGIN_NAMESPACE_AM
+
+class Q_APPMANSHARED_EXPORT QmlLogger : public QObject
+{
+    Q_OBJECT
+
+public:
+    explicit QmlLogger(QQmlEngine *engine = nullptr);
+
+private Q_SLOTS:
+    void warnings(const QList<QQmlError> &list);
+};
+
+QT_END_NAMESPACE_AM
+
+#endif // QMLLOGGER_H

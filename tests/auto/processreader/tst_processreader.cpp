@@ -5,7 +5,7 @@
 
 #include <QtCore>
 #include <QtTest>
-#include <QtAppManMonitor/processreader.h>
+#include <QtAppManShared/processreader.h>
 
 QT_USE_NAMESPACE_AM
 

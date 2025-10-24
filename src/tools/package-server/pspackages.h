@@ -6,7 +6,7 @@
 
 #include <memory>
 #include <QObject>
-#include <QtAppManApplication/packageinfo.h>
+#include <QtAppManPackage/packageinfo.h>
 
 
 class PSConfiguration;

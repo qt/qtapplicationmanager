@@ -20,7 +20,7 @@
 #include "utilities.h"
 #include "qml-utilities.h"
 #include "qtyaml.h"
-#include <QtAppManMain/configuration.h>
+#include <QtAppManSystemUI/configuration.h>
 #include "../devmode.h"
 #include "../error-checking.h"
 

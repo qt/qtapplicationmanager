@@ -1,18 +1,11 @@
 %modules = ( # path to module name map
     "QtAppManCommon" => "$basedir/src/common-lib",
-    "QtAppManCrypto" => "$basedir/src/crypto-lib",
-    "QtAppManApplication" => "$basedir/src/application-lib",
     "QtAppManPackage" => "$basedir/src/package-lib",
-    "QtAppManManager" => "$basedir/src/manager-lib",
-    "QtAppManSharedMain" => "$basedir/src/shared-main-lib",
-    "QtAppManMain" => "$basedir/src/main-lib",
-    "QtAppManWindow" => "$basedir/src/window-lib",
+    "QtAppManShared" => "$basedir/src/shared-lib",
+    "QtAppManSystemUI" => "$basedir/src/systemui-lib",
     "QtAppManLauncher" => "$basedir/src/application-main-lib",
     "QtAppManPluginInterfaces" => "$basedir/src/plugin-interfaces",
-    "QtAppManMonitor" => "$basedir/src/monitor-lib",
-    "QtAppManDBus" => "$basedir/src/dbus-lib",
     "QtAppManIntentServer" => "$basedir/src/intent-server-lib",
-    "QtAppManIntentClient" => "$basedir/src/intent-client-lib",
 );
 %moduleheaders = ( # restrict the module headers to those found in relative path
 );

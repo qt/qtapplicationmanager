@@ -10,7 +10,6 @@ qt_internal_add_test(tst_installationreport
         QTEST_THROW_ON_SKIP
     LIBRARIES
         Qt::Network
-        Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
-        Qt::AppManCryptoPrivate
+        Qt::AppManPackagePrivate
 )

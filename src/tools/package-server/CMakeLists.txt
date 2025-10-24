@@ -11,9 +11,7 @@ qt_internal_add_tool(${target_name}
         pshttpinterface.h pshttpinterface.cpp pshttpinterface_p.h
     LIBRARIES
         Qt::Network
-        Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
-        Qt::AppManCryptoPrivate
         Qt::AppManPackagePrivate
         Qt::HttpServer
     DEFINES

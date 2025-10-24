@@ -11,5 +11,5 @@ qt_internal_add_test(tst_sudo
     LIBRARIES
         Qt::Network
         Qt::AppManCommonPrivate
-        Qt::AppManManagerPrivate
+        Qt::AppManSystemUIPrivate
 )

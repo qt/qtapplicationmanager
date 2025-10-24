@@ -49,7 +49,7 @@ if (${Qt6_VERSION} VERSION_LESS "${MIN_QT_VERSION}")
     message(FATAL_ERROR "Qt ${MIN_QT_VERSION} or newer is required for building version ${PROJECT_VERSION} of the QtApplicationManager")
 endif()
 
-include(src/main-lib/Qt6AppManMainPrivateMacros.cmake)
+include(src/systemui-lib/Qt6AppManSystemUIPrivateMacros.cmake)
 
 if(NOT QT_FEATURE_ssl)
     message(NOTICE "Skipping the build as SSL support in Qt is not available")
@@ -154,7 +154,7 @@ add_custom_target("Other-Files" SOURCES
     qt_cmdline.cmake
     src/common-lib/qt_cmdline.cmake
     src/package-lib/qt_cmdline.cmake
-    src/window-lib/qt_cmdline.cmake
+    src/systemui-lib/qt_cmdline.cmake
     src/common-lib/configure.cmake
     src/plugin-interfaces/configure.cmake
     cmake/FindWrapLibArchive.cmake

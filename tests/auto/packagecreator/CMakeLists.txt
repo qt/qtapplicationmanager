@@ -10,7 +10,7 @@ qt_internal_add_test(tst_packagecreator
         QTEST_THROW_ON_SKIP
     LIBRARIES
         Qt::Network
-        Qt::AppManApplicationPrivate
+        Qt::AppManPackagePrivate
         Qt::AppManCommonPrivate
         Qt::AppManPackagePrivate
 )

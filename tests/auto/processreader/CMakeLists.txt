@@ -10,9 +10,8 @@ qt_internal_add_test(tst_processreader
         QTEST_THROW_ON_SKIP
     LIBRARIES
         Qt::Network
-        Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
-        Qt::AppManManagerPrivate
-        Qt::AppManMonitorPrivate
-        Qt::AppManWindowPrivate
+        Qt::AppManPackagePrivate
+        Qt::AppManSharedPrivate
+        Qt::AppManSystemUIPrivate
 )

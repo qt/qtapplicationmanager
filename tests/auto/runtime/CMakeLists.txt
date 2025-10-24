@@ -11,7 +11,7 @@ qt_internal_add_test(tst_runtime
     LIBRARIES
         Qt::Network
         Qt::Qml
-        Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
-        Qt::AppManManagerPrivate
+        Qt::AppManPackagePrivate
+        Qt::AppManSystemUIPrivate
 )

@@ -5,7 +5,7 @@ if (NOT QT_BUILD_STANDALONE_TESTS AND NOT QT_BUILDING_QT)
     cmake_minimum_required(VERSION 3.16)
     project(monitormodel LANGUAGES C CXX)
     find_package(Qt6BuildInternals COMPONENTS STANDALONE_TEST)
-    find_package(Qt6 COMPONENTS AppManMainPrivate)
+    find_package(Qt6 COMPONENTS AppManSystemUIPrivate)
 endif()
 
 qt_internal_add_manual_test(tst_monitormodel
@@ -14,7 +14,7 @@ qt_internal_add_manual_test(tst_monitormodel
     SOURCES
         main.cpp
     LIBRARIES
-        Qt::AppManMainPrivate
+        Qt::AppManSystemUIPrivate
 )
 
 if(QT_KNOWN_POLICY_QTP0001)

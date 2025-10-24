@@ -13,9 +13,7 @@ qt_internal_add_test(tst_packager-tool
         ../../../src/tools/packager
     LIBRARIES
         Qt::Network
-        Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
-        Qt::AppManCryptoPrivate
-        Qt::AppManManagerPrivate
         Qt::AppManPackagePrivate
+        Qt::AppManSystemUIPrivate
 )

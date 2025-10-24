@@ -1,4 +1,4 @@
-find_package(Qt6 COMPONENTS AppManApplicationMainPrivate)
+find_package(Qt6 COMPONENTS AppManApplicationPrivate)
 
 qt_add_executable(widgets main.cpp)
 
@@ -8,7 +8,7 @@ target_compile_definitions(widgets PRIVATE AM_COMPILING_LAUNCHER)
 target_link_libraries(widgets
     PRIVATE
         Qt::Widgets
-        Qt::AppManApplicationMainPrivate
+        Qt::AppManApplicationPrivate
 )
 
 qt_am_create_builtin_package(AppManWidgets

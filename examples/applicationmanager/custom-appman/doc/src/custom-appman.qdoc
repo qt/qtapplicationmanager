@@ -39,7 +39,7 @@ them is both intended and required, so we need to set the define \c AM_COMPILING
 The following is a breakdown of the minimal code necessary:
 
 \quotefromfile applicationmanager/custom-appman/custom-appman.cpp
-\skipto #include <QtAppManMain/main.h>
+\skipto #include <QtAppManSystemUI/main.h>
 \printuntil QT_USE_NAMESPACE_AM
 
 The application manager is split into functional building blocks. These include statements

@@ -17,7 +17,7 @@
 #include "intent.h"
 #include "startuptimer.h"
 #include "utilities.h"
-#include <QtAppManMain/configuration.h>
+#include <QtAppManSystemUI/configuration.h>
 #include "../devmode.h"
 #include "../error-checking.h"
 

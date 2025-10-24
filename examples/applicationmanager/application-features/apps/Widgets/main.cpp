@@ -8,8 +8,8 @@
 #include <QVBoxLayout>
 
 #include <QtAppManCommon/logging.h>
-#include <QtAppManApplicationMain/applicationmain.h>
-#include <QtAppManSharedMain/notification.h>
+#include <QtAppManApplication/applicationmain.h>
+#include <QtAppManShared/notification.h>
 
 
 int main(int argc, char *argv[])

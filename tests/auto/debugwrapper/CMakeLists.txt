@@ -10,5 +10,5 @@ qt_internal_add_test(tst_debugwrapper
         QTEST_THROW_ON_SKIP
     LIBRARIES
         Qt::Network
-        Qt::AppManManagerPrivate
+        Qt::AppManSystemUIPrivate
 )

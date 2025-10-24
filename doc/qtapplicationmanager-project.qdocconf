@@ -22,35 +22,21 @@ examples.imageextensions = "*.png *.jpg *.gif"
 include(config/exampleurl-qtapplicationmanager.qdocconf)
 
 headerdirs += \
-    ../src/application-lib \
     ../src/common-lib \
-    ../src/crypto-lib \
-    ../src/intent-client-lib \
-    ../src/intent-server-lib \
-    ../src/application-main-lib \
-    ../src/main-lib \
-    ../src/manager-lib \
-    ../src/monitor-lib \
     ../src/package-lib \
-    ../src/shared-main-lib \
-    ../src/window-lib \
+    ../src/shared-lib \
+    ../src/application-lib \
+    ../src/systemui-lib \
     ../src/plugin-interfaces \
     ../src/tools/launcher-qml \
 
 sourcedirs += \
     . \
-    ../src/application-lib \
     ../src/common-lib \
-    ../src/crypto-lib \
-    ../src/intent-client-lib \
-    ../src/intent-server-lib \
-    ../src/application-main-lib \
-    ../src/main-lib \
-    ../src/manager-lib \
-    ../src/monitor-lib \
     ../src/package-lib \
-    ../src/shared-main-lib \
-    ../src/window-lib \
+    ../src/shared-lib \
+    ../src/application-lib \
+    ../src/systemui-lib \
     ../src/plugin-interfaces \
     ../src/tools/controller \
     ../src/tools/launcher-qml \

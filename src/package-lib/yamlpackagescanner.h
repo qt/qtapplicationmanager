@@ -1,0 +1,26 @@
+// Copyright (C) 2021 The Qt Company Ltd.
+// Copyright (C) 2019 Luxoft Sweden AB
+// Copyright (C) 2018 Pelagicore AG
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
+
+#ifndef YAMLPACKAGESCANNER_H
+#define YAMLPACKAGESCANNER_H
+
+#include <QtCore/QIODevice>
+#include <QtAppManPackage/packagescanner.h>
+
+QT_BEGIN_NAMESPACE_AM
+
+
+class Q_APPMANPACKAGE_EXPORT YamlPackageScanner : public PackageScanner
+{
+public:
+    YamlPackageScanner() = default;
+
+    PackageInfo *scan(const QString &filePath) noexcept(false) override;
+    PackageInfo *scan(QIODevice *source, const QString &filePath) noexcept(false) override;
+};
+
+QT_END_NAMESPACE_AM
+
+#endif // YAMLPACKAGESCANNER_H

@@ -1,0 +1,45 @@
+// Copyright (C) 2023 The Qt Company Ltd.
+// Copyright (C) 2019 Luxoft Sweden AB
+// Copyright (C) 2018 Pelagicore AG
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
+
+#ifndef QMLINPROCAPPLICATIONINTERFACEIMPL_H
+#define QMLINPROCAPPLICATIONINTERFACEIMPL_H
+
+#include <QtCore/QVector>
+#include <QtCore/QPointer>
+#include <QtQml/QQmlParserStatus>
+
+#include <QtAppManSystemUI/qtappmansystemuiglobal.h>
+#include <QtAppManShared/applicationinterfaceimpl.h>
+
+QT_BEGIN_NAMESPACE_AM
+
+class QmlInProcRuntime;
+class Notification;
+
+class Q_APPMANSYSTEMUI_EXPORT QmlInProcApplicationInterfaceImpl : public ApplicationInterfaceImpl
+{
+public:
+    QmlInProcApplicationInterfaceImpl(QmlInProcRuntime *runtime);
+
+    void attach(ApplicationInterface *iface) override;
+
+    QString applicationId() const override;
+    QVariantMap name() const override;
+    QUrl icon() const override;
+    QString version() const override;
+    QVariantMap systemProperties() const override;
+    QVariantMap applicationProperties() const override;
+    void acknowledgeQuit() override;
+
+private:
+    QmlInProcRuntime *m_runtime;
+    friend class QmlInProcRuntime;
+
+    Q_DISABLE_COPY_MOVE(QmlInProcApplicationInterfaceImpl)
+};
+
+QT_END_NAMESPACE_AM
+
+#endif // QMLINPROCAPPLICATIONINTERFACEIMPL_H

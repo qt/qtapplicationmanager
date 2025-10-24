@@ -11,7 +11,7 @@ qt_internal_add_test(tst_controller-tool
     LIBRARIES
         Qt::DBus
         Qt::Network
-        Qt::AppManMainPrivate
+        Qt::AppManSystemUIPrivate
     BUILTIN_TESTDATA
     TESTDATA
         BLACKLIST

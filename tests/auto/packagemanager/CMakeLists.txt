@@ -10,10 +10,9 @@ qt_internal_add_test(tst_packagemanager
         QTEST_THROW_ON_SKIP
     LIBRARIES
         Qt::Network
-        Qt::AppManApplicationPrivate
         Qt::AppManCommonPrivate
-        Qt::AppManManagerPrivate
         Qt::AppManPackagePrivate
+        Qt::AppManSystemUIPrivate
     BUILTIN_TESTDATA
     TESTDATA
         BLACKLIST

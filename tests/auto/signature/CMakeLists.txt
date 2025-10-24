@@ -11,7 +11,7 @@ qt_internal_add_test(tst_signature
     LIBRARIES
         Qt::Network
         Qt::AppManCommonPrivate
-        Qt::AppManCryptoPrivate
+        Qt::AppManPackagePrivate
     BUILTIN_TESTDATA
     TESTDATA
         signature-openssl.p7

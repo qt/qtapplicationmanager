@@ -1,0 +1,60 @@
+// Copyright (C) 2021 The Qt Company Ltd.
+// Copyright (C) 2019 Luxoft Sweden AB
+// Copyright (C) 2018 Pelagicore AG
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
+
+#ifndef WAYLANDQTAMCLIENTEXTENSION_P_H
+#define WAYLANDQTAMCLIENTEXTENSION_P_H
+
+#include <QVariantMap>
+#include <QtWaylandClient/QWaylandClientExtensionTemplate>
+#include "private/qwayland-qtam-extension.h"
+
+#include <QtAppManApplication/qtappmanapplicationglobal.h>
+
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
+QT_FORWARD_DECLARE_CLASS(QWindow)
+
+QT_BEGIN_NAMESPACE_AM
+
+class Q_APPMANAPPLICATION_EXPORT WaylandQtAMClientExtension : public QWaylandClientExtensionTemplate<WaylandQtAMClientExtension>,
+        public ::QtWayland::qtam_extension
+{
+    Q_OBJECT
+
+public:
+    WaylandQtAMClientExtension();
+    ~WaylandQtAMClientExtension() override;
+
+    QVariantMap windowProperties(QWindow *window) const;
+    bool setWindowProperty(QWindow *window, const QString &name, const QVariant &value);
+    void clearWindowPropertyCache(QWindow *window);
+
+Q_SIGNALS:
+    void windowPropertyChanged(QWindow *window, const QString &name, const QVariant &value);
+
+protected:
+    bool eventFilter(QObject *o, QEvent *e) override;
+
+private:
+    bool setWindowPropertyHelper(QWindow *window, const QString &name, const QVariant &value);
+    void sendPropertyToServer(::wl_surface *surface, const QString &name, const QVariant &value);
+    void qtam_extension_window_property_changed(wl_surface *surface, const QString &name, wl_array *value) override;
+
+    QMap<QWindow *, QVariantMap> m_windowProperties;    // AXIVION Line Qt-QMapWithPointerKey: cleared on destroyed signal
+    QMap<QWindow *, ::wl_surface *> m_windowToSurface;  // AXIVION Line Qt-QMapWithPointerKey: cleared on destroyed signal
+};
+
+QT_END_NAMESPACE_AM
+
+#endif // WAYLANDQTAMCLIENTEXTENSION_P_H

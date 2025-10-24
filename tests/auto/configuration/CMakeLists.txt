@@ -11,7 +11,7 @@ qt_internal_add_test(tst_configuration
     LIBRARIES
         Qt::Network
         Qt::AppManCommonPrivate
-        Qt::AppManMainPrivate
+        Qt::AppManSystemUIPrivate
     BUILTIN_TESTDATA
     TESTDATA
         data/config1.yaml

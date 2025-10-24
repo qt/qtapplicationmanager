@@ -20,8 +20,7 @@
 #include <QtQuickTest/private/quicktest_p.h>
 #include <QtQuickTest/private/quicktestresult_p.h>
 #include "configuration.h"
-#include "amtest.h"
-
+#include "qml-utilities.h"
 
 QT_BEGIN_NAMESPACE
 namespace QTest {
@@ -30,8 +29,9 @@ namespace QTest {
 }
 QT_END_NAMESPACE
 
-QT_BEGIN_NAMESPACE_AM
+AM_QML_REGISTER_TYPES(QtApplicationManager_Test)
 
+QT_BEGIN_NAMESPACE_AM
 
 void TestRunner::setup(Configuration *cfg)
 {
@@ -83,13 +83,6 @@ void TestRunner::setup(Configuration *cfg)
 
     // Register the test object and application manager test add-on
     qApp->setProperty("_am_buildConfig", cfg->buildConfig());
-
-    // this is the only non-declarative registration, as this is only available for test runs
-    qmlRegisterSingletonType<AmTest>("QtApplicationManager.Test", 2, 0, "AmTest",
-                                     [](QQmlEngine *, QJSEngine *) {
-        QQmlEngine::setObjectOwnership(AmTest::instance(), QQmlEngine::CppOwnership);
-        return AmTest::instance();
-    });
 
     qInfo() << "Verbose mode:" << (cfg->verbose() ? "on" : "off")
             << "(change with $AM_VERBOSE_TEST or the -v1/-v2 options)";

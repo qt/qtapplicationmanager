@@ -5,11 +5,10 @@
 #ifndef AMTEST_H
 #define AMTEST_H
 
-#include <QObject>
-#include <QVariantMap>
-
+#include <QtCore/QObject>
+#include <QtCore/QVariantMap>
+#include <QtQml/QQmlEngine>
 #include <QtAppManCommon/global.h>
-
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -20,6 +19,9 @@ class AmTest : public QObject
     Q_PROPERTY(QVariant buildConfig READ buildConfig CONSTANT FINAL)
     Q_PROPERTY(QString qtVersion READ qtVersion CONSTANT FINAL)
     Q_PROPERTY(bool asanBuild READ isAsanBuild CONSTANT FINAL)
+    QML_ELEMENT
+    QML_ADDED_IN_VERSION(2, 0)
+    QML_SINGLETON
 
     AmTest();
 
@@ -41,6 +43,11 @@ public:
     Q_INVOKABLE bool dirExists(const QString &dir);
     Q_INVOKABLE QVariantMap runProgram(const QStringList &commandLine);
 
+    static QtAM::AmTest *create(QQmlEngine *, QJSEngine *)
+    {
+        QQmlEngine::setObjectOwnership(QtAM::AmTest::instance(), QQmlEngine::CppOwnership);
+        return QtAM::AmTest::instance();
+    }
 
 Q_SIGNALS:
     void objectDestroyed(int index);

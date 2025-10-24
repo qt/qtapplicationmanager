@@ -8,7 +8,7 @@
 #include <QAbstractEventDispatcher>
 #include <QProcess>
 #include <QCoreApplication>
-#include <private/qtestlog_p.h>
+#include <QtTest/private/qtestlog_p.h>
 #include "amtest.h"
 #include "utilities.h"
 

@@ -9,5 +9,5 @@ Helper::Helper(QObject *parent)
 
 QByteArray Helper::getEnv(const QByteArray &envName)
 {
-    return qgetenv(envName);
+    return qgetenv(envName.constData());
 }

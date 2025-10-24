@@ -354,8 +354,8 @@ static void logQmlBacktrace(LogToDestination logTo)
                 logMsg(logTo, "\n > QML backtrace:");
                 for (int frame = 0; frame < stackTrace.size(); ++frame) {
                     const auto &stackFrame = stackTrace.at(frame);
-                    logBacktraceLine(logTo, frame, stackFrame.function.toLocal8Bit().constData(),
-                                     0, stackFrame.source.toLocal8Bit().constData(), stackFrame.line);
+                    logBacktraceLine(logTo, frame, qPrintable(stackFrame.function),
+                                     0, qPrintable(stackFrame.source), stackFrame.line);
                 }
             } else {
                 logMsg(logTo, "\n > QML backtrace: empty");

@@ -60,7 +60,7 @@ QVariantMap QmlInProcApplicationInterfaceImpl::name() const
 QUrl QmlInProcApplicationInterfaceImpl::icon() const
 {
     if (m_runtime && m_runtime->application())
-        return m_runtime->application()->packageInfo()->icon();
+        return QUrl(m_runtime->application()->packageInfo()->icon());
     return { };
 }
 

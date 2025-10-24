@@ -116,7 +116,7 @@ void tst_PackageServerTool::initTestCase()
     auto sameLines = expectedLines.size() - 1;
     QCOMPARE(outLines.first(sameLines), expectedLines.first(sameLines));
     QVERIFY(outLines.last().startsWith(expectedLines.last()));
-    m_url = u"http://"_s + outLines.last().mid(expectedLines.last().length());
+    m_url = QUrl(u"http://"_s + outLines.last().mid(expectedLines.last().length()));
     QVERIFY(m_url.isValid());
     qInfo() << "packager-server URL:" << m_url.toString();
 }

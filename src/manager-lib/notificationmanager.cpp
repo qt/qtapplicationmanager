@@ -377,9 +377,9 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
         return n->category;
     case NMRoles::Icon:
          if (!n->iconUrl.isEmpty())
-             return n->iconUrl;
+             return QUrl(n->iconUrl);
          return n->application && n->application->package() ? n->application->package()->icon()
-                                                            : QString();
+                                                            : QUrl();
     case NMRoles::Image:
         return n->imageUrl;
     case NMRoles::ShowActionsAsIcons:

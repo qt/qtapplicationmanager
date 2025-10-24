@@ -148,7 +148,7 @@ StartupTimer::StartupTimer()
     else if (useTimer.isEmpty() || useTimer == "1")
         m_output = stderr;
     else
-        m_output = fopen(useTimer, "w");
+        m_output = fopen(useTimer.constData(), "w");
 
 #if defined(Q_OS_WIN)
     // Windows reports FILETIMEs in 100nsec steps: divide by 10 to get usec
@@ -186,7 +186,7 @@ StartupTimer::StartupTimer()
         void *result = nullptr;
 
         QByteArray file = "/proc/self/task/" + QByteArray::number(static_cast<int>(syscall(SYS_gettid))) + "/stat";
-        int fd = QT_OPEN(file, O_RDONLY);
+        int fd = QT_OPEN(file.constData(), O_RDONLY);
         if (fd >= 0) {
             char buffer[1024];
             ssize_t bytesRead = QT_READ(fd, buffer, sizeof(buffer) - 1);

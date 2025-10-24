@@ -85,7 +85,7 @@ bool ScopedRenamer::internalRename(const QDir &dir, const QString &from, const Q
             return false;
     }
 #ifdef Q_OS_UNIX
-    return (::rename(fromInfo.absoluteFilePath().toLocal8Bit(), toInfo.absoluteFilePath().toLocal8Bit()) == 0);
+    return (::rename(qPrintable(fromInfo.absoluteFilePath()), qPrintable(toInfo.absoluteFilePath())) == 0);
 #else
     return QDir(dir).rename(from, to);
 #endif

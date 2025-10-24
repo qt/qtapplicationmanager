@@ -963,7 +963,7 @@ static QVariantMap locationMap(const QString &path)
     struct ::statvfs svfs;
 
     do {
-        result = ::statvfs(cpath.toLocal8Bit(), &svfs);
+        result = ::statvfs(qPrintable(cpath), &svfs);
         if (result == -1 && errno == EINTR)
             continue;
     } while (false);

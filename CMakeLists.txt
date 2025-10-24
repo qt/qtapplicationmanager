@@ -13,10 +13,7 @@ project(QtApplicationManager # special case
 
 set(QT_NO_INTERNAL_COMPATIBILITY_FUNCTIONS TRUE)
 add_compile_definitions(
-    QT_STRICT_ITERATORS
-    QT_NO_CAST_TO_ASCII
-    QT_NO_CAST_FROM_ASCII
-    QT_NO_CONTEXTLESS_CONNECT
+    QT_ENABLE_STRICT_MODE_UP_TO=0x060900
 )
 
 # populate the platform check variables

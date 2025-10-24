@@ -512,13 +512,13 @@ void tst_PackageManager::simulateErrorConditions_data()
 #ifdef Q_OS_LINUX
      QTest::newRow("applications-dir-read-only") \
              << false << "~could not create a temporary extraction directory .*" \
-             << FunctionMap { { "before-start", [this]() { return chmod(pathTo(Internal0).toLocal8Bit(), 0000) == 0; } },
-                              { "after-failed", [this]() { return chmod(pathTo(Internal0).toLocal8Bit(), 0777) == 0; } } };
+             << FunctionMap { { "before-start", [this]() { return chmod(qPrintable(pathTo(Internal0)), 0000) == 0; } },
+                              { "after-failed", [this]() { return chmod(qPrintable(pathTo(Internal0)), 0777) == 0; } } };
 
      QTest::newRow("documents-dir-read-only") \
              << false << "~could not create the document directory .*" \
-             << FunctionMap { { "before-start", [this]() { return chmod(pathTo(Documents0).toLocal8Bit(), 0000) == 0; } },
-                              { "after-failed", [this]() { return chmod(pathTo(Documents0).toLocal8Bit(), 0777) == 0; } } };
+             << FunctionMap { { "before-start", [this]() { return chmod(qPrintable(pathTo(Documents0)), 0000) == 0; } },
+                              { "after-failed", [this]() { return chmod(qPrintable(pathTo(Documents0)), 0777) == 0; } } };
 #endif
 }
 

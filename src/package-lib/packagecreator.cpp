@@ -250,7 +250,7 @@ bool PackageCreatorPrivate::create()
             if (!entry)
                 throw Exception(Error::Archive, "[libarchive] could not create a new archive_entry object");
 
-            archive_entry_set_pathname_utf8(entry, file.toUtf8().constData());
+            archive_entry_set_pathname_utf8(entry, qUtf8Printable(file));
             archive_entry_set_size(entry, static_cast<__LA_INT64_T>(fi.size()));
             archive_entry_set_mode(entry, mode);
             archive_entry_xattr_clear(entry);
@@ -259,7 +259,7 @@ bool PackageCreatorPrivate::create()
 #if defined(Q_OS_LINUX)
                 QByteArray xattrList;
                 xattrList.resize(65536);
-                ssize_t xattrListSize = ::listxattr(filePath.toUtf8().constData(), xattrList.data(), xattrList.size());
+                ssize_t xattrListSize = ::listxattr(qPrintable(filePath), xattrList.data(), xattrList.size());
                 if (xattrListSize < 0) {
                     if (errno == ENOTSUP)
                         throw Exception(Error::Archive, "the filesystem at '%1' does not support xattrs").arg(filePath);
@@ -276,15 +276,15 @@ bool PackageCreatorPrivate::create()
                         continue;
                     QByteArray xattrValue;
                     xattrValue.resize(65536);
-                    ssize_t xattrValueSize = ::getxattr(filePath.toUtf8().constData(), xattrName.constData(), xattrValue.data(), xattrValue.size());
+                    ssize_t xattrValueSize = ::getxattr(qPrintable(filePath), xattrName.constData(), xattrValue.data(), xattrValue.size());
                     if (xattrValueSize < 0)
                         throw Exception(errno, "cannot read xattrs of file '%1'").arg(filePath);
 
-                    archive_entry_xattr_add_entry(entry, xattrName, xattrValue.constData(), xattrValueSize);
+                    archive_entry_xattr_add_entry(entry, xattrName.constData(), xattrValue.constData(), xattrValueSize);
 
                     PackageUtilities::addExtendedAttributeToDigest(
                         xattrName,
-                        QByteArrayView(static_cast<const char *>(xattrValue), xattrValueSize),
+                        QByteArrayView(xattrValue).sliced(0, xattrValueSize),
                         digest);
                 }
 #else
@@ -402,7 +402,7 @@ bool PackageCreatorPrivate::addVirtualFile(struct archive *ar, const QString &fi
     struct archive_entry *entry = archive_entry_new();
 
     if (entry) {
-        archive_entry_set_pathname_utf8(entry, file.toUtf8().constData());
+        archive_entry_set_pathname_utf8(entry, qUtf8Printable(file));
         archive_entry_set_mode(entry, S_IFREG | S_IREAD);
         archive_entry_set_size(entry, data.size());
         archive_entry_set_mtime(entry, time(nullptr), 0);

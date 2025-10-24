@@ -584,7 +584,7 @@ void Logging::setSystemUiDltId(const QByteArray &dltAppId, const QByteArray &dlt
         const QByteArray id = dltAppId.isEmpty() ? QByteArray(s_defaultSystemUiDltId) : dltAppId;
         const QByteArray description = dltAppDescription.isEmpty() ? QByteArray(s_defaultSystemUiDltDescription)
                                                                    : dltAppDescription;
-        globalDltRegistration()->registerApplication(id, description);
+        globalDltRegistration()->registerApplication(id.constData(), description.constData());
     }
 #else
     Q_UNUSED(dltAppId)
@@ -596,7 +596,7 @@ void Logging::setDltApplicationId(const QByteArray &dltAppId, const QByteArray &
 {
 #if QT_CONFIG(am_dltlogging)
     if (lg()->dltEnabled)
-        globalDltRegistration()->registerApplication(dltAppId, dltAppDescription);
+        globalDltRegistration()->registerApplication(dltAppId.constData(), dltAppDescription.constData());
 #else
     Q_UNUSED(dltAppId)
     Q_UNUSED(dltAppDescription)

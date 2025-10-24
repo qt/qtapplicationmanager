@@ -56,14 +56,14 @@ void TestRunner::setup(Configuration *cfg)
     int argc = int(testRunnerArguments.size());
     argv.resize(argc + 1);
     for (int i = 0; i < argc; ++i)
-        argv[i] = qstrdup(testRunnerArguments.at(i).toLocal8Bit());
+        argv[i] = qstrdup(qPrintable(testRunnerArguments.at(i)));
     argv[argc] = nullptr;
 
     if (!sourceFile.isEmpty()) {
         if (QFileInfo(sourceFile).fileName() != QFileInfo(testFile).fileName())
             qWarning() << "appman-qmltestrunner: source file" << sourceFile << "does not match test file" << testFile;
         else
-            QTest::setMainSourcePath(sourceFile.toLocal8Bit());
+            QTest::setMainSourcePath(qPrintable(sourceFile));
     }
     QuickTestResult::setCurrentAppname(argv.at(0));
     QuickTestResult::setProgramName("qml");

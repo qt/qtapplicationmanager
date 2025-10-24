@@ -195,7 +195,7 @@ void PluginContainerHelperFunctions::bindMountFileSystem(const QString &from, co
     auto sudo = SudoClient::instance();
     if (!sudo->isFallbackImplementation()) {
         if (!sudo->bindMountFileSystem(from, to, readOnly, namespacePid))
-            throw std::runtime_error(sudo->lastError().toLocal8Bit());
+            throw std::runtime_error(qPrintable(sudo->lastError()));
     } else {
         throw std::runtime_error("Cannot call bindMountFileSystem: root privileges are required. Run appman via 'sudo' or 'chmod +s'.");
     }
@@ -215,7 +215,7 @@ QString PluginContainerHelperFunctions::checkDBusSocketPath(const QString &dbusA
     QFileInfo socketInfo(socketPath);
     if (!socketInfo.exists()) {
         QByteArray err = typeHint + " DBus socket doesn't exist: " + socketPath.toLocal8Bit();
-        throw std::runtime_error(err);
+        throw std::runtime_error(err.constData());
     }
     return socketInfo.absoluteFilePath();
 }
@@ -227,7 +227,7 @@ QString PluginContainerHelperFunctions::checkWaylandSocketPath(const QString &xd
     QFileInfo socketInfo(socketPath);
     if (!socketInfo.exists()) {
         QByteArray err = "Wayland socket doesn't exist: " + socketPath.toLocal8Bit();
-        throw std::runtime_error(err);
+        throw std::runtime_error(err.constData());
     }
     return socketInfo.absoluteFilePath();
 }

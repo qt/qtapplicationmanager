@@ -32,7 +32,7 @@ void QmlLogger::warnings(const QList<QQmlError> &list)
         else
             file = err.url().toDisplayString().toLocal8Bit();
 
-        QMessageLogger ml(file, err.line(), func, LogQml().categoryName());
+        QMessageLogger ml(file.constData(), err.line(), func.constData(), LogQml().categoryName());
         ml.warning().nospace() << qPrintable(err.description());
     }
 }

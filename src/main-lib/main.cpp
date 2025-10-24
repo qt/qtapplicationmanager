@@ -344,7 +344,7 @@ void Main::shutDown(const char *shutdownReason, int exitCode)
             if (!(m_shutdownStage & WindowManagerDown))
                 resources << u"windows"_s;
             qCCritical(LogSystem, "There are still resources in use (%s). Check your System UI implementation. "
-                                  "Exiting regardless.", resources.join(u", "_s).toLocal8Bit().constData());
+                                  "Exiting regardless.", qPrintable(resources.join(u", "_s)));
             finalShutdown(true);
         });
     }

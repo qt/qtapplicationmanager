@@ -186,7 +186,7 @@ qint64 PackageExtractorPrivate::readTar(struct archive *ar, const void **archive
 
         // got an error while reading
         if (m_reply->error() != QNetworkReply::NoError) {
-            archive_set_error(ar, -1, "%s", m_reply->errorString().toLocal8Bit().constData());
+            archive_set_error(ar, -1, "%s", qPrintable(m_reply->errorString()));
             return -1;
         }
 
@@ -289,7 +289,6 @@ void PackageExtractorPrivate::extract()
             auto extractExtendedAttributes = [&]() {
 #if defined(Q_OS_LINUX)
                 const QString filePath = m_destinationPath + entryPath;
-                const QByteArray utf8FilePath = filePath.toUtf8();
                 archive_entry_xattr_reset(entry);
                 while (true) {
                     const char *xattrNameRaw = nullptr;
@@ -310,7 +309,7 @@ void PackageExtractorPrivate::extract()
                     if (m_extendedAttributeCallback) {
                         // the callback will throw on error
                         m_extendedAttributeCallback(filePath, xattrName, xattrValue);
-                    } else if (::setxattr(utf8FilePath, xattrNameRaw, xattrValueRaw, xattrValueSize, 0) != 0) {
+                    } else if (::setxattr(qPrintable(filePath), xattrNameRaw, xattrValueRaw, xattrValueSize, 0) != 0) {
                         throw Exception(errno, "could not set xattr '%1' for entry '%2'")
                         .arg(xattrName).arg(entryPath);
                     }
@@ -357,7 +356,7 @@ void PackageExtractorPrivate::extract()
                     if (m_report.includeExtendedAttributes()) {
 #if defined(Q_OS_LINUX)
                         // we need to mknod first, otherwise "security.*" xattrs don't work correctly
-                        if (::mknod(f.fileName().toUtf8(), S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP, 0) != 0)
+                        if (::mknod(qPrintable(f.fileName()), S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP, 0) != 0)
                             throw Exception(errno, "could not create inode for file '%1'").arg(f.fileName());
 #endif
                         extractExtendedAttributes();
@@ -559,7 +558,7 @@ void PackageExtractorPrivate::download(const QUrl &url)
 
     if (url.isLocalFile()) {
         struct stat statBuffer;
-        if (stat(url.toLocalFile().toLocal8Bit(), &statBuffer) == 0) {
+        if (stat(qPrintable(url.toLocalFile()), &statBuffer) == 0) {
             if (S_ISFIFO(statBuffer.st_mode)) {
                 m_downloadingFromFIFO = true;
             }

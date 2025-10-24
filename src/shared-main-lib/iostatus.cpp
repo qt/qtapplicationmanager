@@ -149,7 +149,7 @@ void IoStatus::addIoReader(const QString &deviceName)
     if (m_ioHash.contains(deviceName))
         return;
 
-    IoReader *ior = new IoReader(deviceName.toLocal8Bit().constData());
+    IoReader *ior = new IoReader(qPrintable(deviceName));
     m_ioHash.insert(deviceName, ior);
 }
 

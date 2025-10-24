@@ -13,8 +13,8 @@
     if (_expected_errstr.startsWith(u"~")) { \
         QRegularExpression re(_expected_errstr.mid(1)); \
         QVERIFY2(re.match(_actual_errstr).hasMatch(), \
-                 QByteArray("\n    Got     : ") + _actual_errstr.toLocal8Bit() + \
-                 QByteArray("\n    Expected: ") + _expected_errstr.toLocal8Bit()); \
+                 qPrintable(u"\n    Got     : " + _actual_errstr + \
+                            u"\n    Expected: " + _expected_errstr)); \
     } else { \
         QCOMPARE(_actual_errstr, _expected_errstr); \
     } \

@@ -1200,7 +1200,7 @@ void listInstances()
     const auto [_, running] = runningInstanceIds();
     for (auto it = running.cbegin(); it != running.cend(); ++it) {
         auto &name = it.key();
-        fprintf(stdout, "%s-%d\n", name.toLocal8Bit().constData(), it.value());
+        fprintf(stdout, "%s-%d\n", qPrintable(name), it.value());
     }
     qApp->quit();
 }

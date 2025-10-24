@@ -338,7 +338,7 @@ quint64 MemoryReader::groupLimit()
     const QString path = g_systemRootDir + QString::fromLatin1(cGroupsMemoryBaseDir)
                    + m_groupPath + u"/memory.limit_in_bytes"_s;
     QByteArray ba = SysFsReader(path.toLocal8Bit(), 41).readValue();
-    return ::strtoull(ba, nullptr, 10);
+    return ::strtoull(ba.constData(), nullptr, 10);
 }
 
 quint64 MemoryReader::readUsedValue() const
@@ -454,11 +454,11 @@ bool MemoryThreshold::setEnabled(bool enabled, const QString &groupPath, MemoryR
 
         if (m_eventFd >= 0) {
             const QString usagePath = cGroup + u"/memory.usage_in_bytes";
-            m_usageFd = QT_OPEN(usagePath.toLocal8Bit().constData(), QT_OPEN_RDONLY);
+            m_usageFd = QT_OPEN(qPrintable(usagePath), QT_OPEN_RDONLY);
 
             if (m_usageFd >= 0) {
                 const QString eventControlPath = cGroup + u"/cgroup.event_control"_s;
-                m_controlFd = QT_OPEN(eventControlPath.toLocal8Bit().constData(), QT_OPEN_WRONLY);
+                m_controlFd = QT_OPEN(qPrintable(eventControlPath), QT_OPEN_WRONLY);
 
                 if (m_controlFd >= 0) {
                     bool registerOk = true;

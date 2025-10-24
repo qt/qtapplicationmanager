@@ -45,11 +45,11 @@ bool InProcessSurfaceItem::setWindowProperty(const QString &name, const QVariant
 {
     const QByteArray key = nameToKey(name);
     const QVariant v = convertFromJSVariant(value);
-    QVariant oldValue = m_windowProperties.property(key);
+    QVariant oldValue = m_windowProperties.property(key.constData());
     bool changed = !oldValue.isValid() || (oldValue != v);
 
     if (changed)
-        m_windowProperties.setProperty(key, v);
+        m_windowProperties.setProperty(key.constData(), v);
 
     return true;
 }
@@ -57,7 +57,7 @@ bool InProcessSurfaceItem::setWindowProperty(const QString &name, const QVariant
 QVariant InProcessSurfaceItem::windowProperty(const QString &name) const
 {
     QByteArray key = nameToKey(name);
-    return m_windowProperties.property(key);
+    return m_windowProperties.property(key.constData());
 }
 
 QVariantMap InProcessSurfaceItem::windowPropertiesAsVariantMap() const
@@ -70,7 +70,7 @@ QVariantMap InProcessSurfaceItem::windowPropertiesAsVariantMap() const
             continue;
 
         QString name = keyToName(key);
-        map[name] = m_windowProperties.property(key);
+        map[name] = m_windowProperties.property(key.constData());
     }
 
     return map;
@@ -84,7 +84,7 @@ bool InProcessSurfaceItem::eventFilter(QObject *o, QEvent *e)
 
         if (isName(key)) {
             QString name = keyToName(dpce->propertyName());
-            emit windowPropertyChanged(name, m_windowProperties.property(key));
+            emit windowPropertyChanged(name, m_windowProperties.property(key.constData()));
         }
     }
 

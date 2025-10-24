@@ -196,7 +196,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
             if (auto *pw = ::getpwuid(uid))
                 return pw;
         }
-        if (auto *pw = ::getpwnam(user))
+        if (auto *pw = ::getpwnam(user.constData()))
             return pw;
         throw Exception("unknown user '%1'").arg(user);
     };
@@ -207,7 +207,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
             if (auto *gr = ::getgrgid(gid))
                 return gr;
         }
-        if (auto *gr = ::getgrnam(group))
+        if (auto *gr = ::getgrnam(group.constData()))
             return gr;
         throw Exception("unknown user '%1'").arg(group);
     };
@@ -381,7 +381,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
             if (xdgRTD.endsWith("/0")) {
                 xdgRTD.chop(1);
                 xdgRTD.append(QByteArray::number(setPw->pw_uid));
-                ::setenv("XDG_RUNTIME_DIR", xdgRTD, 1);
+                ::setenv("XDG_RUNTIME_DIR", xdgRTD.constData(), 1);
             }
             // We are NOT changing to the user's home dir on purpose to avoid overriding a systemd setting
 
@@ -627,7 +627,7 @@ bool SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
 
     try {
         // Create a detached mount point for our source location
-        int fromFd = int(::syscall(SYS_open_tree, -EBADF, from.toLocal8Bit().constData(), OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE));
+        int fromFd = int(::syscall(SYS_open_tree, -EBADF, qPrintable(from), OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE));
         if (fromFd < 0)
             throw Exception(errno, "could not create a detached mount point for %1").arg(from);
 
@@ -651,7 +651,7 @@ bool SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
         }
 
         // Mount the detached mount point to the final location within the mount namespace
-        if (::syscall(SYS_move_mount, fromFd, "", -EBADF, to.toLocal8Bit().constData(), MOVE_MOUNT_F_EMPTY_PATH) < 0)
+        if (::syscall(SYS_move_mount, fromFd, "", -EBADF, qPrintable(to), MOVE_MOUNT_F_EMPTY_PATH) < 0)
             throw Exception(errno, "could not move the detached mount point to %1").arg(to);
 
     } catch (const Exception &e) {
@@ -682,8 +682,7 @@ bool SudoServer::setExtendedAttribute(const QString &file, const QByteArray &att
     bool result = true;
 
     try {
-        const QByteArray futf8 = file.toUtf8();
-        if (::setxattr(futf8.constData(), attrName.constData(), attrValue.constData(), attrValue.size(), 0) != 0)
+        if (::setxattr(qPrintable(file), attrName.constData(), attrValue.constData(), attrValue.size(), 0) != 0)
             throw Exception(errno, "could not set extended attribute '%1' on file '%2'").arg(attrName).arg(file);
         return true;
     } catch (const Exception &e) {

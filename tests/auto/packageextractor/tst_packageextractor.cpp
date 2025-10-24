@@ -213,14 +213,14 @@ public:
                 .toLocal8Bit();
 #ifdef Q_OS_UNIX
         QVERIFY2(m_file.open(QFile::ReadOnly), qPrintable(m_file.errorString()));
-        QVERIFY2(::mkfifo(m_fifoPath, 0600) == 0, ::strerror(errno));
+        QVERIFY2(::mkfifo(m_fifoPath.constData(), 0600) == 0, ::strerror(errno));
 #endif
     }
 
     ~FifoSource() override
     {
 #ifdef Q_OS_UNIX
-        ::unlink(m_fifoPath);
+        ::unlink(m_fifoPath.constData());
 #endif
     }
 
@@ -232,7 +232,7 @@ public:
     void run() override
     {
 #ifdef Q_OS_UNIX
-        int fifoFd = QT_OPEN(m_fifoPath, O_WRONLY);
+        int fifoFd = QT_OPEN(m_fifoPath.constData(), O_WRONLY);
         QVERIFY2(fifoFd >= 0, ::strerror(errno));
 
         QByteArray buffer;

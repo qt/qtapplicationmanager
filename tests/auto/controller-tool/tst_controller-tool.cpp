@@ -240,7 +240,7 @@ void tst_ControllerTool::usage()
 void tst_ControllerTool::instances()
 {
     ControllerTool ctrl({ u"list-instances"_s });
-    QVERIFY2(ctrl.call(), ctrl.failure);
+    QVERIFY2(ctrl.call(), ctrl.failure.constData());
     QVERIFY2(ctrl.stdErrList.isEmpty(), qPrintable(ctrl.stdErrList.join(u'\n')));
     QCOMPARE(ctrl.stdOutList, QStringList({ u"controller-test-id-0"_s }));
 }
@@ -249,12 +249,12 @@ void tst_ControllerTool::applications()
 {
     {
         ControllerTool ctrl({ u"list-applications"_s });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
         QCOMPARE(ctrl.stdOutList, QStringList({ u"controller-app1"_s, u"controller-app2"_s }));
     }
     {
         ControllerTool ctrl({ u"show-application"_s, u"controller-app1"_s });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
         const auto docs = YamlParser::parseAllDocuments(ctrl.stdOut);
         QCOMPARE(docs.size(), 1);
         const auto vm = docs[0].toMap();
@@ -288,13 +288,13 @@ void tst_ControllerTool::packages()
 {
     {
         ControllerTool ctrl({ u"list-packages"_s });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
         QCOMPARE(ctrl.stdOutList, QStringList({ u"controller-pkg"_s }));
     }
 
     {
         ControllerTool ctrl({ u"show-package"_s, u"controller-pkg"_s });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
         const auto docs = YamlParser::parseAllDocuments(ctrl.stdOut);
         QCOMPARE(docs.size(), 1);
         const auto vm = docs[0].toMap();
@@ -318,7 +318,7 @@ void tst_ControllerTool::installationLocation()
 {
     {
         ControllerTool ctrl({ u"show-installation-location"_s });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
         const auto docs = YamlParser::parseAllDocuments(ctrl.stdOut);
         QCOMPARE(docs.size(), 1);
         const auto vm = docs[0].toMap();
@@ -337,25 +337,25 @@ void tst_ControllerTool::installCancel()
 
     ControllerTool install({ u"install-package"_s,
                             QString::fromLatin1(AM_TESTDATA_DIR "packages/test.ampkg") });
-    QVERIFY2(install.start(), install.failure);
+    QVERIFY2(install.start(), install.failure.constData());
 
     QTRY_VERIFY(PackageManager::instance()->isPackageInstallationActive(u"test-pkg"_s));
     QString taskId;
 
     {
         ControllerTool ctrl({ u"list-installation-tasks"_s });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
         QCOMPARE(ctrl.stdOutList.size(), 1);
         taskId = ctrl.stdOutList.at(0);
         QVERIFY(!QUuid::fromString(taskId).isNull());
     }
     {
         ControllerTool ctrl({ u"cancel-installation-task"_s, taskId });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
     }
     {
         ControllerTool ctrl({ u"list-installation-tasks"_s });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
         QCOMPARE(ctrl.stdOutList.size(), 0);
     }
 
@@ -371,11 +371,11 @@ void tst_ControllerTool::installRemove()
     {
         ControllerTool ctrl({ u"install-package"_s, u"-a"_s,
                              QString::fromLatin1(AM_TESTDATA_DIR "packages/test.ampkg") });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
     }
     {
         ControllerTool ctrl({ u"remove-package"_s, u"test-pkg"_s });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
     }
 }
 
@@ -385,13 +385,13 @@ void tst_ControllerTool::startStop()
     QVERIFY(app);
     {
         ControllerTool ctrl({ u"start-application"_s, app->id() });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
     }
 
     QTRY_VERIFY(app->runState() == Am::Running);
     {
         ControllerTool ctrl({ u"stop-application"_s, app->id() });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
     }
 
     QTRY_VERIFY(app->runState() == Am::NotRunning);
@@ -400,12 +400,12 @@ void tst_ControllerTool::startStop()
         bool sp = ApplicationManager::instance()->isSingleProcess();
         ControllerTool ctrl(sp ? QStringList { u"start-application"_s, app->id() }
                                : QStringList { u"debug-application"_s, u"FOO=BAR"_s, app->id() });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
     }
     QTRY_VERIFY(app->runState() == Am::Running);
     {
         ControllerTool ctrl({ u"stop-all-applications"_s });
-        QVERIFY2(ctrl.call(), ctrl.failure);
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
     }
     QTRY_VERIFY(app->runState() == Am::NotRunning);
 }
@@ -414,7 +414,7 @@ void tst_ControllerTool::injectIntent()
 {
     ControllerTool ctrl({ u"inject-intent-request"_s, u"--requesting-application-id"_s,
         u":sysui:"_s, u"--application-id"_s, u":sysui:"_s, u"inject-intent"_s, u"{ }"_s, });
-    QVERIFY2(ctrl.call(), ctrl.failure);
+    QVERIFY2(ctrl.call(), ctrl.failure.constData());
 
     const auto json = QJsonDocument::fromJson(ctrl.stdOut);
     const auto vm = json.toVariant().toMap();

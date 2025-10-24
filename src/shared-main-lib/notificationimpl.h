@@ -9,13 +9,13 @@
 #include <QtCore/QObject>
 #include <QtCore/QUrl>
 #include <QtCore/QVariantMap>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 class Notification;
 
-class NotificationImpl
+class Q_APPMANSHAREDMAIN_EXPORT NotificationImpl
 {
 public:
     static void setFactory(const std::function<NotificationImpl *(Notification *, const QString &)> &factory);

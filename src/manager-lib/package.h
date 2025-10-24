@@ -6,7 +6,7 @@
 #ifndef PACKAGE_H
 #define PACKAGE_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 #include <QtAppManApplication/packageinfo.h>
 #include <QtAppManManager/application.h>
 #include <QtCore/QUrl>
@@ -18,7 +18,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class Application;
 
-class Package : public QObject
+class Q_APPMANMANAGER_EXPORT Package : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString id READ id CONSTANT FINAL)

@@ -6,7 +6,7 @@
 #ifndef SHAREDMAIN_H
 #define SHAREDMAIN_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 #include <QtAppManCommon/openglconfiguration.h>
 #include <QtAppManCommon/watchdogconfiguration.h>
 #include <QtAppManSharedMain/watchdog.h>
@@ -19,7 +19,7 @@ QT_FORWARD_DECLARE_STRUCT(QQmlDebuggingEnabler)
 QT_BEGIN_NAMESPACE_AM
 
 
-class SharedMain
+class Q_APPMANSHAREDMAIN_EXPORT SharedMain
 {
 public:
     SharedMain();

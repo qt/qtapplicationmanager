@@ -14,7 +14,7 @@
 #include <QtQml/QQmlListProperty>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickWindow>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 
 
 QT_FORWARD_DECLARE_CLASS(QQmlComponentAttached)
@@ -27,7 +27,7 @@ class ApplicationManagerWindowAttached;
 class ApplicationManagerWindowAttachedImpl;
 
 
-class ApplicationManagerWindow : public QObject, public QQmlParserStatus
+class Q_APPMANSHAREDMAIN_EXPORT ApplicationManagerWindow : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
@@ -151,7 +151,7 @@ private:
     Q_DISABLE_COPY_MOVE(ApplicationManagerWindow)
 };
 
-class ApplicationManagerWindowAttached : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT ApplicationManagerWindowAttached : public QObject
 {
     Q_OBJECT
     QML_ADDED_IN_VERSION(2, 7)
@@ -167,6 +167,7 @@ class ApplicationManagerWindowAttached : public QObject
 
 public:
     explicit ApplicationManagerWindowAttached(QObject *attachee);
+    ~ApplicationManagerWindowAttached() override;
 
     ApplicationManagerWindow *window() const;
     Q_SIGNAL void windowChanged();

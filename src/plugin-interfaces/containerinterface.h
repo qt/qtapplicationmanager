@@ -11,10 +11,11 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariantMap>
 #include <QtCore/QVector>
-#include <QtAppManPluginInterfaces/qtappman_plugininterfaces-config.h>
+#include <QtAppManPluginInterfaces/qtappmanplugininterfaces-config.h>
+#include <QtAppManPluginInterfaces/qtappmanplugininterfacesexports.h>
 
 
-class ContainerInterface : public QObject
+class Q_APPMANPLUGININTERFACES_EXPORT ContainerInterface : public QObject
 {
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(ContainerInterface)
@@ -84,7 +85,7 @@ Q_SIGNALS:
 
 // This interface is offered by the AM to the plugin - a pointer to a concrete implementation
 // is supplied to the plugin by implementing ContainerManagerInterface::initialize()
-class ContainerHelperFunctions
+class Q_APPMANPLUGININTERFACES_EXPORT ContainerHelperFunctions
 {
     Q_DISABLE_COPY_MOVE(ContainerHelperFunctions)
 
@@ -110,7 +111,7 @@ public:
     virtual QString checkWaylandSocketPath(const QString &xdgRuntimeDir, const QString &waylandDisplay) = 0;
 };
 
-class ContainerManagerInterface
+class Q_APPMANPLUGININTERFACES_EXPORT ContainerManagerInterface
 {
     Q_DISABLE_COPY_MOVE(ContainerManagerInterface)
 

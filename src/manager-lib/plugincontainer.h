@@ -12,7 +12,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class PluginContainerHelperFunctions final : public ContainerHelperFunctions
+class Q_APPMANMANAGER_EXPORT PluginContainerHelperFunctions final : public ContainerHelperFunctions
 {
 public:
     void closeAndClearFileDescriptors(QVector<int> &fdList) override;
@@ -29,7 +29,7 @@ public:
     QString checkWaylandSocketPath(const QString &xdgRuntimeDir, const QString &waylandDisplay) override;
 };
 
-class PluginContainerManager : public AbstractContainerManager
+class Q_APPMANMANAGER_EXPORT PluginContainerManager : public AbstractContainerManager
 {
     Q_OBJECT
 public:
@@ -54,7 +54,7 @@ private:
 
 class PluginContainer;
 
-class PluginContainerProcess : public AbstractContainerProcess
+class Q_APPMANMANAGER_EXPORT PluginContainerProcess : public AbstractContainerProcess
 {
     Q_OBJECT
 
@@ -71,7 +71,7 @@ private:
     PluginContainer *m_container;
 };
 
-class PluginContainer : public AbstractContainer
+class Q_APPMANMANAGER_EXPORT PluginContainer : public AbstractContainer
 {
     Q_OBJECT
 

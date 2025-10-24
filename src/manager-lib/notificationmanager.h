@@ -8,7 +8,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QAbstractListModel>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
@@ -20,7 +20,7 @@ class NotificationManagerPrivate;
 
 // A place to collect signals used internally by appman without polluting
 // NotificationManager's public QML API.
-class NotificationManagerInternalSignals : public QObject
+class Q_APPMANMANAGER_EXPORT NotificationManagerInternalSignals : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:
@@ -29,7 +29,7 @@ Q_SIGNALS:
     void actionInvoked(uint id, const QString &action_key);
 };
 
-class NotificationManager : public QAbstractListModel
+class Q_APPMANMANAGER_EXPORT NotificationManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.freedesktop.Notifications")

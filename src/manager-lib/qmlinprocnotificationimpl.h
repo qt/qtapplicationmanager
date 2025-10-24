@@ -15,7 +15,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class QmlInProcNotificationImpl : public NotificationImpl
+class Q_APPMANMANAGER_EXPORT QmlInProcNotificationImpl : public NotificationImpl
 {
 public:
     QmlInProcNotificationImpl(Notification *notification, const QString &applicationId);

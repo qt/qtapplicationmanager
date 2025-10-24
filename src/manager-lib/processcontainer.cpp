@@ -7,7 +7,6 @@
 #include <QProcess>
 #include <QProcessEnvironment>
 
-#include "global.h"
 #include "logging.h"
 #include "utilities.h"
 #include "containerfactory.h"

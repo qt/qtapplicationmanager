@@ -51,7 +51,6 @@
 #  include <sys/auxv.h>
 #endif
 
-#include "global.h"
 #include "logging.h"
 #include "main.h"
 #include "configuration.h"
@@ -103,7 +102,7 @@
 #include "monitormodel.h"
 #include "processstatus.h"
 
-#include "../plugin-interfaces/startupinterface.h"
+#include "startupinterface.h"
 
 using namespace Qt::StringLiterals;
 using namespace std::chrono_literals;

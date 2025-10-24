@@ -4,11 +4,11 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class Console
+class Q_APPMANCOMMON_EXPORT Console
 {
 public:
     static bool ensureInitialized();

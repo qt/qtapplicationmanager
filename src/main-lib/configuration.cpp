@@ -25,7 +25,6 @@
 #  include <unistd.h>
 #endif
 
-#include "global.h"
 #include "logging.h"
 #include "qtyaml.h"
 #include "configcache.h"

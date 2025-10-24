@@ -15,12 +15,11 @@
 #include <QLibraryInfo>
 
 #include "crashhandler.h"
-#include "global.h"
 #include "utilities.h"
 #include "logging.h"
 #include "console.h"
 #include "colorprint.h"
-#include "qtappman_common-config_p.h"
+#include "qtappmancommon-config_p.h"
 
 #if defined(Q_OS_UNIX)
 #  include <csignal>

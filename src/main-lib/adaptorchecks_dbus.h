@@ -6,7 +6,7 @@
 
 #include <QtDBus/QDBusAbstractAdaptor>
 #include <QtAppManManager/packagemanager.h>
-#include <QtAppManCommon/global.h>
+#include <QtAppManMain/qtappmanmainglobal.h>
 #include <QtAppManCommon/logging.h>
 
 

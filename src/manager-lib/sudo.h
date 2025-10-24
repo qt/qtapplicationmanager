@@ -19,11 +19,11 @@ typedef uint gid_t;
 //typedef uint mode_t; // already typedef'ed in qplatformdefs.h
 #endif
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class Sudo
+class Q_APPMANMANAGER_EXPORT Sudo
 {
 public:
     enum DropPrivileges {
@@ -35,7 +35,7 @@ public:
     static void fallbackServer() noexcept(false);
 };
 
-class SudoInterface
+class Q_APPMANMANAGER_EXPORT SudoInterface
 {
 public:
     virtual ~SudoInterface() = default;
@@ -61,7 +61,7 @@ private:
 
 class SudoServer;
 
-class SudoClient : public SudoInterface
+class Q_APPMANMANAGER_EXPORT SudoClient : public SudoInterface
 {
 public:
     static SudoClient *createInstance(int socketFd, SudoServer *shortCircuit = nullptr);
@@ -91,7 +91,7 @@ private:
     static SudoClient *s_instance;
 };
 
-class SudoServer : public SudoInterface
+class Q_APPMANMANAGER_EXPORT SudoServer : public SudoInterface
 {
 public:
     static SudoServer *createInstance(int socketFd);

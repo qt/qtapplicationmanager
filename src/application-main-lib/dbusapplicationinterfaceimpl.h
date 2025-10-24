@@ -7,7 +7,7 @@
 #define DBUSAPPLICATIONINTERFACEIMPL_H
 
 #include <QtCore/QPointer>
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplicationMain/qtappmanapplicationmainglobal.h>
 #include <QtAppManSharedMain/applicationinterfaceimpl.h>
 
 
@@ -16,7 +16,7 @@ QT_BEGIN_NAMESPACE_AM
 class ApplicationMain;
 
 
-class DBusApplicationInterfaceImpl : public ApplicationInterfaceImpl
+class Q_APPMANAPPLICATIONMAIN_EXPORT DBusApplicationInterfaceImpl : public ApplicationInterfaceImpl
 {
 public:
     explicit DBusApplicationInterfaceImpl(ApplicationMain *applicationMain);

@@ -12,11 +12,11 @@
 #include <QtCore/QPair>
 #include <QtCore/QByteArray>
 #include <QtCore/QElapsedTimer>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class StartupTimer : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT StartupTimer : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(quint64 timeToFirstFrame READ timeToFirstFrame NOTIFY timeToFirstFrameChanged FINAL)

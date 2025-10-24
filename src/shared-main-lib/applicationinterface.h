@@ -11,7 +11,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QVariantMap>
 #include <QtQml/qqmlregistration.h>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 
 
 QT_BEGIN_NAMESPACE_AM
@@ -19,7 +19,7 @@ QT_BEGIN_NAMESPACE_AM
 class Notification;
 class ApplicationInterfaceImpl;
 
-class ApplicationInterface : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT ApplicationInterface : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager.ApplicationInterface")

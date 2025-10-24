@@ -51,6 +51,9 @@ ApplicationManagerWindowAttachedImpl *ApplicationManagerWindowAttachedImpl::crea
     return s_factory ? s_factory(windowAttached, attacheeItem) : nullptr;
 }
 
+ApplicationManagerWindowAttachedImpl::~ApplicationManagerWindowAttachedImpl()
+{ }
+
 ApplicationManagerWindowAttached *ApplicationManagerWindowAttachedImpl::amWindowAttached() const
 {
     return m_amWindowAttached;

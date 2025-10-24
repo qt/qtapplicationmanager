@@ -6,7 +6,7 @@
 #ifndef DBUSCONTEXTADAPTOR_H
 #define DBUSCONTEXTADAPTOR_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManDBus/qtappmandbusglobal.h>
 #include <QtCore/QObject>
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusContext>
@@ -17,7 +17,7 @@ QT_FORWARD_DECLARE_CLASS(QDBusAbstractAdaptor)
 QT_BEGIN_NAMESPACE_AM
 
 
-class DBusContextAdaptor : public QObject, public QDBusContext
+class Q_APPMANDBUS_EXPORT DBusContextAdaptor : public QObject, public QDBusContext
 {
     Q_OBJECT
 

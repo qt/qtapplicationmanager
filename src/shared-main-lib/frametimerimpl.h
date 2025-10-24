@@ -5,14 +5,14 @@
 #define FRAMETIMERIMPL_H
 
 #include <functional>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 
 
 QT_BEGIN_NAMESPACE_AM
 
 class FrameTimer;
 
-class FrameTimerImpl
+class Q_APPMANSHAREDMAIN_EXPORT FrameTimerImpl
 {
 public:
     static void setFactory(const std::function<FrameTimerImpl *(FrameTimer *)> &factory);

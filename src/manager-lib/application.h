@@ -12,7 +12,7 @@
 #include <QtAppManApplication/applicationinfo.h>
 #include <QtAppManApplication/packageinfo.h>
 #include <QtAppManManager/amnamespace.h>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -20,7 +20,7 @@ class AbstractRuntime;
 
 // A place to collect functions used internally by appman without polluting
 // Application's public QML API.
-class ApplicationRequests
+class Q_APPMANMANAGER_EXPORT ApplicationRequests
 {
 public:
     std::function<bool(const QString &documentUrl)> startRequested;
@@ -30,7 +30,7 @@ public:
 
 class Package;
 
-class Application : public QObject
+class Q_APPMANMANAGER_EXPORT Application : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString id READ id CONSTANT FINAL)
@@ -146,7 +146,7 @@ private:
 
 };
 
-QDebug operator<<(QDebug debug, const Application *app);
+Q_APPMANMANAGER_EXPORT QDebug operator<<(QDebug debug, const Application *app);
 
 QT_END_NAMESPACE_AM
 

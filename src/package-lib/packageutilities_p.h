@@ -6,7 +6,7 @@
 #ifndef PACKAGEUTILITIES_P_H
 #define PACKAGEUTILITIES_P_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManPackage/qtappmanpackageglobal.h>
 #include <QtAppManCommon/exception.h>
 #include <QVariantMap>
 
@@ -33,7 +33,7 @@ enum PackageEntryType {
     PackageEntry_Footer
 };
 
-class ArchiveException : public Exception
+class Q_APPMANPACKAGE_EXPORT ArchiveException : public Exception
 {
 public:
     ArchiveException(struct ::archive *ar, const char *errorString);

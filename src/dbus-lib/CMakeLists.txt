@@ -1,10 +1,9 @@
 
 qt_internal_add_module(AppManDBusPrivate
-    CONFIG_MODULE_NAME appman_dbus
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        qtappmandbusglobal.h
         dbuscontextadaptor.cpp dbuscontextadaptor.h
         dbuspolicy.cpp dbuspolicy.h
     PUBLIC_LIBRARIES

@@ -1,10 +1,9 @@
 
 qt_internal_add_module(AppManSharedMainPrivate
-    CONFIG_MODULE_NAME appman_shared_main
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        qtappmansharedmainglobal.h
         applicationinterface.cpp applicationinterface.h
         applicationinterfaceimpl.cpp applicationinterfaceimpl.h
         applicationmanagerwindow.h applicationmanagerwindow.cpp

@@ -1,10 +1,9 @@
 
 qt_internal_add_module(AppManIntentClientPrivate
-    CONFIG_MODULE_NAME appman_intent_client
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        qtappmanintentclientglobal.h
         intentclient.cpp intentclient.h
         intentclientrequest.cpp intentclientrequest.h
         intentclientsysteminterface.cpp intentclientsysteminterface.h

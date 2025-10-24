@@ -7,7 +7,6 @@
 #include <QJSEngine>
 #include <QJSValueList>
 
-#include "global.h"
 #include "logging.h"
 #include "intentserver.h"
 #include "intentmodel.h"

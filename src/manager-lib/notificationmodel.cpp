@@ -6,7 +6,6 @@
 #include <QJSEngine>
 #include <QJSValueList>
 
-#include "global.h"
 #include "logging.h"
 #include "notificationmanager.h"
 #include "notificationmodel.h"

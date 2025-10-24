@@ -6,12 +6,12 @@
 
 #include <QtCore/QString>
 #include <QtCore/QVariantMap>
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 #include <QtAppManCommon/qtyaml.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class OpenGLConfiguration
+class Q_APPMANCOMMON_EXPORT OpenGLConfiguration
 {
 public:
     QString desktopProfile;
@@ -31,8 +31,8 @@ public:
     bool operator!=(const OpenGLConfiguration &other) const;
 };
 
-QDataStream &operator<<(QDataStream &ds, const OpenGLConfiguration &cfg);
-QDataStream &operator>>(QDataStream &ds, OpenGLConfiguration &cfg);
+Q_APPMANCOMMON_EXPORT QDataStream &operator<<(QDataStream &ds, const OpenGLConfiguration &cfg);
+Q_APPMANCOMMON_EXPORT QDataStream &operator>>(QDataStream &ds, OpenGLConfiguration &cfg);
 
 QT_END_NAMESPACE_AM
 

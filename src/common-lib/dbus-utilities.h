@@ -6,18 +6,18 @@
 #ifndef DBUS_UTILITIES_H
 #define DBUS_UTILITIES_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 #include <QtCore/QVariant>
 
 QT_BEGIN_NAMESPACE_AM
 
-QVariant convertToDBusVariant(const QVariant &variant);
+Q_APPMANCOMMON_EXPORT QVariant convertToDBusVariant(const QVariant &variant);
 
-QVariant convertFromDBusVariant(const QVariant &variant);
+Q_APPMANCOMMON_EXPORT QVariant convertFromDBusVariant(const QVariant &variant);
 
-void registerDBusTypes();
+Q_APPMANCOMMON_EXPORT void registerDBusTypes();
 
-void ensureLibDBusIsAvailable();
+Q_APPMANCOMMON_EXPORT void ensureLibDBusIsAvailable();
 
 QT_END_NAMESPACE_AM
 

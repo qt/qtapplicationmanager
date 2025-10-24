@@ -12,7 +12,6 @@
 
 #include <exception>
 
-#include "global.h"
 #include "qtyaml.h"
 #include "packageinfo.h"
 #include "utilities.h"

@@ -11,7 +11,7 @@
 #include <QtCore/QPointer>
 #include <QtQuick/QQuickItem>
 #include <QtCore/QSet>
-#include <QtAppManCommon/global.h>
+#include <QtAppManWindow/qtappmanwindowglobal.h>
 #include <QtAppManManager/application.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -23,7 +23,7 @@ class WindowItem;
 // In the Wayland case, every Window is a surface, but not every surface is a Window. That's why
 // there is a separate WindowSurface class in waylandcompositor.h.
 
-class Window : public QObject
+class Q_APPMANWINDOW_EXPORT Window : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QSize size READ size NOTIFY sizeChanged FINAL)

@@ -10,12 +10,12 @@
 #include <QtCore/QTimer>
 #include <QtCore/QAtomicInteger>
 #include <QtGui/QImage>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 
 
 QT_BEGIN_NAMESPACE_AM
 
-class FrameContentTracker : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT FrameContentTracker : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int duplicateFrames READ duplicateFrames NOTIFY updated FINAL)

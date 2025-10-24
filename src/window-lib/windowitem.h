@@ -12,7 +12,7 @@
 
 #include <QtQuick/QQuickItem>
 #include <QtQuick/private/qquickfocusscope_p.h>
-#include <QtAppManCommon/global.h>
+#include <QtAppManWindow/qtappmanwindowglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -24,7 +24,7 @@ class WaylandQuickIgnoreKeyItem;
 #endif
 
 
-class WindowItem : public QQuickFocusScope
+class Q_APPMANWINDOW_EXPORT WindowItem : public QQuickFocusScope
 {
     Q_OBJECT
 

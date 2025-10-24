@@ -14,9 +14,9 @@
 #include <QtAppManManager/packagemanager.h>
 #include <QtAppManApplication/packagedatabase.h>
 #include <QtAppManManager/asynchronoustask.h>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 #include <QtAppManCrypto/signature.h>
-#include <QtAppManCommon/private/qtappman_common-config_p.h>
+#include <QtAppManCommon/private/qtappmancommon-config_p.h>
 
 QT_BEGIN_NAMESPACE_AM
 

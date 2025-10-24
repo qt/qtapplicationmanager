@@ -9,6 +9,7 @@
 #include <QtCore/QObject>
 
 #include <QtAppManCommon/error.h>
+#include <QtAppManPackage/qtappmanpackageglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QIODevice)
 QT_FORWARD_DECLARE_CLASS(QDir)
@@ -19,7 +20,7 @@ class PackageCreatorPrivate;
 class InstallationReport;
 
 
-class PackageCreator : public QObject
+class Q_APPMANPACKAGE_EXPORT PackageCreator : public QObject
 {
     Q_OBJECT
 

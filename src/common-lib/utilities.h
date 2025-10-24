@@ -16,7 +16,7 @@
 #include <QtCore/QResource>
 #include <QtCore/QLibrary>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 
 #include <functional>
 
@@ -25,13 +25,13 @@ QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
-int timeoutFactor();
-qreal slowAnimationSpeed();
+Q_APPMANCOMMON_EXPORT int timeoutFactor();
+Q_APPMANCOMMON_EXPORT qreal slowAnimationSpeed();
 
 using YamlFormat = QPair<QString, int>;
 
-YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
-                           const QVector<YamlFormat> &formatTypesAndVersions) noexcept(false);
+Q_APPMANCOMMON_EXPORT YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
+                                                 const QVector<YamlFormat> &formatTypesAndVersions) noexcept(false);
 
 /*! \internal
     Convenience function that makes it easy to accept a plain string where
@@ -52,7 +52,8 @@ inline QUrl filePathToUrl(const QString &path, const QString &baseDir)
 }
 
 // Used in {Package,Application,Intent}::name()
-QString translateFromMap(const QMap<QString, QString> &languageToName, const QString &defaultName = {});
+Q_APPMANCOMMON_EXPORT QString translateFromMap(const QMap<QString, QString> &languageToName,
+                                               const QString &defaultName = {});
 
 inline QString urlToLocalFilePath(const QUrl &url)
 {
@@ -71,7 +72,7 @@ inline QString toAbsoluteFilePath(const QString &path, const QString &baseDir = 
 /*! \internal
     Recursively merge the second QVariantMap into the first one
 */
-void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from);
+Q_APPMANCOMMON_EXPORT void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from);
 
 enum class RecursiveOperationType
 {
@@ -91,18 +92,18 @@ enum class RecursiveOperationType
     directory (\c{type == EnterDirectory}) and once when all sub-directories
     and files have been processed (\c{type == LeaveDirectory}).
  */
-bool recursiveOperation(const QString &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
+Q_APPMANCOMMON_EXPORT bool recursiveOperation(const QString &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
 
 // convenience
-bool recursiveOperation(const QByteArray &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
-bool recursiveOperation(const QDir &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
+Q_APPMANCOMMON_EXPORT bool recursiveOperation(const QByteArray &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
+Q_APPMANCOMMON_EXPORT bool recursiveOperation(const QDir &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
 
 // makes files and directories writable, then deletes them
-bool safeRemove(const QString &path, RecursiveOperationType type);
+Q_APPMANCOMMON_EXPORT bool safeRemove(const QString &path, RecursiveOperationType type);
 
-qint64 getParentPid(qint64 pid);
+Q_APPMANCOMMON_EXPORT qint64 getParentPid(qint64 pid);
 
-QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) noexcept(false);
+Q_APPMANCOMMON_EXPORT QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) noexcept(false);
 
 template <typename T>
 QVector<T *> loadPlugins(const char *type, const QStringList &files) noexcept(false)
@@ -115,20 +116,20 @@ QVector<T *> loadPlugins(const char *type, const QStringList &files) noexcept(fa
 }
 
 // Load a Qt resource, either in the form of a resource file or a plugin
-void loadResource(const QString &resource) noexcept(false);
+Q_APPMANCOMMON_EXPORT void loadResource(const QString &resource) noexcept(false);
 
 // close all valid file descriptors and then clear the (non-const) vector
-void closeAndClearFileDescriptors(QVector<int> &fdList);
+Q_APPMANCOMMON_EXPORT void closeAndClearFileDescriptors(QVector<int> &fdList);
 
 // make sure that the given id can be used as a filename
-void validateIdForFilesystemUsage(const QString &id) noexcept(false);
+Q_APPMANCOMMON_EXPORT void validateIdForFilesystemUsage(const QString &id) noexcept(false);
 
 // returns true if the specified process is being debugged (pid == 0 denotes the current process)
-bool isDebuggerAttached(qint64 pid = 0);
+Q_APPMANCOMMON_EXPORT bool isDebuggerAttached(qint64 pid = 0);
 
 // return if the file or directory is - at max - writable by the current user or root
-void ensureSafePermissions(const QString &path) noexcept(false);
-void ensureSafePermissions(const QFileInfo &fi) noexcept(false);
+Q_APPMANCOMMON_EXPORT void ensureSafePermissions(const QString &path) noexcept(false);
+Q_APPMANCOMMON_EXPORT void ensureSafePermissions(const QFileInfo &fi) noexcept(false);
 
 QT_END_NAMESPACE_AM
 

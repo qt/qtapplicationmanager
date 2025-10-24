@@ -8,7 +8,7 @@
 
 #include <functional>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManDBus/qtappmandbusglobal.h>
 #include <QtCore/QVariantMap>
 #include <QtCore/QByteArray>
 
@@ -16,7 +16,7 @@ QT_FORWARD_DECLARE_CLASS(QDBusAbstractAdaptor)
 
 QT_BEGIN_NAMESPACE_AM
 
-class DBusPolicy
+class Q_APPMANDBUS_EXPORT DBusPolicy
 {
 public:
     ~DBusPolicy();

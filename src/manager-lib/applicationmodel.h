@@ -9,7 +9,7 @@
 #include <QtCore/QSortFilterProxyModel>
 #include <QtQml/QJSValue>
 #include <QtQml/QQmlParserStatus>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QJSEngine);
 
@@ -18,7 +18,7 @@ QT_BEGIN_NAMESPACE_AM
 class ApplicationModelPrivate;
 class Application;
 
-class ApplicationModel : public QSortFilterProxyModel, public QQmlParserStatus
+class Q_APPMANMANAGER_EXPORT ApplicationModel : public QSortFilterProxyModel, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)

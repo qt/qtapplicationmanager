@@ -7,7 +7,6 @@
 #include <QDir>
 
 #include "systemreader.h"
-#include "global.h"
 #include "logging.h"
 
 using namespace Qt::StringLiterals;

@@ -8,13 +8,14 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QtPlugin>
-#include <QtAppManPluginInterfaces/qtappman_plugininterfaces-config.h>
+#include <QtAppManPluginInterfaces/qtappmanplugininterfaces-config.h>
+#include <QtAppManPluginInterfaces/qtappmanplugininterfacesexports.h>
 
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
 QT_FORWARD_DECLARE_CLASS(QWindow)
 
-class StartupInterface
+class Q_APPMANPLUGININTERFACES_EXPORT StartupInterface
 {
     Q_DISABLE_COPY_MOVE(StartupInterface)
 

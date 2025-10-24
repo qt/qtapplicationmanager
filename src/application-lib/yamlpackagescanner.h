@@ -12,7 +12,7 @@
 QT_BEGIN_NAMESPACE_AM
 
 
-class YamlPackageScanner : public PackageScanner
+class Q_APPMANAPPLICATION_EXPORT YamlPackageScanner : public PackageScanner
 {
 public:
     YamlPackageScanner() = default;

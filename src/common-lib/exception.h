@@ -11,15 +11,14 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QException>
 
-#include <exception>
 #include <QtAppManCommon/error.h>
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QFile)
 
 QT_BEGIN_NAMESPACE_AM
 
-class Exception : public QException   // clazy:exclude=copyable-polymorphic
+class Q_APPMANCOMMON_EXPORT Exception : public QException   // clazy:exclude=copyable-polymorphic
 {
 public:
     explicit Exception(const char *errorString) noexcept;

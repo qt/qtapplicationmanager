@@ -5,7 +5,7 @@
 #define WATCHDOG_H
 
 #include <QtCore/QObject>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QEventLoop)
 QT_FORWARD_DECLARE_CLASS(QQuickWindow)
@@ -14,7 +14,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class WatchdogPrivate;
 
-class Watchdog : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT Watchdog : public QObject
 {
     Q_OBJECT
 public:

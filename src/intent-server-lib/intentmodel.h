@@ -8,7 +8,7 @@
 #include <QtCore/QSortFilterProxyModel>
 #include <QtQml/QJSValue>
 #include <QtQml/QQmlParserStatus>
-#include <QtAppManCommon/global.h>
+#include <QtAppManIntentServer/qtappmanintentserverglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QJSEngine);
 
@@ -17,7 +17,7 @@ QT_BEGIN_NAMESPACE_AM
 class Intent;
 class IntentModelPrivate;
 
-class IntentModel : public QSortFilterProxyModel, public QQmlParserStatus
+class Q_APPMANINTENTSERVER_EXPORT IntentModel : public QSortFilterProxyModel, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)

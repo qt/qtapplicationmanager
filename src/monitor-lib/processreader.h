@@ -10,7 +10,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QObject>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManMonitor/qtappmanmonitorglobal.h>
 
 #if defined(Q_OS_LINUX)
 #  include <memory>
@@ -19,7 +19,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class ProcessReader : public QObject {
+class Q_APPMANMONITOR_EXPORT ProcessReader : public QObject {
     Q_OBJECT
 
 public:

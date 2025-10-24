@@ -13,7 +13,7 @@
 #include <QColor>
 #include <QPointer>
 #include <QtQuick/private/qquickfocusscope_p.h>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -22,7 +22,7 @@ class ApplicationManagerWindow;
 /*
  *  Item exposed to the System UI
  */
-class InProcessSurfaceItem : public QQuickFocusScope
+class Q_APPMANMANAGER_EXPORT InProcessSurfaceItem : public QQuickFocusScope
 {
     Q_OBJECT
 public:

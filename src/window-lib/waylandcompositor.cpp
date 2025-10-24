@@ -11,7 +11,6 @@
 
 #include <wayland-server.h>
 
-#include "global.h"
 #include "logging.h"
 #include "application.h"
 #include "applicationmanager.h"

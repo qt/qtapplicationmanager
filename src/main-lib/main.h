@@ -9,7 +9,7 @@
 #include <functional>
 
 #include <QtCore/QUrl>
-#include <QtAppManCommon/global.h>
+#include <QtAppManMain/qtappmanmainglobal.h>
 #include <QtAppManCommon/logging.h>
 #include <QtAppManManager/sudo.h>
 
@@ -52,7 +52,7 @@ class Configuration;
 class DBusContextAdaptor;
 
 
-class Main : public MainBase, public SharedMain
+class Q_APPMANMAIN_EXPORT Main : public MainBase, public SharedMain
 {
     Q_OBJECT
     Q_PROPERTY(bool singleProcessMode READ isSingleProcessMode CONSTANT FINAL)

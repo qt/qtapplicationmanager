@@ -6,13 +6,13 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QMultiMap>
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 class FileSystemMountWatcherPrivate;
 
-class FileSystemMountWatcher : public QObject
+class Q_APPMANCOMMON_EXPORT FileSystemMountWatcher : public QObject
 {
     Q_OBJECT
 

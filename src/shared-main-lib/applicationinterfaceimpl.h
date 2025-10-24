@@ -5,7 +5,7 @@
 #define APPLICATIONINTERFACEIMPL_H
 
 #include <QtCore/QObject>
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -13,7 +13,7 @@ class Notification;
 class ApplicationInterface;
 
 
-class ApplicationInterfaceImpl : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT ApplicationInterfaceImpl : public QObject
 {
     Q_OBJECT
 

@@ -8,11 +8,11 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QFile>
-#include <QtAppManCommon/global.h>
+#include <QtAppManMonitor/qtappmanmonitorglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class SysFsReader
+class Q_APPMANMONITOR_EXPORT SysFsReader
 {
 public:
     SysFsReader(const QByteArray &path, int maxRead = 2048);

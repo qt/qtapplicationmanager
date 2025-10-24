@@ -1,10 +1,9 @@
 
 qt_internal_add_module(AppManApplicationPrivate
-    CONFIG_MODULE_NAME appman_application
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        qtappmanapplicationglobal.h
         applicationinfo.cpp applicationinfo.h
         installationreport.cpp installationreport.h
         intentinfo.cpp intentinfo.h

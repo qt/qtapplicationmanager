@@ -8,7 +8,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QAbstractListModel>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 #include <QtAppManApplication/packageinfo.h>
 #include <QtAppManManager/asynchronoustask.h>
 #include <QtAppManCrypto/signature.h>
@@ -27,7 +27,7 @@ class DeinstallationTask;
 
 // A place to collect signals used internally by appman without polluting
 // PackageManager's public QML API.
-class PackageManagerInternalSignals : public QObject
+class Q_APPMANMANAGER_EXPORT PackageManagerInternalSignals : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:
@@ -44,7 +44,7 @@ Q_SIGNALS:
                           QtAM::Package *package);
 };
 
-class PackageManager : public QAbstractListModel
+class Q_APPMANMANAGER_EXPORT PackageManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.PackageManager")

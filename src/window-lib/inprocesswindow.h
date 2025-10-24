@@ -14,7 +14,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class InProcessWindow : public Window
+class Q_APPMANWINDOW_EXPORT InProcessWindow : public Window
 {
     Q_OBJECT
 

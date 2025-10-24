@@ -7,7 +7,7 @@
 #ifndef WAYLANDCOMPOSITOR_H
 #define WAYLANDCOMPOSITOR_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManWindow/qtappmanwindowglobal.h>
 
 #if QT_CONFIG(am_multi_process)
 
@@ -48,7 +48,7 @@ class WindowSurfaceQuickItem;
 // In any case, wl-shell doesn't provide all the features needed by appman, so clients using it will never work
 // perfectly.
 
-class WindowSurface : public QWaylandQuickSurface
+class Q_APPMANWINDOW_EXPORT WindowSurface : public QWaylandQuickSurface
 {
     Q_OBJECT
 public:
@@ -88,7 +88,7 @@ private:
     friend class WaylandCompositor;
 };
 
-class WaylandCompositor : public QWaylandQuickCompositor // clazy:exclude=missing-qobject-macro
+class Q_APPMANWINDOW_EXPORT WaylandCompositor : public QWaylandQuickCompositor // clazy:exclude=missing-qobject-macro
 {
     Q_OBJECT
 public:

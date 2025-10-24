@@ -17,7 +17,6 @@
 #include <QDBusConnection>
 #include "dbuscontextadaptor.h"
 
-#include "global.h"
 #include "logging.h"
 #include "application.h"
 #include "applicationmanager.h"

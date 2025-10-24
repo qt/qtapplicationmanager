@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 
-#include "global.h"
+#include "qtappmanwindowglobal.h"
 #if QT_CONFIG(am_multi_process)
 #include "logging.h"
 #include "qml-utilities.h"

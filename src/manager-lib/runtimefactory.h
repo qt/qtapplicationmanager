@@ -9,7 +9,7 @@
 #include <QtCore/QHash>
 #include <QtCore/QObject>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -19,7 +19,7 @@ class AbstractRuntimeManager;
 class AbstractContainer;
 
 
-class RuntimeFactory : public QObject
+class Q_APPMANMANAGER_EXPORT RuntimeFactory : public QObject
 {
     Q_OBJECT
 public:

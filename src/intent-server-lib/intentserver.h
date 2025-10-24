@@ -11,7 +11,7 @@
 #include <QtCore/QVector>
 #include <QtCore/QUuid>
 #include <QtCore/QQueue>
-#include <QtAppManCommon/global.h>
+#include <QtAppManIntentServer/qtappmanintentserverglobal.h>
 #include <QtAppManIntentServer/intent.h>
 
 
@@ -22,7 +22,7 @@ class IntentServerRequest;
 class IntentServerSystemInterface;
 
 
-class IntentServer : public QAbstractListModel
+class Q_APPMANINTENTSERVER_EXPORT IntentServer : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)

@@ -8,8 +8,7 @@
 #define LIBCRYPTOFUNCTION_H
 
 #include <QtCore/qglobal.h>
-#include <utility>
-#include <QtAppManCommon/global.h>
+#include <QtAppManCrypto/qtappmancryptoglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QLibrary)
 

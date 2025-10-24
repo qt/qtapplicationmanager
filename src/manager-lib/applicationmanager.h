@@ -10,7 +10,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariantList>
 #include <QtQml/QJSValue>
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 #include <QtAppManManager/application.h>
 
 
@@ -25,7 +25,7 @@ class AbstractRuntime;
 
 // A place to collect signals used internally by appman without polluting
 // ApplicationManager's public QML API.
-class ApplicationManagerInternalSignals : public QObject
+class Q_APPMANMANAGER_EXPORT ApplicationManagerInternalSignals : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:
@@ -34,7 +34,7 @@ Q_SIGNALS:
     void shutDownFinished();
 };
 
-class ApplicationManager : public QAbstractListModel
+class Q_APPMANMANAGER_EXPORT ApplicationManager : public QAbstractListModel
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "io.qt.ApplicationManager")

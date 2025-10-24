@@ -18,7 +18,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class WindowSurface;
 
-class WaylandWindow : public Window
+class Q_APPMANWINDOW_EXPORT WaylandWindow : public Window
 {
     Q_OBJECT
     Q_PROPERTY(QWaylandQuickSurface *waylandSurface READ waylandSurface NOTIFY waylandSurfaceChanged FINAL)

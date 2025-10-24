@@ -33,7 +33,7 @@ struct CacheHeader
     bool isValid(const QString &baseName, quint32 typeId = 0, quint32 typeVersion = 0) const;
 };
 
-class ConfigCachePrivate
+class Q_APPMANCOMMON_EXPORT ConfigCachePrivate
 {
 public:
     AbstractConfigCache::Options options;

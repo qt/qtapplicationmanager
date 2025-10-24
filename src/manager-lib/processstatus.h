@@ -13,7 +13,7 @@
 #include <QtCore/QVariant>
 #include <QtQml/QQmlParserStatus>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManManager/qtappmanmanagerglobal.h>
 #include <QtAppManManager/amnamespace.h>
 #include <QtAppManManager/application.h>
 #include <QtAppManMonitor/processreader.h>
@@ -21,7 +21,7 @@
 QT_BEGIN_NAMESPACE_AM
 
 // It's assumed that all ProcessStatus instances are created from the same thread (most likely the main one).
-class ProcessStatus : public QObject, public QQmlParserStatus
+class Q_APPMANMANAGER_EXPORT ProcessStatus : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)

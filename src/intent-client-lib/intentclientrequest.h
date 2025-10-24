@@ -11,13 +11,13 @@
 #include <QtCore/QUuid>
 #include <QtCore/QString>
 #include <QtCore/QVariantMap>
-#include <QtAppManCommon/global.h>
+#include <QtAppManIntentClient/qtappmanintentclientglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
 class IntentClient;
 
-class IntentClientRequest : public QObject
+class Q_APPMANINTENTCLIENT_EXPORT IntentClientRequest : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString requestId READ requestIdAsString NOTIFY requestIdChanged FINAL)

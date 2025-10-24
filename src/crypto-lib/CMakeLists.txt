@@ -1,10 +1,9 @@
 
 qt_internal_add_module(AppManCryptoPrivate
-    CONFIG_MODULE_NAME appman_crypto
-    STATIC
     EXCEPTIONS
     INTERNAL_MODULE
     SOURCES
+        qtappmancryptoglobal.h
         certificate.h certificate.cpp
         signature.cpp signature.h signature_p.h
     PUBLIC_LIBRARIES
@@ -13,7 +12,6 @@ qt_internal_add_module(AppManCryptoPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )
-
 
 qt_internal_extend_target(AppManCryptoPrivate CONDITION WIN32
     SOURCES

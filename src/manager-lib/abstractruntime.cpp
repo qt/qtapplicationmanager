@@ -5,7 +5,6 @@
 
 #include <QUuid>
 
-#include "global.h"
 #include "logging.h"
 #include "application.h"
 #include "abstractruntime.h"

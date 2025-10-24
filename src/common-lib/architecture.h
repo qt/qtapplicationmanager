@@ -4,7 +4,7 @@
 #ifndef ARCHITECTURE_H
 #define ARCHITECTURE_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 #include <QtCore/QVariantMap>
 
 QT_FORWARD_DECLARE_CLASS(QQmlEngine)
@@ -13,7 +13,7 @@ QT_BEGIN_NAMESPACE_AM
 
 namespace Architecture {
 
-QString identify(const QString &fileName);
+Q_APPMANCOMMON_EXPORT QString identify(const QString &fileName);
 
 }
 

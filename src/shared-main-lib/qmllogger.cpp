@@ -6,7 +6,6 @@
 #include <QMessageLogger>
 
 #include "qmllogger.h"
-#include "global.h"
 #include "logging.h"
 
 QT_BEGIN_NAMESPACE_AM

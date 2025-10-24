@@ -7,7 +7,7 @@
 #define WINDOWMANAGER_H
 
 #include <QtCore/QAbstractListModel>
-#include <QtAppManCommon/global.h>
+#include <QtAppManWindow/qtappmanwindowglobal.h>
 
 
 #if QT_CONFIG(am_multi_process)
@@ -35,7 +35,7 @@ class WaylandCompositor;
 
 // A place to collect signals used internally by appman without polluting
 // WindowManager's public QML API.
-class WindowManagerInternalSignals : public QObject
+class Q_APPMANWINDOW_EXPORT WindowManagerInternalSignals : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:
@@ -44,7 +44,7 @@ Q_SIGNALS:
     void shutDownFinished();
 };
 
-class WindowManager : public QAbstractListModel
+class Q_APPMANWINDOW_EXPORT WindowManager : public QAbstractListModel
 
 {
     Q_OBJECT

@@ -12,7 +12,7 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class PackageCreatorPrivate
+class Q_APPMANPACKAGE_EXPORT PackageCreatorPrivate
 {
 public:
     PackageCreatorPrivate(PackageCreator *creator, QIODevice *output, const InstallationReport &report);

@@ -10,12 +10,12 @@
 
 #include <QtCore/QObject>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManSharedMain/qtappmansharedmainglobal.h>
 #include <QtAppManMonitor/systemreader.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class GpuStatus : public QObject
+class Q_APPMANSHAREDMAIN_EXPORT GpuStatus : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(qreal gpuLoad READ gpuLoad NOTIFY gpuLoadChanged FINAL)

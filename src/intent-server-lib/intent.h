@@ -11,11 +11,11 @@
 #include <QtCore/QUrl>
 #include <QtCore/QStringList>
 #include <QtCore/QVariantMap>
-#include <QtAppManCommon/global.h>
+#include <QtAppManIntentServer/qtappmanintentserverglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class Intent : public QObject
+class Q_APPMANINTENTSERVER_EXPORT Intent : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString intentId READ intentId CONSTANT FINAL)

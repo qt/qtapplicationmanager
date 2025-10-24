@@ -12,7 +12,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class Package;
 
-class DeinstallationTask : public AsynchronousTask
+class Q_APPMANMANAGER_EXPORT DeinstallationTask : public AsynchronousTask
 {
     Q_OBJECT
 

@@ -6,7 +6,7 @@
 #ifndef QML_UTILITIES_H
 #define QML_UTILITIES_H
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManCommon/qtappmancommonglobal.h>
 #include <QtQml/QQmlEngine>
 #include <QtQml/qqml.h>
 
@@ -22,13 +22,13 @@
 QT_BEGIN_NAMESPACE_AM
 
 // recursively resolve QJSValues
-QVariant convertFromJSVariant(const QVariant &variant);
+Q_APPMANCOMMON_EXPORT QVariant convertFromJSVariant(const QVariant &variant);
 
-bool tagQmlContext(QQmlContext *context, const QVariant &value);
-QVariant findTaggedQmlContext(QObject *object);
+Q_APPMANCOMMON_EXPORT bool tagQmlContext(QQmlContext *context, const QVariant &value);
+Q_APPMANCOMMON_EXPORT QVariant findTaggedQmlContext(QObject *object);
 
-bool ensureCurrentContextIsSystemUI(QObject *object);
-bool ensureCurrentContextIsInProcessApplication(QObject *object);
+Q_APPMANCOMMON_EXPORT bool ensureCurrentContextIsSystemUI(QObject *object);
+Q_APPMANCOMMON_EXPORT bool ensureCurrentContextIsInProcessApplication(QObject *object);
 
 QT_END_NAMESPACE_AM
 

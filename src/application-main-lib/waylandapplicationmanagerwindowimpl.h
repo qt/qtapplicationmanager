@@ -9,7 +9,7 @@
 #include <memory>
 
 #include <QtCore/QPointer>
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplicationMain/qtappmanapplicationmainglobal.h>
 #include <QtAppManSharedMain/applicationmanagerwindowimpl.h>
 
 
@@ -18,7 +18,7 @@ QT_BEGIN_NAMESPACE_AM
 class ApplicationMain;
 class AMQuickWindowQmlImpl;
 
-class WaylandApplicationManagerWindowImpl : public ApplicationManagerWindowImpl
+class Q_APPMANAPPLICATIONMAIN_EXPORT WaylandApplicationManagerWindowImpl : public ApplicationManagerWindowImpl
 {
 public:
     WaylandApplicationManagerWindowImpl(ApplicationManagerWindow *window, QtAM::ApplicationMain *applicationMain);
@@ -79,7 +79,7 @@ private:
 };
 
 
-class WaylandApplicationManagerWindowAttachedImpl : public ApplicationManagerWindowAttachedImpl
+class Q_APPMANAPPLICATIONMAIN_EXPORT WaylandApplicationManagerWindowAttachedImpl : public ApplicationManagerWindowAttachedImpl
 {
 public:
     WaylandApplicationManagerWindowAttachedImpl(ApplicationManagerWindowAttached *windowAttached,

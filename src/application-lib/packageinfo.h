@@ -14,7 +14,7 @@
 
 #include <memory>
 
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplication/qtappmanapplicationglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QDataStream)
 
@@ -25,7 +25,7 @@ class IntentInfo;
 class ApplicationInfo;
 class YamlPackageScanner;
 
-class PackageInfo
+class Q_APPMANAPPLICATION_EXPORT PackageInfo
 {
 public:
     ~PackageInfo();

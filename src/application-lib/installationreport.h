@@ -10,13 +10,13 @@
 #include <QtCore/QStringList>
 #include <QtCore/QByteArray>
 #include <QtCore/QVariantMap>
-#include <QtAppManCommon/global.h>
+#include <QtAppManApplication/qtappmanapplicationglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QIODevice)
 
 QT_BEGIN_NAMESPACE_AM
 
-class InstallationReport
+class Q_APPMANAPPLICATION_EXPORT InstallationReport
 {
 public:
     InstallationReport(const QString &packageId = QString());

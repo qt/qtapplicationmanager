@@ -223,7 +223,8 @@ int Console::width()
                 consoleWidthCalculated = csbi.dwSize.X;
 #endif
         }
-        cg()->consoleWidthCached = consoleWidthCalculated;
+        if (cg()) // gcc 12+ workaround, similiar to gcc bug 106297 (cg() could be null)
+            cg()->consoleWidthCached = consoleWidthCalculated;
     }
     if ((consoleWidthCalculated <= 0) && cg()->isRunningInQtCreator)
         return 120;

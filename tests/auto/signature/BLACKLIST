@@ -9,3 +9,4 @@ rhel-9.4
 macos-13
 macos-14
 macos-15 # QTBUG-130554
+macos-26

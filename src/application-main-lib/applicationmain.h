@@ -63,6 +63,7 @@ public:
     QStringList loggingRules() const;
     QVariant useAMConsoleLogger() const;
     QString dltLongMessageBehavior() const;
+    QMap<QByteArray, QByteArray> extraJournalFields() const;
     OpenGLConfiguration openGLConfiguration() const;
     WatchdogConfiguration watchdogConfiguration() const;
     QString iconThemeName() const;
@@ -132,6 +133,7 @@ private:
     QStringList m_loggingRules;
     QVariant m_useAMConsoleLogger;
     QString m_dltLongMessageBehavior;
+    QMap<QByteArray, QByteArray> m_extraJournalFields;
 #if defined(QT_WAYLANDCLIENT_LIB)
     std::unique_ptr<WaylandQtAMClientExtension> m_waylandExtension;
 #endif

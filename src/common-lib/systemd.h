@@ -56,6 +56,7 @@ private:
     QReadWriteLock m_extraJournalFieldsLock;
     QMap<QByteArray, QByteArray> m_extraJournalFields;
     QByteArray m_extraJournalFieldsBuffer;
+    bool m_extraJournalFieldsHasSyslogIdentifier = false;
 
     friend class SystemdTest;
 };

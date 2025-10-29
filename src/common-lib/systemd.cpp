@@ -10,6 +10,10 @@
 #include "logging.h"
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#  ifndef _GNU_SOURCE
+#    define _GNU_SOURCE // for program_invocation_short_name
+#  endif
+#  include <cerrno>
 #  include <sys/mman.h>
 #  include <sys/socket.h>
 #  include <sys/stat.h>
@@ -228,39 +232,58 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
     // and with minimal copying.
     // For efficiency, the required trailing new-line is always pre-pended to the next field.
 
-    struct ::iovec iov[12] = {
-                              { (void *) priAndTid, (size_t) priAndTidLen },
-                              { (void *) "\nQT_CATEGORY=", 13 },
-                              { (void *) context.category, qstrlen(context.category) },
-                              };
+    std::array<struct ::iovec, 14> iov {{
+        { (void *) priAndTid, (size_t) priAndTidLen },
+        { (void *) "\nQT_CATEGORY=", 13 },
+        { (void *) context.category, qstrlen(context.category) },
+    }};
     size_t iovLen = 3;
 
     if (!appId.isEmpty()) {
-        iov[iovLen++] = { (void *) "\nQT_AM_APPID=", 13 };
-        iov[iovLen++] = { (void *) appId.constData(), (size_t) appId.size() };
+        iov.at(iovLen++) = { (void *) "\nQT_AM_APPID=", 13 };
+        iov.at(iovLen++) = { (void *) appId.constData(), (size_t) appId.size() };
     }
     if (context.file && context.file[0]) {
-        iov[iovLen++] = { (void *) "\nCODE_FILE=", 11 };
-        iov[iovLen++] = { (void *) context.file, (size_t) qstrlen(context.file) };
+        iov.at(iovLen++) = { (void *) "\nCODE_FILE=", 11 };
+        iov.at(iovLen++) = { (void *) context.file, (size_t) qstrlen(context.file) };
     }
     if (context.line > 0) {
         auto lineBufLen = std::snprintf(lineBuf, sizeof(lineBuf), "\nCODE_LINE=%i", context.line);
-        iov[iovLen++] = { (void *) lineBuf, (size_t) lineBufLen };
+        iov.at(iovLen++) = { (void *) lineBuf, (size_t) lineBufLen };
     }
     if (context.function && context.function[0]) {
-        iov[iovLen++] = { (void *) "\nCODE_FUNC=", 11 };
-        iov[iovLen++] = { (void *) context.function, (size_t) qstrlen(context.function) };
+        iov.at(iovLen++) = { (void *) "\nCODE_FUNC=", 11 };
+        iov.at(iovLen++) = { (void *) context.function, (size_t) qstrlen(context.function) };
     }
 
+    bool hasSyslogIdentifier = false;
     if (m_extraJournalFieldsLock.tryLockForRead()) {
         // It's better to skip the extra fields than to block logging. This can only happen if
         // someone is calling setExtraJournalFields() from a different thread, but you should do
         // this only once in the startup phase anyway.
         if (!m_extraJournalFieldsBuffer.isEmpty()) {
-            iov[iovLen++] = { (void *) m_extraJournalFieldsBuffer.constData(),
-                             (size_t) m_extraJournalFieldsBuffer.size() };
+            iov.at(iovLen++) = { (void *) m_extraJournalFieldsBuffer.constData(),
+                                (size_t) m_extraJournalFieldsBuffer.size() };
+            hasSyslogIdentifier = m_extraJournalFieldsHasSyslogIdentifier;
         }
         m_extraJournalFieldsLock.unlock();
+    }
+
+    if (!hasSyslogIdentifier) {
+        // libsystemd compatibility: add SYSLOG_IDENTIFIER if not already explicitly set
+        // and make sure it contains only valid characters (see sd_journal_sendv())
+        QByteArrayView name(program_invocation_short_name);
+        bool ok = !name.isEmpty();
+        for (char c : name) {
+            if (((c >= 0x01) && (c <= 0x1f)) || (c == 0x7f) || (c == '\'') || (c == '"')) {
+                ok = false;
+                break;
+            }
+        }
+        if (ok) {
+            iov.at(iovLen++) = { (void *) "\nSYSLOG_IDENTIFIER=", 19 };
+            iov.at(iovLen++) = { (void *) name.constData(), (size_t) name.size() };
+        }
     }
 
     bool hasNewlines = message.contains(u'\n');
@@ -285,7 +308,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
     }
     b += '\n';
 
-    iov[iovLen++] =  { (void *) b.constData(), (size_t) b.size() };
+    iov.at(iovLen++) = { (void *) b.constData(), (size_t) b.size() };
 
     // The target is always the same socket
     static const ::sockaddr_un sa {
@@ -300,7 +323,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
     struct ::msghdr mh = {
         .msg_name    = (struct ::sockaddr *) &sa,
         .msg_namelen = (socklen_t) (offsetof(struct sockaddr_un, sun_path) + ::strlen(sa.sun_path)),
-        .msg_iov     = iov,
+        .msg_iov     = iov.data(),
         .msg_iovlen  = iovLen,
         .msg_control = nullptr,
         .msg_controllen = 0,
@@ -357,7 +380,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
         return false;
     auto cleanup = qScopeGuard([=]() { ::close(memFd); });
 
-    if (::writev(memFd, iov, iovLen) < 0)
+    if (::writev(memFd, iov.data(), iovLen) < 0)
         return false;
     if (::fcntl(memFd, F_ADD_SEALS, F_SEAL_SEAL | F_SEAL_SHRINK | F_SEAL_GROW | F_SEAL_WRITE) < 0)
         return false;
@@ -402,30 +425,42 @@ void Systemd::setExtraJournalFields(const QMap<QByteArray, QByteArray> &fields)
     // Convert to a single, readily encoded buffer that uses the same efficient "new-line first"
     // format that the logToJournal() method uses for all the other fields.
 
+    bool hasSyslogIdentifier = false;
     QByteArray buffer;
-    for (auto it = fields.constBegin(); it != fields.constEnd(); ++it) {
-        if (it.key().isEmpty())
+    for (const auto &[k, v] : fields.asKeyValueRange()) {
+        if (k.isEmpty())
             throw Exception("System Journal: field names must not be empty");
-        if (!it.key().isValidUtf8())
+        if (!k.isValidUtf8())
             throw Exception("System Journal: field names must be valid UTF-8");
-        if (it.key().contains('=') || it.key().contains('\n'))
-            throw Exception("System Journal: field names must not contain '=' or new-line characters");
-        if (!it.value().isValidUtf8()) // we do not support binary data at the moment
+        for (const auto c : k) {
+            if ((c < 0x20) || (c == 0x7f) || (c == '='))
+                throw Exception("System Journal: field names must not contain control characters or '='");
+        }
+
+        if (!v.isValidUtf8()) // we do not support binary data at the moment
             throw Exception("System Journal: field values must be valid UTF-8");
-        if (it.value().contains('\n')) {
-            buffer += '\n' + it.key() + "\n12345678";
+        for (const auto c : v) {
+            if (((c < 0x20) && (c != '\n')) || (c == 0x7f))
+                throw Exception("System Journal: field values must not contain control characters");
+        }
+
+        if (v.contains('\n')) {
+            buffer += '\n' + k + "\n12345678";
             auto begin = buffer.size();
-            buffer += it.value();
+            buffer += v;
             auto end = buffer.size();
             qToLittleEndian(qint64(end - begin), buffer.data() + begin - 8);
         } else {
-            buffer += '\n' + it.key() + '=' + it.value();
+            buffer += '\n' + k + '=' + v;
         }
+        if (k == "SYSLOG_IDENTIFIER")
+            hasSyslogIdentifier = true;
     }
 
     QWriteLocker locker(&m_extraJournalFieldsLock);
     m_extraJournalFieldsBuffer = buffer;
     m_extraJournalFields = fields;
+    m_extraJournalFieldsHasSyslogIdentifier = hasSyslogIdentifier;
 }
 
 QT_END_NAMESPACE_AM

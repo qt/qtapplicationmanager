@@ -134,6 +134,11 @@ QString ApplicationMain::dltLongMessageBehavior() const
     return m_dltLongMessageBehavior;
 }
 
+QMap<QByteArray, QByteArray> ApplicationMain::extraJournalFields() const
+{
+    return m_extraJournalFields;
+}
+
 QString ApplicationMain::p2pDBusName() const
 {
     return u"am"_s;
@@ -271,6 +276,8 @@ void ApplicationMain::loadConfiguration(const QByteArray &configYaml) noexcept(f
     m_loggingRules = variantToStringList(loggingConfig.value(u"rules"_s));
     m_useAMConsoleLogger = loggingConfig.value(u"useAMConsoleLogger"_s);
     m_dltLongMessageBehavior = loggingConfig.value(u"dltLongMessageBehavior"_s).toString();
+    for (const auto &[k, v] : loggingConfig.value(u"extraJournalFields"_s).toMap().asKeyValueRange())
+        m_extraJournalFields.insert(k.toUtf8(), v.toString().toUtf8());
 
     QVariantMap dbusConfig = m_configuration.value(u"dbus"_s).toMap();
     m_dbusAddressP2P = dbusConfig.value(u"p2p"_s).toString();

@@ -29,6 +29,7 @@
 #include "notificationmanager.h"
 #include "dbus-utilities.h"
 #include "processtitle.h"
+#include "systemd.h"
 
 #include "runtimeinterface_adaptor.h"
 #include "applicationinterface_adaptor.h"
@@ -285,6 +286,14 @@ bool NativeRuntime::start()
             loggingConfig.insert(u"dltLongMessageBehavior"_s, Logging::dltLongMessageBehavior());
     }
 
+    const QMap<QByteArray, QByteArray> ejf = Systemd::instance()->extraJournalFields();
+    if (!ejf.isEmpty()) {
+        QVariantMap ejfMap;
+        for (const auto &[k, v] : ejf.asKeyValueRange())
+            ejfMap.insert(QString::fromUtf8(k), QString::fromUtf8(v));
+        loggingConfig.insert(u"extraJournalFields"_s, ejfMap);
+    }
+
     const auto &grc = GlobalRuntimeConfiguration::instance();
 
     QVariantMap uiConfig;
@@ -339,7 +348,8 @@ bool NativeRuntime::start()
 
     for (const auto *var : {
          "AM_STARTUP_TIMER", "AM_NO_CUSTOM_LOGGING", "AM_NO_CRASH_HANDLER", "AM_FORCE_COLOR_OUTPUT",
-         "AM_TIMEOUT_FACTOR", "QT_MESSAGE_PATTERN", "ASAN_OPTIONS", "LSAN_OPTIONS", "TSAN_OPTIONS" }) {
+         "AM_TIMEOUT_FACTOR", "QT_MESSAGE_PATTERN", "ASAN_OPTIONS", "LSAN_OPTIONS", "TSAN_OPTIONS",
+         "JOURNAL_STREAM" }) {
         if (qEnvironmentVariableIsSet(var))
             env.insert(QString::fromLatin1(var), qEnvironmentVariable(var));
     }

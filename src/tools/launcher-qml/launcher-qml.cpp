@@ -48,6 +48,7 @@
 #include "processtitle.h"
 #include "qml-utilities.h"
 #include "launcher-qml_p.h"
+#include "systemd.h"
 #include "applicationmanagerwindow.h"
 
 using namespace Qt::StringLiterals;
@@ -105,6 +106,8 @@ int main(int argc, char *argv[])
 
         if (directLoadManifest.isEmpty())
             am->loadConfiguration();
+
+        Systemd::instance()->setExtraJournalFields(am->extraJournalFields());
 
         const QVariantMap ca = am->runtimeConfiguration().value(u"crashAction"_s).toMap();
         const QVariantMap ca_sfti = ca.value(u"stackFramesToIgnore"_s).toMap();

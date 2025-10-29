@@ -2,7 +2,8 @@
     "Project": {
         "Git": {
             "_active": true,
-            "sourceserver_gitdir": "/data/axivion/databases/$(env:TESTED_MODULE_COIN).git"
+            "sourceserver_gitdir": "/data/axivion/databases/$(env:TESTED_MODULE_COIN).git",
+            "sourceserver_remote_url": "ssh://codereview.qt-project.org:29418/qt/$(env:TESTED_MODULE_COIN)"
         },
         "Project-GlobalOptions": {
             "ci_mode": {

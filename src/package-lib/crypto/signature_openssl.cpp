@@ -42,10 +42,10 @@ struct X509_NAME;
 struct X509_NAME_ENTRY;
 struct X509_STORE;
 struct X509_STORE_CTX;
-typedef int (*X509_STORE_CTX_verify_cb)(int, X509_STORE_CTX *);
+using X509_STORE_CTX_verify_cb = int (*)(int, X509_STORE_CTX *);
 struct d2i_of_void;
 struct i2d_of_void;
-typedef int (*pem_password_cb)(char *, int, int, void *);
+using pem_password_cb = int (*)(char *, int, int, void *);
 
 static QT_AM_LIBCRYPTO_FUNCTION(ASN1_BIT_STRING_get_bit, int(*)(ASN1_BIT_STRING *, int), 0);
 static QT_AM_LIBCRYPTO_FUNCTION(ASN1_INTEGER_to_BN, BIGNUM *(*)(const ASN1_INTEGER *, BIGNUM *), nullptr);
@@ -193,7 +193,7 @@ QString CertificateParser::parseASN1String(const ASN1_STRING *asn1)
     if (utf8Len < 0)
         throw OpenSslException("failed to convert ASN1_STRING to UTF8");
 
-    return QString::fromUtf8(reinterpret_cast<const char *>(utf8Ptr), utf8Len);
+    return QString::fromUtf8(QByteArrayView(utf8Ptr, utf8Len));
 }
 
 QDateTime CertificateParser::parseASN1Time(const ASN1_TIME *asn1)
@@ -201,12 +201,12 @@ QDateTime CertificateParser::parseASN1Time(const ASN1_TIME *asn1)
     if (!asn1)
         throw Exception("cannot parse a null ASN1_TIME");
 
-    struct ::tm tm;
+    struct ::tm tm { };
     if (!am_ASN1_TIME_to_tm(asn1, &tm))
         throw OpenSslException("could not parse ASN1 time");
 
-    return QDateTime(QDate(tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday),
-                     QTime(tm.tm_hour, tm.tm_min, tm.tm_sec), QTimeZone::UTC);
+    return { QDate(tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday),
+            QTime(tm.tm_hour, tm.tm_min, tm.tm_sec), QTimeZone::UTC };
 }
 
 QString CertificateParser::parseASN1BigInteger(const ASN1_INTEGER *asn1)
@@ -243,12 +243,11 @@ QVariantMap CertificateParser::parseX509Name(X509_NAME *name)
         if (!asn1Str)
             throw OpenSslException("could not get X509_NAME_ENTRY data");
 
-        char buffer[128]; // the docs say "80 is plenty"
-        buffer[sizeof(buffer) - 1] = 0;
-        int bufferLen = am_OBJ_obj2txt(buffer, sizeof(buffer) - 1, asn1Obj, 1 /*prefer oid*/);
+        std::array<char, 128> buffer { }; // the docs say "80 is plenty"
+        int bufferLen = am_OBJ_obj2txt(buffer.data(), buffer.size() - 1, asn1Obj, 1 /*prefer oid*/);
         if (bufferLen <= 0)
             throw OpenSslException("could not get OID from ASN1_OBJECT");
-        const QString oid = QString::fromLatin1(buffer, -1);
+        const QString oid = QString::fromLatin1(buffer.data(), -1);
         if (oid.isEmpty())
             throw Exception("OID of name entry is empty");
 
@@ -297,7 +296,7 @@ Certificate CertificateParser::parseX509(X509 *x509)
 
         for (int i = 0; i < am_OPENSSL_sk_num(sans); ++i) {
             if (auto san = static_cast<GENERAL_NAME *>(am_OPENSSL_sk_value(sans, i))) {
-                int type;
+                int type = 0;
                 if (auto *dnsName = static_cast<ASN1_STRING *>(am_GENERAL_NAME_get0_value(san, &type))) {
                     if (type == 6 /*GEN_URI*/)
                         subjectAlternativeNames << parseASN1String(dnsName);
@@ -361,7 +360,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
         throw OpenSslException("Could not write the PKCS#7 signature to memory");
     OpenSslPointer<unsigned char> signatureData { signatureDataRaw };
 
-    return QByteArray { reinterpret_cast<const char *>(signatureDataRaw), signatureSize };
+    return QByteArrayView(signatureDataRaw, signatureSize).toByteArray();
 }
 
 Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signaturePkcs7,
@@ -427,7 +426,7 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
         if (int n = am_X509_STORE_CTX_get_error(ctx)) {
             if (void *exdata = am_X509_STORE_get_ex_data(am_X509_STORE_CTX_get0_store(ctx), 0)) {
                 if (const char *str = am_X509_verify_cert_error_string(n))
-                    *reinterpret_cast<QString *>(exdata) = QString::fromUtf8(str);
+                    *static_cast<QString *>(exdata) = QString::fromUtf8(str);
             }
         }
         return ok;

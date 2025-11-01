@@ -10,8 +10,6 @@
 #include <QDebug>
 #include <QMessageAuthenticationCode>
 
-#include <exception>
-
 #include "qtyaml.h"
 #include "packageinfo.h"
 #include "utilities.h"
@@ -24,7 +22,7 @@ QT_BEGIN_NAMESPACE_AM
 
 // you can generate a new set with
 //   xxd -i <(dd if=/dev/urandom bs=64 count=1)
-static const unsigned char privateHmacKeyData[64] = {
+static const std::array<unsigned char, 64> privateHmacKeyData = {
     0xd8, 0xde, 0x41, 0x25, 0xee, 0x24, 0xd0, 0x19, 0xa2, 0x43, 0x06, 0x22,
     0x30, 0xa4, 0x87, 0xf0, 0x12, 0x07, 0xe9, 0xd3, 0x1c, 0xd4, 0x6f, 0xd6,
     0x1c, 0xc5, 0x38, 0x22, 0x2d, 0x7a, 0xe9, 0x90, 0x1e, 0xdf, 0xc8, 0x85,
@@ -200,8 +198,7 @@ void InstallationReport::deserialize(QIODevice *from)
 
         // see if the file has been tampered with by checking the hmac
         QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(u"hmac"_s).toString().toLatin1());
-        QByteArray hmacKey = QByteArray::fromRawData(reinterpret_cast<const char *>(privateHmacKeyData),
-                                                     sizeof(privateHmacKeyData));
+        QByteArrayView hmacKey { privateHmacKeyData.data(), privateHmacKeyData.size() };
 
         QByteArray out = QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle);
         QByteArray hmacCalc= QMessageAuthenticationCode::hash(out, hmacKey, QCryptographicHash::Sha256);
@@ -251,9 +248,8 @@ bool InstallationReport::serialize(QIODevice *to) const
     docs << root;
 
     // generate hmac to prevent tampering
-    QByteArray hmacKey = QByteArray::fromRawData(reinterpret_cast<const char *>(privateHmacKeyData),
-                                                 sizeof(privateHmacKeyData));
-    QByteArray out = QtYaml::yamlFromVariantDocuments({ docs[0], docs[1] }, QtYaml::BlockStyle);
+    QByteArrayView hmacKey { privateHmacKeyData.data(), privateHmacKeyData.size() };
+    QByteArray out = YamlEmitter::fromVariantDocuments({ docs[0], docs[1] }, YamlEmitter::Style::Block);
     QByteArray hmacCalc= QMessageAuthenticationCode::hash(out, hmacKey, QCryptographicHash::Sha256);
 
     // add another YAML document with a single key/value (way faster than using QtYaml)

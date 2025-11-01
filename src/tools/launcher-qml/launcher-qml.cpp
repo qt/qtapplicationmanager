@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(u"Qt Application Manager QML Launcher"_s);
     QCoreApplication::setOrganizationName(u"QtProject"_s);
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
-    QCoreApplication::setApplicationVersion(QString::fromLatin1(QT_AM_VERSION_STR));
+    QCoreApplication::setApplicationVersion(QStringLiteral(QT_AM_VERSION_STR));
 
     if (Logging::isDltAvailable()) {
         if (qEnvironmentVariableIntValue("AM_NO_DLT_LOGGING") == 1)
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
 
         am->setupDBusConnections();
         StartupTimer::instance()->checkpoint("after dbus initialization");
-        controller.reset(new Controller(am.get(), quicklaunched));
+        controller = std::make_unique<Controller>(am.get(), quicklaunched);
 
     } catch (const std::exception &e) {
         qCCritical(LogQmlRuntime) << "ERROR:" << e.what();
@@ -270,7 +270,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     if (Logging::isDltAvailable() && Logging::isDltEnabled()) {
         // Change the DLT Application description, to easily identify the application on the DLT logs.
-        const QVariantMap dlt = qdbus_cast<QVariantMap>(application.value(u"dlt"_s));
+        const auto dlt = qdbus_cast<QVariantMap>(application.value(u"dlt"_s));
         QByteArray dltId = dlt.value(u"id"_s).toString().toLocal8Bit();
         QByteArray dltDescription = dlt.value(u"description"_s).toString().toLocal8Bit();
 
@@ -292,7 +292,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     am->setApplication(convertFromDBusVariant(application).toMap());
     am->setSystemProperties(convertFromDBusVariant(systemProperties).toMap());
 
-    QVariantMap runtimeParameters = qdbus_cast<QVariantMap>(application.value(u"runtimeParameters"_s));
+    auto runtimeParameters = qdbus_cast<QVariantMap>(application.value(u"runtimeParameters"_s));
 
     qCDebug(LogQmlRuntime) << "Loading" << applicationId << "from" << qmlFile;
     if (!document.isEmpty())
@@ -419,7 +419,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         if (!m_window) {
             QQuickItem *contentItem = qobject_cast<QQuickItem *>(topLevel);
             if (contentItem) {
-                QQuickView* view = new QQuickView(&m_engine, nullptr);
+                auto* view = new QQuickView(&m_engine, nullptr);
                 m_window = view;
                 view->setContent(qmlFileUrl, nullptr, topLevel);
                 view->setVisible(contentItem->isVisible());
@@ -471,10 +471,11 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
 bool Controller::eventFilter(QObject *o, QEvent *e)
 {
-    if (e && (e->type() == QEvent::Show) && qobject_cast<QQuickWindow *>(o)) {
-        auto window = static_cast<QQuickWindow *>(o);
-        m_allWindows.append(window);
-        updateSlowAnimationsForWindow(window);
+    if (e && (e->type() == QEvent::Show)) {
+        if (auto window = qobject_cast<QQuickWindow *>(o)) {
+            m_allWindows.append(window);
+            updateSlowAnimationsForWindow(window);
+        }
     }
     return QObject::eventFilter(o, e);
 }
@@ -483,7 +484,7 @@ void Controller::updateSlowAnimationsForWindow(QQuickWindow *window)
 {
     // QUnifiedTimer are thread-local. To also slow down animations running in the SG thread
     // we need to enable the slow mode in this timer as well.
-    QMetaObject::Connection *connection = new QMetaObject::Connection;
+    auto *connection = new QMetaObject::Connection;
     *connection = connect(window, &QQuickWindow::beforeRendering,
                           this, [connection] {
         if (connection && *connection) {

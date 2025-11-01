@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include <QFile>
-#include <errno.h>
+#include <cerrno>
 
 #include "exception.h"
 

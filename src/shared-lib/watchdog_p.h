@@ -62,7 +62,7 @@ public:
         RenderState m_longestStuckType = Idle;
 
         // written from the render thread, read from the watchdog thread
-        QAtomicInteger<qint64> m_timer = { 0 };
+        QAtomicInteger<quint64> m_timer = { 0 };
         QAtomicInteger<char> m_renderState = { char(Idle) };
         QPointer<QThread> m_renderThread;
         quintptr m_renderThreadHandle = 0;
@@ -80,7 +80,7 @@ public:
         std::chrono::milliseconds m_longestStuckDuration = { };
 
         // written from the watched thread, read from the watchdog thread
-        QAtomicInteger<qint64> m_timer = { 0 };
+        QAtomicInteger<quint64> m_timer = { 0 };
         QAtomicInteger<quintptr> m_threadHandle = 0; // QPointer is not thread-safe
     };
     void eventNotify(EventLoopData *eld, bool begin);

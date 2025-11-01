@@ -24,8 +24,6 @@ public:
     virtual void attach(ApplicationInterface *iface);
     virtual void detach(ApplicationInterface *iface);
 
-    virtual ~ApplicationInterfaceImpl() = default;
-
     QList<ApplicationInterface *> amInterfaces();
 
     virtual QString applicationId() const = 0;

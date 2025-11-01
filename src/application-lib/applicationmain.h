@@ -41,7 +41,7 @@ class Q_APPMANAPPLICATION_EXPORT ApplicationMain : public ApplicationMainBase, p
     Q_OBJECT
 public:
     ApplicationMain(int &argc, char **argv) noexcept;
-    virtual ~ApplicationMain() override;
+    ~ApplicationMain() override;
 
     static ApplicationMain *instance();
 

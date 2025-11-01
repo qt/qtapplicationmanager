@@ -41,7 +41,7 @@ public:
     };
     Q_ENUM(Visibility)
 
-    Intent();
+    Intent() = default;
 
     QString intentId() const;
     Visibility visibility() const;

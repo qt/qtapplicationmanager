@@ -389,7 +389,7 @@ QStringList Application::categories() const
 QUrl Application::icon() const
 {
     if (info()->icon().isEmpty())
-        return QUrl();
+        return { };
 
     return QUrl::fromLocalFile(packageInfo()->baseDir().absoluteFilePath(info()->icon()));
 }

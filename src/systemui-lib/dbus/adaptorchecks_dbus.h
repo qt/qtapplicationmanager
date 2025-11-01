@@ -38,7 +38,7 @@ namespace DBusAdaptorChecks {
 bool isDevelopmentModeBus(const QDBusAbstractAdaptor *a);
 
 QStringList filterPackageListByAccess(const QDBusAbstractAdaptor *a, const QStringList &inList,
-                                      std::function<QString(const QString &)> mapToPackageId = [](const QString &x) { return x; });
+                                      const std::function<QString (const QString &)> &mapToPackageId = { });
 
 QStringList filterTaskListByAccess(const QDBusAbstractAdaptor *a, const QStringList &taskList);
 

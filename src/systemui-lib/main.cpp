@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:execute-external-code
 
+#include <iostream>
 #include <memory>
 #include <cstdlib>
 #include <qglobal.h>
@@ -142,15 +143,17 @@ Main::Main(int &argc, char **argv, InitFlags initFlags)
         once = true;
 
         UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
-                                               { SIGINT, SIGTERM },
-                                               [](int sig) {
+                                               { SIGINT, SIGTERM }, [](int sig) {
             UnixSignalHandler::instance()->resetToDefault(sig);
-            static_cast<Main *>(QCoreApplication::instance())->shutDown((sig == SIGINT) ? "Ctrl+C" : "SIGTERM");
+            if (auto *main = qobject_cast<Main *>(QCoreApplication::instance()))
+                main->shutDown((sig == SIGINT) ? "Ctrl+C" : "SIGTERM");
         });
 
         atexit([]() {
-            if (unexpectedShutdown)
-                fputs("ERROR: Some code outside the Qt ApplicationManager called exit()\n", stderr);
+            if (unexpectedShutdown) {
+                std::cerr << "ERROR: Some code outside the Qt ApplicationManager called exit()"
+                          << std::endl;
+            }
             unexpectedShutdown = true;
         });
     }
@@ -194,7 +197,7 @@ void Main::setup(const Configuration *cfg) noexcept(false)
 
     CrashHandler::setCrashActionConfiguration(cfg->yaml.crashAction.printBacktrace,
                                               cfg->yaml.crashAction.printQmlStack,
-                                              cfg->yaml.crashAction.waitForGdbAttach.count(),
+                                              int(cfg->yaml.crashAction.waitForGdbAttach.count()),
                                               cfg->yaml.crashAction.dumpCore,
                                               cfg->yaml.crashAction.dumpCoreOnWatchdogKill,
                                               cfg->yaml.crashAction.stackFramesToIgnore.onCrash,
@@ -534,10 +537,10 @@ void Main::setupIntents(const Configuration *cfg)
 {
     m_intentServer = IntentAMImplementation::createIntentServerAndClientInstance(
         m_packageManager,
-        cfg->yaml.intents.timeouts.disambiguation.count(),
-        cfg->yaml.intents.timeouts.startApplication.count(),
-        cfg->yaml.intents.timeouts.replyFromApplication.count(),
-        cfg->yaml.intents.timeouts.replyFromSystem.count());
+        int(cfg->yaml.intents.timeouts.disambiguation.count()),
+        int(cfg->yaml.intents.timeouts.startApplication.count()),
+        int(cfg->yaml.intents.timeouts.replyFromApplication.count()),
+        int(cfg->yaml.intents.timeouts.replyFromSystem.count()));
     StartupTimer::instance()->checkpoint("after IntentServer instantiation");
 }
 
@@ -578,7 +581,7 @@ void Main::setupQuickLauncher(const Configuration *cfg)
         m_quickLauncher = QuickLauncher::createInstance(cfg->yaml.quicklaunch.runtimesPerContainer,
                                                         cfg->yaml.quicklaunch.idleLoad,
                                                         cfg->yaml.quicklaunch.failedStartLimit,
-                                                        cfg->yaml.quicklaunch.failedStartLimitIntervalSec.count());
+                                                        int(cfg->yaml.quicklaunch.failedStartLimitIntervalSec.count()));
         StartupTimer::instance()->checkpoint("after quick-launcher setup");
     } else {
         qCDebug(LogSystem) << "Not setting up the quick-launch pool (runtimesPerContainer is 0)";
@@ -746,7 +749,7 @@ void Main::setupWindowManager(const Configuration *cfg)
             }
         }
 #endif
-        return QString();
+        return { };
     };
 
     m_windowManager = WindowManager::createInstance(m_engine, waylandSocketName());
@@ -788,7 +791,7 @@ void Main::createInstanceInfoFile(const QString &instanceId) noexcept(false)
 
     for (int i = 0; i < 32; ++i) { // Wayland sockets are limited to 32 instances as well
         QString tryPattern = filePattern.arg(i);
-        lockf.reset(new QLockFile(rtDir.absoluteFilePath(tryPattern + u".lock"_s)));
+        lockf = std::make_unique<QLockFile>(rtDir.absoluteFilePath(tryPattern + u".lock"_s));
         lockf->setStaleLockTime(0);
         if (lockf->tryLock()) {
             fileName = tryPattern;
@@ -971,7 +974,7 @@ void Main::setupDBus(const Configuration *cfg)
                 .arg(m_p2pServer->lastError().message());
         }
 
-        auto dbusMap = m_infoFileContents[u"dbus"_s].toMap();
+        auto dbusMap = m_infoFileContents.value(u"dbus"_s).toMap();
         const QString dbusAddress = u"p2p:"_s + m_p2pServer->address();
 
         qCDebug(LogDBus) << "Registering development mode D-Bus services:";

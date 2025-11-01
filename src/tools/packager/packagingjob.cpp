@@ -4,9 +4,8 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 // Qt-Security score:critical reason:cryptography
 
+#include <iostream>
 #include <memory>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include <QFile>
 #include <QSaveFile>
@@ -44,7 +43,7 @@ PackagingJob *PackagingJob::create(const QString &destinationName, const QString
                                    bool includeExtendedAttributes, const QString &prePackageCmd,
                                    bool asJson)
 {
-    PackagingJob *p = new PackagingJob();
+    auto *p = new PackagingJob();
     p->m_mode = Create;
     p->m_includeExtendedAttributes = includeExtendedAttributes;
     p->m_prePackageCmd = prePackageCmd;
@@ -60,7 +59,7 @@ PackagingJob *PackagingJob::developerSign(const QString &sourceName, const QStri
                                   const QString &certificateFile, const QString &passPhrase,
                                   bool asJson)
 {
-    PackagingJob *p = new PackagingJob();
+    auto *p = new PackagingJob();
     p->m_mode = DeveloperSign;
     p->m_asJson = asJson;
     p->m_sourceName = sourceName;
@@ -71,9 +70,9 @@ PackagingJob *PackagingJob::developerSign(const QString &sourceName, const QStri
 }
 
 PackagingJob *PackagingJob::developerVerify(const QString &sourceName, const QStringList &certificateFiles,
-                                            const QStringList crlFiles)
+                                            const QStringList &crlFiles)
 {
-    PackagingJob *p = new PackagingJob();
+    auto *p = new PackagingJob();
     p->m_mode = DeveloperVerify;
     p->m_sourceName = sourceName;
     p->m_certificateFiles = certificateFiles;
@@ -85,7 +84,7 @@ PackagingJob *PackagingJob::storeSign(const QString &sourceName, const QString &
                               const QString &certificateFile, const QString &passPhrase,
                               const QString &hardwareId, bool asJson)
 {
-    PackagingJob *p = new PackagingJob();
+    auto *p = new PackagingJob();
     p->m_mode = StoreSign;
     p->m_asJson = asJson;
     p->m_sourceName = sourceName;
@@ -99,7 +98,7 @@ PackagingJob *PackagingJob::storeSign(const QString &sourceName, const QString &
 PackagingJob *PackagingJob::storeVerify(const QString &sourceName, const QStringList &certificateFiles,
                                         const QStringList &crlFiles, const QString &hardwareId)
 {
-    PackagingJob *p = new PackagingJob();
+    auto *p = new PackagingJob();
     p->m_mode = StoreVerify;
     p->m_sourceName = sourceName;
     p->m_certificateFiles = certificateFiles;
@@ -117,9 +116,6 @@ int PackagingJob::resultCode() const
 {
     return m_resultCode;
 }
-
-PackagingJob::PackagingJob()
-{ }
 
 void PackagingJob::execute() noexcept(false)
 {
@@ -153,9 +149,9 @@ void PackagingJob::execute() noexcept(false)
 
             auto header = p.parseHeader();
             if (header.first == u"am-application" && header.second == 1) {
-                fprintf(stderr, "WARNING: 'info.yaml' is still using the old format (type '%s', version '%d').\n"
-                                "         This is going to be deprecated in a future release.\n",
-                        qPrintable(header.first), header.second);
+                std::cerr << "WARNING: 'info.yaml' is still using the old format (type '"
+                          << qPrintable(header.first) << "', version '" << header.second << "').\n"
+                          << "         This is going to be deprecated in a future release.\n";
             }
         } catch (...) {
         }
@@ -177,7 +173,7 @@ void PackagingJob::execute() noexcept(false)
         }
 
         // check intents
-        auto intents = package->intents();
+        const auto intents = package->intents();
         for (const auto *intent : intents) {
             const auto icon = intent->icon();
             if (!icon.isEmpty() && !QFile::exists(source.absoluteFilePath(icon))) {
@@ -187,7 +183,7 @@ void PackagingJob::execute() noexcept(false)
         }
 
         // check applications
-        auto applications = package->applications();
+        const auto applications = package->applications();
         if (applications.isEmpty())
             throw Exception(Error::Package, "no applications defined in package");
         for (const auto *application : applications) {
@@ -220,8 +216,9 @@ void PackagingJob::execute() noexcept(false)
 
             // prevent the packaging of symlinks
             if (entryInfo.isSymLink()) {
-                fprintf(stderr, "WARNING: sym-links are not supported (found: %s -> %s)\n",
-                        qPrintable(entryInfo.filePath()), qPrintable(entryInfo.symLinkTarget()));
+                std::cerr << "WARNING: sym-links are not supported (found: "
+                          << qPrintable(entryInfo.filePath()) << " -> "
+                          << qPrintable(entryInfo.symLinkTarget()) << ")\n";
                 continue;
             }
 

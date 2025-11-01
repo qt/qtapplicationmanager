@@ -85,7 +85,7 @@ private:
     struct Impl
     {
         Impl(WindowItem *windowItem) : q(windowItem) {}
-        virtual ~Impl() {}
+        virtual ~Impl() = default;
         virtual void setup(Window *window) = 0;
         virtual void tearDown() = 0;
         virtual void updateSize(const QSizeF &newSize) = 0;

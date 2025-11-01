@@ -72,11 +72,11 @@ ApplicationManagerWindowAttached *ApplicationManagerWindow::qmlAttachedPropertie
 
 QQmlListProperty<QObject> ApplicationManagerWindow::data()
 {
-    return QQmlListProperty<QObject>(this, nullptr,
-                                     ApplicationManagerWindow::data_append,
-                                     ApplicationManagerWindow::data_count,
-                                     ApplicationManagerWindow::data_at,
-                                     ApplicationManagerWindow::data_clear);
+    return { this, nullptr,
+            ApplicationManagerWindow::data_append,
+            ApplicationManagerWindow::data_count,
+            ApplicationManagerWindow::data_at,
+            ApplicationManagerWindow::data_clear };
 }
 
 void ApplicationManagerWindow::data_append(QQmlListProperty<QObject> *property, QObject *object)

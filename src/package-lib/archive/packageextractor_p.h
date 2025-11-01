@@ -47,7 +47,7 @@ private:
     QUrl m_url;
     QString m_destinationPath;
     std::function<void(const QString &)> m_fileExtractedCallback;
-    std::function<void(const QString &, const QByteArray &, const QByteArray &)> m_extendedAttributeCallback;
+    std::function<void(const QString &, QByteArrayView, QByteArrayView)> m_extendedAttributeCallback;
     bool m_failed = false;
     QAtomicInt m_canceled;
     Error m_errorCode = Error::None;

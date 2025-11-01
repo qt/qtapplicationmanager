@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:execute-external-code
 
-#include <tuple>
+#include <iostream>
 
 #include <QJsonDocument>
 #include <QSocketNotifier>
@@ -443,7 +443,7 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
     m_process = new QProcess(this);
     connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
         Q_ASSERT(sizeof(QProcess::ProcessError) == sizeof(ContainerInterface::ProcessError));
-        ContainerInterface::ProcessError processError = static_cast<ContainerInterface::ProcessError>(error);
+        auto processError = static_cast<ContainerInterface::ProcessError>(error);
 
         emit errorOccured(processError);
     });
@@ -476,7 +476,7 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
     }
 
     // Create a pipe which is used by bwrap to communicate its status e.g. the used namespaces
-    if (::pipe2(m_statusPipeFd, O_NONBLOCK) == -1) {
+    if (::pipe2(m_statusPipeFd.data(), O_NONBLOCK) == -1) {
         qCWarning(lcBwrap) << "Couldn't create the status pipe:" << qt_error_string(errno);
         return false;
     }
@@ -488,8 +488,10 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
     m_process->setChildProcessModifier([this, stopBeforeExec]() {
           // copied from processcontainer, this could be moved into a helper
         if (stopBeforeExec) {
-            fprintf(stderr, "\n*** a 'process' container was started in stopped state ***\nthe process is suspended via SIGSTOP and you can attach a debugger to it via\n\n   gdb -p %d\n\n", getpid());
-            raise(SIGSTOP);
+            std::cerr << "\n*** a 'process' container was started in stopped state ***\n"
+                         "The process is suspended via SIGSTOP and you can attach a debugger to it via\n"
+                         "\n   gdb -p " << ::getpid() << "\n\n";
+            ::raise(SIGSTOP);
         }
         // duplicate any requested redirections to the respective stdin/out/err fd. Also make sure to
         // close the original fd: otherwise we would block the tty where the fds originated from.
@@ -505,11 +507,11 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
     });
 
     // read from fifo and dump to message handler
-    QSocketNotifier *sn = new QSocketNotifier(m_statusPipeFd[0], QSocketNotifier::Read, this);
+    auto *sn = new QSocketNotifier(m_statusPipeFd[0], QSocketNotifier::Read, this);
     connect(sn, &QSocketNotifier::activated, this, [this, sn](int pipeFd) {
         do {
-            char buffer[1024];
-            qsizetype bytesRead = qt_safe_read(pipeFd, buffer, sizeof(buffer));
+            std::array<char, 1024> buffer;
+            qsizetype bytesRead = qt_safe_read(pipeFd, buffer.data(), buffer.size());
 
             if (bytesRead <= 0) {
                 // eof or hard error
@@ -519,7 +521,7 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
                 }
                 break;
             }
-            m_statusBuffer.append(buffer, bytesRead);
+            m_statusBuffer.append(buffer.data(), bytesRead);
         } while (true);
 
         do {

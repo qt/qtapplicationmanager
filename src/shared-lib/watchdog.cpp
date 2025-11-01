@@ -62,7 +62,7 @@ static const char *renderStateName(WatchdogPrivate::RenderState rs)
     return "";
 }
 
-QDebug &operator<<(QDebug &dbg, WatchdogPrivate::RenderState rs)
+QDebug operator<<(QDebug dbg, WatchdogPrivate::RenderState rs)
 {
     dbg << renderStateName(rs);
     return dbg;
@@ -327,7 +327,7 @@ void WatchdogPrivate::watchEventLoop(QThread *thread)
     // can be accessed quickly.
     // In order to set this up, we need to execute setLocalData() on the watched thread though:
 
-    QObject *dummy = new QObject();
+    auto *dummy = new QObject();
     dummy->moveToThread(thread);
     QMetaObject::invokeMethod(dummy, [=]() {
             WatchdogPrivate::s_eventLoopData.setLocalData(eld);

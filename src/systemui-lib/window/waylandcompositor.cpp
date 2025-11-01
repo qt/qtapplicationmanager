@@ -4,6 +4,8 @@
 // Copyright (C) 2016 Klarälvdalens Datakonsult AB, a KDAB Group company
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <iostream>
+
 #include <QQuickView>
 #include <QWaylandOutput>
 #include <QWaylandSeat>
@@ -338,7 +340,7 @@ void WaylandCompositor::setupLogging()
         ::fprintf(f, ")\n");
 
         if (::fclose(f) == 0) {
-            ::fprintf(stderr, "%s", buffer);
+            std::cerr << buffer;
             ::free(buffer);
         }
     }, this);
@@ -355,7 +357,7 @@ void WaylandCompositor::registerOutputWindow(QQuickWindow* window)
     //TODO: check if upstreaming to QtWaylandCompositor is an option
     connect(window, &QQuickWindow::activeFocusItemChanged,
             this, [this, window]() {
-        QQuickItem *lastFocusItem = window->property("_am_lastFocusItem").value<QQuickItem *>();
+        auto *lastFocusItem = window->property("_am_lastFocusItem").value<QQuickItem *>();
         QQuickItem *currentFocusItem = window->activeFocusItem();
 
         window->setProperty("_am_lastFocusItem", QVariant::fromValue(currentFocusItem));
@@ -390,8 +392,8 @@ void WaylandCompositor::doCreateSurface(QWaylandClient *client, uint id, int ver
 
 void WaylandCompositor::createWlSurface(QWaylandSurface *surface, const QWaylandResource &resource)
 {
-    WindowSurface *windowSurface = static_cast<WindowSurface *>(surface);
-    QWaylandWlShellSurface *ss = new QWaylandWlShellSurface(m_wlShell, windowSurface, resource);
+    auto *windowSurface = static_cast<WindowSurface *>(surface);
+    auto *ss = new QWaylandWlShellSurface(m_wlShell, windowSurface, resource);
     windowSurface->setShellSurface(ss);
 
     connect(windowSurface, &QWaylandSurface::hasContentChanged, this, [this, windowSurface]() {
@@ -403,7 +405,7 @@ void WaylandCompositor::createWlSurface(QWaylandSurface *surface, const QWayland
 
 void WaylandCompositor::onXdgSurfaceCreated(QWaylandXdgSurface *xdgSurface)
 {
-    WindowSurface *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
+    auto *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
 
     Q_ASSERT(!windowSurface->m_wlSurface);
     windowSurface->m_xdgSurface = xdgSurface;
@@ -417,7 +419,7 @@ void WaylandCompositor::onXdgSurfaceCreated(QWaylandXdgSurface *xdgSurface)
 
 void WaylandCompositor::onTopLevelCreated(QWaylandXdgToplevel *topLevel, QWaylandXdgSurface *xdgSurface)
 {
-    WindowSurface *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
+    auto *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
 
     Q_ASSERT(!windowSurface->m_wlSurface);
     Q_ASSERT(windowSurface->m_xdgSurface == xdgSurface);
@@ -427,7 +429,7 @@ void WaylandCompositor::onTopLevelCreated(QWaylandXdgToplevel *topLevel, QWaylan
 
 void WaylandCompositor::onPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurface *xdgSurface)
 {
-    WindowSurface *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
+    auto *windowSurface = static_cast<WindowSurface*>(xdgSurface->surface());
 
     Q_ASSERT(!windowSurface->m_wlSurface);
     Q_ASSERT(windowSurface->m_xdgSurface == xdgSurface);

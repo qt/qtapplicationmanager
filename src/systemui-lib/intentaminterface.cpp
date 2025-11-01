@@ -151,7 +151,7 @@ void IntentServerAMImplementation::initialize(IntentServer *server)
     connect(AbstractRuntime::signaler(), &RuntimeSignaler::aboutToStart,
             intentServer(), [this](AbstractRuntime *runtime) {
 #if QT_CONFIG(am_multi_process)
-                if (NativeRuntime *nativeRuntime = qobject_cast<NativeRuntime *>(runtime)) {
+                if (auto *nativeRuntime = qobject_cast<NativeRuntime *>(runtime)) {
                     connect(nativeRuntime, &NativeRuntime::applicationConnectedToPeerDBus,
                             intentServer(), [this](const QDBusConnection &connection, Application *application) {
                                 qCDebug(LogIntents) << "IntentServer: applicationConnectedToPeerDBus"
@@ -178,7 +178,7 @@ void IntentServerAMImplementation::initialize(IntentServer *server)
                             });
                 } else
 #endif // defined(AM_MULTI_PROCESS)
-                if (QmlInProcRuntime *qmlRuntime = qobject_cast<QmlInProcRuntime *>(runtime)) {
+                if (auto *qmlRuntime = qobject_cast<QmlInProcRuntime *>(runtime)) {
                     connect(qmlRuntime, &QmlInProcRuntime::stateChanged,
                             intentServer(), [this, qmlRuntime](Am::RunState newState) {
                                 if (!qmlRuntime->application())
@@ -425,9 +425,9 @@ IntentServerDBusIpcConnection::IntentServerDBusIpcConnection(const QDBusConnecti
                                                              Application *application,
                                                              IntentServerAMImplementation *iface)
     : IntentServerIpcConnection(false /* !inProcess*/, application, iface)
+    , m_connectionName(connection.name())
+    , m_adaptor(new IntentInterfaceAdaptor(this))
 {
-    m_connectionName = connection.name();
-    m_adaptor = new IntentInterfaceAdaptor(this);
     QDBusConnection(connection).registerObject(u"/IntentServer"_s, this, QDBusConnection::ExportAdaptors);
 }
 
@@ -492,7 +492,7 @@ QString IntentServerDBusIpcConnection::requestToSystem(const QString &intentId,
                                             convertFromDBusVariant(parameters).toMap());
     if (!isr) {
         sendErrorReply(QDBusError::NotSupported, u"No matching intent handler registered."_s);
-        return QString();
+        return { };
     } else {
         return isr->requestId().toString();
     }

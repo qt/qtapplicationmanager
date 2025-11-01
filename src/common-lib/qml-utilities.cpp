@@ -11,8 +11,6 @@
 #include <private/qv4engine_p.h>
 #include <private/qqmlcontext_p.h>
 #include <private/qqmlcontextdata_p.h>
-#include "logging.h"
-#include "utilities.h"
 #include "qml-utilities.h"
 
 using namespace Qt::StringLiterals;
@@ -30,15 +28,15 @@ QVariant convertFromJSVariant(const QVariant &variant)
         return convertFromJSVariant(variant.value<QVariant>());
     } else if (type == QMetaType::QVariantList) {
         QVariantList outList;
-        QVariantList inList = variant.toList();
-        for (auto it = inList.cbegin(); it != inList.cend(); ++it)
-            outList.append(convertFromJSVariant(*it));
+        const QVariantList inList = variant.toList();
+        for (const auto &v : inList)
+            outList.append(convertFromJSVariant(v));
         return outList;
     } else if (type == QMetaType::QVariantMap) {
         QVariantMap outMap;
-        QVariantMap inMap = variant.toMap();
-        for (auto it = inMap.cbegin(); it != inMap.cend(); ++it)
-            outMap.insert(it.key(), convertFromJSVariant(it.value()));
+        const QVariantMap inMap = variant.toMap();
+        for (const auto &[k, v] : inMap.asKeyValueRange())
+            outMap.insert(k, convertFromJSVariant(v));
         return outMap;
     } else {
         return variant;

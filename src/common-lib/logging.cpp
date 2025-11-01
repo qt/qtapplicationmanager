@@ -157,7 +157,7 @@ struct DeferredMessage
     const char *file;
     const char *function;
     const char *category;
-    const QString message;
+    QString message;
 };
 
 struct LoggingGlobal
@@ -232,12 +232,11 @@ Q_GLOBAL_STATIC(LoggingGlobal, lg)
 DeferredMessage::DeferredMessage(QtMsgType _msgType, const QMessageLogContext &_context, const QString &_message)
     : msgType(_msgType)
     , line(_context.line)
+    , file(qstrdup(_context.file))
+    , function(qstrdup(_context.function))
+    , category(qstrdup(_context.category))
     , message(_message)
-{
-    file = qstrdup(_context.file);
-    function = qstrdup(_context.function);
-    category = qstrdup(_context.category);
-}
+{ }
 
 DeferredMessage::DeferredMessage(DeferredMessage &&other) noexcept
     : msgType(other.msgType)
@@ -245,7 +244,7 @@ DeferredMessage::DeferredMessage(DeferredMessage &&other) noexcept
     , file(other.file)
     , function(other.function)
     , category(other.category)
-    , message(other.message)
+    , message(std::move(other.message))
 {
     other.file = nullptr;
     other.function = nullptr;
@@ -265,7 +264,7 @@ class LogBufferReference
 public:
     LogBufferReference()
         : m_index(lg()->acquireLogBuffer())
-        , m_buffer(lg()->logBuffers[m_index])
+        , m_buffer(lg()->logBuffers.at(m_index))
     {
         if (m_buffer.capacity() > LoggingGlobal::LogBufferMaxSize)
             m_buffer.clear();
@@ -282,7 +281,7 @@ public:
     QByteArray &buffer() { return m_buffer; }
 
 private:
-    int m_index;
+    uint m_index;
     QByteArray &m_buffer;
 };
 

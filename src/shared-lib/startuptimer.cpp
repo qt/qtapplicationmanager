@@ -132,10 +132,10 @@ QByteArray StartupTimer::formatMicroSecs(quint64 micros)
     int msec = int(micros / 1000);
     int usec = int(micros % 1000);
 
-    char timeBuffer[20];
-    std::snprintf(timeBuffer, sizeof(timeBuffer), "%d'%03d.%03d", sec, msec,
-                  usec);
-    return QByteArray(timeBuffer);
+    std::array<char, 20> timeBuffer;
+    timeBuffer[0] = '\0';
+    std::snprintf(timeBuffer.data(), timeBuffer.size(), "%d'%03d.%03d", sec, msec, usec);
+    return { timeBuffer.data() };
 }
 
 StartupTimer::StartupTimer()
@@ -191,16 +191,16 @@ StartupTimer::StartupTimer()
         QByteArray file = "/proc/self/task/" + QByteArray::number(static_cast<int>(syscall(SYS_gettid))) + "/stat";
         int fd = QT_OPEN(file.constData(), O_RDONLY);
         if (fd >= 0) {
-            char buffer[1024];
-            ssize_t bytesRead = QT_READ(fd, buffer, sizeof(buffer) - 1);
+            std::array<char, 1024> buffer;
+            ssize_t bytesRead = QT_READ(fd, buffer.data(), buffer.size() - 1);
             if (bytesRead > 0) {
                 buffer[bytesRead] = 0;
                 for (int field = 0, pos = 0; pos < bytesRead; ) {
-                    if (buffer[pos++] == ' ') {
+                    if (buffer.at(pos++) == ' ') {
                         if (++field == 21) {
-                            const QByteArrayView fieldView { buffer + pos, bytesRead - pos };
+                            const QByteArrayView fieldView { buffer.data() + pos, bytesRead - pos };
                             auto jiffies = fieldView.mid(0, fieldView.indexOf(' ')).toUInt();
-                            *reinterpret_cast<quint32 *>(resultPtr) = jiffies;
+                            *static_cast<quint32 *>(resultPtr) = jiffies;
                             result = reinterpret_cast<void *>(1);
                             break;
                         }
@@ -241,11 +241,11 @@ StartupTimer::StartupTimer()
     if (m_initialized) {
         int fd = QT_OPEN("/proc/uptime", O_RDONLY);
         if (fd >= 0) {
-            char buffer[32];
-            ssize_t bytesRead = QT_READ(fd, buffer, sizeof(buffer) - 1);
+            std::array<char, 32> buffer;
+            ssize_t bytesRead = QT_READ(fd, buffer.data(), buffer.size() - 1);
             if (bytesRead > 0) {
                 buffer[bytesRead] = 0;
-                const QByteArrayView fieldView { buffer, bytesRead };
+                const QByteArrayView fieldView { buffer.data(), bytesRead };
                 auto uptime = fieldView.mid(0, fieldView.indexOf(' ')).toDouble();
                 m_systemUpTime = quint64(uptime * 1000);
             }

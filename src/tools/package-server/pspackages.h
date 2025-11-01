@@ -30,6 +30,7 @@ public:
 class PSPackages : public QObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY(PSPackages)
 
 public:
     PSPackages(PSConfiguration *cfg, QObject *parent = nullptr);

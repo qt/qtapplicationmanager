@@ -37,6 +37,7 @@
 
 #include "unixsignalhandler.h"
 
+using namespace std::chrono_literals;
 using namespace Qt::StringLiterals;
 
 QT_USE_NAMESPACE_AM
@@ -248,7 +249,7 @@ private:
                     }
                 }
             });
-            m_disconnectTimer->start(500);
+            m_disconnectTimer->start(500ms);
         }
     }
 
@@ -309,11 +310,7 @@ enum Command {
 };
 
 // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
-static struct {
-    Command command;
-    const char *name;
-    const char *description;
-} commandTable[] = {
+static const std::array<std::tuple<Command, const char *, const char *>, 17> commandTable = {{
     { StartApplication,          "start-application",           "Start an application." },
     { DebugApplication,          "debug-application",           "Debug an application." },
     { StopApplication,           "stop-application",            "Stop an application." },
@@ -331,21 +328,20 @@ static struct {
     { InjectIntentRequest,       "inject-intent-request",       "Inject an intent request for testing." },
     { SetDeveloperCertificate,   "set-developer-certificate",   "Set the developer certificate for development mode." },
     { ShowDevelopmentMode,       "show-development-mode",       "Show the current development mode status." },
-    { NoCommand,                 nullptr,                       nullptr }
-};
+}};
 
 static Command command(QCommandLineParser &clp)
 {
     if (!clp.positionalArguments().isEmpty()) {
         QByteArray cmd = clp.positionalArguments().at(0).toLatin1();
 
-        for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
-            if (cmd == commandTable[i].name) {
+        for (const auto &[command, name, description] : commandTable) {
+            if (cmd == name) {
                 clp.clearPositionalArguments();
-                clp.addPositionalArgument(QString::fromLatin1(cmd),
-                                          QString::fromLatin1(commandTable[i].description),
-                                          QString::fromLatin1(cmd));
-                return commandTable[i].command;
+                clp.addPositionalArgument(QString::fromLatin1(name),
+                                          QString::fromLatin1(description),
+                                          QString::fromLatin1(name));
+                return command;
             }
         }
     }
@@ -416,7 +412,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(u"Qt Application Manager Controller"_s);
     QCoreApplication::setOrganizationName(u"QtProject"_s);
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
-    QCoreApplication::setApplicationVersion(QString::fromLatin1(QT_AM_VERSION_STR));
+    QCoreApplication::setApplicationVersion(QStringLiteral(QT_AM_VERSION_STR));
 
     ensureLibDBusIsAvailable(); // this needs to happen before the QCoreApplication constructor
 
@@ -424,14 +420,11 @@ int main(int argc, char *argv[])
 
     QByteArray desc = "\n\nAvailable commands are:\n";
     size_t longestName = 0;
-    for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i)
-        longestName = qMax(longestName, qstrlen(commandTable[i].name));
-    for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
-        desc += "  ";
-        desc += commandTable[i].name;
-        desc += QByteArray(1 + int(longestName - qstrlen(commandTable[i].name)), ' ');
-        desc += commandTable[i].description;
-        desc += '\n';
+    for (const auto &[command, name, description] : commandTable)
+        longestName = qMax(longestName, qstrlen(name));
+    for (const auto &[command, name, description] : commandTable) {
+        desc += "  "_ba + name + QByteArray(1 + qsizetype(longestName - qstrlen(name)), ' ')
+        + description + '\n';
     }
 
     desc += "\nMore information about each command can be obtained by running\n" \
@@ -494,12 +487,13 @@ int main(int argc, char *argv[])
                 stdRedirections[u"err"_s] = 2;
             bool restart = clp.isSet(u"restart"_s);
 
-            a.runLater(std::bind(startOrDebugApplication,
-                                 QString(),
-                                 clp.positionalArguments().at(1),
-                                 stdRedirections,
-                                 restart,
-                                 args == 3 ? clp.positionalArguments().at(2) : QString()));
+            const QString debugWrapper = { };
+            const QString appId = clp.positionalArguments().at(1);
+            const QString documentUrl = (args == 3) ? clp.positionalArguments().at(2) : QString();
+
+            a.runLater([=] {
+                startOrDebugApplication(debugWrapper, appId, stdRedirections, restart, documentUrl);
+            });
             break;
         }
         case DebugApplication: {
@@ -525,12 +519,13 @@ int main(int argc, char *argv[])
                 stdRedirections[u"err"_s] = 2;
             bool restart = clp.isSet(u"restart"_s);
 
-            a.runLater(std::bind(startOrDebugApplication,
-                                 clp.positionalArguments().at(1),
-                                 clp.positionalArguments().at(2),
-                                 stdRedirections,
-                                 restart,
-                                 args == 4 ? clp.positionalArguments().at(3) : QString()));
+            const QString debugWrapper = clp.positionalArguments().at(1);
+            const QString appId = clp.positionalArguments().at(2);
+            const QString documentUrl = (args == 4) ? clp.positionalArguments().at(3) : QString();
+
+            a.runLater([=] {
+                startOrDebugApplication(debugWrapper, appId, stdRedirections, restart, documentUrl);
+            });
             break;
         }
         case StopAllApplications:
@@ -541,7 +536,7 @@ int main(int argc, char *argv[])
             a.runLater(stopAllApplications);
             break;
 
-        case StopApplication:
+        case StopApplication: {
             clp.addOption({ { u"f"_s, u"force"_s }, u"Force kill the application."_s });
             clp.addPositionalArgument(u"application-id"_s, u"The id of an installed application."_s);
             clp.process(a);
@@ -549,17 +544,18 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            a.runLater(std::bind(stopApplication,
-                                 clp.positionalArguments().at(1),
-                                 clp.isSet(u"f"_s)));
-            break;
+            const QString appId = clp.positionalArguments().at(1);
+            const bool force = clp.isSet(u"f"_s);
 
+            a.runLater([=] { stopApplication(appId, force); });
+            break;
+        }
         case ListApplications:
             clp.process(a);
             a.runLater(listApplications);
             break;
 
-        case ShowApplication:
+        case ShowApplication: {
             clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
             clp.addPositionalArgument(u"application-id"_s, u"The id of an installed application."_s);
             clp.process(a);
@@ -567,17 +563,18 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            a.runLater(std::bind(showApplication,
-                                 clp.positionalArguments().at(1),
-                                 clp.isSet(u"json"_s)));
-            break;
+            const QString appId = clp.positionalArguments().at(1);
+            const bool json = clp.isSet(u"json"_s);
 
+            a.runLater([=] { showApplication(appId, json); });
+            break;
+        }
         case ListPackages:
             clp.process(a);
             a.runLater(listPackages);
             break;
 
-        case ShowPackage:
+        case ShowPackage: {
             clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
             clp.addPositionalArgument(u"package-id"_s, u"The id of an installed package."_s);
             clp.process(a);
@@ -585,12 +582,13 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            a.runLater(std::bind(showPackage,
-                                 clp.positionalArguments().at(1),
-                                 clp.isSet(u"json"_s)));
-            break;
+            const QString appId = clp.positionalArguments().at(1);
+            const bool json = clp.isSet(u"json"_s);
 
-        case InstallPackage:
+            a.runLater([=] { showPackage(appId, json); });
+            break;
+        }
+        case InstallPackage: {
             clp.addOption({ { u"l"_s, u"location"_s }, u"Set a custom installation location (deprecated and ignored)."_s, u"installation-location"_s, u"internal-0"_s });
             clp.addOption({ { u"a"_s, u"acknowledge"_s }, u"Automatically acknowledge the installation (unattended mode)."_s });
             clp.addPositionalArgument(u"package"_s, u"The file name of the package; can be - for stdin."_s);
@@ -599,14 +597,15 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
             if (clp.isSet(u"l"_s))
-                fprintf(stderr, "Ignoring the deprecated -l option.\n");
+                std::cerr << "Ignoring the deprecated -l option.\n";
 
-            a.runLater(std::bind(installPackage,
-                                 clp.positionalArguments().at(1),
-                                 clp.isSet(u"a"_s)));
+            const QString package = clp.positionalArguments().at(1);
+            const bool acknowledge = clp.isSet(u"a"_s);
+
+            a.runLater([=] { installPackage(package, acknowledge); });
             break;
-
-        case RemovePackage:
+        }
+        case RemovePackage: {
             clp.addOption({ { u"f"_s, u"force"_s }, u"Force removal of package."_s });
             clp.addOption({ { u"k"_s, u"keep-documents"_s }, u"Keep the document folder of the application."_s });
             clp.addPositionalArgument(u"package-id"_s, u"The id of an installed package."_s);
@@ -615,12 +614,13 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
 
-            a.runLater(std::bind(removePackage,
-                                 clp.positionalArguments().at(1),
-                                 clp.isSet(u"k"_s),
-                                 clp.isSet(u"f"_s)));
-            break;
+            const QString packageId = clp.positionalArguments().at(1);
+            const bool force = clp.isSet(u"f"_s);
+            const bool keepDocuments = clp.isSet(u"k"_s);
 
+            a.runLater([=] { removePackage(packageId, keepDocuments, force); });
+            break;
+        }
         case ListInstallationTasks:
             clp.process(a);
             a.runLater(listInstallationTasks);
@@ -636,22 +636,23 @@ int main(int argc, char *argv[])
             if (!(((args == 1) && all) || ((args == 2) && !all)))
                 clp.showHelp(1);
 
-            a.runLater(std::bind(cancelInstallationTask,
-                                 all,
-                                 args == 2 ? clp.positionalArguments().at(1) : QString()));
+            const QString taskId = (args == 2) ? clp.positionalArguments().at(1) : QString();
+
+            a.runLater([=] { cancelInstallationTask(all, taskId); });
             break;
         }
-        case ShowInstallationLocation:
+        case ShowInstallationLocation: {
             clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
             clp.process(a);
 
             if (clp.positionalArguments().size() > 1)
                 clp.showHelp(1);
 
-            a.runLater(std::bind(showInstallationLocation,
-                                 clp.isSet(u"json"_s)));
-            break;
+            const bool json = clp.isSet(u"json"_s);
 
+            a.runLater([=] { showInstallationLocation(json); });
+            break;
+        }
         case ListInstances:
             clp.process(a);
             a.runLater(listInstances);
@@ -682,8 +683,11 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() == 3)
                 jsonParams = clp.positionalArguments().at(2);
 
-            a.runLater(std::bind(injectIntentRequest, clp.positionalArguments().at(1),
-                                 isBroadcast, requestingAppId, appId, jsonParams));
+            const QString intentId = clp.positionalArguments().at(1);
+
+            a.runLater([=] {
+                injectIntentRequest(intentId, isBroadcast, requestingAppId, appId, jsonParams);
+            });
             break;
         }
         case SetDeveloperCertificate: {
@@ -724,8 +728,9 @@ int main(int argc, char *argv[])
             if (clp.positionalArguments().size() > 1)
                 clp.showHelp(1);
 
-            a.runLater(std::bind(showDevelopmentMode,
-                                 clp.isSet(u"json"_s)));
+            const bool json = clp.isSet(u"json"_s);
+
+            a.runLater([=] { showDevelopmentMode(json); });
             break;
         }
 
@@ -735,7 +740,7 @@ int main(int argc, char *argv[])
         return result;
 
     } catch (const Exception &e) {
-        fprintf(stderr, "ERROR: %s\n", qPrintable(e.errorString()));
+        std::cerr << "ERROR: " << qPrintable(e.errorString()) << std::endl;
         return int(e.errorCode());
     }
 }
@@ -795,7 +800,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                 getReply.waitForFinished();
                 if (getReply.isError())
                     throw Exception(Error::IO, "failed to get exit code from application manager: %1").arg(getReply.error().message());
-                fprintf(stdout, "\n --- application has quit ---\n\n");
+                std::cout << "\n --- application has quit ---\n\n";
                 auto app = getReply.value();
                 qApp->exit(app.value(u"lastExitCode"_s, 1).toInt());
             }
@@ -811,7 +816,8 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
     bool hasRedirections = !stdRedirections.isEmpty();
 #if defined(Q_OS_WINDOWS)
     if (hasRedirections) {
-        fprintf(stderr, "WARNING: Ignoring std-in/out/err redirections, as these are not supported on Windows.");
+        std::cerr << "WARNING: Ignoring std-in/out/err redirections, as these are not supported on Windows."
+                  << std::endl;
         hasRedirections = false;
     }
 #endif
@@ -840,7 +846,8 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
         qApp->exit(isStarted ? 0 : 2);
     } else {
         installInterruptHandler([appId](int sig) {
-            fprintf(stdout, "Stopping application due to signal %s.\n", UnixSignalHandler::signalName(sig));
+            std::cout << "Stopping application due to signal " << UnixSignalHandler::signalName(sig)
+                      << ".\n";
             auto stopReply = dbus()->manager()->stopApplication(appId, true);
             stopReply.waitForFinished();
             qApp->exit(1);
@@ -881,7 +888,7 @@ void listApplications() noexcept(false)
 
     const auto applicationIds = reply.value();
     for (const auto &applicationId : applicationIds)
-        fprintf(stdout, "%s\n", qPrintable(applicationId));
+        std::cout << qPrintable(applicationId) << '\n';
     qApp->quit();
 }
 
@@ -895,8 +902,8 @@ void showApplication(const QString &appId, bool asJson) noexcept(false)
         throw Exception(Error::IO, "failed to get application via DBus: %1").arg(reply.error().message());
 
     QVariant app = convertFromDBusVariant(reply.value());
-    fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(app).toJson().constData()
-                                   : QtYaml::yamlFromVariantDocuments({ app }).constData());
+    std::cout << (asJson ? QJsonDocument::fromVariant(app).toJson().constData()
+                         : QtYaml::yamlFromVariantDocuments({ app }).constData()) << '\n';
     qApp->quit();
 }
 
@@ -911,7 +918,7 @@ void listPackages() noexcept(false)
 
     const auto packageIds = reply.value();
     for (const auto &packageId : packageIds)
-        fprintf(stdout, "%s\n", qPrintable(packageId));
+        std::cout << qPrintable(packageId) << '\n';
     qApp->quit();
 }
 
@@ -925,8 +932,8 @@ void showPackage(const QString &packageId, bool asJson) noexcept(false)
         throw Exception(Error::IO, "failed to get package via DBus: %1").arg(reply.error().message());
 
     QVariant package = convertFromDBusVariant(reply.value());
-    fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(package).toJson().constData()
-                                   : QtYaml::yamlFromVariantDocuments({ package }).constData());
+    std::cout << (asJson ? QJsonDocument::fromVariant(package).toJson().constData()
+                         : QtYaml::yamlFromVariantDocuments({ package }).constData()) << '\n';
     qApp->quit();
 }
 
@@ -937,7 +944,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
     if (package == u"-") { // sent via stdin
         bool success = false;
 
-        QTemporaryFile *tf = new QTemporaryFile(qApp);
+        auto *tf = new QTemporaryFile(qApp);
         QFile in;
 
         if (tf->open() && in.open(stdin, QIODevice::ReadOnly)) {
@@ -958,7 +965,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
     if (!fi.exists() || !fi.isReadable() || !fi.isFile())
         throw Exception(Error::IO, "Package file is not readable: %1").arg(packageFile);
 
-    fprintf(stdout, "Starting installation of package %s ...\n", qPrintable(packageFile));
+    std::cout << "Starting installation of package " << qPrintable(packageFile) << "...\n";
 
     dbus()->connectToManager();
     dbus()->connectToPackager();
@@ -981,7 +988,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
             QString packageId = metadata.value(u"packageId"_s).toString();
             if (packageId.isEmpty())
                 throw Exception(Error::IO, "could not find a valid package id in the package");
-            fprintf(stdout, "Acknowledging package installation for '%s'...\n", qPrintable(packageId));
+            std::cout << "Acknowledging package installation for " << qPrintable(packageId) << "...\n";
             dbus()->packager()->acknowledgePackageInstallation(taskId);
         });
     }
@@ -999,7 +1006,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
                      qApp, [](const QString &taskId) {
         if (taskId != installationId)
             return;
-        fprintf(stdout, "Package installation finished successfully.\n");
+        std::cout << "Package installation finished successfully.\n";
         qApp->quit();
     });
 
@@ -1017,7 +1024,8 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
     // cancel the job on Ctrl+C
 
     installInterruptHandler([](int sig) {
-        fprintf(stdout, "Cancelling package installation due to signal %s.\n", UnixSignalHandler::signalName(sig));
+        std::cout << "Cancelling package installation due to signal "
+                  << UnixSignalHandler::signalName(sig) << ".\n";
         auto cancelReply = dbus()->packager()->cancelTask(installationId);
         cancelReply.waitForFinished();
         qApp->exit(1);
@@ -1026,7 +1034,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
 
 void removePackage(const QString &packageId, bool keepDocuments, bool force) noexcept(false)
 {
-    fprintf(stdout, "Starting removal of package %s...\n", qPrintable(packageId));
+    std::cout << "Starting removal of package " << qPrintable(packageId) << "...\n";
 
     dbus()->connectToManager();
     dbus()->connectToPackager();
@@ -1053,7 +1061,7 @@ void removePackage(const QString &packageId, bool keepDocuments, bool force) noe
                      qApp, [](const QString &taskId) {
         if (taskId != installationId)
             return;
-        fprintf(stdout, "Package removal finished successfully.\n");
+        std::cout << "Package removal finished successfully.\n";
         qApp->quit();
     });
 
@@ -1079,7 +1087,7 @@ void listInstallationTasks() noexcept(false)
 
     const auto taskIds = reply.value();
     for (const auto &taskId : taskIds)
-        fprintf(stdout, "%s\n", qPrintable(taskId));
+        std::cout << qPrintable(taskId) << '\n';
     qApp->quit();
 }
 
@@ -1122,11 +1130,12 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
                      qApp, [](const QString &taskId, int errorCode, const QString &errorString) {
         if (cancelTaskIds.removeOne(taskId)) {
             if (errorCode != int(Error::Canceled)) {
-                fprintf(stdout, "Could not cancel task %s anymore - the installation task already failed (%s).\n",
-                        qPrintable(taskId), qPrintable(errorString));
+                std::cout << "Could not cancel task " << qPrintable(taskId) << ": "
+                          << "the installation task already failed (" << qPrintable(errorString)
+                          << ").\n";
                 result |= 2;
             } else {
-                fprintf(stdout, "Installation task was canceled successfully.\n");
+                std::cout << "Installation task was canceled successfully.\n";
             }
             if (cancelTaskIds.isEmpty())
                 qApp->exit(result);
@@ -1137,8 +1146,8 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
     QObject::connect(dbus()->packager(), &IoQtPackageManagerInterface::taskFinished,
                      qApp, [](const QString &taskId) {
         if (cancelTaskIds.removeOne(taskId)) {
-            fprintf(stdout, "Could not cancel task %s anymore - the installation task already finished successfully.\n",
-                    qPrintable(taskId));
+            std::cout << "Could not cancel task " << qPrintable(taskId) << ": "
+                      << "the installation task already finished successfully.\n",
             result |= 1;
             if (cancelTaskIds.isEmpty())
                 qApp->exit(result);
@@ -1146,7 +1155,7 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
     });
 
     for (const auto &cancelTaskId : std::as_const(cancelTaskIds)) {
-        fprintf(stdout, "Canceling installation task %s...\n", qPrintable(cancelTaskId));
+        std::cout << "Canceling installation task " << qPrintable(cancelTaskId) << "...\n";
 
         // cancel the task
 
@@ -1164,11 +1173,11 @@ void showInstallationLocation(bool asJson) noexcept(false)
 {
     dbus()->connectToPackager();
 
-    auto installationLocation = dbus()->packager()->installationLocation();
+    auto location = dbus()->packager()->installationLocation();
     dbus()->throwOnError();
 
-    fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(installationLocation).toJson().constData()
-                                   : QtYaml::yamlFromVariantDocuments({ installationLocation }).constData());
+    std::cout << (asJson ? QJsonDocument::fromVariant(location).toJson().constData()
+                         : QtYaml::yamlFromVariantDocuments({ location }).constData()) << '\n';
     qApp->quit();
 }
 
@@ -1196,10 +1205,12 @@ static std::pair<QString, QMultiHash<QString, int>> runningInstanceIds()
                 QLockFile testLock(path);
                 if (testLock.tryLock(0))
                     testLock.unlock(); // stale lock
-                else if (testLock.error() != QLockFile::LockFailedError)
-                    fprintf(stderr, "WARNING: unrecoverable, stale lock file: %s\n", qPrintable(path));
-                else
+                else if (testLock.error() != QLockFile::LockFailedError) {
+                    std::cerr << "WARNING: unrecoverable, stale lock file: " << qPrintable(path)
+                              << std::endl;
+                } else {
                     result.insert(name.left(dashPos), counter);
+                }
             }
         }
     }
@@ -1270,7 +1281,7 @@ void listInstances()
     const auto [_, running] = runningInstanceIds();
     for (auto it = running.cbegin(); it != running.cend(); ++it) {
         auto &name = it.key();
-        fprintf(stdout, "%s-%d\n", qPrintable(name), it.value());
+        std::cout << qPrintable(name) << '-' << it.value() << '\n';
     }
     qApp->quit();
 }
@@ -1297,7 +1308,7 @@ void injectIntentRequest(const QString &intentId, bool isBroadcast,
         if (reply.isError())
             throw Exception(Error::IO, "failed to call sendIntentRequest via DBus: %1").arg(reply.error().message());
         const auto jsonResult = reply.value();
-        fprintf(stdout, "%s\n", qPrintable(jsonResult));
+        std::cout << qPrintable(jsonResult) << '\n';
     }
 
     qApp->quit();
@@ -1343,8 +1354,8 @@ void showDevelopmentMode(bool asJson)
 
     QVariantMap out { { u"developmentMode"_s, devMode }, { u"developerCertificate"_s, devCert } };
 
-    fprintf(stdout, "%s\n", asJson ? QJsonDocument::fromVariant(out).toJson().constData()
-                                    : QtYaml::yamlFromVariantDocuments({ out }).constData());
+    std::cout << (asJson ? QJsonDocument::fromVariant(out).toJson().constData()
+                         : QtYaml::yamlFromVariantDocuments({ out }).constData()) << '\n';
     qApp->quit();
 }
 

@@ -70,7 +70,7 @@ private:
     QString m_appRelativeCodePath;
     QString m_hostPath;
     QString m_containerPath;
-    int m_statusPipeFd[2] = { -1, -1 };
+    std::array<int, 2> m_statusPipeFd = { -1, -1 };
     QVector<int> m_stdioRedirections;
     QMap<QString, QString> m_debugWrapperEnvironment;
     QStringList m_debugWrapperCommand;

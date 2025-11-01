@@ -73,7 +73,7 @@ QString AbstractContainer::containerId() const
 
 QString AbstractContainer::controlGroup() const
 {
-    return QString();
+    return { };
 }
 
 bool AbstractContainer::setControlGroup(const QString &groupName)
@@ -133,7 +133,7 @@ QVariantMap AbstractContainer::configuration() const
 {
     if (m_manager)
         return m_manager->configuration();
-    return QVariantMap();
+    return { };
 }
 
 
@@ -145,7 +145,7 @@ AbstractContainerManager::AbstractContainerManager(const QString &id, QObject *p
 
 QString AbstractContainerManager::defaultIdentifier()
 {
-    return QString();
+    return { };
 }
 
 QString AbstractContainerManager::identifier() const

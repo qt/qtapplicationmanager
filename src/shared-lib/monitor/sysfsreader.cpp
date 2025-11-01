@@ -35,16 +35,16 @@ QByteArray SysFsReader::fileName() const
 QByteArray SysFsReader::readValue() const
 {
     if (!m_fd.isOpen())
-        return QByteArray();
+        return { };
     if (!m_fd.seek(0))
-        return QByteArray();
+        return { };
 
     qsizetype offset = 0;
     qsizetype read = 0;
     do {
         read = m_fd.read(m_buffer.data() + offset, m_buffer.size() - offset);
         if (read < 0)
-            return QByteArray();
+            return { };
         else if (read < (m_buffer.size() - offset))
             m_buffer[read + offset] = 0;
         offset += read;

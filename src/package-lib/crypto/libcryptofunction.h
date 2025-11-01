@@ -24,8 +24,8 @@ template <typename R> class LibCryptoResult
 {
 public:
     LibCryptoResult(R r) : m_r(r) { }
-    LibCryptoResult(const LibCryptoResult &other) { m_r = other.m_r; }
-    LibCryptoResult operator=(const LibCryptoResult &that) { m_r = that.m_r; return *this; }
+    LibCryptoResult(const LibCryptoResult &other) : m_r(other.m_r) { }
+    LibCryptoResult &operator=(const LibCryptoResult &that) { m_r = that.m_r; return *this; }
     ~LibCryptoResult() { }
     R result() { return m_r; }
 private:
@@ -49,7 +49,6 @@ protected:
 
     void resolve();
 
-    const char *m_symbol;
     void (*m_functionPtr)() = nullptr;
 
 private:
@@ -57,6 +56,8 @@ private:
 
     static QLibrary *s_library;
     static bool s_isMacOSLibreSSL;
+
+    const char *m_symbol;
     bool m_tried = false;
 };
 
@@ -64,7 +65,7 @@ template <typename F>
 class LibCryptoFunction : protected LibCryptoFunctionBase
 {
     template <typename Result, typename ...Args> static Result returnType(Result (*)(Args...));
-    typedef decltype(returnType(std::declval<F>())) R;
+    using R = decltype(returnType(std::declval<F>()));
 
     LibCryptoResult<R> m_defaultResult;
 
@@ -88,9 +89,9 @@ public:
     template <typename ...Args>
     R operator()(Args &&...args)
     {
-        if (Q_UNLIKELY(!functionPointer()))
-            return m_defaultResult.result();
-        return std::forward<F>(reinterpret_cast<F>(m_functionPtr))(std::forward<Args>(args)...);
+        if (F f = functionPointer())
+            return f(std::forward<Args>(args)...);
+        return m_defaultResult.result();
     }
 };
 

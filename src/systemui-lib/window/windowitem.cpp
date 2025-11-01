@@ -262,11 +262,11 @@ void WindowItem::setObjectFollowsItemSize(bool value)
 
 QQmlListProperty<QObject> WindowItem::contentItemData()
 {
-    return QQmlListProperty<QObject>(this, nullptr,
+    return { this, nullptr,
             WindowItem::contentItemData_append,
             WindowItem::contentItemData_count,
             WindowItem::contentItemData_at,
-            WindowItem::contentItemData_clear);
+            WindowItem::contentItemData_clear };
 }
 
 void WindowItem::contentItemData_append(QQmlListProperty<QObject> *property, QObject *value)

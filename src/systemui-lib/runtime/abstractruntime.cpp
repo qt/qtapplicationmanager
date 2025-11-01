@@ -50,7 +50,7 @@ QVariantMap AbstractRuntime::configuration() const
 {
     if (m_manager)
         return m_manager->configuration();
-    return QVariantMap();
+    return { };
 }
 
 QVariantMap AbstractRuntime::systemProperties() const
@@ -60,7 +60,7 @@ QVariantMap AbstractRuntime::systemProperties() const
         return m_app->isBuiltIn() ? grc.systemPropertiesForBuiltInApps
                                   : grc.systemPropertiesForThirdPartyApps;
     }
-    return QVariantMap();
+    return { };
 }
 
 RuntimeSignaler *AbstractRuntime::signaler()

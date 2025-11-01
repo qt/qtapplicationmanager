@@ -22,8 +22,6 @@ class Q_APPMANSYSTEMUI_EXPORT IntentServerSystemInterface : public QObject
     Q_OBJECT
 
 public:
-    ~IntentServerSystemInterface() override = default;
-
     virtual void initialize(IntentServer *intentServer);
     IntentServer *intentServer() const;
 

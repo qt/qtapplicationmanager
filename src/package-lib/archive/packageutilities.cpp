@@ -26,7 +26,7 @@ ArchiveException::ArchiveException(struct ::archive *ar, const char *errorString
 { }
 
 
-QVariantMap PackageUtilities::headerDataForDigest = QVariantMap {
+const QVariantMap PackageUtilities::headerDataForDigest = QVariantMap {
     { u"extraSigned"_s, QVariantMap() }
 };
 

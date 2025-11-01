@@ -128,7 +128,7 @@ void checkPackageAccessPrivate(const QDBusAbstractAdaptor *a, const QString &pac
 }
 
 QStringList filterPackageListByAccess(const QDBusAbstractAdaptor *a, const QStringList &inList,
-                                      std::function<QString (const QString &)> mapToPackageId)
+                                      const std::function<QString (const QString &)> &mapToPackageId)
 {
     if (isDevelopmentModeBus(a)
         && (PackageManager::instance()->developmentMode() != PackageManager::DevelopmentMode::System)) {
@@ -137,7 +137,7 @@ QStringList filterPackageListByAccess(const QDBusAbstractAdaptor *a, const QStri
 
         QStringList outList;
         for (const auto &item : inList) {
-            const QString packageId = mapToPackageId(item);
+            const QString packageId = mapToPackageId ? mapToPackageId(item) : item;
             if (!packageId.isEmpty() && cert.matchPackageId(packageId))
                 outList << item;
         }

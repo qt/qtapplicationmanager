@@ -27,7 +27,6 @@ class Q_APPMANSYSTEMUI_EXPORT InProcessSurfaceItem : public QQuickFocusScope
     Q_OBJECT
 public:
     InProcessSurfaceItem(QQuickItem *parent = nullptr);
-    ~InProcessSurfaceItem() override;
 
     bool setWindowProperty(const QString &name, const QVariant &value);
     QVariant windowProperty(const QString &name) const;

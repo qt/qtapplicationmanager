@@ -142,38 +142,38 @@ void QuickLauncher::rebuild()
     int todo = 0;
     int done = 0;
 
-    for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
-        if (entry->m_disabled)
+    for (auto &entry : m_quickLaunchPool) {
+        if (entry.m_disabled)
             continue;
 
-        if (entry->m_containersAndRuntimes.size() < entry->m_maximum) {
-            todo += (entry->m_maximum - entry->m_containersAndRuntimes.size());
+        if (entry.m_containersAndRuntimes.size() < entry.m_maximum) {
+            todo += (entry.m_maximum - int(entry.m_containersAndRuntimes.size()));
             if (done >= 1)
                 continue;
 
-            std::unique_ptr<AbstractContainer> ac(ContainerFactory::instance()->create(entry->m_containerId, nullptr));
+            std::unique_ptr<AbstractContainer> ac(ContainerFactory::instance()->create(entry.m_containerId, nullptr));
             if (!ac) {
-                entry->addFailure();
+                entry.addFailure();
                 qCWarning(LogQuickLaunch) << "ERROR: Could not create quick-launch container"
-                                          << entry->m_containerId;
+                                          << entry.m_containerId;
                 continue;
             }
 
             std::unique_ptr<AbstractRuntime> ar;
-            if (!entry->m_runtimeId.isEmpty()) {
-                ar.reset(RuntimeFactory::instance()->createQuickLauncher(ac.release(), entry->m_runtimeId));
+            if (!entry.m_runtimeId.isEmpty()) {
+                ar.reset(RuntimeFactory::instance()->createQuickLauncher(ac.release(), entry.m_runtimeId));
                 if (!ar) {
-                    entry->addFailure();
+                    entry.addFailure();
                     qCWarning(LogQuickLaunch) << "ERROR: Could not create quick-launch runtime"
-                                              << entry->m_runtimeId << "within container"
-                                              << entry->m_containerId;
+                                              << entry.m_runtimeId << "within container"
+                                              << entry.m_containerId;
                     continue;
                 }
                 if (!ar->start()) {
-                    entry->addFailure();
+                    entry.addFailure();
                     qCWarning(LogQuickLaunch) << "ERROR: Could not start quick-launch runtime"
-                                              << entry->m_runtimeId << "within container"
-                                              << entry->m_containerId;
+                                              << entry.m_runtimeId << "within container"
+                                              << entry.m_containerId;
                     continue;
                 }
             }
@@ -184,11 +184,11 @@ void QuickLauncher::rebuild()
                 connect(container->process(), &AbstractContainerProcess::finished,
                         this, [this, container, runtime](int exitCode, Am::ExitStatus status) {
                     if ((status != Am::NormalExit) || exitCode) {
-                        for (auto e = m_quickLaunchPool.begin(); e != m_quickLaunchPool.end(); ++e) {
-                            for (int i = 0; i < e->m_containersAndRuntimes.size(); ++i) {
-                                auto car = e->m_containersAndRuntimes.at(i);
+                        for (auto &e : m_quickLaunchPool) {
+                            for (int i = 0; i < e.m_containersAndRuntimes.size(); ++i) {
+                                auto car = e.m_containersAndRuntimes.at(i);
                                 if ((car.first == container) && (car.second == runtime)) {
-                                    e->addFailure();
+                                    e.addFailure();
                                     checkFailedStarts();
                                     break;
                                 }
@@ -208,12 +208,12 @@ void QuickLauncher::rebuild()
                 });
             }
 
-            entry->m_containersAndRuntimes << qMakePair(container, runtime);
+            entry.m_containersAndRuntimes << qMakePair(container, runtime);
             ++done;
 
             qCDebug(LogQuickLaunch) << "Added new quick-launch entry for container:"
-                                    << entry->m_containerId << "/ runtime:"
-                                    << (entry->m_runtimeId.isEmpty() ? u"(none)"_s : entry->m_runtimeId);
+                                    << entry.m_containerId << "/ runtime:"
+                                    << (entry.m_runtimeId.isEmpty() ? u"(none)"_s : entry.m_runtimeId);
         }
     }
 
@@ -233,19 +233,19 @@ void QuickLauncher::removeEntry(AbstractContainer *container, AbstractRuntime *r
     int carCount = 0;
     int carRemoved = 0;
 
-    for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
-        for (int i = 0; i < entry->m_containersAndRuntimes.size(); ++i) {
-            auto car = entry->m_containersAndRuntimes.at(i);
+    for (auto &entry : m_quickLaunchPool) {
+        for (int i = 0; i < entry.m_containersAndRuntimes.size(); ++i) {
+            auto car = entry.m_containersAndRuntimes.at(i);
             if ((container && car.first == container)
                     || (runtime && car.second == runtime)) {
                 qCDebug(LogQuickLaunch) << "Removed quick-launch entry for container:"
-                                        << entry->m_containerId << "/ runtime:"
-                                        << (entry->m_runtimeId.isEmpty() ? u"(none)"_s : entry->m_runtimeId);
+                                        << entry.m_containerId << "/ runtime:"
+                                        << (entry.m_runtimeId.isEmpty() ? u"(none)"_s : entry.m_runtimeId);
 
-                entry->m_containersAndRuntimes.removeAt(i--);
+                entry.m_containersAndRuntimes.removeAt(i--);
                 carRemoved++;
             }
-            carCount += entry->m_containersAndRuntimes.count();
+            carCount += int(entry.m_containersAndRuntimes.count());
         }
     }
     // make sure to only emit shutDownFinished once: when the list gets empty for the first time.
@@ -259,22 +259,22 @@ void QuickLauncher::checkFailedStarts()
 {
     qint64 intervalStart = QDateTime::currentMSecsSinceEpoch() - (m_failedStartLimitIntervalSec * 1000);
 
-    for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
-        if (entry->m_disabled)
+    for (auto &entry : m_quickLaunchPool) {
+        if (entry.m_disabled)
             continue;
 
-        entry->m_failedTimeStamps.removeIf([=](qint64 ts) { return ts < intervalStart; });
+        entry.m_failedTimeStamps.removeIf([=](qint64 ts) { return ts < intervalStart; });
 
         if (m_failedStartLimit && m_failedStartLimitIntervalSec
-                && (entry->m_failedTimeStamps.size() >= m_failedStartLimit)) {
+                && (entry.m_failedTimeStamps.size() >= m_failedStartLimit)) {
             qCWarning(LogQuickLaunch) << "Disabling quick-launch for container:"
-                                      << entry->m_containerId << "/ runtime:"
-                                      << (entry->m_runtimeId.isEmpty() ? u"(none)"_s : entry->m_runtimeId)
+                                      << entry.m_containerId << "/ runtime:"
+                                      << (entry.m_runtimeId.isEmpty() ? u"(none)"_s : entry.m_runtimeId)
                                       << "due to too many failed start attempts:"
-                                      << entry->m_failedTimeStamps.size() << "failed starts within"
+                                      << entry.m_failedTimeStamps.size() << "failed starts within"
                                       << m_failedStartLimitIntervalSec << "seconds";
-            entry->m_disabled = true;
-            entry->m_failedTimeStamps.clear();
+            entry.m_disabled = true;
+            entry.m_failedTimeStamps.clear();
         }
     }
 }
@@ -286,12 +286,12 @@ QPair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QString 
     // 1st pass: find entry with matching container and runtime
     // 2nd pass: find entry with matching container and no runtime
     for (int pass = 1; pass <= 2; ++pass) {
-        for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
-            if (entry->m_containerId == containerId) {
-                if (((pass == 1) && (entry->m_runtimeId == runtimeId))
-                        || ((pass == 2) && (entry->m_runtimeId.isEmpty()))) {
-                    if (!entry->m_containersAndRuntimes.isEmpty()) {
-                        result = entry->m_containersAndRuntimes.takeFirst();
+        for (auto &entry : m_quickLaunchPool) {
+            if (entry.m_containerId == containerId) {
+                if (((pass == 1) && (entry.m_runtimeId == runtimeId))
+                        || ((pass == 2) && (entry.m_runtimeId.isEmpty()))) {
+                    if (!entry.m_containersAndRuntimes.isEmpty()) {
+                        result = entry.m_containersAndRuntimes.takeFirst();
                         result.first->disconnect(this);
                         if (result.second)
                             result.second->disconnect(this);
@@ -313,8 +313,8 @@ void QuickLauncher::shutDown()
     m_shuttingDown = true;
     bool waitForRemove = false;
 
-    for (auto entry = m_quickLaunchPool.begin(); entry != m_quickLaunchPool.end(); ++entry) {
-        for (const auto &car : std::as_const(entry->m_containersAndRuntimes)) {
+    for (const auto &entry : std::as_const(m_quickLaunchPool)) {
+        for (const auto &car : std::as_const(entry.m_containersAndRuntimes)) {
             if (car.second)
                 car.second->stop(Am::NormalExit);
             else if (car.first)

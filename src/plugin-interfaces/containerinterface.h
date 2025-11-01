@@ -49,7 +49,7 @@ public:
     Q_ENUM(ProcessError)
 
     ContainerInterface();
-    virtual ~ContainerInterface() override;
+    ~ContainerInterface() override;
 
     virtual bool attachApplication(const QVariantMap &application) = 0;
 

@@ -303,9 +303,8 @@ static void logBacktraceLine(LogToDestination logTo, int level, const char *symb
     // clickable URLs (QtCreator is not parsing lines containing ANSI codes)
     ColorPrint cprt(lineOut, (logTo == Console) && Console::stderrSupportsAnsiColor() && !wantClickableUrl);
 
-    char levelStr[5];
-    std::snprintf(levelStr, sizeof(levelStr), "%4d", level);
-    cprt << levelStr << ": ";
+    // right-align without allocations (level is < 999)
+    cprt << QByteArrayView("   ", ((level < 10) ? 3 : ((level < 100) ? 2 : 1))) << level << ": ";
 
     if (errorString)
         cprt << ColorPrint::bred << "ERROR: " << ColorPrint::reset << errorString << " (" << errorCode << ')';

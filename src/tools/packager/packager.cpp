@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 // Qt-Security score:critical reason:data-parser
 
+#include <iostream>
 #include <memory>
-#include <stdio.h>
 
 #include <QCoreApplication>
 #include <QCommandLineParser>
@@ -37,31 +37,27 @@ enum Command {
 };
 
 // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
-static struct {
-    Command command;
-    const char *name;
-    const char *description;
-} commandTable[] = {
+static const std::array<std::tuple<Command, const char *, const char *>, 6> commandTable = {{
     { CreatePackage,      "create-package",       "Create a new package." },
     { DevSignPackage,     "dev-sign-package",     "Add developer signature to package." },
     { DevVerifyPackage,   "dev-verify-package",   "Verify developer signature on package." },
     { StoreSignPackage,   "store-sign-package",   "Add store signature to package." },
     { StoreVerifyPackage, "store-verify-package", "Verify store signature on package." },
     { YamlToJson,         "yaml-to-json",         "Convenience functionality for build systems (internal)." }
-};
+}};
 
 static Command command(QCommandLineParser &clp)
 {
     if (!clp.positionalArguments().isEmpty()) {
         QByteArray cmd = clp.positionalArguments().at(0).toLatin1();
 
-        for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
-            if (cmd == commandTable[i].name) {
+        for (const auto &[command, name, description] : commandTable) {
+            if (cmd == name) {
                 clp.clearPositionalArguments();
-                clp.addPositionalArgument(QString::fromLatin1(cmd),
-                                          QString::fromLatin1(commandTable[i].description),
-                                          QString::fromLatin1(cmd));
-                return commandTable[i].command;
+                clp.addPositionalArgument(QString::fromLatin1(name),
+                                          QString::fromLatin1(description),
+                                          QString::fromLatin1(name));
+                return command;
             }
         }
     }
@@ -73,20 +69,17 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(u"Qt ApplicationManager Packager"_s);
     QCoreApplication::setOrganizationName(u"QtProject"_s);
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
-    QCoreApplication::setApplicationVersion(QString::fromLatin1(QT_AM_VERSION_STR));
+    QCoreApplication::setApplicationVersion(QStringLiteral(QT_AM_VERSION_STR));
 
     QCoreApplication a(argc, argv);
 
     QByteArray desc = "\n\nAvailable commands are:\n";
     size_t longestName = 0;
-    for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i)
-        longestName = qMax(longestName, qstrlen(commandTable[i].name));
-    for (uint i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
-        desc += "  ";
-        desc += commandTable[i].name;
-        desc += QByteArray(1 + qsizetype(longestName - qstrlen(commandTable[i].name)), ' ');
-        desc += commandTable[i].description;
-        desc += '\n';
+    for (const auto &[command, name, description] : commandTable)
+        longestName = qMax(longestName, qstrlen(name));
+    for (const auto &[command, name, description] : commandTable) {
+        desc += "  "_ba + name + QByteArray(1 + qsizetype(longestName - qstrlen(name)), ' ')
+                + description + '\n';
     }
 
     desc += "\nMore information about each command can be obtained by running\n" \
@@ -104,7 +97,7 @@ int main(int argc, char *argv[])
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsPositionalArguments);
 
     if (!clp.parse(QCoreApplication::arguments())) {
-        fprintf(stderr, "%s\n", qPrintable(clp.errorText()));
+        std::cerr << qPrintable(clp.errorText()) << std::endl;
         exit(1);
     }
     clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
@@ -167,7 +160,7 @@ int main(int argc, char *argv[])
                                 .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
                                 .arg(md.second.isEmpty() ? u"option"_s : md.second);
                     }
-                    for (const auto &doc : docs)
+                    for (const auto &doc : std::as_const(docs))
                         recursiveMergeVariantMap(result, doc.toMap());
                 }
                 return result;
@@ -295,7 +288,7 @@ int main(int argc, char *argv[])
             } else {
                 json.setArray(QJsonArray::fromVariantList(docs.toList()));
             }
-            fprintf(stdout, "%s", json.toJson(QJsonDocument::Indented).constData());
+            std::cout << json.toJson(QJsonDocument::Indented).constData();
             return 0;
         }
         }
@@ -305,10 +298,10 @@ int main(int argc, char *argv[])
 
         p->execute();
         if (clp.isSet(u"verbose"_s) && !p->output().isEmpty())
-            fprintf(stdout, "%s\n", qPrintable(p->output()));
+            std::cout << qPrintable(p->output()) << '\n';
         return p->resultCode();
     } catch (const Exception &e) {
-        fprintf(stderr, "ERROR: %s\n", qPrintable(e.errorString()));
+        std::cerr << "ERROR: " << qPrintable(e.errorString()) << std::endl;
         return 1;
     }
 }

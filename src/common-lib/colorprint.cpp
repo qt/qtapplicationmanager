@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include <array>
+#include <charconv>
 #include <QStringEncoder>
 
 #include "colorprint.h"
@@ -33,7 +34,7 @@ ColorPrint::~ColorPrint()
     }
 }
 
-ColorPrint &ColorPrint::operator<<(const QString &str)
+ColorPrint &ColorPrint::operator<<(QStringView str)
 {
     // Don't use QString::toLocal8Bit() here, because it always allocates memory.
     // QStringEncoder together with op+=() on the other hand only allocates if necessary.
@@ -41,7 +42,7 @@ ColorPrint &ColorPrint::operator<<(const QString &str)
     return *this;
 }
 
-ColorPrint &ColorPrint::operator<<(const QByteArray &ba)
+ColorPrint &ColorPrint::operator<<(QByteArrayView ba)
 {
     m_buffer.append(ba);
     return *this;
@@ -61,9 +62,10 @@ ColorPrint &ColorPrint::operator<<(const char *str)
 
 ColorPrint &ColorPrint::operator<<(int i)
 {
-    char tmp[12]; // 32 bit ints are at most 10 digits long, plus sign and terminating null
-    std::snprintf(tmp, sizeof(tmp), "%d", i);
-    m_buffer.append(tmp);
+    std::array<char, 11> tmp; // 32 bit ints are at most 10 digits long, plus the potential sign
+    const auto [endPtr, error] = std::to_chars(tmp.data(), tmp.data() + tmp.size(), i);
+    if (error == std::errc())
+        m_buffer.append(QByteArrayView(tmp.data(), endPtr));
     return *this;
 }
 
@@ -101,7 +103,7 @@ ColorPrint &ColorPrint::operator<<(const Command cmd)
     };
 
     if (m_colorSupport && (int(cmd) >= 0) && (size_t(cmd) < cmds.size()))
-        m_buffer.append(cmds[cmd]);
+        m_buffer.append(cmds.at(cmd));
     return *this;
 }
 

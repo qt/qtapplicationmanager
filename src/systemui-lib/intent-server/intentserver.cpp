@@ -337,7 +337,7 @@ int IntentServer::rowCount(const QModelIndex &parent) const
 QVariant IntentServer::data(const QModelIndex &index, int role) const
 {
     if (index.parent().isValid() || !index.isValid())
-        return QVariant();
+        return { };
 
     Intent *intent = m_intents.at(index.row());
 
@@ -362,7 +362,7 @@ QVariant IntentServer::data(const QModelIndex &index, int role) const
     case IntentObject:
         return QVariant::fromValue(intent);
     }
-    return QVariant();
+    return { };
 }
 
 QHash<int, QByteArray> IntentServer::roleNames() const
@@ -390,7 +390,7 @@ QVariantMap IntentServer::get(int index) const
 {
     if (index < 0 || index >= count()) {
         qCWarning(LogSystem) << "IntentServer::get(index): invalid index:" << index;
-        return QVariantMap();
+        return { };
     }
 
     QVariantMap map;
@@ -642,7 +642,7 @@ QString IntentServer::packageIdForApplicationId(const QString &applicationId) co
                 return pit.key();
         }
     }
-    return QString();
+    return { };
 }
 
 /*!

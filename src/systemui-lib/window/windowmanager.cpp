@@ -435,10 +435,10 @@ int WindowManager::rowCount(const QModelIndex &parent) const
 QVariant WindowManager::data(const QModelIndex &index, int role) const
 {
     if (index.parent().isValid() || !index.isValid())
-        return QVariant();
+        return { };
 
     if (index.row() < 0 || index.row() >= d->windowsInModel.count())
-        return QVariant();
+        return { };
 
     Window *win = d->windowsInModel.at(index.row());
 
@@ -457,7 +457,7 @@ QVariant WindowManager::data(const QModelIndex &index, int role) const
     default:
         break;
     }
-    return QVariant();
+    return { };
 }
 
 QHash<int, QByteArray> WindowManager::roleNames() const
@@ -488,7 +488,7 @@ QVariantMap WindowManager::get(int index) const
 {
     if (index < 0 || index >= count()) {
         qCWarning(LogSystem) << "WindowManager::get(index): invalid index:" << index;
-        return QVariantMap();
+        return { };
     }
 
     QVariantMap map;
@@ -767,7 +767,7 @@ void WindowManager::setupWindow(Window *window)
 
     connect(window, &Window::windowPropertyChanged,
             this, [this](const QString &name, const QVariant &value) {
-        if (Window *win = qobject_cast<Window *>(sender()))
+        if (auto *win = qobject_cast<Window *>(sender()))
             emit windowPropertyChanged(win, name, value);
     });
 
@@ -854,7 +854,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     // whether windows are removed or not
     int index = d->findWindowByWaylandSurface(surface->surface());
     if (index == -1) {
-        WaylandWindow *w = new WaylandWindow(app, surface);
+        auto *w = new WaylandWindow(app, surface);
         setupWindow(w);
     }
 }

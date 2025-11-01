@@ -71,11 +71,10 @@ bool DBusPolicy::add(const QDBusAbstractAdaptor *dbusAdaptor, const QVariantMap 
         const QVariantMap &policy = it->toMap();
         DBusPolicyEntry dbp;
 
-        bool ok;
         const QVariantList uidList = policy.value(u"uids"_s).toList();
         for (const QVariant &v : uidList) {
-            uint uid = v.toUInt(&ok);
-            if (ok)
+            bool ok;
+            if (uint uid = v.toUInt(&ok); ok)
                 dbp.m_uids << uid;
         }
         std::sort(dbp.m_uids.begin(), dbp.m_uids.end());

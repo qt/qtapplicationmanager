@@ -139,10 +139,9 @@ public:
 
     ApplicationManagerWindowImpl *implementation();
 
-protected:
+private:
     std::unique_ptr<ApplicationManagerWindowImpl> m_impl;
 
-private:
     static void data_append(QQmlListProperty<QObject> *property, QObject *object);
     static qsizetype data_count(QQmlListProperty<QObject> *property);
     static QObject *data_at(QQmlListProperty<QObject> *property, qsizetype index);
@@ -189,11 +188,10 @@ public:
     QQuickItem *attachee();
     void reconnect(ApplicationManagerWindow *newWin); // callback for implementation
 
-protected:
+private:
     std::unique_ptr<ApplicationManagerWindowAttachedImpl> m_impl;
     QPointer<ApplicationManagerWindow> m_amwindow;
 
-private:
     Q_DISABLE_COPY_MOVE(ApplicationManagerWindowAttached)
 };
 

@@ -109,9 +109,6 @@ InstallationTask::InstallationTask(const QString &installationPath, const QStrin
     setObjectName(u"QtAM-InstallationTask"_s);
 }
 
-InstallationTask::~InstallationTask()
-{ }
-
 bool InstallationTask::cancel()
 {
     QMutexLocker locker(&m_mutex);
@@ -159,8 +156,8 @@ void InstallationTask::execute()
         connect(m_extractor, &PackageExtractor::progress, this, &AsynchronousTask::progress);
 
         m_extractor->setFileExtractedCallback([this](const QString &f) { checkExtractedFile(f); });
-        m_extractor->setExtendedAttributeCallback([](const QString &f, const QByteArray &name, const QByteArray &value) {
-            if (!SudoClient::instance()->setExtendedAttribute(f, name, value)) {
+        m_extractor->setExtendedAttributeCallback([](const QString &f, QByteArrayView name, QByteArrayView value) {
+            if (!SudoClient::instance()->setExtendedAttribute(f, name.toByteArray(), value.toByteArray())) {
                 QByteArray who = SudoClient::instance()->isFallbackImplementation() ? "appman user" : "root";
                 throw Exception("could not set extended attribute '%1' on file '%2' as %3: %4")
                         .arg(name).arg(f).arg(who).arg(SudoClient::instance()->lastError());
@@ -429,7 +426,7 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
         // that back would be a huge API break nowadays as the QML APIs are fully typed.
         // At least we have to make sure NOT to change anything in the PackageInfo instance after
         // the signal emission below.
-        m_tempPackageForAcknowledge.reset(new Package(newPackage->info(), Package::BeingInstalled));
+        m_tempPackageForAcknowledge = std::make_unique<Package>(newPackage->info(), Package::BeingInstalled);
         m_tempPackageForAcknowledge->moveToThread(m_pm->thread());
         const auto &applicationInfos = newPackage->info()->applications();
         for (const auto &applicationInfo : applicationInfos) {

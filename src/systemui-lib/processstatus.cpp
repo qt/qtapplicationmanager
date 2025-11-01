@@ -200,7 +200,7 @@ void ProcessStatus::onRunStateChanged(Am::RunState state)
 
 void ProcessStatus::determinePid()
 {
-    qint64 newId;
+    qint64 newId = 0;
     if (m_appId.isEmpty()) {
         newId = QCoreApplication::applicationPid();
     } else {

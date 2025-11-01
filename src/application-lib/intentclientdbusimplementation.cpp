@@ -76,7 +76,7 @@ void IntentClientDBusImplementation::requestToSystem(const QPointer<IntentClient
             m_dbusInterface->requestToSystem(icr->intentId(), icr->applicationId(),
                                              convertToDBusVariant(icr->parameters()).toMap());
 
-    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(reply, icr);
+    auto *watcher = new QDBusPendingCallWatcher(reply, icr);
     connect(watcher, &QDBusPendingCallWatcher::finished, icr, [this, watcher, icr]() {
         watcher->deleteLater();
 

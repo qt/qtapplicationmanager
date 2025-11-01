@@ -206,17 +206,16 @@ void SharedMain::setupOpenGL(const OpenGLConfiguration &openGLConfiguration)
 
         if (!isES) {
             // we need to map the ES version to the corresponding desktop versions:
-            static int mapping[] = {
-                2, 0,   2, 1,
-                3, 0,   4, 3,
-                3, 1,   4, 5,
-                3, 2,   4, 6,
-                -1
-            };
-            for (int i = 0; mapping[i] != -1; i += 4) {
-                if ((majorVersion == mapping[i]) && (minorVersion == mapping[i + 1])) {
-                    majorVersion = mapping[i + 2];
-                    minorVersion = mapping[i + 3];
+            static const std::array<std::tuple<int, int, int, int>, 4> mapping = {{
+                { 2, 0,  2, 1 },
+                { 3, 0,  4, 3 },
+                { 3, 1,  4, 5 },
+                { 3, 2,  4, 6 },
+            }};
+            for (const auto &[esMajor, esMinor, desktopMajor, desktopMinor] : mapping) {
+                if ((majorVersion == esMajor) && (minorVersion == esMinor)) {
+                    majorVersion = desktopMajor;
+                    minorVersion = desktopMinor;
                     valid = true;
                     break;
                 }

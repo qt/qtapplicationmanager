@@ -213,7 +213,7 @@ QVector<Application *> Package::applications() const
 QUrl Package::icon() const
 {
     if (info()->icon().isEmpty())
-        return QUrl();
+        return { };
 
     QDir dir;
     switch (state()) {

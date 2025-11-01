@@ -1277,7 +1277,7 @@ int ApplicationManager::rowCount(const QModelIndex &parent) const
 QVariant ApplicationManager::data(const QModelIndex &index, int role) const
 {
     if (index.parent().isValid() || !index.isValid())
-        return QVariant();
+        return { };
 
     Application *app = d->apps.at(index.row());
     return dataForRole(app, role);
@@ -1328,7 +1328,7 @@ QVariant ApplicationManager::dataForRole(Application *app, int role) const
     case AMRoles::LastExitStatus:
         return app->lastExitStatus();
     }
-    return QVariant();
+    return { };
 }
 
 QHash<int, QByteArray> ApplicationManager::roleNames() const
@@ -1356,7 +1356,7 @@ QVariantMap ApplicationManager::get(int index) const
 {
     if (index < 0 || index >= count()) {
         qCWarning(LogSystem) << "ApplicationManager::get(index): invalid index:" << index;
-        return QVariantMap();
+        return { };
     }
     return get(d->apps.at(index));
 }
@@ -1434,8 +1434,8 @@ QStringList ApplicationManager::applicationIds() const
 {
     QStringList ids;
     ids.reserve(d->apps.size());
-    for (int i = 0; i < d->apps.size(); ++i)
-        ids << d->apps.at(i)->id();
+    for (const auto *app : std::as_const(d->apps))
+        ids << app->id();
     return ids;
 }
 

@@ -88,7 +88,7 @@ bool InProcessWindow::isPopup() const
 
 QPoint InProcessWindow::requestedPopupPosition() const
 {
-    return QPoint();
+    return { };
 }
 
 QT_END_NAMESPACE_AM

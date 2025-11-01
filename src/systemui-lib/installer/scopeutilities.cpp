@@ -8,10 +8,9 @@
 #include "packagemanager.h"
 #include "utilities.h"
 
-QT_BEGIN_NAMESPACE_AM
+using namespace Qt::StringLiterals;
 
-ScopedDirectoryCreator::ScopedDirectoryCreator()
-{ }
+QT_BEGIN_NAMESPACE_AM
 
 bool ScopedDirectoryCreator::create(const QString &path, bool removeExisting)
 {
@@ -60,7 +59,7 @@ ScopedDirectoryCreator::~ScopedDirectoryCreator()
 
 QDir ScopedDirectoryCreator::dir()
 {
-    return QDir(m_path);
+    return { m_path };
 }
 
 ScopedRenamer::ScopedRenamer()
@@ -114,8 +113,8 @@ bool ScopedRenamer::rename(const QString &baseName, ScopedRenamer::Modes modes)
                 m_done |= NamePlusToName;
             }
             else if (backupDone && !undoRename()) {
-                qCCritical(LogSystem) << QString::fromLatin1("failed to rename '%1+' to '%1', but also failed to rename backup '%1-' back to '%1' (in directory %2)")
-                                         .arg(m_name, m_basePath.absolutePath());
+                qCCritical(LogSystem) << u"failed to rename '%1+' to '%1', but also failed to rename backup '%1-' back to '%1' (in directory %2)"_s
+                                             .arg(m_name, m_basePath.absolutePath());
             }
         }
     }
@@ -142,12 +141,12 @@ bool ScopedRenamer::undoRename()
             m_taken = true;
         } else {
             if (m_done & NamePlusToName) {
-                qCCritical(LogSystem) << QString::fromLatin1("failed to undo rename from '%1+' to '%1' (in directory %2)")
-                                         .arg(m_name, m_basePath.absolutePath());
+                qCCritical(LogSystem) << u"failed to undo rename from '%1+' to '%1' (in directory %2)"_s
+                                             .arg(m_name, m_basePath.absolutePath());
             }
             if (m_done & NameToNameMinus) {
-                qCCritical(LogSystem) << QString::fromLatin1("failed to undo rename from '%1' to '%1-' (in directory %2)")
-                                         .arg(m_name, m_basePath.absolutePath());
+                qCCritical(LogSystem) << u"failed to undo rename from '%1' to '%1-' (in directory %2)"_s
+                                             .arg(m_name, m_basePath.absolutePath());
             }
         }
     }

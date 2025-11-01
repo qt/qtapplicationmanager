@@ -85,7 +85,7 @@ ApplicationMain *ApplicationMain::instance()
 void ApplicationMain::registerWaylandExtensions() noexcept
 {
 #if defined(QT_WAYLANDCLIENT_LIB)
-     m_waylandExtension.reset(new WaylandQtAMClientExtension());
+     m_waylandExtension = std::make_unique<WaylandQtAMClientExtension>();
      connect(m_waylandExtension.get(), &WaylandQtAMClientExtension::windowPropertyChanged,
              this, &ApplicationMain::windowPropertyChanged);
 #endif
@@ -172,7 +172,7 @@ QVariantMap ApplicationMain::windowProperties(QWindow *window) const
 #else
     Q_UNUSED(window)
 #endif
-    return QVariantMap();
+    return { };
 }
 
 bool ApplicationMain::setWindowProperty(QWindow *window, const QString &name, const QVariant &value)

@@ -14,6 +14,7 @@
 #include <QJSValue>
 #include <QQmlEngine>
 
+using namespace std::chrono_literals;
 using namespace Qt::StringLiterals;
 
 
@@ -129,7 +130,7 @@ QT_USE_NAMESPACE_AM
 MonitorModel::MonitorModel(QObject *parent)
     : QAbstractListModel(parent)
 {
-    m_timer.setInterval(1000);
+    m_timer.setInterval(1s);
     connect(&m_timer, &QTimer::timeout, this, &MonitorModel::readDataSourcesAndAddRow);
 }
 
@@ -150,10 +151,10 @@ MonitorModel::~MonitorModel()
 */
 QQmlListProperty<QObject> MonitorModel::dataSources()
 {
-    return QQmlListProperty<QObject>(this, nullptr, &MonitorModel::dataSources_append,
+    return { this, nullptr, &MonitorModel::dataSources_append,
             &MonitorModel::dataSources_count,
             &MonitorModel::dataSources_at,
-            &MonitorModel::dataSources_clear);
+            &MonitorModel::dataSources_clear };
 }
 
 void MonitorModel::dataSources_append(QQmlListProperty<QObject> *property, QObject *dataSource)
@@ -193,7 +194,7 @@ void MonitorModel::clearDataSources()
 
 void MonitorModel::appendDataSource(QObject *dataSourceObj)
 {
-    DataSource *dataSource = new DataSource;
+    auto *dataSource = new DataSource;
     dataSource->obj = dataSourceObj;
     m_dataSources.append(dataSource);
 
@@ -281,7 +282,7 @@ int MonitorModel::rowCount(const QModelIndex &parent) const
 QVariant MonitorModel::data(const QModelIndex &index, int role) const
 {
     if (index.parent().isValid() || !index.isValid() || index.row() < 0 || index.row() >= m_rows.count())
-        return QVariant();
+        return { };
 
     return m_rows.at(index.row())->dataFromRoleIndex.value(role);
 }
@@ -350,7 +351,7 @@ void MonitorModel::readDataSourcesAndAddRow()
     int cnt = count();
     if (cnt < m_maximumCount) {
         // create a new row
-        DataRow *dataRow = new DataRow;
+        auto *dataRow = new DataRow;
         fillDataRow(dataRow);
         beginInsertRows(QModelIndex(), cnt, cnt);
         m_rows.append(dataRow);
@@ -372,7 +373,7 @@ void MonitorModel::readDataSourcesAndAddRow()
         changePersistentIndexList(before, after);
         emit layoutChanged({ }, VerticalSortHint);
 
-        fillDataRow(m_rows.last());
+        fillDataRow(m_rows.constLast());
         QModelIndex modelIndex = index(cnt - 1, 0);
         emit dataChanged(modelIndex, modelIndex);
     }
@@ -461,7 +462,7 @@ QVariantMap MonitorModel::get(int row) const
 {
     if (row < 0 || row >= count()) {
         qCWarning(LogSystem) << "MonitorModel::get invalid row:" << row;
-        return QVariantMap();
+        return { };
     }
 
     QVariantMap map;

@@ -9,6 +9,7 @@
 #include <private/qsgrhisupport_p.h>
 #include <qqmlinfo.h>
 
+using namespace std::chrono_literals;
 using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
@@ -46,7 +47,7 @@ QT_BEGIN_NAMESPACE_AM
 FrameContentTracker::FrameContentTracker(QObject *parent)
     : QObject(parent)
 {
-    m_updateTimer.setInterval(1000);
+    m_updateTimer.setInterval(1s);
     connect(&m_updateTimer, &QTimer::timeout, this, &FrameContentTracker::update);
 }
 
@@ -162,7 +163,7 @@ void FrameContentTracker::setWindow(QObject *window)
     m_sameFrameCounter = 0;
 
     if (m_window) {
-        QQuickWindow *quickWindow = qobject_cast<QQuickWindow*>(m_window);
+        auto *quickWindow = qobject_cast<QQuickWindow*>(m_window);
         if (auto *amWindow = qobject_cast<ApplicationManagerWindow *>(m_window)) {
             if (amWindow->isSingleProcess()) {
                 qmlWarning(this) << "The content of an application's window in single-process mode"

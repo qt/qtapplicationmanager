@@ -31,6 +31,7 @@ public:
 protected:
     FrameTimerImpl(FrameTimer *frameTimer);
 
+private:
     FrameTimer *m_frameTimer = nullptr;
 
     static std::function<FrameTimerImpl *(FrameTimer *)> s_factory;

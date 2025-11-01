@@ -67,7 +67,7 @@ Q_SIGNALS:
 protected:
     void setError(Error errorCode, const QString &errorString);
     virtual void execute() = 0;
-    void run() override final;
+    void run() final;
 
 protected:
     mutable QMutex m_mutex;

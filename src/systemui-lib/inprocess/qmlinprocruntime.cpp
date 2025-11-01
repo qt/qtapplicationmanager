@@ -26,6 +26,7 @@
 #include "utilities.h"
 #include "qml-utilities.h"
 
+using namespace std::chrono_literals;
 using namespace Qt::StringLiterals;
 
 
@@ -56,7 +57,7 @@ QmlInProcRuntime::QmlInProcRuntime(Application *app, QmlInProcRuntimeManager *ma
 
 QmlInProcRuntime::~QmlInProcRuntime()
 {
-    stop(Am::ForcedExit);
+    QmlInProcRuntime::stop(Am::ForcedExit); // force non-virtual call
 
     // if there is still a window present at this point, fire the 'closing' signal (probably) again,
     // because it's still the duty of WindowManager together with qml-ui to free and delete this item!!
@@ -175,7 +176,7 @@ void QmlInProcRuntime::incubate()
     // QQmlIncubator has no signal for when it's done, so we have to poll via a timer
     if (!m_incubationTimer) {
         m_incubationTimer = new QTimer(this);
-        m_incubationTimer->setInterval(1000/60);
+        m_incubationTimer->setInterval(16ms);
 
         connect(m_incubationTimer, &QTimer::timeout, this, [this]() {
             if (m_incubator.isError()) {

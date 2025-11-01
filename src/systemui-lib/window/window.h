@@ -42,7 +42,6 @@ public:
     Q_ENUM(ContentState)
 
     Window(Application *app);
-    ~Window() override;
 
     virtual bool isInProcess() const = 0;
     virtual Application *application() const;
@@ -81,7 +80,7 @@ Q_SIGNALS:
     void contentStateChanged();
     void requestedPopupPositionChanged();
 
-protected:
+private:
     QPointer<Application> m_application;
 
     QSet<WindowItem*> m_items;

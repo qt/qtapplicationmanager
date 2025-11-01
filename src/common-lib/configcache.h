@@ -126,10 +126,10 @@ protected:
 private:
     ADAPTOR m_adaptor;
 
-    template <typename U = T> typename std::enable_if<std::is_copy_constructible<U>::value, void *>::type
+    template <typename U = T> typename std::enable_if_t<std::is_copy_constructible_v<U>, void *>
     doClone(T *t)
     { return new T(*static_cast<T *>(t)); }
-    template <typename U = T> typename std::enable_if<!std::is_copy_constructible<U>::value, void *>::type
+    template <typename U = T> typename std::enable_if_t<!std::is_copy_constructible_v<U>, void *>
     doClone(T *)
     { Q_ASSERT_X(false, "ConfigCache::clone", "trying to clone non-copy-constructible content"); return nullptr; }
 

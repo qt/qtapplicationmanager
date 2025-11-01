@@ -12,9 +12,10 @@
 
 class PSConfiguration
 {
+    Q_DISABLE_COPY(PSConfiguration)
+
 public:
     PSConfiguration() = default;
-    PSConfiguration(const PSConfiguration &) = delete;
 
     QDir dataDirectory;
     QUrl listenUrl;

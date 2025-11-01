@@ -30,7 +30,7 @@
 #  include <windows.h>
 #else
 #  include <sys/stat.h>
-#  include <errno.h>
+#  include <cerrno>
 #  if defined(Q_OS_ANDROID)
 #    include <sys/vfs.h>
 #    define statvfs statfs
@@ -578,7 +578,7 @@ int PackageManager::rowCount(const QModelIndex &parent) const
 QVariant PackageManager::data(const QModelIndex &index, int role) const
 {
     if (index.parent().isValid() || !index.isValid())
-        return QVariant();
+        return { };
 
     Package *package = d->packages.at(index.row());
     return dataForRole(package, role);
@@ -609,7 +609,7 @@ QVariant PackageManager::dataForRole(Package *package, int role) const
     case PMRoles::PackageObject:
         return QVariant::fromValue(package);
     default:
-        return QVariant();
+        return { };
     }
 }
 
@@ -638,7 +638,7 @@ QVariantMap PackageManager::get(int index) const
 {
     if (index < 0 || index >= count()) {
         qCWarning(LogSystem) << "PackageManager::get(index): invalid index:" << index;
-        return QVariantMap();
+        return { };
     }
     return get(d->packages.at(index));
 }
@@ -1161,8 +1161,8 @@ QStringList PackageManager::packageIds() const
 {
     QStringList ids;
     ids.reserve(d->packages.size());
-    for (int i = 0; i < d->packages.size(); ++i)
-        ids << d->packages.at(i)->id();
+    for (const auto *pkg : std::as_const(d->packages))
+        ids << pkg->id();
     return ids;
 }
 
@@ -1262,7 +1262,7 @@ QString PackageManager::startPackageInstallationInternal(const QUrl &sourceUrl, 
         return enqueueTask(task);
     }
 #endif
-    return QString();
+    return { };
 }
 
 /*!
@@ -1309,9 +1309,11 @@ void PackageManager::acknowledgePackageInstallation(const QString &taskId)
         const auto allTasks = d->allTasks();
 
         for (AsynchronousTask *task : allTasks) {
-            if (qobject_cast<InstallationTask *>(task) && (task->id() == taskId)) {
-                static_cast<InstallationTask *>(task)->acknowledge();
-                break;
+            if (auto *itask = qobject_cast<InstallationTask *>(task)) {
+                if (itask->id() == taskId) {
+                    itask->acknowledge();
+                    break;
+                }
             }
         }
     }
@@ -1334,7 +1336,7 @@ QString PackageManager::removePackageInternal(const QString &packageId, bool kee
         }
     }
 #endif
-    return QString();
+    return { };
 }
 
 /*!
@@ -1537,17 +1539,17 @@ void PackageManager::executeNextTask()
         triggerExecuteNextTask();
     });
 
-    if (qobject_cast<InstallationTask *>(task)) {
-        connect(static_cast<InstallationTask *>(task), &InstallationTask::finishedPackageExtraction, this, [this, task]() {
-            qCDebug(LogInstaller) << "emit blockingUntilInstallationAcknowledge" << task->id();
-            emit taskBlockingUntilInstallationAcknowledge(task->id());
+    if (auto *itask = qobject_cast<InstallationTask *>(task)) {
+        connect(itask, &InstallationTask::finishedPackageExtraction, this, [this, itask]() {
+            qCDebug(LogInstaller) << "emit blockingUntilInstallationAcknowledge" << itask->id();
+            emit taskBlockingUntilInstallationAcknowledge(itask->id());
 
             // we can now start the next download in parallel - the InstallationTask will take care
             // of serializing the final installation steps on its own as soon as it gets the
             // required acknowledge (or cancel).
-            if (d->activeTask == task)
+            if (d->activeTask == itask)
                 d->activeTask = nullptr;
-            d->installationTaskList.append(task);
+            d->installationTaskList.append(itask);
             triggerExecuteNextTask();
         });
     }
@@ -1640,7 +1642,7 @@ bool PackageManager::finishedPackageInstall(const QString &id)
         bool isDowngrade = (package->state() == Package::BeingDowngraded);
 
         // figure out what the new info is
-        PackageInfo *newPackageInfo;
+        PackageInfo *newPackageInfo { };
         if (isUpdate)
             newPackageInfo = d->pendingPackageInfoUpdates.take(package);
         else if (isDowngrade)
@@ -1674,7 +1676,7 @@ bool PackageManager::finishedPackageInstall(const QString &id)
             unregisterApplicationsAndIntentsOfPackage(package);
 
             // update the correct base/updated info pointer
-            PackageInfo *oldPackageInfo;
+            PackageInfo *oldPackageInfo { };
             if (package->isBuiltIn())
                 oldPackageInfo = package->setUpdatedInfo(newPackageInfo);
             else

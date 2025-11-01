@@ -116,6 +116,7 @@ protected:
     static bool s_taggedLogging;
     void setupLogging();
 
+private:
     QWaylandWlShell *m_wlShell;
     QWaylandXdgShell *m_xdgShell;
     QVector<QWaylandOutput *> m_outputs;

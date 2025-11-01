@@ -451,7 +451,7 @@ QVariantMap NotificationManager::get(int index) const
 {
     if (index < 0 || index >= count()) {
         qCWarning(LogSystem) << "NotificationManager::get(index): invalid index:" << index;
-        return QVariantMap();
+        return { };
     }
 
     QVariantMap map;
@@ -520,8 +520,8 @@ void NotificationManager::triggerNotificationAction(uint id, const QString &acti
     if (i >= 0) {
         NotificationData *n = d->notifications.at(i);
         bool found = false;
-        for (auto it = n->actions.cbegin(); it != n->actions.cend(); ++it) {
-            const QVariantMap map = (*it).toMap();
+        for (const auto &action : std::as_const(n->actions)) {
+            const QVariantMap map = action.toMap();
             Q_ASSERT(map.size() == 1);
             if (map.constBegin().key() == actionId) {
                 found = true;
@@ -567,7 +567,7 @@ uint NotificationManager::showNotification(const QString &app_name, uint replace
                               << now << timeout;
 
     Application *app = ApplicationManager::instance()->fromId(app_name);
-    NotificationData *n;
+    NotificationData *n = nullptr;
     if (replaces_id) {
         int i = d->findNotificationById(replaces_id);
 
@@ -652,7 +652,7 @@ uint NotificationManager::notifyHelper(NotificationData *n, bool replaces, int t
 
     if (timeout > 0) {
         delete n->timer;
-        QTimer *t = new QTimer(this);
+        auto *t = new QTimer(this);
         connect(t, &QTimer::timeout, this, [this, id, t]() {
                     d->closeNotification(id, TimeoutExpired);
                     t->deleteLater();

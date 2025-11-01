@@ -18,8 +18,8 @@ public:
     explicit ColorPrint(QByteArray &buffer, bool colorSupport);
     ~ColorPrint();
 
-    ColorPrint &operator<<(const QString &str);
-    ColorPrint &operator<<(const QByteArray &ba);
+    ColorPrint &operator<<(QStringView str);
+    ColorPrint &operator<<(QByteArrayView ba);
     ColorPrint &operator<<(char c);
     ColorPrint &operator<<(const char *str);
     ColorPrint &operator<<(int i);
@@ -58,7 +58,7 @@ public:
 
     // anything we can invoke with a ColorPrint & parameter is a valid operator<< source
     template <typename OP>
-    typename std::enable_if<std::is_invocable_v<OP, ColorPrint &>, ColorPrint &>::type
+    typename std::enable_if_t<std::is_invocable_v<OP, ColorPrint &>, ColorPrint &>
     operator<<(const OP &op)
     {
         std::invoke(op, *this);

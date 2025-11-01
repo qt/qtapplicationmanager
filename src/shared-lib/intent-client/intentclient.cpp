@@ -216,10 +216,10 @@ IntentClientRequest *IntentClient::requestToSystem(const QString &requestingAppl
                                                    const QString &intentId, const QString &applicationId,
                                                    const QVariantMap &parameters)
 {
-    IntentClientRequest *ir = new IntentClientRequest(IntentClientRequest::Direction::ToSystem,
-                                                      requestingApplicationId, QUuid(),
-                                                      intentId, applicationId, parameters,
-                                                      applicationId == u":broadcast:");
+    auto *ir = new IntentClientRequest(IntentClientRequest::Direction::ToSystem,
+                                       requestingApplicationId, QUuid(),
+                                       intentId, applicationId, parameters,
+                                       applicationId == u":broadcast:");
 
     qCDebug(LogIntents) << "Application" << requestingApplicationId << "created an intent request for"
                         << intentId << "(application:" << applicationId << ")";
@@ -289,9 +289,9 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
     qCDebug(LogIntents) << "Client: Incoming intent request" << requestId << "to application" << applicationId
                         << "for intent" << intentId << (broadcast ? "(broadcast)" : "") << "parameters" << parameters;
 
-    IntentClientRequest *icr = new IntentClientRequest(IntentClientRequest::Direction::ToApplication,
-                                                       requestingApplicationId, requestId, intentId,
-                                                       applicationId, parameters, broadcast);
+    auto *icr = new IntentClientRequest(IntentClientRequest::Direction::ToApplication,
+                                        requestingApplicationId, requestId, intentId,
+                                        applicationId, parameters, broadcast);
 
     AbstractIntentHandler *handler = m_handlers.value(qMakePair(intentId, applicationId));
     if (handler) {

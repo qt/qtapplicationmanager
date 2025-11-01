@@ -37,10 +37,6 @@ InProcessSurfaceItem::InProcessSurfaceItem(QQuickItem *parent)
     setFocusOnClick(true);
 }
 
-InProcessSurfaceItem::~InProcessSurfaceItem()
-{
-}
-
 bool InProcessSurfaceItem::setWindowProperty(const QString &name, const QVariant &value)
 {
     const QByteArray key = nameToKey(name);
@@ -79,7 +75,7 @@ QVariantMap InProcessSurfaceItem::windowPropertiesAsVariantMap() const
 bool InProcessSurfaceItem::eventFilter(QObject *o, QEvent *e)
 {
     if ((o == &m_windowProperties) && (e->type() == QEvent::DynamicPropertyChange)) {
-        QDynamicPropertyChangeEvent *dpce = static_cast<QDynamicPropertyChangeEvent *>(e);
+        auto *dpce = static_cast<QDynamicPropertyChangeEvent *>(e);
         QByteArray key = dpce->propertyName();
 
         if (isName(key)) {
@@ -178,7 +174,7 @@ QSGNode *InProcessSurfaceItem::updatePaintNode(QSGNode *oldNode, QQuickItem::Upd
     if (m_color.alpha() == 0)
         return oldNode;  // no need to render fully transparent node
 
-    QSGSimpleRectNode *node = static_cast<QSGSimpleRectNode *>(oldNode);
+    auto *node = static_cast<QSGSimpleRectNode *>(oldNode);
     if (!node) {
         node = new QSGSimpleRectNode(clipRect(), m_color);
     } else {

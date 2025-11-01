@@ -17,10 +17,6 @@ using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-
-AmTest::AmTest()
-{}
-
 AmTest *AmTest::instance()
 {
     static QPointer<AmTest> object = new AmTest;
@@ -43,7 +39,7 @@ QVariant AmTest::buildConfig() const
 
 QString AmTest::qtVersion() const
 {
-    return QString::fromLatin1(QT_VERSION_STR);
+    return QStringLiteral(QT_VERSION_STR);
 }
 
 bool AmTest::isAsanBuild() const

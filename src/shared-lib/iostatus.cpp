@@ -87,8 +87,8 @@ void IoStatus::setDeviceNames(const QStringList &value)
 
     m_deviceNames = value;
 
-    for (auto it = m_deviceNames.cbegin(); it != m_deviceNames.cend(); ++it)
-        addIoReader(*it);
+    for (const auto &deviceName : std::as_const(m_deviceNames))
+        addIoReader(deviceName);
 
     emit deviceNamesChanged();
 }
@@ -149,7 +149,7 @@ void IoStatus::addIoReader(const QString &deviceName)
     if (m_ioHash.contains(deviceName))
         return;
 
-    IoReader *ior = new IoReader(qPrintable(deviceName));
+    auto *ior = new IoReader(qPrintable(deviceName));
     m_ioHash.insert(deviceName, ior);
 }
 

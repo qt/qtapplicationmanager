@@ -46,8 +46,8 @@ QT_END_NAMESPACE_AM
 #  include <fcntl.h>
 #  include <unistd.h>
 #  include <sys/ioctl.h>
-#  include <errno.h>
-#  include <stdio.h>
+#  include <cerrno>
+#  include <cstdio>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -77,7 +77,7 @@ std::unique_ptr<SysFsReader> CpuReader::s_sysFs;
 CpuReader::CpuReader()
 {
     if (!s_sysFs) {
-        s_sysFs.reset(new SysFsReader("/proc/stat", 256));
+        s_sysFs = std::make_unique<SysFsReader>("/proc/stat", 256);
         if (!s_sysFs->isOpen())
             qCWarning(LogSystem) << "WARNING: could not read CPU statistics from" << s_sysFs->fileName();
         else
@@ -137,7 +137,7 @@ void GpuVendor::fetch()
     auto readVendor = [&vendor](QOpenGLContext *c) {
         const GLubyte *p = c->functions()->glGetString(GL_VENDOR);
         if (p)
-            vendor = QByteArray(reinterpret_cast<const char *>(p)).toLower();
+            vendor = QByteArrayView(p).toByteArray().toLower();
     };
 
     if (QOpenGLContext::currentContext()) {
@@ -287,7 +287,7 @@ qreal GpuReader::readLoadValue()
 }
 
 // TODO: can we always expect cgroup FS to be mounted on /sys/fs/cgroup?
-static const char *cGroupsMemoryBaseDir = "/sys/fs/cgroup/memory/";
+static const char * const cGroupsMemoryBaseDir = "/sys/fs/cgroup/memory/";
 
 MemoryReader::MemoryReader() : MemoryReader(QString())
 { }
@@ -309,7 +309,7 @@ MemoryReader::MemoryReader(const QString &groupPath)
     if (!s_hasCGroupV1)
         path = g_systemRootDir + u"/proc/meminfo"_s;
 
-    m_sysFs.reset(new SysFsReader(path.toLocal8Bit(), 1500));
+    m_sysFs = std::make_unique<SysFsReader>(path.toLocal8Bit(), 1500);
     if (!m_sysFs->isOpen()) {
         qCWarning(LogSystem) << "WARNING: could not read memory statistics from" << m_sysFs->fileName()
                              << "(make sure that the memory cgroup is mounted)";
@@ -505,7 +505,7 @@ bool MemoryThreshold::setEnabled(bool enabled, const QString &groupPath, MemoryR
 void MemoryThreshold::readEventFd()
 {
     if (m_eventFd >= 0) {
-        quint64 counter;
+        quint64 counter = 0;
 
         ssize_t r = QT_READ(m_eventFd, &counter, sizeof(counter));
         if (r < 0) {
@@ -542,10 +542,10 @@ bool MemoryWatcher::startWatching(const QString &groupPath)
     hasMemoryLowWarning = false;
     hasMemoryCriticalWarning = false;
 
-    m_reader.reset(new MemoryReader(groupPath));
+    m_reader = std::make_unique<MemoryReader>(groupPath);
     m_memLimit = groupPath.isEmpty() ? m_reader->totalValue() : m_reader->groupLimit();
 
-    m_threshold.reset(new MemoryThreshold({m_warning, m_critical}));
+    m_threshold = std::make_unique<MemoryThreshold>(QList {m_warning, m_critical});
     connect(m_threshold.get(), &MemoryThreshold::thresholdTriggered, this, &MemoryWatcher::checkMemoryConsumption);
     return m_threshold->setEnabled(true, groupPath, m_reader.get());
 }
@@ -575,10 +575,11 @@ QMap<QByteArray, QByteArray> fetchCGroupProcessInfo(qint64 pid)
     if (!file.open(QIODevice::ReadOnly))
         return result;
 
-    char textBuffer[250];
-    while (file.readLine(textBuffer, sizeof(textBuffer)) > 0) {
+    std::array<char, 250> textBuffer;
+    while (file.readLine(textBuffer.data(), textBuffer.size()) > 0) {
         // NB: we don't want the ending '\n' character, hence the -1
-        auto fields = QByteArray::fromRawData(textBuffer, qstrlen(textBuffer) - 1).split(':');
+        auto fields = QByteArray::fromRawData(textBuffer.data(), qsizetype(qstrlen(textBuffer.data()) - 1))
+                          .split(':');
         if (fields.size() == 3)
             result[fields[1]] = fields[2];
     }

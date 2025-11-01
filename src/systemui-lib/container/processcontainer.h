@@ -38,10 +38,10 @@ class Q_APPMANSYSTEMUI_EXPORT HostProcess : public AbstractContainerProcess
 
 public:
     HostProcess();
-    virtual ~HostProcess() override;
+    ~HostProcess() override;
 
-    virtual qint64 processId() const override;
-    virtual Am::RunState state() const override;
+    qint64 processId() const override;
+    Am::RunState state() const override;
 
     void setStdioRedirections(QVector<int> &&stdioRedirections);
     void setWorkingDirectory(const QString &dir);

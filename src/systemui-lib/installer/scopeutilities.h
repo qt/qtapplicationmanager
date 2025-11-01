@@ -17,7 +17,7 @@ QT_BEGIN_NAMESPACE_AM
 class Q_APPMANSYSTEMUI_EXPORT ScopedDirectoryCreator
 {
 public:
-    ScopedDirectoryCreator();
+    ScopedDirectoryCreator() = default;
     bool create(const QString &path, bool removeExisting = true);
     bool take();
     bool destroy();

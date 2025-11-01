@@ -130,15 +130,15 @@ QVariant convertToDBusVariant(const QVariant &variant)
         return convertToDBusVariant(variant.value<QVariant>());
     } else if (type == QMetaType::QVariantList) {
         QVariantList outList;
-        QVariantList inList = variant.toList();
-        for (auto it = inList.cbegin(); it != inList.cend(); ++it)
-            outList.append(convertToDBusVariant(*it));
+        const QVariantList inList = variant.toList();
+        for (const auto &v : inList)
+            outList.append(convertToDBusVariant(v));
         return outList;
     } else if (type == QMetaType::QVariantMap) {
         QVariantMap outMap;
-        QVariantMap inMap = variant.toMap();
-        for (auto it = inMap.cbegin(); it != inMap.cend(); ++it)
-            outMap.insert(it.key(), convertToDBusVariant(it.value()));
+        const QVariantMap inMap = variant.toMap();
+        for (const auto &[k, v] : inMap.asKeyValueRange())
+            outMap.insert(k, convertToDBusVariant(v));
         return outMap;
     } else {
         return variant;
@@ -154,16 +154,16 @@ QVariant convertFromDBusVariant(const QVariant &variant)
     int type = variant.userType();
 
     if (type == qMetaTypeId<DBusInvalid>()) {
-        return QVariant();
+        return { };
     } else if (type == qMetaTypeId<DBusNull>()) {
         return QVariant::fromValue(nullptr);
     } else if (type == qMetaTypeId<DBusUrl>()) {
         return QUrl(variant.value<DBusUrl>().m_url);
     } else if (type == qMetaTypeId<QDBusVariant>()) {
-        QDBusVariant dbusVariant = variant.value<QDBusVariant>();
+        const auto dbusVariant = variant.value<QDBusVariant>();
         return convertFromDBusVariant(dbusVariant.variant()); // just to be on the safe side
     } else if (type == qMetaTypeId<QDBusArgument>()) {
-        const QDBusArgument dbusArg = variant.value<QDBusArgument>();
+        const auto dbusArg = variant.value<QDBusArgument>();
         switch (dbusArg.currentType()) {
         case QDBusArgument::BasicType:
         case QDBusArgument::VariantType:
@@ -215,19 +215,19 @@ QVariant convertFromDBusVariant(const QVariant &variant)
             Q_FALLTHROUGH();
         }
         default:
-            return QVariant();
+            return { };
         }
     } else if (type == QMetaType::QVariantList) {
         QVariantList outList;
-        QVariantList inList = variant.toList();
-        for (auto it = inList.cbegin(); it != inList.cend(); ++it)
-            outList.append(convertFromDBusVariant(*it));
+        const QVariantList inList = variant.toList();
+        for (const auto &v : inList)
+            outList.append(convertFromDBusVariant(v));
         return outList;
     } else if (type == QMetaType::QVariantMap) {
         QVariantMap outMap;
-        QVariantMap inMap = variant.toMap();
-        for (auto it = inMap.cbegin(); it != inMap.cend(); ++it)
-            outMap.insert(it.key(), convertFromDBusVariant(it.value()));
+        const QVariantMap inMap = variant.toMap();
+        for (const auto &[k, v] : inMap.asKeyValueRange())
+            outMap.insert(k, convertFromDBusVariant(v));
         return outMap;
     } else {
         return variant;

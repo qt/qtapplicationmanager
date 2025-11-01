@@ -45,16 +45,18 @@ QT_BEGIN_NAMESPACE_AM
 QT_END_NAMESPACE_AM
 #  include <dlfcn.h>
 #  include <sys/socket.h>
-#  include <signal.h>
+#  include <csignal>
 QT_BEGIN_NAMESPACE_AM
 
 static qint64 getDBusPeerPid(const QDBusConnection &conn)
 {
-    typedef bool (*am_dbus_connection_get_socket_t)(void *, int *);
+    using am_dbus_connection_get_socket_t = bool (*)(void *, int *);
     static am_dbus_connection_get_socket_t am_dbus_connection_get_socket = nullptr;
 
-    if (!am_dbus_connection_get_socket)
-        am_dbus_connection_get_socket = reinterpret_cast<am_dbus_connection_get_socket_t>(dlsym(RTLD_DEFAULT, "dbus_connection_get_socket"));
+    if (!am_dbus_connection_get_socket) {
+        am_dbus_connection_get_socket = reinterpret_cast<am_dbus_connection_get_socket_t>(
+            dlsym(RTLD_DEFAULT, "dbus_connection_get_socket"));
+    }
 
     if (!am_dbus_connection_get_socket)
         qFatal("ERROR: could not resolve 'dbus_connection_get_socket' from libdbus-1");

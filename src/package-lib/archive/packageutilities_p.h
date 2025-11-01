@@ -23,7 +23,7 @@ void addExtendedAttributeToDigest(QByteArrayView name, QByteArrayView value, QCr
 void addHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) noexcept(false);
 
 // key == field name, value == type to choose correct hashing algorithm
-extern QVariantMap headerDataForDigest;
+extern const QVariantMap headerDataForDigest;
 };
 
 enum PackageEntryType {
@@ -35,6 +35,7 @@ enum PackageEntryType {
 
 class Q_APPMANPACKAGE_EXPORT ArchiveException : public Exception
 {
+    Q_DISABLE_COPY(ArchiveException)
 public:
     ArchiveException(struct ::archive *ar, const char *errorString);
 };

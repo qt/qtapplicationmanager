@@ -10,6 +10,7 @@
 #include <QQuickWindow>
 #include <qqmlinfo.h>
 
+using namespace std::chrono_literals;
 using namespace Qt::StringLiterals;
 
 /*!
@@ -76,7 +77,7 @@ FrameTimer::FrameTimer(QObject *parent)
     // Not installing a factory is ok for this class. It will just be usable for QQuickWindows
     // this way, but that's enough for the Wayland client use-case.
 
-    m_updateTimer.setInterval(1000);
+    m_updateTimer.setInterval(1s);
     connect(&m_updateTimer, &QTimer::timeout, this, &FrameTimer::update);
 }
 
@@ -170,7 +171,7 @@ void FrameTimer::setWindow(QObject *window)
     if (m_window) {
         bool connected = false;
 
-        QQuickWindow *quickWindow = qobject_cast<QQuickWindow*>(m_window);
+        auto *quickWindow = qobject_cast<QQuickWindow*>(m_window);
         if (auto *amWindow = qobject_cast<ApplicationManagerWindow *>(m_window)) {
             if (amWindow->isSingleProcess()) {
                 qmlWarning(this) << "It makes no sense to measure the FPS of an application's window in single-process mode."

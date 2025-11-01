@@ -60,8 +60,8 @@ bool WindowManagerAdaptor::makeScreenshot(const QString &filename, const QString
 
         // selector := "appId[property=value]:screen" with all 3 parts being optional
         // an empty appId means all apps
-        int propertyIndex = selector.indexOf(u'[');
-        int screenIndex = selector.lastIndexOf(u':');
+        qsizetype propertyIndex = selector.indexOf(u'[');
+        qsizetype screenIndex = selector.lastIndexOf(u':');
 
         QString appId = (propertyIndex > 0) ? selector.left(propertyIndex) :
                             ((screenIndex > 0) ? selector.left(screenIndex) : selector);

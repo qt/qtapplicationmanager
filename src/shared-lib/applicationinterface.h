@@ -55,10 +55,9 @@ Q_SIGNALS:
 
     Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
 
-protected:
+private:
     QPointer<ApplicationInterfaceImpl> m_impl;
 
-private:
     explicit ApplicationInterface(QObject *parent);
     Q_DISABLE_COPY_MOVE(ApplicationInterface)
 

@@ -38,7 +38,7 @@ enum class Error {
     Intents = 60
 };
 
-inline QDebug &operator<<(QDebug &debug, Error error)
+inline QDebug operator<<(QDebug debug, Error error)
 {
     return debug << int(error);
 }

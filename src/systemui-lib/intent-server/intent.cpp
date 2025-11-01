@@ -156,9 +156,6 @@ QT_BEGIN_NAMESPACE_AM
 */
 
 
-Intent::Intent()
-{ }
-
 Intent::Intent(const QString &id, const QString &packageId, const QString &applicationId,
                const QStringList &capabilities, Intent::Visibility visibility,
                const QVariantMap &parameterMatch, const QMap<QString, QString> &names,

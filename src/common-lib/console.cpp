@@ -19,7 +19,6 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str);
 #  include <unistd.h>
 #  include <sys/ioctl.h>
 #  include <termios.h>
-#  include <signal.h>
 #  if defined(Q_OS_MACOS)
 #    include <libproc.h>
 #  endif

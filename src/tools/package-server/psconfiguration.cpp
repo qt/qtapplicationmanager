@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 // Qt-Security score:critical reason:data-parser
 
+#include <iostream>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
 #include <QtAppManCommon/qtyaml.h>
@@ -57,7 +58,7 @@ void PSConfiguration::parse(const QStringList &args)
     });
 
     if (!clp.parse(args)) {
-        fprintf(stderr, "%s\n", qPrintable(clp.errorText()));
+        std::cerr << qPrintable(clp.errorText()) << std::endl;
         exit(1);
     }
 

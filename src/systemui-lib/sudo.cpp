@@ -17,7 +17,7 @@
 #include "utilities.h"
 #include "exception.h"
 
-#include <errno.h>
+#include <cerrno>
 
 using namespace Qt::StringLiterals;
 
@@ -419,17 +419,16 @@ bool SudoInterface::sendMessage(int socket, const QByteArray &msg, MessageType t
 QByteArray SudoInterface::receiveMessage(int socket, MessageType type, QString *errorString)
 {
     const int headerSize = 4;
-    char recvBuffer[8*1024];
-    auto bytesReceived = EINTR_LOOP(recv(socket, recvBuffer, sizeof(recvBuffer), 0));
+    std::array<char, 8*1024> recvBuffer;
+    auto bytesReceived = EINTR_LOOP(::recv(socket, recvBuffer.data(), recvBuffer.size(), 0));
 
-    if ((bytesReceived < headerSize) || qstrncmp(recvBuffer, (type == Request ? "RQST" : "RPLY"), 4)) {
+    if ((bytesReceived < headerSize) || qstrncmp(recvBuffer.data(), (type == Request ? "RQST" : "RPLY"), 4)) {
         *errorString = u"failed to receive command from the SudoClient process"_s;
         //qCCritical(LogSystem) << *errorString;
-        return QByteArray();
+        return { };
     }
 
-    QByteArray packet(recvBuffer + headerSize, int(bytesReceived) - headerSize);
-
+    auto packet = QByteArray::fromRawData(recvBuffer.data() + headerSize, bytesReceived - headerSize);
     QDataStream ds(&packet, QDataStream::ReadOnly);
     QByteArray msg;
     ds >> *errorString >> msg;
@@ -525,7 +524,7 @@ QByteArray SudoClient::call(const QByteArray &msg)
 
     //qCCritical(LogSystem) << "failed to send command to the SudoServer process";
     m_errorString = u"failed to send command to the SudoServer process"_s;
-    return QByteArray();
+    return { };
 }
 
 

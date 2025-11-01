@@ -25,7 +25,7 @@ public:
                                        const QString &certificateFile, const QString &passPhrase,
                                        bool asJson = false);
     static PackagingJob *developerVerify(const QString &sourceName, const QStringList &certificateFiles,
-                                         const QStringList crlFiles);
+                                         const QStringList &crlFiles);
 
     static PackagingJob *storeSign(const QString &sourceName, const QString &destinationName,
                                    const QString &certificateFile, const QString &passPhrase,
@@ -39,7 +39,7 @@ public:
     int resultCode() const;
 
 private:
-    PackagingJob();
+    PackagingJob() = default;
 
     enum Mode {
         Create,
@@ -49,7 +49,7 @@ private:
         StoreVerify,
     };
 
-    Mode m_mode;
+    Mode m_mode = Create;
     QString m_output;
     int m_resultCode = 0;
     bool m_includeExtendedAttributes = false;

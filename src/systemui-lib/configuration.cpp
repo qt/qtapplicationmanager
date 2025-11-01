@@ -17,8 +17,7 @@
 #include <QGuiApplication>
 
 #include <cstdlib>
-#include <cstdio>
-#include <functional>
+#include <iostream>
 #include <memory>
 
 #if defined(Q_OS_LINUX)
@@ -344,7 +343,7 @@ QVariant Configuration::buildConfig() const
         } catch (...) {
         }
     }
-    return QVariant();
+    return { };
 }
 
 Configuration::~Configuration()
@@ -361,7 +360,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     if (d->clp.isSet(u"help"_s))
         d->clp.showHelp();
 
-    for (const auto &opt : d->deprecatedOptions) {
+    for (const auto &opt : std::as_const(d->deprecatedOptions)) {
         if (d->clp.isSet(opt)) {
             auto names = opt.names();
             for (auto &name : names)
@@ -374,7 +373,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     if (!d->buildConfigFilePath.isEmpty() && d->clp.isSet(u"build-config"_s)) {
         QFile f(d->buildConfigFilePath);
         if (f.open(QFile::ReadOnly)) {
-            ::fprintf(stdout, "%s\n", f.readAll().constData());
+            std::cout << f.readAll().constData() << std::endl;
             ::exit(0);
         } else {
             throw Exception("Could not find the embedded build config.");
@@ -499,8 +498,8 @@ void Configuration::parseWithArguments(const QStringList &arguments)
             d->data.ui.mainQml = args.at(0);
 
         QStringList importPaths = d->data.ui.importPaths;
-        for (int i = 0; i < d->data.ui.importPaths.size(); ++i)
-            d->data.ui.importPaths[i] = toAbsoluteFilePath(d->data.ui.importPaths.at(i));
+        for (auto &ip : d->data.ui.importPaths)
+            ip = toAbsoluteFilePath(ip);
     }
 
     if (!d->data.instanceId.isEmpty()) {

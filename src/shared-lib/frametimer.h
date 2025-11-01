@@ -64,10 +64,8 @@ public:
 
     FrameTimerImpl *implementation();
 
-protected:
-    std::unique_ptr<FrameTimerImpl> m_impl;
-
 private:
+    std::unique_ptr<FrameTimerImpl> m_impl;
     QPointer<QObject> m_window;
 
     int m_count = 0;

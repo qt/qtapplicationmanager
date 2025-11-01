@@ -18,6 +18,7 @@
 
 #if defined(Q_OS_UNIX)
 #  include <csignal>
+#  include <iostream>
 #  include <unistd.h>
 #  include <fcntl.h>
 #endif
@@ -36,15 +37,17 @@ HostProcess::HostProcess()
 #if defined(Q_OS_UNIX)
     m_process->setChildProcessModifier([this]() {
         if (m_stopBeforeExec) {
-            fprintf(stderr, "\n*** a 'process' container was started in stopped state ***\nthe process is suspended via SIGSTOP and you can attach a debugger to it via\n\n   gdb -p %d\n\n", getpid());
-            raise(SIGSTOP);
+            std::cerr << "\n*** a 'process' container was started in stopped state ***\n"
+                         "The process is suspended via SIGSTOP and you can attach a debugger to it via\n"
+                         "\n   gdb -p " << ::getpid() << "\n\n";
+            ::raise(SIGSTOP);
         }
         // duplicate any requested redirections to the respective stdin/out/err fd. Also make sure to
         // close the original fd: otherwise we would block the tty where the fds originated from.
         for (int i = 0; i < 3; ++i) {
             int fd = m_stdioRedirections.value(i, -1);
             if (fd >= 0) {
-                dup2(fd, i);
+                ::dup2(fd, i);
                 ::close(fd);
             }
         }
@@ -140,7 +143,7 @@ void HostProcess::setStdioRedirections(QVector<int> &&stdioRedirections)
 {
     // we own the file descriptors now
     closeAndClearFileDescriptors(m_stdioRedirections);
-    m_stdioRedirections = stdioRedirections;
+    m_stdioRedirections = std::move(stdioRedirections);
 
 #if defined(Q_OS_UNIX)
     // make sure that the redirection fds do not have a close-on-exec flag, since we need them
@@ -148,9 +151,9 @@ void HostProcess::setStdioRedirections(QVector<int> &&stdioRedirections)
     for (int fd : std::as_const(m_stdioRedirections)) {
         if (fd < 0)
             continue;
-        int flags = fcntl(fd, F_GETFD);
+        int flags = ::fcntl(fd, F_GETFD);
         if (flags & FD_CLOEXEC)
-            fcntl(fd, F_SETFD, flags & ~FD_CLOEXEC);
+            ::fcntl(fd, F_SETFD, flags & ~FD_CLOEXEC);
     }
 #endif
 }
@@ -169,7 +172,7 @@ ProcessContainer::ProcessContainer(ProcessContainerManager *manager, Application
                                    const QMap<QString, QString> &debugWrapperEnvironment,
                                    const QStringList &debugWrapperCommand)
     : AbstractContainer(manager, app)
-    , m_stdioRedirections(stdioRedirections)
+    , m_stdioRedirections(std::move(stdioRedirections))
     , m_debugWrapperEnvironment(debugWrapperEnvironment)
     , m_debugWrapperCommand(debugWrapperCommand)
 {
@@ -291,7 +294,7 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments,
             penv.insert(it.key(), it.value());
     }
 
-    HostProcess *process = new HostProcess();
+    auto *process = new HostProcess();
     process->setWorkingDirectory(m_baseDirectory);
     process->setProcessEnvironment(penv);
     process->setStopBeforeExec(configuration().value(u"stopBeforeExec"_s).toBool());

@@ -65,7 +65,7 @@ public:
     Am::RunState state() const override;
 
 public Q_SLOTS:
-    void stop(Am::ExitStatus exitStatus) override;
+    void stop(QtAM::Am::ExitStatus exitStatus) override;
 
 private:
     PluginContainer *m_container;
@@ -76,7 +76,7 @@ class Q_APPMANSYSTEMUI_EXPORT PluginContainer : public AbstractContainer
     Q_OBJECT
 
 public:
-    virtual ~PluginContainer() override;
+    ~PluginContainer() override;
 
     QString controlGroup() const override;
     bool setControlGroup(const QString &groupName) override;
@@ -93,7 +93,7 @@ public:
     AbstractContainerProcess *start(const QStringList &arguments, const QMap<QString, QString> &env,
                                     const QVariantMap &amConfig) override;
 
-protected:
+private:
     explicit PluginContainer(AbstractContainerManager *manager, Application *app,
                              ContainerInterface *containerInterface, bool hasDebugWrapper);
     std::unique_ptr<ContainerInterface> m_interface;

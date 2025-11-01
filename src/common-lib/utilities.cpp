@@ -340,7 +340,7 @@ void validateIdForFilesystemUsage(const QString &id)  noexcept(false)
 
     // all characters need to be ASCII minus any filesystem special characters:
     bool spaceOnly = true;
-    static const char forbiddenChars[] = "<>:\"/\\|?*";
+    static const char *forbiddenChars = "<>:\"/\\|?*";
     for (int pos = 0; pos < id.length(); ++pos) {
         ushort ch = id.at(pos).unicode();
         if ((ch < 0x20) || (ch > 0x7f) || strchr(forbiddenChars, ch & 0xff)) {

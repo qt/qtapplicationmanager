@@ -47,7 +47,7 @@ AbstractContainer *PluginContainerManager::create(Application *app, QVector<int>
                                                   const QStringList &debugWrapperCommand)
 {
     // stdioRedirections should really be changed to 'move', but we would break the plugin API.
-    auto containerInterface = m_interface->create(app == nullptr, stdioRedirections,
+    auto containerInterface = m_interface->create(app == nullptr, std::move(stdioRedirections),
                                                   debugWrapperEnvironment, debugWrapperCommand);
     if (!containerInterface) {
         closeAndClearFileDescriptors(stdioRedirections);

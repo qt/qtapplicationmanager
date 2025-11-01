@@ -73,7 +73,7 @@ private:
 };
 
 template <typename... Ts> void am_trace(QDebug dbg, Ts &&... ts)
-{ (dbg << ... << ts); }
+{ (( dbg << std::forward<Ts>(ts)), ...); }
 
 #define AM_TRACE(category, ...) \
     for (bool qt_category_enabled = category().isDebugEnabled(); qt_category_enabled; qt_category_enabled = false) { \

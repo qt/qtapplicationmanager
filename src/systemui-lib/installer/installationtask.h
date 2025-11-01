@@ -33,7 +33,6 @@ class Q_APPMANSYSTEMUI_EXPORT InstallationTask : public AsynchronousTask
 public:
     InstallationTask(const QString &installationPath, const QString &documentPath,
                      const QUrl &sourceUrl, Origin origin, QObject *parent = nullptr);
-    ~InstallationTask() override;
 
     void acknowledge();
     bool cancel() override;

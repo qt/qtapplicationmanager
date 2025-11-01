@@ -54,7 +54,7 @@ public:
     }
 
     // this will generate compiler errors if there's no suitable QString::arg(const C &) overload
-    template <typename C> typename std::enable_if<QtPrivate::IsSequentialContainer<C>::Value, Exception>::type &
+    template <typename C> typename std::enable_if_t<QtPrivate::IsSequentialContainer<C>::Value, Exception> &
     arg(const C &c) noexcept
     {
         QString s;

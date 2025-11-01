@@ -203,7 +203,7 @@ bool UnixSignalHandler::install(Type handlerType, std::initializer_list<int> sig
     if (handlerType == ForwardedToEventLoopHandler) {
 #if defined(Q_OS_UNIX)
         if ((m_pipe[0] == -1) && qApp) {
-            auto dummy = pipe(m_pipe);
+            auto dummy = ::pipe(m_pipe.data());
             Q_UNUSED(dummy)
 
             auto sn = new QSocketNotifier(m_pipe[0], QSocketNotifier::Read, this);

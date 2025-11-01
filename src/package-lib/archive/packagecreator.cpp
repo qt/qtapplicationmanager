@@ -58,7 +58,7 @@ PackageCreator::~PackageCreator()
 
 QDir PackageCreator::sourceDirectory() const
 {
-    return QDir(d->m_sourcePath);
+    return { d->m_sourcePath };
 }
 
 void PackageCreator::setSourceDirectory(const QDir &sourceDir)
@@ -127,7 +127,7 @@ PackageCreatorPrivate::PackageCreatorPrivate(PackageCreator *creator, QIODevice 
 bool PackageCreatorPrivate::create()
 {
     struct archive *ar = nullptr;
-    char buffer[64 * 1024];
+    std::array<char, 64*1024> buffer;
 
     try {
         if (m_report.packageId().isNull())
@@ -180,7 +180,7 @@ bool PackageCreatorPrivate::create()
         auto dummyCallback = [](archive *, void *){ return ARCHIVE_OK; };
         auto writeCallback = [](archive *, void *user, const void *writeBuffer, size_t size) {
             // this could be simpler, if we had an event loop ... but we do not
-            QIODevice *output = reinterpret_cast<QIODevice *>(user);
+            auto *output = static_cast<QIODevice *>(user);
             qint64 written = output->write(static_cast<const char *>(writeBuffer), qint64(size));
             output->waitForBytesWritten(-1);
             return static_cast<__LA_SSIZE_T>(written);
@@ -309,15 +309,15 @@ bool PackageCreatorPrivate::create()
                     if (q->wasCanceled())
                         throw Exception(Error::Canceled);
 
-                    qint64 bytesRead = f.read(buffer, sizeof(buffer));
+                    qint64 bytesRead = f.read(buffer.data(), buffer.size());
                     if (bytesRead < 0)
                         throw Exception(f, "could not read from file");
                     fileSize += bytesRead;
 
-                    if (archive_write_data(ar, buffer, static_cast<size_t>(bytesRead)) == -1)
+                    if (archive_write_data(ar, buffer.data(), static_cast<size_t>(bytesRead)) == -1)
                         throw ArchiveException(ar, "could not write to archive");
 
-                    digest.addData({ buffer, qsizetype(bytesRead) });
+                    digest.addData({ buffer.data(), qsizetype(bytesRead) });
                 }
 
                 if (fileSize != fi.size())

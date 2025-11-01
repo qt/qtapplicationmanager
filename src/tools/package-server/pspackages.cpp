@@ -53,7 +53,6 @@ PSPackages::PSPackages(PSConfiguration *cfg, QObject *parent)
     d->cfg = cfg;
 }
 
-
 PSPackages::~PSPackages()
 { }
 

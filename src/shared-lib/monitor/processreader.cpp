@@ -53,7 +53,7 @@ void ProcessReader::update()
 void ProcessReader::openCpuLoad()
 {
     const QByteArray fileName = "/proc/" + QByteArray::number(m_pid) + "/stat";
-    m_statReader.reset(new SysFsReader(fileName));
+    m_statReader = std::make_unique<SysFsReader>(fileName);
     if (!m_statReader->isOpen())
         qCWarning(LogSystem) << "Cannot read CPU load from" << fileName;
     m_lastCpuUsage = 0;
@@ -117,9 +117,9 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
     if (!sf)
         return false;
 
-    const int lineLen = 100;  // we are not interested in full library paths
+    static const int lineLen = 100;  // we are not interested in full library paths
     char line[lineLen + 5];   // padding for highly unlikely trailing perm flags below
-    char *pl;                 // pointer to chars within line
+    char *pl = nullptr;       // pointer to chars within line
     bool ok = true;
 
     if (!fgets(line, lineLen, sf))

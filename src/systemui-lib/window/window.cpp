@@ -158,10 +158,6 @@ Window::Window(Application *app)
 {
 }
 
-Window::~Window()
-{
-}
-
 Application *Window::application() const
 {
     return m_application;

@@ -57,7 +57,7 @@ PackageExtractor::PackageExtractor(const QUrl &downloadUrl, const QDir &destinat
 
 QDir PackageExtractor::destinationDirectory() const
 {
-    return QDir(d->m_destinationPath);
+    return { d->m_destinationPath };
 }
 
 void PackageExtractor::setDestinationDirectory(const QDir &destinationDir)
@@ -70,7 +70,7 @@ void PackageExtractor::setFileExtractedCallback(const std::function<void(const Q
     d->m_fileExtractedCallback = callback;
 }
 
-void PackageExtractor::setExtendedAttributeCallback(const std::function<void(const QString &, const QByteArray &, const QByteArray &)> &callback)
+void PackageExtractor::setExtendedAttributeCallback(const std::function<void(const QString &, QByteArrayView, QByteArrayView)> &callback)
 {
     d->m_extendedAttributeCallback = callback;
 }
@@ -300,8 +300,9 @@ void PackageExtractorPrivate::extract()
                     if (xattrNameRaw == nullptr || ((xattrValueRaw == nullptr) && (xattrValueSize != 0)))
                         continue;
 
-                    const QByteArray xattrName = QByteArray::fromRawData(xattrNameRaw, qstrlen(xattrNameRaw));
-                    const QByteArray xattrValue = QByteArray::fromRawData(static_cast<const char *>(xattrValueRaw), xattrValueSize);
+                    const QByteArrayView xattrName { xattrNameRaw };
+                    const QByteArrayView xattrValue { static_cast<const char *>(xattrValueRaw),
+                                                    qsizetype(xattrValueSize) };
 
                     if (xattrName.startsWith("system.posix_acl"))
                         continue;
@@ -311,7 +312,7 @@ void PackageExtractorPrivate::extract()
                         m_extendedAttributeCallback(filePath, xattrName, xattrValue);
                     } else if (::setxattr(qPrintable(filePath), xattrNameRaw, xattrValueRaw, xattrValueSize, 0) != 0) {
                         throw Exception(errno, "could not set xattr '%1' for entry '%2'")
-                        .arg(xattrName).arg(entryPath);
+                            .arg(xattrName).arg(entryPath);
                     }
 
                     PackageUtilities::addExtendedAttributeToDigest(xattrName, xattrValue, digest);
@@ -406,7 +407,7 @@ void PackageExtractorPrivate::extract()
                     if (offset != readPosition)
                         throw Exception(Error::Package, "[libarchive] current read position (%1) does not match requested offset (%2)").arg(readPosition).arg(offset);
 
-                    readPosition += bytesRead;
+                    readPosition += __LA_INT64_T(bytesRead);
 
                     switch (packageEntryType) {
                     case PackageEntry_File:

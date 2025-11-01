@@ -23,7 +23,7 @@ class AmTest : public QObject
     QML_ADDED_IN_VERSION(2, 0)
     QML_SINGLETON
 
-    AmTest();
+    AmTest() = default;
 
 public:
     enum MsgType { DebugMsg, WarningMsg, CriticalMsg, FatalMsg, InfoMsg, SystemMsg = CriticalMsg };

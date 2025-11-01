@@ -39,11 +39,10 @@ public:
         return that;
     }
 
-protected:
+private:
     QDBusAbstractAdaptor *m_adaptor = nullptr;
     bool m_isRegistered = false;
 
-private:
     explicit DBusContextAdaptor(QObject *realObject);
 };
 

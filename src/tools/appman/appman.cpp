@@ -44,7 +44,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
     QCoreApplication::setOrganizationName(u"QtProject"_s);
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
-    QCoreApplication::setApplicationVersion(QString::fromLatin1(QT_AM_VERSION_STR));
+    QCoreApplication::setApplicationVersion(QStringLiteral(QT_AM_VERSION_STR));
 
     std::unique_ptr<Main> a;
     std::unique_ptr<Configuration> cfg;

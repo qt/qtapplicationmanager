@@ -91,3 +91,13 @@ qt_internal_extend_target(AppManCommonPrivate CONDITION AM_COVERAGE
     LIBRARIES
         gcov
 )
+
+qt_internal_extend_target(AppManCommonPrivate CONDITION LINUX AND QT_FEATURE_system_zlib
+    LIBRARIES
+        WrapZLIB::WrapZLIB
+)
+
+qt_internal_extend_target(AppManCommonPrivate CONDITION LINUX AND NOT QT_FEATURE_system_zlib
+    LIBRARIES
+        Qt::ZlibPrivate
+)

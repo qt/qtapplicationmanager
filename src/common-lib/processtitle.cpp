@@ -5,220 +5,154 @@
 
 #include "processtitle.h"
 
-#if !defined(Q_OS_LINUX)
-QT_BEGIN_NAMESPACE_AM
-void ProcessTitle::setTitle(const char *, ...) { }
-void adjustArgumentCount(int &) { }
-void ProcessTitle::augmentCommand(const char *) { }
-const char *ProcessTitle::title() { return nullptr; }
-QT_END_NAMESPACE_AM
-#else
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#  ifndef _GNU_SOURCE
+#    define _GNU_SOURCE // for program_invocation_short_name
+#  endif
+#  include <cerrno>
+#  include <unistd.h>
+#  include <sys/syscall.h>
+#  include <sys/prctl.h>
+#  include <zlib.h>
 
-#include "logging.h"
+#  include <QFile>
+#  include <QSysInfo>
+#  include <QVersionNumber>
+#  include "exception.h"
+#  include "logging.h"
 
-#include <QVarLengthArray>
-#include <QByteArray>
-
-#include <cstdio>
-
-#include <errno.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-/* \internal
-
-   How this works:
-   All argv[] and envp[] strings are in one continuous memory region that starts at argv[0]. All
-   strings are simply separated by '\0'. Sadly, Linux has no setproctitle() call like the BSDs
-   have. You could just overwrite argv[0], but writing beyond the original length would overwrite
-   the environment as seen by a process.
-
-   In order to make room to extend argv[], we provide two solutions:
-   1. Copy the environment somewhere else and use the "old" environment as a buffer to extend
-      argv[]. This is the generic approach taken by the setTitle() function. This function mimics
-      the API of the setproctitle() function found in BSDs:
-      https://www.freebsd.org/cgi/man.cgi?query=setproctitle&sektion=3
-      Unfortunately, the kernel keeps it's view to the old environment, which makes
-      /proc/<pid>/environ hold part of the command line arguments instead of the actual
-      environment.
-   2. Use space already reserved with a placeholder argument at the end. This is the approach taken
-      by the augmentCommand() function and solves the problem that /proc/<pid>/environ is broken by
-      the first approach. For this to work we need to be able to insert the placeholder argument at
-      process execution (and hence it doesn't work for processes started on the command line by the
-      user).
-
-   Both approaches need the ProcessTitleInitialize() function to run at process start-up. This is
-   achieved by registering it as an .init function (which is a bit intrusive in a library like
-   this, but kept for backwards compatibility).
-
-*/
+using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-const char *ProcessTitle::placeholderArgument = "#placeholder-for-still-unknown-qtapplicationmanager-applicationid";
-
-static char *startOfArgv = nullptr;    // original buffer (that ps uses), eventually with changed content
-static size_t maxArgvSize = 0;
-static char *originalArgv = nullptr;   // "original" in terms of content, but moved to differnt buffer
-static size_t originalArgvSize = 0;
-static int placeholders = 0;
-
-static void ProcessTitleInitialize(int argc, char *argv[], char *envp[])
+// This function is not necessary, but it helps the user diagnose a failing setTitle() call
+// 1: yes or module | 0: no | -1: unknown
+static int hasKernelConfig(const char *config)
 {
-    // char *start = argv[0];
-    // for (int i = 0; i < argc; ++i)
-    //     fprintf(stderr, "ARGV[%d] = %p | len=%d | delta=%ld\n", i, argv[i], int(strlen(argv[i])), argv[i] - start);
-    // for (int i = 0; envp[i]; ++i)
-    //     fprintf(stderr, "ENVP[%d] = %p | len=%d | delta=%ld\n", i, envp[i], int(strlen(envp[i])), envp[i] - start);
+    const QString kernel = QSysInfo::kernelVersion();
+    const QByteArray configKey = "\n"_ba + config + '=';
 
-    // sanity checks
-    if (argc <= 0 || !argv[0] || !envp)
-        return;
+    for (QString path : { u"/proc/config"_s, u"/proc/config.gz"_s,
+                         u"/boot/config-${k}"_s, u"/lib/modules/${k}/build/.config"_s }) {
+        path.replace(u"${k}"_s, kernel);
+        QByteArray content;
+        if (auto f = ::gzopen(qPrintable(path), "r")) {
+            std::array<char, 4096> buffer;
+            while (true) {
+                if (int result = ::gzread(f, buffer.data(), buffer.size()); result > 0)
+                    content.append(buffer.data(), result);
+                else
+                    break;
+            }
+            ::gzclose(f);
 
-    char *lastArg = argv[argc - 1];
-    const size_t lastArgSize = strlen(lastArg);
-    if (envp[0] && ((lastArg + lastArgSize + 1) != envp[0]))
-        return;
-
-    // calculate the size of the available area
-    startOfArgv = argv[0];
-    originalArgvSize = size_t(envp[0] - argv[0]);
-    originalArgv = static_cast<char *>(malloc(originalArgvSize));
-    memcpy(originalArgv, argv[0], originalArgvSize);
-
-    if (!strcmp(lastArg, ProcessTitle::placeholderArgument)) {
-        placeholders = 1;
-        // make sure ps doesn't print dummy placeholder argument
-        memset(lastArg, 0, lastArgSize);
-        // and /proc/<pid>/cmdline splits arguments with spaces
-        for (int i = argc - 2; i > 0; --i)
-            argv[i][-1] = ' ';
-    } else {
-        char *envpEnd;
-        size_t envc = 0;
-
-        while (envp[envc])
-            ++envc;
-        envpEnd = envp[envc - 1] + strlen(envp[envc - 1]) + 1;
-        maxArgvSize = size_t(envpEnd - startOfArgv);
-
-        // temporary copy of the list of pointers on the stack
-        QVarLengthArray<char *, 2048> oldenvp(static_cast<int>(envc));
-        memcpy(oldenvp.data(), envp, envc * sizeof(char *));
-
-        // this will only free the list of pointers, but not the contents!
-        clearenv();
-
-        // copy the environment via setenv() - do NOT use putenv() as this would just put the old
-        // pointer in the new table.
-        for (int i = 0; i < oldenvp.size(); ++i) {
-            // split into key/value pairs for setenv()
-            char *name = oldenvp[i];
-            if (!name || !*name)
-                continue;
-            char *value = strchr(name, '=');
-            if (!value) // entries without '=' should not exist
-                continue;
-            *value++ = 0;
-            if (!*name)
-                continue;
-            if (setenv(name, value, 1) != 0) {
-                fprintf(stderr, "ERROR: could not copy the environment: %s\n", strerror(errno));
-                _exit(1);
+            const auto pos = content.indexOf(configKey);
+            if ((pos >= 0) && ((pos + configKey.size()) < content.size())) {
+                const char configValue = content.at(pos + configKey.size());
+                return ((configValue == 'y') || (configValue == 'm')) ? 1 : 0;
+            } else {
+                return 0;
             }
         }
-
-        // fprintf(stderr, "env is moved: testing $SHELL=%s\n", getenv("SHELL"));
     }
-
-    // we need to replace the argv[i] pointers with a copy of the original strings,
-    // since the app's cmdline parser might want to access argv[i] later.
-    for (int i = argc - 1; i >= 0; --i)
-        argv[i] = originalArgv + (argv[i] - argv[0]);
+    return -1;
 }
 
-// register as a .init function that is automatically run before main()
-decltype(ProcessTitleInitialize) *init_ProcessTitleInitialize
-    __attribute__((section(".init_array"), used)) = ProcessTitleInitialize;
+Q_GLOBAL_STATIC(QByteArray, originalProgramInvocationShortName, program_invocation_short_name);
+static const char *currentTitle = nullptr; // this cannot be deleted at shutdown!
 
-void ProcessTitle::setTitle(const char *fmt, ...)
+void ProcessTitle::setTitle(QByteArrayView title)
 {
-    if (!startOfArgv || maxArgvSize <= 0 || !originalArgv || originalArgvSize <= 0) {
-        qWarning(LogSystem) << "ProcessTitle::setTitle() failed, because its initialization function"
-                               " was not called via an .init_array section at process startup.";
-        return;
-    }
+    try {
+        // man setproctitle (BSD only)
+        const QByteArray t = [&]() -> QByteArray {
+            if (title.isEmpty())
+                return *originalProgramInvocationShortName;
+            else if (title.startsWith('-'))
+                return title.toByteArray();
+            else
+                return *originalProgramInvocationShortName + ": " + title;
+        }();
 
-    char title[256];
-    char *ptr = title;
-    size_t len = 0;
+        QFile procSelfStat(u"/proc/self/stat"_s);
+        if (!procSelfStat.open(QIODevice::ReadOnly))
+            throw Exception(procSelfStat, "failed to open");
 
-    if (!fmt) {
-        // reset to original argv[]
-        ptr = originalArgv;
-        len = originalArgvSize;
-    } else {
-        // BSD compatibility: the title will always start with the original argv[0] + ": ",
-        // unless the first character in the format string is a '-'
-        if (fmt[0] == '-') {
-            fmt++;
-        } else {
-            len = qMin(strlen(originalArgv), sizeof(title) - 3);
-            memcpy(title, originalArgv, len);
-            memcpy(title + len, ": \0", 3);
-            len += 2;
+        const auto statBuffer = procSelfStat.readAll();
+        if (statBuffer.isEmpty())
+            throw Exception(procSelfStat, "failed to read");
+
+        // The second field is the process name in parentheses. It may contain spaces, so we
+        // need to find the last ')' to start our actual parsing
+        auto endOfNamePos = statBuffer.lastIndexOf(')');
+        if (endOfNamePos < 1)
+            throw Exception("could not parse %1").arg(procSelfStat.fileName());
+
+        // Skip ") ", then split the rest of the line by spaces
+        const auto statList = statBuffer.sliced(endOfNamePos + 2).split(' ');
+        if (statList.size() < 50)
+            throw Exception("not enough fields in %1").arg(procSelfStat.fileName());
+
+        // man 5 proc_pid_stat
+        // Since we started parsing after the process name, we have a -2 offset.
+        // We also add another -1, because the kernel docs are 1-based.
+        auto parseField = [&](int index) -> __u64 {
+            bool ok = false;
+            if (auto f = statList.at(index - 2 - 1).toULongLong(&ok); ok)
+                return f;
+            else
+                throw Exception("could not parse field %1 in %2").arg(index).arg(procSelfStat.fileName());
+        };
+
+        auto argStart = std::make_unique<char[]>(t.size() + 1);
+        qstrcpy(argStart.get(), t.constData());
+
+        struct ::prctl_mm_map map {
+            .start_code  = parseField(26),
+            .end_code    = parseField(27),
+            .start_data  = parseField(45),
+            .end_data    = parseField(46),
+            .start_brk   = parseField(47),
+            .brk         = __u64(::syscall(__NR_brk, 0)),
+            .start_stack = parseField(28),
+            .arg_start   = __u64(argStart.get()),
+            .arg_end     = __u64(argStart.get() + t.size() + 1),
+            .env_start   = parseField(50),
+            .env_end     = parseField(51),
+            .auxv        = 0ULL,
+            .auxv_size   = 0U,
+            .exe_fd      = -1U,
+        };
+
+        if (::prctl(PR_SET_MM, __u64(PR_SET_MM_MAP), &map, __u64(sizeof(map)), 0ULL) != 0) {
+            if (errno == EINVAL) {
+                if (QVersionNumber::fromString(QSysInfo::kernelVersion()) < QVersionNumber(3, 18))
+                    throw Exception("the kernel is older than 3.18");
+                else if (hasKernelConfig("CONFIG_CHECKPOINT_RESTORE") == 0)
+                    throw Exception("the kernel is missing CONFIG_CHECKPOINT_RESTORE");
+            }
+            throw Exception(errno, "prctl(PR_SET_MM_MAP)");
         }
 
-        va_list ap;
-        va_start(ap, fmt);
-        size_t result = static_cast<size_t>(
-            std::vsnprintf(title + len, sizeof(title) - len, fmt, ap));
-        va_end(ap);
-        len += qMin(result, sizeof(title) - len); // clamp to buffer size in case of overflow
-        if ((len + 1) > maxArgvSize)
-            len = maxArgvSize - 1;
+        program_invocation_short_name = argStart.get();
+
+        delete [] currentTitle;
+        currentTitle = argStart.release();
+    } catch (const Exception &e) {
+        qCWarning(LogSystem).noquote() << "ProcessTitle::setTitle() failed:" << e.errorString();
     }
-    if (ptr && len) {
-        memcpy(startOfArgv, ptr, len);
-        memset(startOfArgv + len, 0, maxArgvSize - len);
-    }
-}
-
-void ProcessTitle::adjustArgumentCount(int &argc)
-{
-    argc -= placeholders;
-}
-
-void ProcessTitle::augmentCommand(const char *extension)
-{
-    if (!startOfArgv || originalArgvSize <= 0 || placeholders == 0) {
-        qWarning(LogSystem) << "ProcessTitle::augmentCommand() failed";
-        return;
-    }
-
-    static const char *prefix = ": ";
-    const size_t prefixLen = strlen(prefix);
-    const size_t placeholderLen = strlen(placeholderArgument);
-    const size_t commandLen = strlen(originalArgv);
-    size_t augmentLen = strlen(extension) + prefixLen;
-    if (augmentLen > placeholderLen)
-        augmentLen = placeholderLen + 1;
-
-    char *pos = startOfArgv + commandLen;
-    // move real arguments to the right to make space for the command extension
-    memmove(pos + augmentLen, pos, originalArgvSize - placeholderLen - commandLen - 2);
-    // copy prefix and extension to this space
-    memcpy(pos, prefix, prefixLen);
-    strncpy(pos + prefixLen, extension, augmentLen - prefixLen);
 }
 
 const char *ProcessTitle::title()
 {
-    return startOfArgv;
+    return currentTitle ? currentTitle : originalProgramInvocationShortName->constData();
 }
 
 QT_END_NAMESPACE_AM
 
+#else // defined Q_OS_LINUX && !defined(Q_OS_ANDROID)
+QT_BEGIN_NAMESPACE_AM
+void ProcessTitle::setTitle(QByteArrayView) { }
+const char *ProcessTitle::title() { return nullptr; }
+QT_END_NAMESPACE_AM
 #endif

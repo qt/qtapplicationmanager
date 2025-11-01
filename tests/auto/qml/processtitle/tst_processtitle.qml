@@ -20,7 +20,7 @@ TestCase {
     ProcessStatus {
         id: processStatus
         applicationId: ""
-        Component.onCompleted: sysuiPid = processId;
+        Component.onCompleted: testCase.sysuiPid = processId;
     }
 
 
@@ -31,9 +31,8 @@ TestCase {
     }
 
     function test_launcher_qml_data() {
-        return [ { tag: "small", appId: "test.processtitle.app", resId: "test.processtitle.app" },
-                 { tag: "large", appId: "appappapp1appappapp2appappapp3appappapp4appappapp5appappapp6appappapp7",
-                                 resId: "appappapp1appappapp2appappapp3appappapp4appappapp5appappapp6appa" } ];
+        return [ { tag: "small", appId: "test.processtitle.app" },
+                 { tag: "large", appId: "appappapp1appappapp2appappapp3appappapp4appappapp5appappapp6appappapp7" } ];
     }
 
     function test_launcher_qml(data) {
@@ -43,10 +42,10 @@ TestCase {
         var pid
         if (ApplicationManager.systemProperties.quickLaunch) {
             sigIdx = 0;
-            quickArg = " --quicklaunch"
+            quickArg = ": [quicklaunch]"
             tryVerify(function() {
                 let out = AmTest.runProgram([ "ps", "--ppid", sysuiPid, "-o", "pid,args", "--no-headers"]).stdout
-                const re = new RegExp(" *(\\d*) .*" + executable + quickArg)
+                const re = new RegExp(" *(\\d*) .*" + executable + quickArg.replace(/[\[\]:]/g, '\\$&'))
                 let match = re.exec(out)
                 pid = match ? match[1] : 0
                 return pid
@@ -54,9 +53,6 @@ TestCase {
             wait(500 * AmTest.timeoutFactor);
 
             let cmdLine = AmTest.runProgram([ "cat", `/proc/${pid}/cmdline` ]).stdout.split('\0')[0]
-            if (cmdLine.includes("/qemu-"))
-                skip("This doesn't work inside qemu")
-
             verify(cmdLine.endsWith(executable + quickArg),
                    "cmdLine: '" + cmdLine + "' does not end with: '" + executable + quickArg + "'");
         } else {
@@ -71,18 +67,15 @@ TestCase {
             runStateChangedSpy.wait(spyTimeout);
 
         compare(runStateChangedSpy.signalArguments[sigIdx][0], data.appId);
-        compare(runStateChangedSpy.signalArguments[sigIdx][1], ApplicationObject.Running);
+        compare(runStateChangedSpy.signalArguments[sigIdx][1], Am.Running);
         wait(500 * AmTest.timeoutFactor);
 
         processStatus.applicationId = data.appId;
         pid = processStatus.processId;
 
         let cmdLine = AmTest.runProgram([ "cat", `/proc/${pid}/cmdline` ]).stdout.split('\0')[0]
-        if (cmdLine.includes("/qemu-"))
-            skip("This doesn't work inside qemu")
-
         let psOutput = AmTest.runProgram([ "ps", "--no-headers", pid ]).stdout.trim()
-        let checkStr = executable + ": " + data.resId + quickArg
+        let checkStr = executable + ": " + data.appId
         verify(psOutput.endsWith(checkStr), "ps output: '" + psOutput + "' does not end with: '" + checkStr + "'");
         verify(cmdLine.endsWith(checkStr), "cmd.line: '" + cmdLine + "' does not end with: '" + checkStr + "'");
 
@@ -94,6 +87,6 @@ TestCase {
         ApplicationManager.stopAllApplications();
         runStateChangedSpy.wait(spyTimeout);
         runStateChangedSpy.wait(spyTimeout);
-        compare(runStateChangedSpy.signalArguments[1][1], ApplicationObject.NotRunning);
+        compare(runStateChangedSpy.signalArguments[1][1], Am.NotRunning);
     }
 }

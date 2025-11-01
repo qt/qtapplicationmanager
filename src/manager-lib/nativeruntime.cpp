@@ -28,7 +28,6 @@
 #include "unixsignalhandler.h"
 #include "notificationmanager.h"
 #include "dbus-utilities.h"
-#include "processtitle.h"
 #include "systemd.h"
 
 #include "runtimeinterface_adaptor.h"
@@ -394,8 +393,6 @@ bool NativeRuntime::start()
     } else {
         if (m_isQuickLauncher)
             args << u"--quicklaunch"_s;
-
-        args << QString::fromLocal8Bit(ProcessTitle::placeholderArgument);    // must be last argument
     }
 
     emit signaler()->aboutToStart(this);

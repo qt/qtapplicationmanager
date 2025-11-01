@@ -3,6 +3,12 @@ qt_feature_evaluate_features("${CMAKE_CURRENT_SOURCE_DIR}/common-lib/configure.c
 
 set(QT_SBOM_DEFAULT_QT_LICENSE_ID_LIBRARIES "QT_COMMERCIAL_OR_GPL3")
 
+if(NOT QT_FEATURE_system_zlib)
+    find_package(Qt6 COMPONENTS ZlibPrivate)
+elseif(NOT TARGET WrapZLIB::WrapZLIB)
+    qt_find_package(WrapZLIB PROVIDED_TARGETS WrapZLIB::WrapZLIB)
+endif()
+
 add_subdirectory(3rdparty)
 add_subdirectory(wayland-extensions)
 add_subdirectory(dbus-interfaces)

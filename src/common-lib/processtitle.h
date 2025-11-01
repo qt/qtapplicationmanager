@@ -7,16 +7,13 @@
 #define PROCESSTITLE_H
 
 #include <QtAppManCommon/global.h>
+#include <QtCore/QByteArrayView>
 
 QT_BEGIN_NAMESPACE_AM
 
 namespace ProcessTitle {
 
-extern const char *placeholderArgument;
-
-void setTitle(const char *fmt, ...) Q_ATTRIBUTE_FORMAT_PRINTF(1, 2);
-void adjustArgumentCount(int &argc);
-void augmentCommand(const char* extension);
+void setTitle(QByteArrayView title);
 const char *title();
 
 }

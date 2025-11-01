@@ -1,11 +1,4 @@
 
-# Handle the conditional finding of either system zlib or qt zlib.
-if(NOT QT_FEATURE_system_zlib)
-    find_package(Qt6 COMPONENTS ZlibPrivate)
-elseif(NOT TARGET WrapZLIB::WrapZLIB)
-    qt_find_package(WrapZLIB PROVIDED_TARGETS WrapZLIB::WrapZLIB)
-endif()
-
 qt_internal_add_3rdparty_library(BundledLibArchive
     QMAKE_LIB_NAME archive
     STATIC

@@ -61,8 +61,6 @@ int main(int argc, char *argv[])
 {
     StartupTimer::instance()->checkpoint("entered main");
 
-    ProcessTitle::adjustArgumentCount(argc);
-
     QCoreApplication::setApplicationName(u"Qt Application Manager QML Launcher"_s);
     QCoreApplication::setOrganizationName(u"QtProject"_s);
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
@@ -102,8 +100,10 @@ int main(int argc, char *argv[])
         clp.process(*am);
 
         bool quicklaunched = clp.isSet(u"quicklaunch"_s);
-        QString directLoadManifest = clp.value(u"directload"_s);
+        if (quicklaunched)
+            ProcessTitle::setTitle("[quicklaunch]");
 
+        QString directLoadManifest = clp.value(u"directload"_s);
         if (directLoadManifest.isEmpty())
             am->loadConfiguration();
 
@@ -340,7 +340,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
         Logging::registerUnregisteredDltContexts();
     }
     // Dress up the ps output to make it easier to correlate all the launcher processes
-    ProcessTitle::augmentCommand(applicationId.toLocal8Bit().constData());
+    ProcessTitle::setTitle(applicationId.toLocal8Bit());
 
     auto *am = ApplicationMain::instance();
     am->setApplication(convertFromDBusVariant(application).toMap());

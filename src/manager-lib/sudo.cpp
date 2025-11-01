@@ -334,7 +334,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
             qCCritical(LogSystem) << "could not drop privileges in the SudoServer process -- continuing with full root privileges";
 
         SudoServer::createInstance(socketFds[0]);
-        ProcessTitle::setTitle("%s", "sudo helper");
+        ProcessTitle::setTitle("sudo helper");
         SudoServer::instance()->run();
     }
 

@@ -17,6 +17,8 @@ QT_BEGIN_NAMESPACE_AM
 class Systemd
 {
 public:
+    Q_DISABLE_COPY_MOVE(Systemd)
+
     static Systemd *instance();
     ~Systemd();
 
@@ -35,10 +37,6 @@ public:
 
 private:
     Systemd();
-    Systemd(const Systemd &) = delete;
-    Systemd(Systemd &&) = delete;
-    Systemd &operator=(const Systemd &) = delete;
-    Systemd &operator=(Systemd &&) = delete;
 
     bool checkPid(const QByteArray &pidVar);
 

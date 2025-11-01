@@ -13,6 +13,7 @@
 #  ifndef _GNU_SOURCE
 #    define _GNU_SOURCE // for program_invocation_short_name
 #  endif
+#  include <charconv>
 #  include <cerrno>
 #  include <sys/mman.h>
 #  include <sys/socket.h>
@@ -182,7 +183,7 @@ bool Systemd::canLogToJournal() const
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     static const bool result = [this] {
         QByteArrayView js(m_journalStream);
-        if (int pos = js.indexOf(':'); pos > 0) {
+        if (qsizetype pos = js.indexOf(':'); pos > 0) {
             bool devOk, inoOk;
             dev_t dev = static_cast<dev_t>(js.left(pos).toULongLong(&devOk));
             ino_t ino = static_cast<ino_t>(js.mid(pos + 1).toULongLong(&inoOk));
@@ -223,17 +224,19 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
     }();
 
     const QByteArray appId = Logging::applicationId();
-    char lineBuf[32];
-    char priAndTid[32];
-    auto priAndTidLen = std::snprintf(priAndTid, sizeof(priAndTid), "PRIORITY=%c\nTID=%i",
-                                      priority, (int) ::syscall(SYS_gettid));
+    std::array<char, 32> lineBuf;
+    std::array<char, 32> priAndTid { "PRIORITY=0\nTID=" };
+    priAndTid.at(9) = priority;
+    const auto [endPtr, error] = std::to_chars(priAndTid.begin() + 15, priAndTid.end(),
+                                               (pid_t) ::syscall(SYS_gettid));
+    const size_t priAndTidLen = (error == std::errc()) ? (endPtr - priAndTid.begin()) : 10;
 
     // We are using scatter/gather IO to send the message in one datagram without allocations
     // and with minimal copying.
     // For efficiency, the required trailing new-line is always pre-pended to the next field.
 
     std::array<struct ::iovec, 14> iov {{
-        { (void *) priAndTid, (size_t) priAndTidLen },
+        { (void *) priAndTid.data(), (size_t) priAndTidLen },
         { (void *) "\nQT_CATEGORY=", 13 },
         { (void *) context.category, qstrlen(context.category) },
     }};
@@ -248,8 +251,10 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
         iov.at(iovLen++) = { (void *) context.file, (size_t) qstrlen(context.file) };
     }
     if (context.line > 0) {
-        auto lineBufLen = std::snprintf(lineBuf, sizeof(lineBuf), "\nCODE_LINE=%i", context.line);
-        iov.at(iovLen++) = { (void *) lineBuf, (size_t) lineBufLen };
+        ::strcpy(lineBuf.data(), "\nCODE_LINE=");
+        auto [endPtr, error] = std::to_chars(lineBuf.begin() + 11, lineBuf.end(), context.line);
+        if (error == std::errc())
+            iov.at(iovLen++) = { (void *) lineBuf.data(), (size_t) (endPtr - lineBuf.data()) };
     }
     if (context.function && context.function[0]) {
         iov.at(iovLen++) = { (void *) "\nCODE_FUNC=", 11 };

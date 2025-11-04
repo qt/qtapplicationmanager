@@ -41,6 +41,8 @@ public:
 
     void setAutomaticReporting(bool enableAutomaticReporting);
 
+    void updateLoggingCategory();
+
 Q_SIGNALS:
     void timeToFirstFrameChanged(quint64 timeToFirstFrame);
     void systemUpTimeChanged(quint64 systemUpTime);
@@ -53,6 +55,7 @@ private:
     static QByteArray formatMicroSecs(quint64 micros);
 
     FILE *m_output = nullptr;
+    bool m_outputToLogger = false;
     bool m_initialized = false;
     bool m_automaticReporting = true;
     quint64 m_processCreation = 0;

@@ -507,6 +507,11 @@ void Logging::setMessagePattern(const QString &pattern)
     }
 }
 
+bool Logging::isLoggingToStderr()
+{
+    return !lg()->useJournalLogger && lg()->useAMConsoleLogger;
+}
+
 QVariant Logging::useAMConsoleLogger()
 {
     return lg()->useAMConsoleLoggerConfig;

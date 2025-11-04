@@ -43,9 +43,9 @@
           can only be obtained with 10ms resolution.
 
     In order to activate startup timing measurement, the \c $AM_STARTUP_TIMER environment variable
-    needs to be set: if set to \c 1, a startup performance analysis will be printed on the console.
-    Anything other than \c 1 will be interpreted as the name of a file that is used instead of the
-    console.
+    needs to be set: if set to \c 1, a startup performance analysis will be logged in the
+    \c am.startup category with level \c info. Anything other than \c 1 will be interpreted as the
+    name of a file to log to instead.
 
     When activated, this report will always be printed for the System UI. If the application manager
     is running in multi-process mode, additional reports will also be printed for every QML
@@ -143,12 +143,15 @@ StartupTimer::StartupTimer()
     ::atexit([]() { delete s_instance; });
 
     QByteArray useTimer = qgetenv("AM_STARTUP_TIMER");
-    if (useTimer.isNull())
+
+    if (useTimer.isNull()) {
         return;
-    else if (useTimer.isEmpty() || useTimer == "1")
-        m_output = stderr;
-    else
-        m_output = fopen(useTimer.constData(), "w");
+    } else if (useTimer.isEmpty() || useTimer == "1") {
+        m_outputToLogger = true;
+        updateLoggingCategory();
+    } else {
+        m_output = ::fopen(useTimer.constData(), "w");
+    }
 
 #if defined(Q_OS_WIN)
     // Windows reports FILETIMEs in 100nsec steps: divide by 10 to get usec
@@ -298,8 +301,8 @@ StartupTimer *StartupTimer::instance()
 
 StartupTimer::~StartupTimer()
 {
-    if (m_output && m_output != stderr)
-        fclose(m_output);
+    if (m_output)
+        ::fclose(m_output);
 
     s_instance = nullptr;
 }
@@ -360,13 +363,22 @@ void StartupTimer::setAutomaticReporting(bool enableAutomaticReporting)
     }
 }
 
+void StartupTimer::updateLoggingCategory()
+{
+    if (m_outputToLogger)
+        const_cast<QLoggingCategory &>(LogStartupTimer()).setEnabled(QtInfoMsg, true);
+}
+
 void StartupTimer::createReport(const QString &title)
 {
-    if (m_output && !m_checkpoints.isEmpty()) {
-        bool ansiColorSupport = (m_output == stderr) ? Console::stderrSupportsAnsiColor() : false;
+    if ((m_output || m_outputToLogger) && !m_checkpoints.isEmpty()) {
+        bool ansiColorSupport = m_outputToLogger
+                                && Logging::isLoggingToStderr()
+                                && Console::stderrSupportsAnsiColor();
         const char cellChar = ansiColorSupport ? ' ' : '#';
 
-        ColorPrint cprt(m_output, ansiColorSupport);
+        QByteArray buffer;
+        ColorPrint cprt(buffer, ansiColorSupport);
 
         cprt << '\n' << ColorPrint::yellow << "== STARTUP TIMING REPORT: " << title << " =="
              << ColorPrint::reset << '\n';
@@ -417,6 +429,16 @@ void StartupTimer::createReport(const QString &title)
                  << ColorPrint::reset << '\n';
         }
         m_checkpoints.clear();
+
+        if (m_outputToLogger) {
+            qCInfo(LogStartupTimer) << buffer.constData();
+        } else if (m_output) {
+            ::fputs(buffer.constData(), m_output);
+            ::fflush(m_output);
+#if defined(Q_OS_UNIX)
+            ::fsync(::fileno(m_output));
+#endif
+        }
     }
 }
 

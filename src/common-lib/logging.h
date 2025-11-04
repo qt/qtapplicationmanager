@@ -51,6 +51,8 @@ public:
 
     static void setMessagePattern(const QString &pattern);
 
+    static bool isLoggingToStderr();
+
     static QVariant useAMConsoleLogger();
     static void setUseAMConsoleLogger(const QVariant &config);
 

@@ -91,7 +91,6 @@ public:
 
     static IntentServerIpcConnection *find(const QString &appId);
 
-    Application *application() const;
     virtual QString applicationId() const;
     bool isInProcess() const;
 
@@ -107,7 +106,7 @@ Q_SIGNALS:
 protected:
     IntentServerIpcConnection(bool inProcess, Application *application, IntentServerAMImplementation *iface);
 
-    Application *m_application;
+    QPointer<Application> m_application;
     IntentServerAMImplementation *m_interface;
     bool m_inprocess = true;
     bool m_ready = false;

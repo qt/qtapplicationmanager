@@ -340,11 +340,6 @@ IntentServerIpcConnection *IntentServerIpcConnection::find(const QString &appId)
     return nullptr;
 }
 
-Application *IntentServerIpcConnection::application() const
-{
-    return m_application;
-}
-
 QString IntentServerIpcConnection::applicationId() const
 {
     return m_application ? m_application->id() : QString();
@@ -492,7 +487,7 @@ QString IntentServerDBusIpcConnection::requestToSystem(const QString &intentId,
                                                        const QString &applicationId,
                                                        const QVariantMap &parameters)
 {
-    auto requestingApplicationId = application() ? application()->id() : QString();
+    auto requestingApplicationId = this->applicationId();
     auto isr = m_interface->requestToSystem(requestingApplicationId, intentId, applicationId,
                                             convertFromDBusVariant(parameters).toMap());
     if (!isr) {
@@ -506,7 +501,7 @@ QString IntentServerDBusIpcConnection::requestToSystem(const QString &intentId,
 void IntentServerDBusIpcConnection::replyFromApplication(const QString &requestId, bool error,
                                                          const QVariantMap &result)
 {
-    emit m_interface->replyFromApplication(application()->id(), QUuid::fromString(requestId), error,
+    emit m_interface->replyFromApplication(applicationId(), QUuid::fromString(requestId), error,
                                            convertFromDBusVariant(result).toMap());
 }
 

@@ -94,6 +94,9 @@ qt_am_create_installable_package(
     [PACKAGE_DIRECTORY package_dir]
     [PACKAGE_NAME package_name]
     [FAKEROOT]
+    [SIGN_PACKAGE]
+    [CERTIFICATE certifiate_file]
+    [CERTIFICATE_PASSWORD certificate_password]
     [ADDITIONAL_OPTIONS]
     [DEPENDENCIES ...]
 )
@@ -117,6 +120,17 @@ The \c INSTALL_DIRECTORY argument can be used to specify a directory where the p
 
 The \c FAKEROOT argument will run the packager in a fake root environment. This is useful when using
 a pre-package-command that requires root privileges e.g. to set IMA signatures.
+
+When \c SIGN_PACKAGE is set, the created package is signed with a developer signature using
+\c CERTIFICATE and \c CERTIFICATE_PASSWORD.
+
+If \c CERTIFICATE or \c CERTIFICATE_PASSWORD is not provided, the following environment variables are
+used instead:
+
+\list
+\li \c QT_AM_PACKAGE_CERTIFICATE
+\li \c QT_AM_PACKAGE_CERTIFICATE_PASSWORD
+\endlist
 
 The \c ADDITIONAL_OPTIONS argument can be used to pass additional command line options to the packager.
 See \l {Packager} for a list of available options.

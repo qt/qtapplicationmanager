@@ -278,7 +278,7 @@ function(qt6_am_create_installable_package target)
     cmake_parse_arguments(
         PARSE_ARGV 1
         ARG
-        "FAKEROOT" "OUTPUT_DIRECTORY;INSTALL_DIRECTORY;PACKAGE_DIRECTORY;PACKAGE_NAME;" "FILES;DEPENDENCIES;ADDITIONAL_OPTIONS"
+        "FAKEROOT;SIGN_PACKAGE" "OUTPUT_DIRECTORY;INSTALL_DIRECTORY;PACKAGE_DIRECTORY;PACKAGE_NAME;CERTIFICATE;CERTIFICATE_PASSWORD" "FILES;DEPENDENCIES;ADDITIONAL_OPTIONS"
     )
 
     if (DEFINED ARG_KEYWORDS_MISSING_VALUES)
@@ -301,6 +301,23 @@ function(qt6_am_create_installable_package target)
 
     if (NOT FOUND_INFO_YAML)
         message(FATAL_ERROR "FILES does not contain a info.yaml")
+    endif()
+
+    if (ARG_SIGN_PACKAGE)
+        if (NOT DEFINED ARG_CERTIFICATE)
+            if (DEFINED ENV{QT_AM_PACKAGE_CERTIFICATE})
+                set(ARG_CERTIFICATE $ENV{QT_AM_PACKAGE_CERTIFICATE})
+            else()
+                message(FATAL_ERROR "No certificate set! Either use the CERTIFICATE argument, or set the QT_AM_PACKAGE_CERTIFICATE environment variable")
+            endif()
+        endif()
+        if (DEFINED ARG_CERTIFICATE_PASSWORD)
+            set(OPT_CERTIFICATE_PASSWORD --password "pass:${ARG_CERTIFICATE_PASSWORD")
+        elif (DEFINED ENV{QT_AM_CERTIFICATE_PASSWORD})
+            set(OPT_CERTIFICATE_PASSWORD --password "env:QT_AM_CERTIFICATE_PASSWORD")
+        else()
+            set(OPT_CERTIFICATE_PASSWORD "")
+        endif()
     endif()
 
     if (ARG_PACKAGE_DIRECTORY)
@@ -349,30 +366,55 @@ function(qt6_am_create_installable_package target)
 
     qt_am_internal_find_host_packager()
 
-    set(PACKAGE_PATH ${ARG_OUTPUT_DIRECTORY}/${ARG_PACKAGE_NAME})
+    if (ARG_SIGN_PACKAGE)
+        get_filename_component(PACKAGE_NAME ${ARG_PACKAGE_NAME} NAME_WE)
+        get_filename_component(PACKAGE_EXTENSION ${ARG_PACKAGE_NAME} EXT)
+        set(UNSIGNED_PACKAGE_PATH ${ARG_OUTPUT_DIRECTORY}/${PACKAGE_NAME}-unsigned${PACKAGE_EXTENSION})
+    else()
+        set(UNSIGNED_PACKAGE_PATH ${ARG_OUTPUT_DIRECTORY}/${ARG_PACKAGE_NAME})
+    endif()
+    set(PACKAGE_ARTIFACT ${UNSIGNED_PACKAGE_PATH})
+
     add_custom_command(
-        OUTPUT  ${PACKAGE_PATH}
-        COMMAND ${CMAKE_COMMAND} -E rm -f ${PACKAGE_PATH}
+        OUTPUT  ${UNSIGNED_PACKAGE_PATH}
+        COMMAND ${CMAKE_COMMAND} -E rm -f ${UNSIGNED_PACKAGE_PATH}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${ARG_PACKAGE_DIRECTORY}
         COMMAND ${CMAKE_COMMAND} -E copy ${ARG_FILES} ${ARG_PACKAGE_DIRECTORY}
         COMMAND ${CMAKE_COMMAND} -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
                     ${RUN_WITH_FAKEROOT}
                     $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>
-                    create-package ${ARG_ADDITIONAL_OPTIONS} ${PACKAGE_PATH} ${ARG_PACKAGE_DIRECTORY}
+                    create-package ${ARG_ADDITIONAL_OPTIONS} ${UNSIGNED_PACKAGE_PATH} ${ARG_PACKAGE_DIRECTORY}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS ${ARG_DEPENDENCIES} ${ARG_FILES}
         VERBATIM
     )
 
+    if (ARG_SIGN_PACKAGE)
+        set(SIGNED_PACKAGE_PATH ${ARG_OUTPUT_DIRECTORY}/${ARG_PACKAGE_NAME})
+        set(PACKAGE_ARTIFACT ${SIGNED_PACKAGE_PATH})
+
+        add_custom_command(
+            OUTPUT  ${SIGNED_PACKAGE_PATH}
+            COMMAND ${CMAKE_COMMAND} -E rm -f ${SIGNED_PACKAGE_PATH}
+            COMMAND ${CMAKE_COMMAND} -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
+                        ${RUN_WITH_FAKEROOT}
+                        $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>
+                        dev-sign-package ${UNSIGNED_PACKAGE_PATH} ${SIGNED_PACKAGE_PATH} ${ARG_CERTIFICATE} ${OPT_CERTIFICATE_PASSWORD}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            DEPENDS ${UNSIGNED_PACKAGE_PATH}
+            VERBATIM
+        )
+    endif()
+
     if (ARG_INSTALL_DIRECTORY)
         install(
-            FILES ${PACKAGE_PATH}
+            FILES ${PACKAGE_ARTIFACT}
             DESTINATION "${ARG_INSTALL_DIRECTORY}"
             OPTIONAL
         )
     endif()
 
-    add_custom_target(${target} DEPENDS ${PACKAGE_PATH})
+    add_custom_target(${target} DEPENDS ${PACKAGE_ARTIFACT})
     target_sources(${target} PRIVATE ${ARG_FILES})
 endfunction()
 

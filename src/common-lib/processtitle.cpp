@@ -128,7 +128,8 @@ void ProcessTitle::setTitle(QByteArrayView title)
             if (errno == EINVAL) {
                 if (QVersionNumber::fromString(QSysInfo::kernelVersion()) < QVersionNumber(3, 18))
                     throw Exception("the kernel is older than 3.18");
-                else if (hasKernelConfig("CONFIG_CHECKPOINT_RESTORE") == 0)
+            } else if (errno == EPERM) {
+                if (hasKernelConfig("CONFIG_CHECKPOINT_RESTORE") == 0)
                     throw Exception("the kernel is missing CONFIG_CHECKPOINT_RESTORE");
             }
             throw Exception(errno, "prctl(PR_SET_MM_MAP)");

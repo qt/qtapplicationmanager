@@ -1006,6 +1006,16 @@ void Main::setupDBus(const Configuration *cfg)
                          this, [this](const QDBusConnection &conn) {
             for (const auto &[path, adaptor] : std::as_const(m_p2pAdaptors).asKeyValueRange())
                 adaptor->registerOnDBus(conn, path);
+
+            auto *timer = new QTimer();
+            // The connName capture is on purpose to avoid holding a reference to conn
+            connect(timer, &QTimer::timeout, this, [timer, connName = conn.name()]() {
+                if (!QDBusConnection(connName).isConnected()) {
+                    QDBusConnection::disconnectFromPeer(connName);
+                    timer->deleteLater();
+                }
+            });
+            timer->start(500ms);
         });
 
         // Write the bus address to our info file for the appman-controller tool

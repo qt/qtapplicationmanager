@@ -1123,6 +1123,16 @@ QString Main::registerDBusObject(QDBusAbstractAdaptor *adaptor, const QString &d
                                  this, [this](const QDBusConnection &conn) {
                     for (const auto &[path, object] : std::as_const(m_p2pAdaptors).asKeyValueRange())
                         object->registerOnDBus(conn, path);
+
+                    auto *timer = new QTimer();
+                    // The connName capture is on purpose to avoid holding a reference to conn
+                    connect(timer, &QTimer::timeout, this, [timer, connName = conn.name()]() {
+                        if (!QDBusConnection(connName).isConnected()) {
+                            QDBusConnection::disconnectFromPeer(connName);
+                            timer->deleteLater();
+                        }
+                    });
+                    timer->start(500ms);
                 });
             }
         }

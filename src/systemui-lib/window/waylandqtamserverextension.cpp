@@ -34,6 +34,7 @@ void WaylandQtAMServerExtension::setWindowProperty(QWaylandSurface *surface, con
             switch (target->version()) {
             case 1: {
                 QDataStream ds(&data, QDataStream::WriteOnly);
+                ds.setVersion(QDataStream::Qt_6_7);
                 ds << value;
                 break;
             }
@@ -78,6 +79,7 @@ void WaylandQtAMServerExtension::qtam_extension_set_window_property(QtWaylandSer
     switch (resource->version()) {
     case 1: {
         QDataStream ds(data);
+        ds.setVersion(QDataStream::Qt_6_7);
         ds >> variantValue;
         break;
     }

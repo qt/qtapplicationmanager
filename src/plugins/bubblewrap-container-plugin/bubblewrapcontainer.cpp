@@ -583,9 +583,11 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
         bwrapCommand += { u"--ro-bind"_s, dbusP2PSocket, dbusP2PSocket };
 
         const QString dbusSessionBusAddress = qEnvironmentVariable("DBUS_SESSION_BUS_ADDRESS");
-        const QString sessionBusSocket = h->checkDBusSocketPath(dbusSessionBusAddress, "Session");
-        bwrapCommand += { u"--ro-bind"_s, sessionBusSocket, sessionBusSocket };
-        bwrapCommand += { u"--setenv"_s, u"DBUS_SESSION_BUS_ADDRESS"_s, dbusSessionBusAddress };
+        if (!dbusSessionBusAddress.isEmpty()) {
+            const QString sessionBusSocket = h->checkDBusSocketPath(dbusSessionBusAddress, "Session");
+            bwrapCommand += { u"--ro-bind"_s, sessionBusSocket, sessionBusSocket };
+            bwrapCommand += { u"--setenv"_s, u"DBUS_SESSION_BUS_ADDRESS"_s, dbusSessionBusAddress };
+        }
 
         const QString xdgRuntimeDir = qEnvironmentVariable("XDG_RUNTIME_DIR");
         const QString waylandDisplay = qEnvironmentVariable("WAYLAND_DISPLAY");

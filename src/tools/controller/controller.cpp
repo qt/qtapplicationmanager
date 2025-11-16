@@ -696,6 +696,11 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                 qApp->exit(app.value(u"lastExitCode"_s, 1).toInt());
             }
         });
+
+        // Workaround for a race condition in QtDBus, where the bus sometimes disconnects, if the
+        // first thing you do after a successful connect to the peer is to send file descriptors
+        bool b = dbus()->manager()->singleProcess();
+        Q_UNUSED(b);
     }
 
     bool isDebug = !debugWrapper.isEmpty();

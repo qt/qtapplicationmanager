@@ -73,6 +73,7 @@ void WaylandQtAMClientExtension::sendPropertyToServer(struct ::wl_surface *surfa
     }
     QByteArray data;
     QDataStream ds(&data, QDataStream::WriteOnly);
+    ds.setVersion(QDataStream::Qt_6_7);
     ds << value;
 
     qCDebug(LogWayland) << "window property: client send:" << surface << name << value;
@@ -123,6 +124,7 @@ void WaylandQtAMClientExtension::qtam_extension_window_property_changed(wl_surfa
     if (QWindow *window = m_windowToSurface.key(surface)) {
         const auto data = QByteArray::fromRawData(static_cast<const char *>(value->data), qsizetype(value->size));
         QDataStream ds(data);
+        ds.setVersion(QDataStream::Qt_6_7);
         QVariant variantValue;
         ds >> variantValue;
 

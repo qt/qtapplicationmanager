@@ -45,6 +45,7 @@ void PackageUtilities::addHeaderDataToDigest(const QVariantMap &header, QCryptog
         if (header.contains(it.key())) {
             QByteArray ba;
             QDataStream ds(&ba, QDataStream::WriteOnly);
+            ds.setVersion(QDataStream::Qt_6_7);
 
             QVariant v = header.value(it.key());
             if (!v.convert(it.value().metaType()))

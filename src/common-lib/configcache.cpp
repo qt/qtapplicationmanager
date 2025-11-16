@@ -158,6 +158,7 @@ void AbstractConfigCache::parse()
         if (cacheFile.open(QFile::ReadOnly)) {
             try {
                 QDataStream ds(&cacheFile);
+                ds.setVersion(QDataStream::Qt_6_7);
                 CacheHeader cacheHeader;
                 ds >> cacheHeader;
 
@@ -346,6 +347,7 @@ void AbstractConfigCache::parse()
                     throw Exception(cacheFile, "failed to open file for writing");
 
                 QDataStream ds(&newCacheFile);
+                ds.setVersion(QDataStream::Qt_6_7);
                 CacheHeader cacheHeader;
                 cacheHeader.m_baseName = d->cacheBaseName;
                 cacheHeader.m_typeId = d->typeId;

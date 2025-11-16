@@ -302,7 +302,7 @@ QStringList PackageManagerAdaptor::activeTaskIds()
 bool PackageManagerAdaptor::setDeveloperCertificate(const QByteArray &pkcs12Data, const QByteArray &pkcs12Password)
 {
     try {
-        checkDBusAccess();
+        checkDBusAccessNoCertificateNeeded();
 
         try {
             PackageManager::instance()->setDeveloperCertificate(pkcs12Data, pkcs12Password);

@@ -5,8 +5,9 @@
 #define ADAPTORCHECKS_DBUS_H
 
 #include <QtDBus/QDBusAbstractAdaptor>
-#include <packagemanager.h>
+#include <QtAppManManager/packagemanager.h>
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/logging.h>
 
 
 // The DBus adaptor headers are auto-generated, so we cannot use a common base class or additional
@@ -20,13 +21,18 @@ namespace DBusAdaptorChecks {
 // public API
 
 #define checkDBusAccess()                     checkDBusAccessPrivate(this, __FUNCTION__)
+#define checkDBusAccessNoCertificateNeeded()  checkDBusAccessPrivate(this, __FUNCTION__, false)
 #define checkInstaller()                      checkInstallerPrivate(this)
 #define checkDevelopmentModeSystem()          checkDevelopmentModeSystemPrivate(this)
 #define checkPackageAccess(packageId)         checkPackageAccessPrivate(this, packageId)
 #define checkApplicationAccess(applicationId) checkApplicationAccessPrivate(this, applicationId)
 #define checkTaskAccess(taskId)               checkTaskAccessPrivate(this, taskId)
 
-#define catchExceptionAsDBusError(...) catch(const Exception &e) { DBusContextAdaptor::sendErrorReply(this, e.errorString()); return __VA_ARGS__; }
+#define catchExceptionAsDBusError(...) catch(const Exception &e) { \
+    DBusContextAdaptor::sendErrorReply(this, e.errorString()); \
+    qCWarning(LogDBus).noquote() << "DBus call was denied:" << e.errorString(); \
+    return __VA_ARGS__; \
+}
 #define catchExceptionAndIgnore(...)   catch(const Exception &) { return __VA_ARGS__; }
 
 bool isDevelopmentModeBus(const QDBusAbstractAdaptor *a);
@@ -38,7 +44,8 @@ QStringList filterTaskListByAccess(const QDBusAbstractAdaptor *a, const QStringL
 
 // private API
 
-void checkDBusAccessPrivate(const QDBusAbstractAdaptor *a, const char *function);
+void checkDBusAccessPrivate(const QDBusAbstractAdaptor *a, const char *function,
+                            bool certificateNeeded = true);
 void checkInstallerPrivate(const QDBusAbstractAdaptor *a);
 void checkDevelopmentModeSystemPrivate(const QDBusAbstractAdaptor *a);
 void checkPackageAccessPrivate(const QDBusAbstractAdaptor *a, const QString &packageId);

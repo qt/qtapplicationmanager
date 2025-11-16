@@ -12,7 +12,8 @@ using namespace Qt::StringLiterals;
 QT_BEGIN_NAMESPACE_AM
 namespace DBusAdaptorChecks {
 
-void checkDBusAccessPrivate(const QDBusAbstractAdaptor *a, const char *function)
+void checkDBusAccessPrivate(const QDBusAbstractAdaptor *a, const char *function,
+                            bool certificateNeeded)
 {
     if (isDevelopmentModeBus(a)) {
         switch (PackageManager::instance()->developmentMode()) {
@@ -26,8 +27,10 @@ void checkDBusAccessPrivate(const QDBusAbstractAdaptor *a, const char *function)
             break;
 
         case PackageManager::DevelopmentMode::Application:
-            if (!PackageManager::instance()->developerCertificate().isValid())
-                throw Exception("Developer certificate is not set");
+            if (certificateNeeded) {
+                if (!PackageManager::instance()->developerCertificate().isValid())
+                    throw Exception("Developer certificate is not set");
+            }
             break;
         }
     } else {

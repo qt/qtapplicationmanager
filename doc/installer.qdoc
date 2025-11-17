@@ -127,7 +127,7 @@ X509 extension.
 
 \badcode
 $ openssl ca -batch -config dev-ca.conf -policy signing_policy -extensions signing_req \
-             -infiles developer-req.csr -out developer.crt
+             -out developer.crt -infiles developer-req.csr
 \endcode
 
 This generates the signed \c developer.crt file, which is then sent back to the developer.
@@ -136,7 +136,7 @@ The final step for developers is to bundle their private key and the signed cert
 P12 file, which is the format that the \l {Packager}{\c appman-packager} tool expects:
 
 \badcode
-$ openssl pkcs12 -export -in developer.crt -inkey developer.key -out developer.p12
+$ openssl pkcs12 -export -out developer.p12 -in developer.crt -inkey developer.key
 \endcode
 
 \section2 Binding Developer Certificates to Package IDs

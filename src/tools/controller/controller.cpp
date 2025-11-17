@@ -190,6 +190,11 @@ private:
         QDBusConnection conn(iface);
 
         QString dbus = m_dbusAddresses.value(iface).toString();
+        if (dbus.isEmpty()) {
+            throw Exception("This application manager instance does not expose the D-Bus interface "
+                            "%1.\nDid you forget to enable development mode?").arg(iface);
+        }
+
         if (dbus == u"system") {
             conn = QDBusConnection::systemBus();
             m_dbusName = u"[system-bus]"_s;
@@ -1236,7 +1241,7 @@ static QVariantMap resolveInstanceInfo(const QString &instanceId)
         }
 
         if (result.isEmpty()) {
-            throw Exception("Could not resolve the given instance-id (%1) to any running appman instance.\n  (did you start the appman with '--dbus none'?)")
+            throw Exception("Could not resolve the given instance-id (%1) to any running appman instance")
                 .arg(instanceId);
         }
     } catch (const Exception &e) {

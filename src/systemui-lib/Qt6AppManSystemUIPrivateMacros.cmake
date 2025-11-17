@@ -278,7 +278,7 @@ function(qt6_am_create_installable_package target)
     cmake_parse_arguments(
         PARSE_ARGV 1
         ARG
-        "FAKEROOT;SIGN_PACKAGE" "OUTPUT_DIRECTORY;INSTALL_DIRECTORY;PACKAGE_DIRECTORY;PACKAGE_NAME;CERTIFICATE;CERTIFICATE_PASSWORD" "FILES;DEPENDENCIES;ADDITIONAL_OPTIONS"
+        "FAKEROOT;SIGN_PACKAGE;STAGING_INSTALL" "OUTPUT_DIRECTORY;INSTALL_DIRECTORY;PACKAGE_DIRECTORY;PACKAGE_NAME;CERTIFICATE;CERTIFICATE_PASSWORD;STAGING_PREFIX;STAGING_COMPONENT" "FILES;DEPENDENCIES;ADDITIONAL_OPTIONS"
     )
 
     if (DEFINED ARG_KEYWORDS_MISSING_VALUES)
@@ -317,6 +317,12 @@ function(qt6_am_create_installable_package target)
             set(OPT_CERTIFICATE_PASSWORD --password "env:QT_AM_CERTIFICATE_PASSWORD")
         else()
             set(OPT_CERTIFICATE_PASSWORD "")
+        endif()
+    endif()
+
+    if (ARG_STAGING_INSTALL)
+        if (NOT DEFINED ARG_STAGING_PREFIX)
+            message(FATAL_ERROR "Missing mandatory STAGING_PREFIX argument")
         endif()
     endif()
 
@@ -375,11 +381,29 @@ function(qt6_am_create_installable_package target)
     endif()
     set(PACKAGE_ARTIFACT ${UNSIGNED_PACKAGE_PATH})
 
+    if (ARG_STAGING_INSTALL)
+        if (DEFINED ARG_STAGING_COMPONENT)
+            set(COMPONENT_INSTALL "--component ${ARG_STAGING_COMPONENT}")
+        endif()
+        add_custom_target(${target}_prepackage
+            COMMAND ${CMAKE_COMMAND} -E env "DESTDIR="
+                        ${CMAKE_COMMAND} --install . --prefix ${CMAKE_CURRENT_BINARY_DIR}/${target}_staging ${COMPONENT_INSTALL}
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+            VERBATIM
+            SOURCES ${ARG_FILES} #workaround for manifest parsing error in QtCreator
+        )
+        target_sources(${target}_prepackage PRIVATE ${ARG_FILES})
+        set(ARG_PACKAGE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${target}_staging/${ARG_STAGING_PREFIX}")
+        list(APPEND ARG_DEPENDENCIES "${target}_prepackage")
+    else()
+        set(COPY_TO_PACKAGEDIR_COMMAND COMMAND ${CMAKE_COMMAND} -E make_directory ${ARG_PACKAGE_DIRECTORY}
+                                       COMMAND ${CMAKE_COMMAND} -E copy ${ARG_FILES} ${ARG_PACKAGE_DIRECTORY})
+    endif()
+
     add_custom_command(
         OUTPUT  ${UNSIGNED_PACKAGE_PATH}
         COMMAND ${CMAKE_COMMAND} -E rm -f ${UNSIGNED_PACKAGE_PATH}
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${ARG_PACKAGE_DIRECTORY}
-        COMMAND ${CMAKE_COMMAND} -E copy ${ARG_FILES} ${ARG_PACKAGE_DIRECTORY}
+        ${COPY_TO_PACKAGEDIR_COMMAND}
         COMMAND ${CMAKE_COMMAND} -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
                     ${RUN_WITH_FAKEROOT}
                     $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>

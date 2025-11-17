@@ -97,6 +97,9 @@ qt_am_create_installable_package(
     [SIGN_PACKAGE]
     [CERTIFICATE certifiate_file]
     [CERTIFICATE_PASSWORD certificate_password]
+    [STAGING_INSTALL]
+    [STAGING_PREFIX staging_prefix]
+    [STAGING_COMPONENT staging_component]
     [ADDITIONAL_OPTIONS]
     [DEPENDENCIES ...]
 )
@@ -131,6 +134,14 @@ used instead:
 \li \c QT_AM_PACKAGE_CERTIFICATE
 \li \c QT_AM_PACKAGE_CERTIFICATE_PASSWORD
 \endlist
+
+The \c STAGING_INSTALL argument can be used to package more complex applications.
+Instead of copying all files provided in \c FILES, it will call `cmake --install` to install the
+whole project into a staging directory. Afterwards it will package the folder specified by the
+\c STAGING_PREFIX argument inside the staging directory.
+Use the \c STAGING_COMPONENT argument to specify which component should be installed to the staging
+directory. This can be used to minimize the amount of files being installed and can improve the
+packaging time.
 
 The \c ADDITIONAL_OPTIONS argument can be used to pass additional command line options to the packager.
 See \l {Packager} for a list of available options.

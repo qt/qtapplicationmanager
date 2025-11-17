@@ -173,7 +173,17 @@ void InstallationTask::execute()
         if (!m_foundInfo || !m_foundIcon)
             throw Exception(Error::Package, "package did not contain a valid info.yaml and icon file");
 
-        if (!m_pm->allowInstallationOfUnsignedPackages()) {
+        if (m_pm->allowInstallationOfUnsignedPackages()) {
+            if (origin() == Origin::ApplicationDeveloper) {
+                if (m_pm->developmentMode() == PackageManager::DevelopmentMode::Application) {
+                    const auto cert = m_pm->developerCertificate();
+                    if (!cert.matchPackageId(m_packageId)) {
+                        throw Exception(Error::Package, "the package's id (%1) does not match the currently set developer certificate (%2)")
+                            .arg(m_packageId).arg(cert.subjectAlternativeNames());
+                    }
+                }
+            }
+        } else {
             bool hasStoreSignature = !m_extractor->installationReport().storeSignature().isEmpty();
 
             // Step 1: verify the store signature (optional, if in dev mode)

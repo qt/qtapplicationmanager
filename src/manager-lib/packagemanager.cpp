@@ -781,6 +781,12 @@ void PackageManager::setDevelopmentMode(DevelopmentMode mode)
         d->developmentMode = mode;
 }
 
+/*!
+    \qmlproperty Certificate PackageManager::developerCertificate
+    \readonly
+
+    A readonly property representing the currently set developer certificate.
+*/
 Certificate PackageManager::developerCertificate() const
 {
     return d->developerCertificate;

@@ -758,6 +758,7 @@ void PackageManager::setDeveloperCertificate(const QByteArray &pkcs12Data, const
 
 /*!
     \qmlproperty enum PackageManager::developmentMode
+    \since 6.11
     \readonly
 
     This readonly property reflects the \l{development-mode}{\c developmentMode} setting in the
@@ -783,6 +784,7 @@ void PackageManager::setDevelopmentMode(DevelopmentMode mode)
 
 /*!
     \qmlproperty Certificate PackageManager::developerCertificate
+    \since 6.11
     \readonly
 
     A readonly property representing the currently set developer certificate.

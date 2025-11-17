@@ -48,6 +48,7 @@ public:
         Developer        = DigitalSignature | NonRepudiation | KeyEncipherment | DecipherOnly,
     };
     Q_DECLARE_FLAGS(KeyUsages, KeyUsage)
+    Q_FLAG(KeyUsages)
 
     bool isValid() const { return !m_subject.isEmpty(); }
     QVariantMap subject() const { return m_subject; }

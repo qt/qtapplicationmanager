@@ -52,8 +52,8 @@ class PackageManager : public QAbstractListModel
     // these are const on purpose - these should never change in a running system
     Q_PROPERTY(bool installationEnabled READ installationEnabled CONSTANT FINAL REVISION(6, 10))
     Q_PROPERTY(bool allowInstallationOfUnsignedPackages READ allowInstallationOfUnsignedPackages CONSTANT FINAL)
-    Q_PROPERTY(DevelopmentMode developmentMode READ developmentMode CONSTANT FINAL)
-    Q_PROPERTY(Certificate developerCertificate READ developerCertificate NOTIFY developerCertificateChanged FINAL)
+    Q_PROPERTY(DevelopmentMode developmentMode READ developmentMode CONSTANT FINAL REVISION(6, 11))
+    Q_PROPERTY(Certificate developerCertificate READ developerCertificate NOTIFY developerCertificateChanged FINAL REVISION(6, 11))
     Q_PROPERTY(QString hardwareId READ hardwareId CONSTANT FINAL)
     Q_PROPERTY(QString architecture READ architecture CONSTANT FINAL)
 
@@ -182,7 +182,7 @@ Q_SIGNALS:
                                                const QVariantMap &packageExtraMetaData,
                                                const QVariantMap &packageExtraSignedMetaData);
     Q_SCRIPTABLE void taskBlockingUntilInstallationAcknowledge(const QString &taskId);
-    Q_SCRIPTABLE void developerCertificateChanged();
+    Q_REVISION(6, 11) Q_SCRIPTABLE void developerCertificateChanged();
 
 protected:
     Package *startingPackageInstallation(PackageInfo *info);

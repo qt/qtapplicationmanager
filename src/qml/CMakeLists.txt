@@ -32,6 +32,7 @@ qt_internal_add_qml_module(AppManQmlSystemUIPrivate
         QtApplicationManager/auto
         QtQuick
     PUBLIC_LIBRARIES
+        Qt::AppManCryptoPrivate
         Qt::AppManManagerPrivate
         Qt::AppManWindowPrivate
         Qt::AppManIntentServerPrivate

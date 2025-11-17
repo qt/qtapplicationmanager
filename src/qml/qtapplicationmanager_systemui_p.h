@@ -4,6 +4,7 @@
 #ifndef QTAPPLICATIONMANAGER_SYSTEMUI_P_H
 #define QTAPPLICATIONMANAGER_SYSTEMUI_P_H
 #include <QtQml/QQmlEngine>
+#include <QtAppManCrypto/certificate.h>
 #include <QtAppManIntentServer/intent.h>
 #include <QtAppManIntentServer/intentmodel.h>
 #include <QtAppManIntentServer/intentserver.h>
@@ -234,6 +235,28 @@ class ForeignNamespaceAm
     QML_ADDED_IN_VERSION(2, 0)
     QML_UNCREATABLE("")
 };
+
+class ForeignCertificate
+{
+    Q_GADGET
+    QML_FOREIGN(QtAM::Certificate)
+    QML_ADDED_IN_VERSION(6, 11)
+    QML_UNCREATABLE("")
+    QML_ANONYMOUS
+};
+
+// Qt's documented hack to export enums from gadgets:
+class ForeignCertificateEnums : public QtAM::Certificate
+{
+    Q_GADGET
+};
+namespace ForeignCertificateNamespace
+{
+Q_NAMESPACE
+QML_NAMED_ELEMENT(Certificate)
+QML_FOREIGN_NAMESPACE(ForeignCertificateEnums)
+QML_ADDED_IN_VERSION(6, 11)
+}
 
 QT_END_NAMESPACE
 

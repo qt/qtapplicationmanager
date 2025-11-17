@@ -11,7 +11,7 @@ using namespace Qt::StringLiterals;
 QT_BEGIN_NAMESPACE_AM
 
 /*!
-    \qmltype Certificate
+    \qmlvaluetype Certificate
     \inqmlmodule QtApplicationManager.SystemUI
     \ingroup system-ui-non-instantiable
     \since 6.11

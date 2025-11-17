@@ -24,6 +24,7 @@ include(config/exampleurl-qtapplicationmanager.qdocconf)
 headerdirs += \
     ../src/application-lib \
     ../src/common-lib \
+    ../src/crypto-lib \
     ../src/intent-client-lib \
     ../src/intent-server-lib \
     ../src/application-main-lib \
@@ -40,6 +41,7 @@ sourcedirs += \
     . \
     ../src/application-lib \
     ../src/common-lib \
+    ../src/crypto-lib \
     ../src/intent-client-lib \
     ../src/intent-server-lib \
     ../src/application-main-lib \

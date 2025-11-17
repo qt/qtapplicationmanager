@@ -30,7 +30,7 @@ formatType: am-configuration
 ---
 systemProperties:
   public:
-    serverBinary: '${qt_INSTALL_PREFIX}/${qt_INSTALL_BINS}/appman-package-server'"
+    serverBinary: '${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}/appman-package-server'"
 )
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/extra.yaml PROPERTIES QT_RESOURCE_ALIAS extra.yaml)
 

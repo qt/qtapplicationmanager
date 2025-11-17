@@ -22,6 +22,7 @@
 #include <QLockFile>
 
 #include <functional>
+#include <iostream>
 
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/error.h>
@@ -51,6 +52,46 @@ static void installInterruptHandler(const std::function<void (int)> &handler)
     UnixSignalHandler::instance()->resetToDefault(AM_SIGNALS);
     UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
                                            AM_SIGNALS, handler);
+}
+
+//TODO: also use this in appman-packager
+static QString readPassword(const QString &option, const QString &hint)
+{
+    // see: man openssl-passphrase-options
+    // supported formats: pass:password, env:varname, file:filename, fd:number and stdin
+    if (option.startsWith(u"pass:"_s)) {
+        return option.mid(5);
+    } else if (option.startsWith(u"env:"_s)) {
+        QByteArray env = option.mid(4).toLocal8Bit();
+        if (!qEnvironmentVariableIsSet(env.constData()))
+            throw Exception("Environment variable '%1' is not set").arg(env);
+        return qEnvironmentVariable(env.constData());
+    } else if (option.startsWith(u"file:"_s)) {
+        QFile f(option.mid(5));
+        if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+            throw Exception(f, "Could not open password file");
+        return QString::fromLocal8Bit(f.readLine()).trimmed();
+#if defined(Q_OS_UNIX)
+    } else if (option.startsWith(u"fd:"_s)) {
+        bool ok = false;
+        int fd = option.mid(3).toInt(&ok);
+        if (!ok || (fd < 0))
+            throw Exception("Could not parse file descriptor number from password option: %1").arg(option);
+        QFile f;
+        if (!f.open(fd, QIODevice::ReadOnly | QIODevice::Text))
+            throw Exception(f, "Could not open file descriptor %1 for reading password").arg(fd);
+        return QString::fromLocal8Bit(f.readLine()).trimmed();
+#endif
+    } else if (option == u"stdin"_s) {
+        //TODO: use getpass/readpassphrase where available to avoid echoing the password
+        std::string line;
+        std::cout << hint.toLocal8Bit().constData() << ": ";
+        std::cin >> line;
+        return QString::fromLocal8Bit(line).trimmed();
+    } else {
+        throw Exception("Unknown password format. Needs to be one of pass:, env:, file:, fd: or stdin"
+                        "\n    See also: man openssl-passphrase-options");
+    }
 }
 
 class DBus : public QObject
@@ -327,7 +368,8 @@ static void listInstances() noexcept(false);
 static void injectIntentRequest(const QString &intentId, bool isBroadcast,
                                 const QString &applicationId, const QString &requestingApplicationId,
                                 const QString &jsonParameters) noexcept(false);
-static void setDeveloperCertificate(const QString &pkcs12Path, const QString &pkcs12Password) noexcept(false);
+static void setDeveloperCertificate(const QString &pkcs12Path, const QString &pkcs12Password,
+                                    bool clear = false) noexcept(false);
 static void showDevelopmentMode(bool asJson = false) noexcept(false);
 
 
@@ -639,19 +681,37 @@ int main(int argc, char *argv[])
                                  isBroadcast, requestingAppId, appId, jsonParams));
             break;
         }
-        case SetDeveloperCertificate:
+        case SetDeveloperCertificate: {
             clp.addPositionalArgument(u"certificate"_s, u"PKCS#12 certificate file."_s);
-            clp.addPositionalArgument(u"password"_s,    u"Password for the PKCS#12 certificate."_s);
+            clp.addOption({ u"clear"_s, u"Remove the currently set developer certificate."_s });
+            clp.addOption({{ u"p"_s, u"password"_s },
+                           u"Password for the PKCS#12 certificate in the form "
+                           "pass:<password>, env:<envvar>, file:<path>, fd:<number> or stdin. "
+                           "See the documentation for details."_s,
+                           u"format[:value]"_s });
             clp.process(a);
 
-            if (clp.positionalArguments().size() != 3)
+            const bool isClear = clp.isSet(u"clear"_s);
+            const bool hasPassword = clp.isSet(u"p"_s);
+
+            if (clp.positionalArguments().size() != (isClear ? 1 : 2))
                 clp.showHelp(1);
 
-            a.runLater(std::bind(setDeveloperCertificate,
-                                 clp.positionalArguments().at(1),
-                                 clp.positionalArguments().at(2)));
-            break;
+            if (isClear && hasPassword)
+                throw Exception("Cannot use --password and --clear at the same time.");
 
+            const QString certificate = isClear ? QString() : clp.positionalArguments().at(1);
+            QString password = hasPassword ? clp.value(u"p"_s) : QString();
+
+            if ((certificate == u"-") && (password == u"stdin"))
+                throw Exception("Cannot read both the certificate and the password from stdin");
+
+            if (hasPassword)
+                password = readPassword(password, u"PKCS#12 certificate password"_s);
+
+            a.runLater([=] { setDeveloperCertificate(certificate, password, isClear); });
+            break;
+        }
         case ShowDevelopmentMode:
             clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
             clp.process(a);
@@ -1238,15 +1298,27 @@ void injectIntentRequest(const QString &intentId, bool isBroadcast,
     qApp->quit();
 }
 
-void setDeveloperCertificate(const QString &pkcs12Path, const QString &pkcs12Password)
+void setDeveloperCertificate(const QString &pkcs12Path, const QString &pkcs12Password, bool clear)
 {
     dbus()->connectToPackager();
 
-    QFile cf(pkcs12Path);
-    if (!cf.open(QIODevice::ReadOnly))
-        throw Exception(cf, "could not open certificate file");
-    QByteArray pkcs12Data = cf.readAll();
-
+    QByteArray pkcs12Data;
+    if (clear) {
+        Q_ASSERT(pkcs12Path.isEmpty());
+        Q_ASSERT(pkcs12Password.isEmpty());
+    } else {
+        QFile cf;
+        bool isOpen = false;
+        if (pkcs12Path == u"-") { // sent via stdin
+            isOpen = cf.open(stdin, QIODevice::ReadOnly);
+        } else {
+            cf.setFileName(pkcs12Path);
+            isOpen = cf.open(QIODevice::ReadOnly);
+        }
+        if (!isOpen)
+            throw Exception(cf, "could not open certificate file");
+        pkcs12Data = cf.readAll();
+    }
     auto reply = dbus()->packager()->setDeveloperCertificate(pkcs12Data, pkcs12Password.toUtf8());
     reply.waitForFinished();
     if (reply.isError())

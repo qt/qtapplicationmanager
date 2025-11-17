@@ -152,6 +152,48 @@ The following commands are available:
         Please note that \c{--application-id} and \c{--broadcast} are mutually exclusive.
 
         For successful non-broadcast requests, the result will be printed to the console as JSON.
+\row
+    \li \span {style="white-space: nowrap"} {\c set-developer-certificate}
+    \li \c{<certificate>}
+    \li Sets the developer certificate to be used when \e{development mode} is set to \e
+        application. The certificate contains the package ids the developer is allowed to work with
+        and the application manager will restict access accordingly.
+        The certificate has to be provided as a PKCS#12 file. If it is specified as \c{-}, the tool
+        tries to read the package from \c stdin.
+
+        If a password for the PKCS#12 certificate is required, it can be supplied via the
+        \c{-p} / \c{--password} option. The same password mechanisms as in the OpenSSL command-line
+        tool are supported. See \l{openssl-passphrase-options}{the OpenSSL man page} for details.
+
+        \list
+            \li \b{pass:}\e{passwd}\br
+                The password is set as \e passwd. Use this format only when security is not a
+                concern, because this method exposes the password to system utilities.
+            \li \b{env:}\e{var}\br
+                The password is taken from the environment variable \e var. As with the \b{pass:}
+                mechanism above, the password may be visible to system utilities.
+            \li \b{file:}\e{path}\br
+                The password is read from the file at \e path. Reading stops at the first newline
+                character.
+            \li \b{fd:}\e{number}\br
+                The password is read from the file descriptor specified by \e number in the same
+                way as specified for \b file above. Please note, that this option is not supported
+                on Windows.
+            \li \b{stdin}\br
+                The password is read from standard input in the same way as specified for \b file
+                above. If possible, this will directly access the console and disable echoing for
+                better security.
+        \endlist
+
+        Clearing the currently set developer certificate can be done by not specifying any
+        certificate, but just using the option \c{--clear}.
+
+        \b{See also} \l{Package Installation}
+\row
+    \li \span {style="white-space: nowrap"} {\c show-development-mode}
+    \li (none)
+    \li Shows the current development mode and set developer certificate of the application manager
+        in YAML format. Alternatively, use \c{--json} to get the output in JSON format instead.
 \endtable
 
 The \c{appman-controller} naturally supports the standard Unix \c{--help} command-line option.

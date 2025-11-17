@@ -25,3 +25,8 @@
     \externalpage https://github.com/rgriebl/wlanalyze
     \title wlanalyze
 */
+
+/*!
+    \externalpage https://docs.openssl.org/3.5/man1/openssl-passphrase-options/
+    \title openssl-passphrase-options
+*/

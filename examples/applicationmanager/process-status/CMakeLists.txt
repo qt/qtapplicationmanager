@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(process-status LANGUAGES CXX)
 
-if(NOT DEFINED INSTALL_EXAMPLESDIR)
-  set(INSTALL_EXAMPLESDIR "examples")
-endif()
-
-set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/process-status")
-
-
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
@@ -44,7 +37,7 @@ target_link_libraries(process-status PRIVATE
 
 qt_am_create_builtin_package(process-status.cpu-hog
     OUTPUT_DIRECTORY apps/process-status.cpu-hog
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/process-status.cpu-hog
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/process-status.cpu-hog
     FILES
         apps/process-status.cpu-hog/info.yaml
         apps/process-status.cpu-hog/icon.png
@@ -53,7 +46,7 @@ qt_am_create_builtin_package(process-status.cpu-hog
 
 qt_am_create_builtin_package(process-status.mem-hog
     OUTPUT_DIRECTORY apps/process-status.mem-hog
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/process-status.mem-hog
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/process-status.mem-hog
     FILES
         apps/process-status.mem-hog/info.yaml
         apps/process-status.mem-hog/icon.png
@@ -62,7 +55,7 @@ qt_am_create_builtin_package(process-status.mem-hog
 
 qt_am_create_builtin_package(process-status.slim
     OUTPUT_DIRECTORY apps/process-status.slim
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/process-status.slim
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/process-status.slim
     FILES
         apps/process-status.slim/info.yaml
         apps/process-status.slim/icon.png
@@ -70,7 +63,7 @@ qt_am_create_builtin_package(process-status.slim
 )
 
 install(TARGETS process-status
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

@@ -13,7 +13,7 @@ target_link_libraries(widgets
 
 qt_am_create_builtin_package(AppManWidgets
     OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    INSTALL_DIRECTORY "${INSTALL_EXAMPLEDIR}/apps/Widgets"
+    INSTALL_DIRECTORY "${CMAKE_INSTALL_BINDIR}/apps/Widgets"
     FILES
         info.yaml
         icon.png

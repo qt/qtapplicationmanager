@@ -1,14 +1,14 @@
 formatVersion: 1
 formatType: am-package
 ---
-id:      'test.app'
+id:      'TestApp'
 icon:    'icon.png'
 name:
   en: 'TestApp'
 version: '1.0'
 
 applications:
-- id:      'test.app'
+- id:      'TestApp'
   code:    'app.qml'
   runtime: 'qml'
   runtimeParameters:

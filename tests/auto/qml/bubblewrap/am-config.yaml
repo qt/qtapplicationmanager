@@ -13,7 +13,7 @@ flags:
 
 containers:
   selection:
-    - "test.app": "bubblewrap"
+    - "TestApp": "bubblewrap"
 
   bubblewrap:
     sharedNamespaces: [ '-all', '+net' ]

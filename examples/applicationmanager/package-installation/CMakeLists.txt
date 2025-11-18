@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(package-installation LANGUAGES CXX)
 
-if(NOT DEFINED INSTALL_EXAMPLESDIR)
-  set(INSTALL_EXAMPLESDIR "examples")
-endif()
-
-set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/package-installation")
-
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
@@ -70,7 +64,7 @@ target_link_libraries(package-installation PRIVATE
 
 qt_am_create_builtin_package(builtin.blue
     OUTPUT_DIRECTORY apps/builtin.blue
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/builtin.blue
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/builtin.blue
     FILES
         apps/builtin.blue/info.yaml
         apps/builtin.blue/icon.png
@@ -79,7 +73,7 @@ qt_am_create_builtin_package(builtin.blue
 
 qt_am_create_installable_package(installable-red
     OUTPUT_DIRECTORY ps-data/upload
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/ps-data/upload
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/ps-data/upload
     FILES
         installable-apps/installable.red/info.yaml
         installable-apps/installable.red/icon.png
@@ -88,7 +82,7 @@ qt_am_create_installable_package(installable-red
 
 qt_am_create_installable_package(installable-green
     OUTPUT_DIRECTORY ps-data/upload
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/ps-data/upload
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/ps-data/upload
     FILES
         installable-apps/installable.green/info.yaml
         installable-apps/installable.green/icon.png
@@ -112,7 +106,7 @@ set_target_properties(installable-pink-module PROPERTIES
 
 qt_am_create_installable_package(installable-pink
     OUTPUT_DIRECTORY ps-data/upload
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/ps-data/upload
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/ps-data/upload
     FILES
         installable-apps/installable.pink/info.yaml
         installable-apps/installable.pink/icon.png
@@ -123,7 +117,7 @@ qt_am_create_installable_package(installable-pink
 add_dependencies(package-installation installable-red installable-green installable-pink)
 
 install(TARGETS package-installation
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

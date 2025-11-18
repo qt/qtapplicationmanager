@@ -13,7 +13,7 @@ if(WIN32)
 endif()
 
 qt_am_create_builtin_package(Glitches
-    INSTALL_DIRECTORY "${INSTALL_EXAMPLEDIR}/apps/Glitches"
+    INSTALL_DIRECTORY "${CMAKE_INSTALL_BINDIR}/apps/Glitches"
     FILES
         info.yaml
         icon.png

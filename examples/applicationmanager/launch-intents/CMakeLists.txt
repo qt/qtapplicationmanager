@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(launch-intents LANGUAGES CXX)
 
-if(NOT DEFINED INSTALL_EXAMPLESDIR)
-  set(INSTALL_EXAMPLESDIR "examples")
-endif()
-
-set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/launch-intents")
-
-
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
@@ -40,7 +33,7 @@ target_link_libraries(launch-intents PRIVATE
 
 qt_am_create_builtin_package(launch-intents.red
     OUTPUT_DIRECTORY apps/launch-intents.red
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/launch-intents.red
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/launch-intents.red
     FILES
         apps/launch-intents.red/info.yaml
         apps/launch-intents.red/icon.png
@@ -49,7 +42,7 @@ qt_am_create_builtin_package(launch-intents.red
 
 qt_am_create_builtin_package(launch-intents.blue
     OUTPUT_DIRECTORY apps/launch-intents.blue
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/launch-intents.blue
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/launch-intents.blue
     FILES
         apps/launch-intents.blue/info.yaml
         apps/launch-intents.blue/icon.png
@@ -58,7 +51,7 @@ qt_am_create_builtin_package(launch-intents.blue
 
 qt_am_create_builtin_package(launch-intents.green
     OUTPUT_DIRECTORY apps/launch-intents.green
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/launch-intents.green
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/launch-intents.green
     FILES
         apps/launch-intents.green/info.yaml
         apps/launch-intents.green/icon.png
@@ -66,7 +59,7 @@ qt_am_create_builtin_package(launch-intents.green
 )
 
 install(TARGETS launch-intents
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

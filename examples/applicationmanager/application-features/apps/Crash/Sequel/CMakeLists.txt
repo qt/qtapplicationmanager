@@ -8,9 +8,9 @@ qt_add_qml_module(
 
 install(
     TARGETS sequelmoduleplugin
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}/apps/Crash/Sequel"
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}/apps/Crash/Sequel"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}/apps/Crash/Sequel"
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}/apps/Crash/Sequel"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/apps/Crash/Sequel"
 )
 
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/qmldir DESTINATION "${INSTALL_EXAMPLEDIR}/apps/Crash/Sequel")
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/qmldir DESTINATION "${CMAKE_INSTALL_BINDIR}/apps/Crash/Sequel")

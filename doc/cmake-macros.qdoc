@@ -63,7 +63,7 @@ Here is a snippet showing how this function is used:
 
 \badcode
 qt_am_add_systemui_wrapper(minidesk
-    INSTALL_DIR "${INSTALL_EXAMPLEDIR}"
+    INSTALL_DIR "${CMAKE_INSTALL_BINDIR}"
     CONFIG_YAML am-config.yaml
     EXTRA_FILES apps system-ui
     EXTRA_ARGS --verbose

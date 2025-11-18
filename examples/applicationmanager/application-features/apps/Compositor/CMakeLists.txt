@@ -10,7 +10,7 @@ if(WIN32)
 endif()
 
 qt_am_create_builtin_package(Compositor
-    INSTALL_DIRECTORY "${INSTALL_EXAMPLEDIR}/apps/Compositor"
+    INSTALL_DIRECTORY "${CMAKE_INSTALL_BINDIR}/apps/Compositor"
     FILES
         info.yaml
         icon.png

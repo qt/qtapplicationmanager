@@ -58,7 +58,7 @@ TestCase {
         if ((parseInt(bwrapVersion[0]) === 0) && (parseInt(bwrapVersion[1]) < 5))
             skip("Test needs at least bwrap 0.5.0")
 
-        var app = ApplicationManager.application("test.app")
+        var app = ApplicationManager.application("TestApp")
         runStateChangedSpy.target = app
 
         app.start()

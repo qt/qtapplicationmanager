@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(minidesk LANGUAGES CXX)
 
-if(NOT DEFINED INSTALL_EXAMPLESDIR)
-  set(INSTALL_EXAMPLESDIR "examples")
-endif()
-
-set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/minidesk")
-
-
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
@@ -45,7 +38,7 @@ target_link_libraries(minidesk PRIVATE
 
 qt_am_create_builtin_package(tld.minidesk.app1
     OUTPUT_DIRECTORY apps/tld.minidesk.app1
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/tld.minidesk.app1
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/tld.minidesk.app1
     FILES
         apps/tld.minidesk.app1/info.yaml
         apps/tld.minidesk.app1/icon.png
@@ -54,7 +47,7 @@ qt_am_create_builtin_package(tld.minidesk.app1
 
 qt_am_create_builtin_package(tld.minidesk.app2
     OUTPUT_DIRECTORY apps/tld.minidesk.app2
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/tld.minidesk.app2
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/tld.minidesk.app2
     FILES
         apps/tld.minidesk.app2/info.yaml
         apps/tld.minidesk.app2/icon.png
@@ -62,7 +55,7 @@ qt_am_create_builtin_package(tld.minidesk.app2
 )
 
 install(TARGETS minidesk
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

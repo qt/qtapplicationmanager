@@ -12,7 +12,7 @@ if (WIN32)
 endif()
 
 qt_am_create_builtin_package(Crash
-    INSTALL_DIRECTORY "${INSTALL_EXAMPLEDIR}/apps/Crash"
+    INSTALL_DIRECTORY "${CMAKE_INSTALL_BINDIR}/apps/Crash"
     FILES
         info.yaml
         icon.png

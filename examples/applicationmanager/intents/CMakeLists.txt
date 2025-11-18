@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(intents LANGUAGES CXX)
 
-if(NOT DEFINED INSTALL_EXAMPLESDIR)
-  set(INSTALL_EXAMPLESDIR "examples")
-endif()
-
-set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/intents")
-
-
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
@@ -51,7 +44,7 @@ target_link_libraries(intents PRIVATE
 
 qt_am_create_builtin_package(intents.red
     OUTPUT_DIRECTORY apps/intents.red
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/intents.red
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/intents.red
     FILES
         apps/intents.red/info.yaml
         apps/intents.red/icon.png
@@ -60,7 +53,7 @@ qt_am_create_builtin_package(intents.red
 
 qt_am_create_builtin_package(intents.blue
     OUTPUT_DIRECTORY apps/intents.blue
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/intents.blue
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/intents.blue
     FILES
         apps/intents.blue/info.yaml
         apps/intents.blue/icon.png
@@ -69,7 +62,7 @@ qt_am_create_builtin_package(intents.blue
 
 qt_am_create_builtin_package(intents.green
     OUTPUT_DIRECTORY apps/intents.green
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/intents.green
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/intents.green
     FILES
         apps/intents.green/info.yaml
         apps/intents.green/icon.png
@@ -77,12 +70,12 @@ qt_am_create_builtin_package(intents.green
 )
 
 install(TARGETS intents
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(TARGETS shared
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}/imports/shared"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}/imports/shared"
 )
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/imports/shared/qmldir DESTINATION "${INSTALL_EXAMPLEDIR}/imports/shared")
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/imports/shared/qmldir DESTINATION "${CMAKE_INSTALL_BINDIR}/imports/shared")

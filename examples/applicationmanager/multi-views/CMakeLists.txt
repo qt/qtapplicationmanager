@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(multi-views LANGUAGES CXX)
 
-if(NOT DEFINED INSTALL_EXAMPLESDIR)
-  set(INSTALL_EXAMPLESDIR "examples")
-endif()
-
-set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/multi-views")
-
-
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
@@ -41,7 +34,7 @@ target_link_libraries(multi-views PRIVATE
 
 qt_am_create_builtin_package(tld.multi-views.app
     OUTPUT_DIRECTORY apps/tld.multi-views.app
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/tld.multi-views.app
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/tld.multi-views.app
     FILES
         apps/tld.multi-views.app/info.yaml
         apps/tld.multi-views.app/icon.png
@@ -49,7 +42,7 @@ qt_am_create_builtin_package(tld.multi-views.app
 )
 
 install(TARGETS multi-views
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

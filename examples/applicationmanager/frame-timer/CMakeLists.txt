@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(frame-timer LANGUAGES CXX)
 
-if(NOT DEFINED INSTALL_EXAMPLESDIR)
-  set(INSTALL_EXAMPLESDIR "examples")
-endif()
-
-set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/frame-timer")
-
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
@@ -39,7 +33,7 @@ target_link_libraries(frame-timer PRIVATE
 
 qt_am_create_builtin_package(frame-timer.fish
     OUTPUT_DIRECTORY apps/frame-timer.fish
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/frame-timer.fish
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/frame-timer.fish
     FILES
         apps/frame-timer.fish/info.yaml
         apps/frame-timer.fish/fish.svg
@@ -48,7 +42,7 @@ qt_am_create_builtin_package(frame-timer.fish
 
 qt_am_create_builtin_package(frame-timer.rabbit
     OUTPUT_DIRECTORY apps/frame-timer.rabbit
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/frame-timer.rabbit
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/frame-timer.rabbit
     FILES
         apps/frame-timer.rabbit/info.yaml
         apps/frame-timer.rabbit/rabbit.svg
@@ -56,7 +50,7 @@ qt_am_create_builtin_package(frame-timer.rabbit
 )
 
 install(TARGETS frame-timer
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

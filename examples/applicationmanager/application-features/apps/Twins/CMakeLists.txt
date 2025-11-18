@@ -10,7 +10,7 @@ if(WIN32)
 endif()
 
 qt_am_create_builtin_package(Twins
-    INSTALL_DIRECTORY "${INSTALL_EXAMPLEDIR}/apps/Twins"
+    INSTALL_DIRECTORY "${CMAKE_INSTALL_BINDIR}/apps/Twins"
     FILES
         info.yaml
         icon.png

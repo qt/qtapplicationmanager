@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(bubblewrap-example LANGUAGES CXX)
 
-if(NOT DEFINED INSTALL_EXAMPLESDIR)
-  set(INSTALL_EXAMPLESDIR "examples")
-endif()
-
-set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/bubblewrap-example")
-
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
@@ -49,7 +43,7 @@ target_link_libraries(bubblewrap-example PRIVATE
 
 qt_am_create_builtin_package(bubblewrap.browser
     OUTPUT_DIRECTORY apps/bubblewrap.browser
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/bubblewrap.browser
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/bubblewrap.browser
     FILES
         apps/bubblewrap.browser/info.yaml
         apps/bubblewrap.browser/icon.svg
@@ -59,7 +53,7 @@ qt_am_create_builtin_package(bubblewrap.browser
 
 qt_am_create_builtin_package(bubblewrap.networkinfo
     OUTPUT_DIRECTORY apps/bubblewrap.networkinfo
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/bubblewrap.networkinfo
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/bubblewrap.networkinfo
     FILES
         apps/bubblewrap.networkinfo/info.yaml
         apps/bubblewrap.networkinfo/icon.svg
@@ -68,7 +62,7 @@ qt_am_create_builtin_package(bubblewrap.networkinfo
 
 qt_am_create_builtin_package(bubblewrap.simple
     OUTPUT_DIRECTORY apps/bubblewrap.simple
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/bubblewrap.simple
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/bubblewrap.simple
     FILES
         apps/bubblewrap.simple/info.yaml
         apps/bubblewrap.simple/icon.svg
@@ -78,16 +72,16 @@ qt_am_create_builtin_package(bubblewrap.simple
 file(COPY bubblewrap-network-setup.sh DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
 install(TARGETS bubblewrap-example
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(TARGETS networkhelper
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}/imports/NetworkHelper"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/imports/NetworkHelper"
 )
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/imports/NetworkHelper/qmldir DESTINATION "${INSTALL_EXAMPLEDIR}/imports/NetworkHelper")
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/imports/NetworkHelper/qmldir DESTINATION "${CMAKE_INSTALL_BINDIR}/imports/NetworkHelper")
 
 install(FILES bubblewrap-network-setup.sh
-    DESTINATION "${INSTALL_EXAMPLEDIR}"
+    DESTINATION "${CMAKE_INSTALL_BINDIR}"
 )

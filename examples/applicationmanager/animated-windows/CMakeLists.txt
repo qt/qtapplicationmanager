@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(animated-windows LANGUAGES CXX)
 
-if(NOT DEFINED INSTALL_EXAMPLESDIR)
-  set(INSTALL_EXAMPLESDIR "examples")
-endif()
-
-set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}/applicationmanager/animated-windows")
-
 find_package(Qt6 COMPONENTS AppManMainPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
@@ -39,7 +33,7 @@ target_link_libraries(animated-windows PRIVATE
 
 qt_am_create_builtin_package(animated-windows.fish
     OUTPUT_DIRECTORY apps/animated-windows.fish
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/animated-windows.fish
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/animated-windows.fish
     FILES
         apps/animated-windows.fish/info.yaml
         apps/animated-windows.fish/fish.svg
@@ -48,7 +42,7 @@ qt_am_create_builtin_package(animated-windows.fish
 
 qt_am_create_builtin_package(animated-windows.rabbit
     OUTPUT_DIRECTORY apps/animated-windows.rabbit
-    INSTALL_DIRECTORY ${INSTALL_EXAMPLEDIR}/apps/animated-windows.rabbit
+    INSTALL_DIRECTORY ${CMAKE_INSTALL_BINDIR}/apps/animated-windows.rabbit
     FILES
         apps/animated-windows.rabbit/info.yaml
         apps/animated-windows.rabbit/rabbit.svg
@@ -56,7 +50,7 @@ qt_am_create_builtin_package(animated-windows.rabbit
 )
 
 install(TARGETS animated-windows
-    RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
-    BUNDLE DESTINATION "${INSTALL_EXAMPLEDIR}"
-    LIBRARY DESTINATION "${INSTALL_EXAMPLEDIR}"
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

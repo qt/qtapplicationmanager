@@ -349,6 +349,7 @@ function(qt6_am_create_installable_package target)
         install(
             FILES ${PACKAGE_PATH}
             DESTINATION "${ARG_INSTALL_DIRECTORY}"
+            OPTIONAL
         )
     endif()
 

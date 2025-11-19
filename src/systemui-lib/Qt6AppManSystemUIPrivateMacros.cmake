@@ -364,9 +364,15 @@ function(qt6_am_create_installable_package target)
             if (NOT LIBPSEUDO)
                 message(FATAL_ERROR "Could not find fakeroot or libpseudo.so in the host sysroot")
             endif()
+            find_program(PSEUDO pseudo HINTS ${QT_HOST_PATH}/bin NO_CMAKE_FIND_ROOT_PATH)
+            if (NOT PSEUDO)
+                message(FATAL_ERROR "Could not find fakeroot or pseudo in the host sysroot")
+            endif()
+            get_filename_component(PSEUDO_DIR ${PSEUDO} DIRECTORY)
             set(RUN_WITH_FAKEROOT "PSEUDO_PREFIX=/usr")
             list(APPEND RUN_WITH_FAKEROOT "PSEUDO_LOCALSTATEDIR=/tmp/am-pseudo")
             list(APPEND RUN_WITH_FAKEROOT "LD_PRELOAD=${LIBPSEUDO}")
+            list(APPEND RUN_WITH_FAKEROOT "PSEUDO_BINDIR=${PSEUDO_DIR}")
         endif()
     endif()
 
@@ -403,8 +409,9 @@ function(qt6_am_create_installable_package target)
     add_custom_command(
         OUTPUT  ${UNSIGNED_PACKAGE_PATH}
         COMMAND ${CMAKE_COMMAND} -E rm -f ${UNSIGNED_PACKAGE_PATH}
+        COMMAND ${CMAKE_COMMAND} -E rm -rf /tmp/am-pseudo
         ${COPY_TO_PACKAGEDIR_COMMAND}
-        COMMAND ${CMAKE_COMMAND} -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
+        COMMAND ${CMAKE_COMMAND} -E env "PATH=$ENV{PATH}"
                     ${RUN_WITH_FAKEROOT}
                     $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>
                     create-package ${ARG_ADDITIONAL_OPTIONS} ${UNSIGNED_PACKAGE_PATH} ${ARG_PACKAGE_DIRECTORY}
@@ -420,7 +427,7 @@ function(qt6_am_create_installable_package target)
         add_custom_command(
             OUTPUT  ${SIGNED_PACKAGE_PATH}
             COMMAND ${CMAKE_COMMAND} -E rm -f ${SIGNED_PACKAGE_PATH}
-            COMMAND ${CMAKE_COMMAND} -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
+            COMMAND ${CMAKE_COMMAND} -E env "PATH=$ENV{PATH}"
                         ${RUN_WITH_FAKEROOT}
                         $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>
                         dev-sign-package ${UNSIGNED_PACKAGE_PATH} ${SIGNED_PACKAGE_PATH} ${ARG_CERTIFICATE} ${OPT_CERTIFICATE_PASSWORD}

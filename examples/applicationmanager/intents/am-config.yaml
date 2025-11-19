@@ -18,4 +18,4 @@ ui:
 flags:
   noSecurity: yes
   noUiWatchdog: yes
-  developmentMode: yes
+  developmentMode: system

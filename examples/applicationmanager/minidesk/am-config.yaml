@@ -25,6 +25,7 @@ systemProperties:
 
 # development setup:
 flags:
+  developmentMode: system
   noSecurity: yes
 
 watchdog:

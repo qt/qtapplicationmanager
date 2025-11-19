@@ -7,6 +7,9 @@ applications:
 ui:
   mainQml: "${CONFIG_DIR}/system-ui.qml"
 
+flags:
+  developmentMode: system
+
 runtimes:
   qml:
     importPaths: "${EXECUTABLE_DIR}/imports"

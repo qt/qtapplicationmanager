@@ -31,4 +31,5 @@ watchdog:
 
 # development setup:
 flags:
+  developmentMode: system
   noSecurity: yes

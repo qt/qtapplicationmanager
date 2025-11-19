@@ -21,3 +21,4 @@ systemProperties:
 flags:
   noSecurity: yes
   noUiWatchdog: yes
+  developmentMode: system

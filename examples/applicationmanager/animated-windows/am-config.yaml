@@ -6,3 +6,6 @@ applications:
 
 ui:
   mainQml: "${CONFIG_DIR}/system-ui/main.qml"
+
+flags:
+  developmentMode: system

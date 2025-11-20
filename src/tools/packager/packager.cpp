@@ -20,14 +20,16 @@
 #include <QtAppManCommon/utilities.h>
 #include <QtAppManPackage/packageutilities.h>
 #include "packagingjob.h"
+#include "../shared/toolapplication.h"
 
 using namespace Qt::StringLiterals;
 
-
 QT_USE_NAMESPACE_AM
 
+// REMEMBER to update the completion file util/bash/appman-prompt, if you add new commands or options!
+
 enum Command {
-    NoCommand,
+    NoCommand = 0,
     CreatePackage,
     DevSignPackage,
     DevVerifyPackage,
@@ -36,84 +38,28 @@ enum Command {
     YamlToJson
 };
 
-// REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
-static const std::array<std::tuple<Command, const char *, const char *>, 6> commandTable = {{
-    { CreatePackage,      "create-package",       "Create a new package." },
-    { DevSignPackage,     "dev-sign-package",     "Add developer signature to package." },
-    { DevVerifyPackage,   "dev-verify-package",   "Verify developer signature on package." },
-    { StoreSignPackage,   "store-sign-package",   "Add store signature to package." },
-    { StoreVerifyPackage, "store-verify-package", "Verify store signature on package." },
-    { YamlToJson,         "yaml-to-json",         "Convenience functionality for build systems (internal)." }
-}};
-
-static Command command(QCommandLineParser &clp)
-{
-    if (!clp.positionalArguments().isEmpty()) {
-        QByteArray cmd = clp.positionalArguments().at(0).toLatin1();
-
-        for (const auto &[command, name, description] : commandTable) {
-            if (cmd == name) {
-                clp.clearPositionalArguments();
-                clp.addPositionalArgument(QString::fromLatin1(name),
-                                          QString::fromLatin1(description),
-                                          QString::fromLatin1(name));
-                return command;
-            }
-        }
-    }
-    return NoCommand;
-}
-
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setApplicationName(u"Qt ApplicationManager Packager"_s);
-    QCoreApplication::setOrganizationName(u"QtProject"_s);
-    QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
-    QCoreApplication::setApplicationVersion(QStringLiteral(QT_AM_VERSION_STR));
+    ToolApplication<Command> tool("Packager", argc, argv);
 
-    QCoreApplication a(argc, argv);
-
-    QByteArray desc = "\n\nAvailable commands are:\n";
-    size_t longestName = 0;
-    for (const auto &[command, name, description] : commandTable)
-        longestName = qMax(longestName, qstrlen(name));
-    for (const auto &[command, name, description] : commandTable) {
-        desc += "  "_ba + name + QByteArray(1 + qsizetype(longestName - qstrlen(name)), ' ')
-                + description + '\n';
-    }
-
-    desc += "\nMore information about each command can be obtained by running\n" \
-            "  appman-packager <command> --help";
+    tool.setCommands({
+        { CreatePackage,      "create-package",       "Create a new package." },
+        { DevSignPackage,     "dev-sign-package",     "Add developer signature to package." },
+        { DevVerifyPackage,   "dev-verify-package",   "Verify developer signature on package." },
+        { StoreSignPackage,   "store-sign-package",   "Add store signature to package." },
+        { StoreVerifyPackage, "store-verify-package", "Verify store signature on package." },
+        { YamlToJson,         "yaml-to-json",         "Convenience functionality for build systems (internal)." }
+    });
 
     QCommandLineParser clp;
-    clp.setApplicationDescription(u"\n"_s + QCoreApplication::applicationName() + QString::fromLatin1(desc));
-
-    clp.addHelpOption();
-    clp.addVersionOption();
-
-    clp.addPositionalArgument(u"command"_s, u"The command to execute."_s);
-
-    // ignore unknown options for now -- the sub-commands may need them later
-    clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsPositionalArguments);
-
-    if (!clp.parse(QCoreApplication::arguments())) {
-        std::cerr << qPrintable(clp.errorText()) << std::endl;
-        exit(1);
-    }
-    clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
+    Command cmd = tool.parse(clp);
 
     try {
         std::unique_ptr<PackagingJob> p;
 
-        // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
-        switch (command(clp)) {
+        switch (cmd) {
         default:
         case NoCommand:
-            if (clp.isSet(u"version"_s))
-                clp.showVersion();
-            if (clp.isSet(u"help"_s))
-                clp.showHelp();
-            clp.showHelp(1);
             break;
 
         case CreatePackage: {
@@ -127,7 +73,7 @@ int main(int argc, char *argv[])
             clp.addOption({{ u"pre-package-command"_s, u"p"_s }, u"Calls this command on each packaged file, before it gets packaged"_s , u"command"_s });
             clp.addPositionalArgument(u"package"_s,          u"The file name of the created package."_s);
             clp.addPositionalArgument(u"source-directory"_s, u"The package's content root directory."_s);
-            clp.process(a);
+            clp.process(tool);
 
             if (clp.positionalArguments().size() != 3)
                 clp.showHelp(1);
@@ -182,31 +128,50 @@ int main(int argc, char *argv[])
                                          clp.isSet(u"json"_s)));
             break;
         }
-        case DevSignPackage:
+        case DevSignPackage: {
             clp.addOption({ u"verbose"_s, u"Dump the package's meta-data header and footer information to stdout."_s });
             clp.addOption({ u"json"_s,    u"Output in JSON format instead of YAML."_s });
+            clp.addOption({{ u"p"_s, u"password"_s },
+                           u"Password for the PKCS#12 certificate in the form "
+                           "pass:<password>, env:<envvar>, file:<path>, fd:<number> or stdin. "
+                           "See the documentation for details."_s,
+                           u"format[:value]"_s });
             clp.addPositionalArgument(u"package"_s,        u"File name of the unsigned package (input)."_s);
             clp.addPositionalArgument(u"signed-package"_s, u"File name of the signed package (output)."_s);
             clp.addPositionalArgument(u"certificate"_s,    u"PKCS#12 certificate file."_s);
-            clp.addPositionalArgument(u"password"_s,       u"Password for the PKCS#12 certificate."_s);
-            clp.process(a);
+            clp.process(tool);
 
-            if (clp.positionalArguments().size() != 5)
+            const qsizetype argCount = clp.positionalArguments().size();
+            QString password;
+
+            if ((argCount < 4) || (argCount > 5))
                 clp.showHelp(1);
+            if (argCount == 5) {
+                if (clp.isSet(u"p"_s)) {
+                    throw Exception("Cannot use --password and the legacy password positional "
+                                    "argument at the same time.");
+                }
+                std::cerr << "INFO: Using the legacy password positional argument is deprecated. "
+                             "Please use the --password option instead." << std::endl;
+                password = clp.positionalArguments().at(4);
+            } else {
+                password = tool.parsePasswordOption(clp.value(u"p"_s),
+                                                    u"PKCS#12 certificate password"_s);
+            }
 
             p.reset(PackagingJob::developerSign(clp.positionalArguments().at(1),
                                                 clp.positionalArguments().at(2),
                                                 clp.positionalArguments().at(3),
-                                                clp.positionalArguments().at(4),
+                                                password,
                                                 clp.isSet(u"json"_s)));
             break;
-
+        }
         case DevVerifyPackage:
             clp.addOption({ u"verbose"_s, u"Print details regarding the verification to stdout."_s });
             clp.addOption({ u"crl"_s, u"CRL file to use during verification."_s, u"file"_s });
             clp.addPositionalArgument(u"package"_s,      u"File name of the signed package (input)."_s);
-            clp.addPositionalArgument(u"certificates"_s, u"The developer's CA certificate file(s)."_s, u"certificates..."_s);
-            clp.process(a);
+            clp.addPositionalArgument(u"certificates"_s, u"Developer CA certificate file(s)."_s, u"certificates..."_s);
+            clp.process(tool);
 
             if (clp.positionalArguments().size() < 3)
                 clp.showHelp(1);
@@ -216,34 +181,65 @@ int main(int argc, char *argv[])
                                                   clp.values(u"crl"_s)));
             break;
 
-        case StoreSignPackage:
-            clp.addOption({ u"verbose"_s, u"Dump the package's meta-data header and footer information to stdout."_s });
-            clp.addOption({ u"json"_s,    u"Output in JSON format instead of YAML."_s });
+        case StoreSignPackage: {
+            clp.addOption({ u"verbose"_s,     u"Dump the package's meta-data header and footer information to stdout."_s });
+            clp.addOption({ u"json"_s,        u"Output in JSON format instead of YAML."_s });
+            clp.addOption({ u"hardware-id"_s, u"Unique hardware id to which this package gets bound."_s, u"hardware-id"_s });
+            clp.addOption({{ u"p"_s, u"password"_s },
+                           u"Password for the PKCS#12 certificate in the form "
+                           "pass:<password>, env:<envvar>, file:<path>, fd:<number> or stdin. "
+                           "See the documentation for details."_s,
+                           u"format[:value]"_s });
             clp.addPositionalArgument(u"package"_s,        u"File name of the unsigned package (input)."_s);
             clp.addPositionalArgument(u"signed-package"_s, u"File name of the signed package (output)."_s);
             clp.addPositionalArgument(u"certificate"_s,    u"PKCS#12 certificate file."_s);
-            clp.addPositionalArgument(u"password"_s,       u"Password for the PKCS#12 certificate."_s);
-            clp.addPositionalArgument(u"hardware-id"_s,    u"Unique hardware id to which this package gets bound."_s);
-            clp.process(a);
+            clp.process(tool);
 
-            if (clp.positionalArguments().size() != 6)
+            const qsizetype argCount = clp.positionalArguments().size();
+            QString password;
+            QString hardwareId;
+
+            if ((argCount < 4) || (argCount > 6))
                 clp.showHelp(1);
+            if (argCount > 4) {
+                if (clp.isSet(u"p"_s)) {
+                    throw Exception("Cannot use --password and the legacy password positional "
+                                    "argument at the same time.");
+                }
+                std::cerr << "INFO: Using the legacy password positional argument is deprecated. "
+                             "Please use the --password option instead." << std::endl;
+                password = clp.positionalArguments().at(4);
+
+                if (argCount > 5) {
+                    if (clp.isSet(u"hardware-id"_s)) {
+                        throw Exception("Cannot use --hardware-id and the legacy hardware-id positional "
+                                        "argument at the same time.");
+                    }
+                    std::cerr << "INFO: Using the legacy hardware-id positional argument is deprecated. "
+                                 "Please use the --hardware-id option instead." << std::endl;
+                    hardwareId = clp.positionalArguments().at(5);
+                }
+            } else {
+                password = tool.parsePasswordOption(clp.value(u"p"_s),
+                                                    u"PKCS#12 certificate password"_s);
+                hardwareId = clp.value(u"hardware-id"_s);
+            }
 
             p.reset(PackagingJob::storeSign(clp.positionalArguments().at(1),
                                             clp.positionalArguments().at(2),
                                             clp.positionalArguments().at(3),
-                                            clp.positionalArguments().at(4),
-                                            clp.positionalArguments().at(5),
+                                            password,
+                                            hardwareId,
                                             clp.isSet(u"json"_s)));
             break;
-
+        }
         case StoreVerifyPackage:
             clp.addOption({ u"verbose"_s, u"Print details regarding the verification to stdout."_s });
             clp.addOption({ u"crl"_s, u"CRL file to use during verification."_s, u"file"_s });
             clp.addPositionalArgument(u"package"_s,      u"File name of the signed package (input)."_s);
             clp.addPositionalArgument(u"certificates"_s, u"Store CA certificate file(s)."_s, u"certificates..."_s);
             clp.addPositionalArgument(u"hardware-id"_s,  u"Unique hardware id to which this package was bound."_s);
-            clp.process(a);
+            clp.process(tool);
 
             if (clp.positionalArguments().size() < 4)
                 clp.showHelp(1);
@@ -257,7 +253,7 @@ int main(int argc, char *argv[])
         case YamlToJson: {
             clp.addOption({{ u"i"_s, u"document-index"_s }, u"Only output the specified YAML sub-document."_s, u"index"_s });
             clp.addPositionalArgument(u"yaml-file"_s, u"YAML file name, defaults to stdin (input)."_s);
-            clp.process(a);
+            clp.process(tool);
 
             if (clp.positionalArguments().size() > 2)
                 clp.showHelp(1);
@@ -300,8 +296,8 @@ int main(int argc, char *argv[])
         if (clp.isSet(u"verbose"_s) && !p->output().isEmpty())
             std::cout << qPrintable(p->output()) << '\n';
         return p->resultCode();
-    } catch (const Exception &e) {
-        std::cerr << "ERROR: " << qPrintable(e.errorString()) << std::endl;
-        return 1;
+    } catch (const std::exception &e) {
+        std::cerr << "ERROR: " << e.what() << std::endl;
+        return 2;
     }
 }

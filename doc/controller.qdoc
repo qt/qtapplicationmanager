@@ -163,7 +163,7 @@ The following commands are available:
 
         If a password for the PKCS#12 certificate is required, it can be supplied via the
         \c{-p} / \c{--password} option. The same password mechanisms as in the OpenSSL command-line
-        tool are supported. See \l{openssl-passphrase-options}{the OpenSSL man page} for details.
+        tool are supported.
 
         \list
             \li \b{pass:}\e{passwd}\br
@@ -171,7 +171,7 @@ The following commands are available:
                 concern, because this method exposes the password to system utilities.
             \li \b{env:}\e{var}\br
                 The password is taken from the environment variable \e var. As with the \b{pass:}
-                mechanism above, the password may be visible to system utilities.
+                mechanism above, the password is visible to system utilities.
             \li \b{file:}\e{path}\br
                 The password is read from the file at \e path. Reading stops at the first newline
                 character.

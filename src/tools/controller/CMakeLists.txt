@@ -2,7 +2,9 @@
 qt_internal_add_app(appman-controller
     EXCEPTIONS
     SOURCES
+        ../shared/toolapplication.h ../shared/toolapplication.cpp
         controller.cpp
+        dbus.h dbus.cpp
     LIBRARIES
         Qt::DBus
         Qt::Network

@@ -22,6 +22,7 @@
 #include <QQmlEngine>
 #include <QQmlProperty>
 #include <QtQuick/private/qquickitem_p.h>
+#include <QtQuick/private/qquickshadereffectsource_p.h>
 
 using namespace Qt::StringLiterals;
 
@@ -380,16 +381,13 @@ void WindowItem::InProcessImpl::setupPrimaryView()
 void WindowItem::InProcessImpl::setupSecondaryView()
 {
     if (!m_shaderEffectSource) {
-        QQmlEngine *engine = QQmlEngine::contextForObject(q)->engine();
-        QQmlComponent component(engine);
+        auto ses = new QQuickShaderEffectSource(q);
+        QQuickItemPrivate::get(ses)->anchors()->setFill(q);
+        ses->setSourceItem(m_inProcessWindow->rootItem());
+        ses->setParent(q);
+        ses->setParentItem(q);
 
-        component.setData("import QtQuick\nShaderEffectSource { anchors.fill: parent }", QUrl());
-        m_shaderEffectSource = qobject_cast<QQuickItem *>(component.create());
-        m_shaderEffectSource->setParent(q);
-        m_shaderEffectSource->setParentItem(q);
-
-        QQmlProperty::write(m_shaderEffectSource, u"sourceItem"_s,
-                QVariant::fromValue(m_inProcessWindow->rootItem()));
+        m_shaderEffectSource = ses;
     }
 }
 

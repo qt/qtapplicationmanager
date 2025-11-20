@@ -12,6 +12,7 @@ qt_internal_add_module(AppManWindowPrivate
         windowmanager.cpp windowmanager.h windowmanager_p.h
     LIBRARIES
         Qt::CorePrivate
+        Qt::QuickPrivate
     PUBLIC_LIBRARIES
         Qt::Core
         Qt::Gui

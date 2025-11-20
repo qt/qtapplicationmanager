@@ -1,4 +1,4 @@
-// Copyright (C) 2021 The Qt Company Ltd.
+// Copyright (C) 2025 The Qt Company Ltd.
 // Copyright (C) 2019 Luxoft Sweden AB
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
@@ -32,15 +32,15 @@
 #include <QtAppManCommon/qtyaml.h>
 #include <QtAppManCommon/dbus-utilities.h>
 
-#include "applicationmanager_interface.h"
-#include "packagemanager_interface.h"
-
-#include "unixsignalhandler.h"
+#include "dbus.h"
+#include "../shared/toolapplication.h"
 
 using namespace std::chrono_literals;
 using namespace Qt::StringLiterals;
 
 QT_USE_NAMESPACE_AM
+
+Q_GLOBAL_STATIC(DBus, dbus)
 
 static void installInterruptHandler(const std::function<void (int)> &handler)
 {
@@ -53,299 +53,6 @@ static void installInterruptHandler(const std::function<void (int)> &handler)
     UnixSignalHandler::instance()->resetToDefault(AM_SIGNALS);
     UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
                                            AM_SIGNALS, handler);
-}
-
-//TODO: also use this in appman-packager
-static QString readPassword(const QString &option, const QString &hint)
-{
-    // see: man openssl-passphrase-options
-    // supported formats: pass:password, env:varname, file:filename, fd:number and stdin
-    if (option.startsWith(u"pass:"_s)) {
-        return option.mid(5);
-    } else if (option.startsWith(u"env:"_s)) {
-        QByteArray env = option.mid(4).toLocal8Bit();
-        if (!qEnvironmentVariableIsSet(env.constData()))
-            throw Exception("Environment variable '%1' is not set").arg(env);
-        return qEnvironmentVariable(env.constData());
-    } else if (option.startsWith(u"file:"_s)) {
-        QFile f(option.mid(5));
-        if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
-            throw Exception(f, "Could not open password file");
-        return QString::fromLocal8Bit(f.readLine()).trimmed();
-#if defined(Q_OS_UNIX)
-    } else if (option.startsWith(u"fd:"_s)) {
-        bool ok = false;
-        int fd = option.mid(3).toInt(&ok);
-        if (!ok || (fd < 0))
-            throw Exception("Could not parse file descriptor number from password option: %1").arg(option);
-        QFile f;
-        if (!f.open(fd, QIODevice::ReadOnly | QIODevice::Text))
-            throw Exception(f, "Could not open file descriptor %1 for reading password").arg(fd);
-        return QString::fromLocal8Bit(f.readLine()).trimmed();
-#endif
-    } else if (option == u"stdin"_s) {
-        //TODO: use getpass/readpassphrase where available to avoid echoing the password
-        std::string line;
-        std::cout << hint.toLocal8Bit().constData() << ": ";
-        std::cin >> line;
-        return QString::fromLocal8Bit(line).trimmed();
-    } else {
-        throw Exception("Unknown password format. Needs to be one of pass:, env:, file:, fd: or stdin"
-                        "\n    See also: man openssl-passphrase-options");
-    }
-}
-
-class DBus : public QObject
-{
-    Q_OBJECT
-
-public:
-    DBus()
-        : m_dbusService(u"io.qt.ApplicationManager"_s)
-
-    {
-        registerDBusTypes();
-    }
-
-    void setInstanceInfo(const QVariantMap &instanceInfo)
-    {
-        m_dbusAddresses = instanceInfo[u"dbus"_s].toMap();
-    }
-
-    void connectToManager() noexcept(false)
-    {
-        if (m_manager)
-            return;
-
-        auto conn = connectTo(u"io.qt.ApplicationManager"_s);
-        m_manager = tryConnectToDBusInterface<IoQtApplicationManagerInterface>(m_dbusService,
-                                                                               u"/ApplicationManager"_s,
-                                                                               conn.name(), this);
-        if (!m_manager) {
-            throw Exception("Could not connect to the io.qt.ApplicationManager D-Bus interface on %1")
-                .arg(m_dbusName);
-        }
-    }
-
-    void connectToPackager() noexcept(false)
-    {
-        if (m_packager)
-            return;
-
-        auto conn = connectTo(u"io.qt.PackageManager"_s);
-        m_packager = tryConnectToDBusInterface<IoQtPackageManagerInterface>(m_dbusService,
-                                                                            u"/PackageManager"_s,
-                                                                            conn.name(), this);
-        if (!m_packager) {
-            throw Exception("Could not connect to the io.qt.PackageManager D-Bus interface on %1")
-                .arg(m_dbusName);
-        }
-    }
-
-    inline void throwOnError()
-    {
-        for (auto *iface : std::initializer_list<const QDBusAbstractInterface *>{ m_manager, m_packager }) {
-            if (iface && iface->lastError().isValid())
-                throw Exception("D-Bus error on %1: %2").arg(iface->interface(), iface->lastError().message());
-        }
-    }
-
-    Q_SIGNAL void disconnected(QString reason);
-
-private:
-    template<typename T>
-    static T *tryConnectToDBusInterface(const QString &service, const QString &path,
-                                        const QString &connectionName, QObject *parent)
-    {
-        // we are working with very small delays in the milli-second range here, so a linear factor
-        // to support valgrind would have to be very large and probably conflict with usage elsewhere
-        // in the codebase, where the ranges are normally in the seconds.
-        static const int timeout = timeoutFactor() * timeoutFactor();
-
-        QDBusConnection conn(connectionName);
-
-        if (!conn.isConnected())
-            return nullptr;
-        if (!service.isEmpty() && conn.interface()) {
-            // the 'T' constructor can block up to 25sec (!), if the service is not registered!
-            if (!conn.interface()->isServiceRegistered(service))
-                return nullptr;
-        }
-
-        QElapsedTimer timer;
-        timer.start();
-
-        do {
-            T *iface = new T(service, path, conn, parent);
-            if (!iface->lastError().isValid())
-                return iface;
-            delete iface;
-            QThread::msleep(static_cast<unsigned long>(timeout));
-        } while (timer.elapsed() < (100 * timeout)); // 100msec base line
-
-        return nullptr;
-    }
-
-    QDBusConnection connectTo(const QString &iface) noexcept(false)
-    {
-        QDBusConnection conn(iface);
-
-        QString dbus = m_dbusAddresses.value(iface).toString();
-        if (dbus.isEmpty()) {
-            throw Exception("This application manager instance does not expose the D-Bus interface "
-                            "%1.\nDid you forget to enable development mode?").arg(iface);
-        }
-
-        if (dbus == u"system") {
-            conn = QDBusConnection::systemBus();
-            m_dbusName = u"[system-bus]"_s;
-        } else if (dbus == u"session") {
-            conn = QDBusConnection::sessionBus();
-            m_dbusName = u"[session-bus]"_s;
-        } else if (dbus.startsWith(u"p2p:")) {
-            const auto address = dbus.mid(4);
-            conn = QDBusConnection::connectToPeer(address, u"p2p"_s);
-            m_dbusName = u"[p2p] "_s + address;
-            m_dbusService.clear(); // no service names allowed on p2p busses
-        } else {
-            conn = QDBusConnection::connectToBus(dbus, u"custom_%1"_s.arg(iface));
-            m_dbusName = dbus;
-        }
-
-        if (!conn.isConnected()) {
-            throw Exception(Error::IO, "Could not connect to the application manager D-Bus interface %1 at %2: %3")
-                .arg(iface, m_dbusName, conn.lastError().message());
-        }
-
-        installDisconnectWatcher(conn, u"io.qt.ApplicationManager"_s);
-        return conn;
-    }
-
-    void installDisconnectWatcher(const QDBusConnection &conn, const QString &serviceName)
-    {
-        if (m_disconnectedEmitted)
-            return;
-
-        if (!m_connections.contains(conn.name())) {
-            auto *watcher = new QDBusServiceWatcher(serviceName, conn, QDBusServiceWatcher::WatchForOwnerChange, this);
-            connect(watcher, &QDBusServiceWatcher::serviceOwnerChanged,
-                    this, [this](const QString &, const QString &, const QString &) {
-                disconnectDetected(u"owner changed"_s);
-            });
-            m_connections.append(conn.name());
-        }
-
-        // serviceOwnerChanged does not work if the bus-daemon process dies (as is the case when
-        // the AM starts its own session bus in --dbus=auto mode and then later crashes, killing
-        // the bus-daemon with it).
-        // QDBusConnection::isConnected() does not have a change signal, so we have to poll.
-        if (!m_disconnectTimer) {
-            m_disconnectTimer = new QTimer(this);
-            connect(m_disconnectTimer, &QTimer::timeout, this, [this]() {
-                for (const auto &name : std::as_const(m_connections)) {
-                    if (!QDBusConnection(name).isConnected()) {
-                        disconnectDetected(u"bus died"_s);
-                        break;
-                    }
-                }
-            });
-            m_disconnectTimer->start(500ms);
-        }
-    }
-
-    void disconnectDetected(const QString &reason)
-    {
-        if (!m_disconnectedEmitted) {
-            emit disconnected(reason);
-            m_disconnectedEmitted = true;
-            if (m_disconnectTimer)
-                m_disconnectTimer->stop();
-        }
-    }
-
-public:
-    IoQtPackageManagerInterface *packager() const
-    {
-        return m_packager;
-    }
-
-    IoQtApplicationManagerInterface *manager() const
-    {
-        return m_manager;
-    }
-
-private:
-    IoQtPackageManagerInterface *m_packager = nullptr;
-    IoQtApplicationManagerInterface *m_manager = nullptr;
-    QVariantMap m_dbusAddresses;
-    QString m_dbusName;
-    QString m_dbusService;
-    QStringList m_connections;
-    QTimer *m_disconnectTimer = nullptr;
-    bool m_disconnectedEmitted = false;
-};
-
-Q_GLOBAL_STATIC(DBus, dbus)
-
-
-enum Command {
-    NoCommand,
-    StartApplication,
-    DebugApplication,
-    StopApplication,
-    StopAllApplications,
-    ListApplications,
-    ShowApplication,
-    ListPackages,
-    ShowPackage,
-    InstallPackage,
-    RemovePackage,
-    ListInstallationTasks,
-    CancelInstallationTask,
-    ShowInstallationLocation,
-    ListInstances,
-    InjectIntentRequest,
-    SetDeveloperCertificate,
-    ShowDevelopmentMode,
-};
-
-// REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
-static const std::array<std::tuple<Command, const char *, const char *>, 17> commandTable = {{
-    { StartApplication,          "start-application",           "Start an application." },
-    { DebugApplication,          "debug-application",           "Debug an application." },
-    { StopApplication,           "stop-application",            "Stop an application." },
-    { StopAllApplications,       "stop-all-applications",       "Stop all applications." },
-    { ListApplications,          "list-applications",           "List all installed applications." },
-    { ShowApplication,           "show-application",            "Show application meta-data." },
-    { ListPackages,              "list-packages",               "List all installed packages." },
-    { ShowPackage,               "show-package",                "Show package meta-data." },
-    { InstallPackage,            "install-package",             "Install a package." },
-    { RemovePackage,             "remove-package",              "Remove a package." },
-    { ListInstallationTasks,     "list-installation-tasks",     "List all active installation tasks." },
-    { CancelInstallationTask,    "cancel-installation-task",    "Cancel an active installation task." },
-    { ShowInstallationLocation,  "show-installation-location",  "Show details for installation location." },
-    { ListInstances,             "list-instances",              "List all named application manager instances." },
-    { InjectIntentRequest,       "inject-intent-request",       "Inject an intent request for testing." },
-    { SetDeveloperCertificate,   "set-developer-certificate",   "Set the developer certificate for development mode." },
-    { ShowDevelopmentMode,       "show-development-mode",       "Show the current development mode status." },
-}};
-
-static Command command(QCommandLineParser &clp)
-{
-    if (!clp.positionalArguments().isEmpty()) {
-        QByteArray cmd = clp.positionalArguments().at(0).toLatin1();
-
-        for (const auto &[command, name, description] : commandTable) {
-            if (cmd == name) {
-                clp.clearPositionalArguments();
-                clp.addPositionalArgument(QString::fromLatin1(name),
-                                          QString::fromLatin1(description),
-                                          QString::fromLatin1(name));
-                return command;
-            }
-        }
-    }
-    return NoCommand;
 }
 
 static std::pair<QString, QMultiHash<QString, int>> runningInstanceIds();
@@ -373,96 +80,66 @@ static void setDeveloperCertificate(const QString &pkcs12Path, const QString &pk
                                     bool clear = false) noexcept(false);
 static void showDevelopmentMode(bool asJson = false) noexcept(false);
 
+// REMEMBER to update the completion file util/bash/appman-prompt, if you add new commands or options!
 
-class ThrowingApplication : public QCoreApplication // clazy:exclude=missing-qobject-macro
-{
-public:
-    ThrowingApplication(int &argc, char **argv)
-        : QCoreApplication(argc, argv)
-    { }
-
-    Exception *exception() const
-    {
-        return m_exception;
-    }
-
-    template <typename T> void runLater(T slot)
-    {
-        // run the specified function as soon as the event loop is up and running
-        QMetaObject::invokeMethod(this, slot, Qt::QueuedConnection);
-    }
-
-protected:
-    bool notify(QObject *o, QEvent *e) override
-    {
-        try {
-            return QCoreApplication::notify(o, e);
-        } catch (const Exception &e) {
-            m_exception = new Exception(e);
-            exit(3);
-            return true;
-        }
-    }
-private:
-    Exception *m_exception = nullptr;
+enum Command {
+    NoCommand = 0,
+    StartApplication,
+    DebugApplication,
+    StopApplication,
+    StopAllApplications,
+    ListApplications,
+    ShowApplication,
+    ListPackages,
+    ShowPackage,
+    InstallPackage,
+    RemovePackage,
+    ListInstallationTasks,
+    CancelInstallationTask,
+    ShowInstallationLocation,
+    ListInstances,
+    InjectIntentRequest,
+    SetDeveloperCertificate,
+    ShowDevelopmentMode,
 };
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setApplicationName(u"Qt Application Manager Controller"_s);
-    QCoreApplication::setOrganizationName(u"QtProject"_s);
-    QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
-    QCoreApplication::setApplicationVersion(QStringLiteral(QT_AM_VERSION_STR));
-
     ensureLibDBusIsAvailable(); // this needs to happen before the QCoreApplication constructor
 
-    ThrowingApplication a(argc, argv);
+    ToolApplication<Command> tool("Controller", argc, argv);
 
-    QByteArray desc = "\n\nAvailable commands are:\n";
-    size_t longestName = 0;
-    for (const auto &[command, name, description] : commandTable)
-        longestName = qMax(longestName, qstrlen(name));
-    for (const auto &[command, name, description] : commandTable) {
-        desc += "  "_ba + name + QByteArray(1 + qsizetype(longestName - qstrlen(name)), ' ')
-        + description + '\n';
-    }
-
-    desc += "\nMore information about each command can be obtained by running\n" \
-            " appman-controller <command> --help";
+    tool.setCommands({
+        { StartApplication,          "start-application",           "Start an application." },
+        { DebugApplication,          "debug-application",           "Debug an application." },
+        { StopApplication,           "stop-application",            "Stop an application." },
+        { StopAllApplications,       "stop-all-applications",       "Stop all applications." },
+        { ListApplications,          "list-applications",           "List all installed applications." },
+        { ShowApplication,           "show-application",            "Show application meta-data." },
+        { ListPackages,              "list-packages",               "List all installed packages." },
+        { ShowPackage,               "show-package",                "Show package meta-data." },
+        { InstallPackage,            "install-package",             "Install a package." },
+        { RemovePackage,             "remove-package",              "Remove a package." },
+        { ListInstallationTasks,     "list-installation-tasks",     "List all active installation tasks." },
+        { CancelInstallationTask,    "cancel-installation-task",    "Cancel an active installation task." },
+        { ShowInstallationLocation,  "show-installation-location",  "Show details for installation location." },
+        { ListInstances,             "list-instances",              "List all named application manager instances." },
+        { InjectIntentRequest,       "inject-intent-request",       "Inject an intent request for testing." },
+        { SetDeveloperCertificate,   "set-developer-certificate",   "Set the developer certificate for development mode." },
+        { ShowDevelopmentMode,       "show-development-mode",       "Show the current development mode status." },
+    });
 
     QCommandLineParser clp;
-
     clp.addOption({ { u"instance-id"_s }, u"Connect to the named instance."_s, u"instance-id"_s });
-    clp.addHelpOption();
-    clp.addVersionOption();
-
-    clp.addPositionalArgument(u"command"_s, u"The command to execute."_s);
-
-    // ignore unknown options for now -- the sub-commands may need them later
-    clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsPositionalArguments);
-
-    // ignore the return value here, as we also accept options we don't know about yet.
-    // If an option is really not accepted by a command, the command specific parsing should report
-    // this.
-    clp.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
-    clp.parse(QCoreApplication::arguments());
-
+    Command cmd = tool.parse(clp);
 
     // REMEMBER to update the completion file util/bash/appman-prompt, if you apply changes below!
     try {
-        auto cmd = command(clp);
         if ((cmd != NoCommand) && (cmd != ListInstances) && !clp.isSet(u"help"_s))
             dbus()->setInstanceInfo(resolveInstanceInfo(clp.value(u"instance-id"_s)));
 
         switch (cmd) {
         case NoCommand:
-            if (clp.isSet(u"version"_s))
-                clp.showVersion();
-
-            clp.setApplicationDescription(u"\n"_s + QCoreApplication::applicationName() + QString::fromLatin1(desc));
-            if (clp.isSet(u"help"_s))
-                clp.showHelp(0);
-            clp.showHelp(1);
             break;
 
         case StartApplication: {
@@ -472,7 +149,7 @@ int main(int argc, char *argv[])
             clp.addOption({ { u"r"_s, u"restart"_s }, u"Before starting, stop the application if it is already running"_s });
             clp.addPositionalArgument(u"application-id"_s, u"The id of an installed application."_s);
             clp.addPositionalArgument(u"document-url"_s,   u"The optional document-url."_s, u"[document-url]"_s);
-            clp.process(a);
+            clp.process(tool);
 
             int args = int(clp.positionalArguments().size());
             if ((args < 2) || (args > 3))
@@ -491,7 +168,7 @@ int main(int argc, char *argv[])
             const QString appId = clp.positionalArguments().at(1);
             const QString documentUrl = (args == 3) ? clp.positionalArguments().at(2) : QString();
 
-            a.runLater([=] {
+            tool.runLater([=] {
                 startOrDebugApplication(debugWrapper, appId, stdRedirections, restart, documentUrl);
             });
             break;
@@ -504,7 +181,7 @@ int main(int argc, char *argv[])
             clp.addPositionalArgument(u"debug-wrapper"_s,  u"The debug-wrapper specification."_s);
             clp.addPositionalArgument(u"application-id"_s, u"The id of an installed application."_s);
             clp.addPositionalArgument(u"document-url"_s,   u"The optional document-url."_s, u"[document-url]"_s);
-            clp.process(a);
+            clp.process(tool);
 
             int args = int(clp.positionalArguments().size());
             if ((args < 3) || (args > 4))
@@ -523,23 +200,23 @@ int main(int argc, char *argv[])
             const QString appId = clp.positionalArguments().at(2);
             const QString documentUrl = (args == 4) ? clp.positionalArguments().at(3) : QString();
 
-            a.runLater([=] {
+            tool.runLater([=] {
                 startOrDebugApplication(debugWrapper, appId, stdRedirections, restart, documentUrl);
             });
             break;
         }
         case StopAllApplications:
-            clp.process(a);
+            clp.process(tool);
             if (clp.positionalArguments().size() != 1)
                 clp.showHelp(1);
 
-            a.runLater(stopAllApplications);
+            tool.runLater(stopAllApplications);
             break;
 
         case StopApplication: {
             clp.addOption({ { u"f"_s, u"force"_s }, u"Force kill the application."_s });
             clp.addPositionalArgument(u"application-id"_s, u"The id of an installed application."_s);
-            clp.process(a);
+            clp.process(tool);
 
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
@@ -547,18 +224,18 @@ int main(int argc, char *argv[])
             const QString appId = clp.positionalArguments().at(1);
             const bool force = clp.isSet(u"f"_s);
 
-            a.runLater([=] { stopApplication(appId, force); });
+            tool.runLater([=] { stopApplication(appId, force); });
             break;
         }
         case ListApplications:
-            clp.process(a);
-            a.runLater(listApplications);
+            clp.process(tool);
+            tool.runLater(listApplications);
             break;
 
         case ShowApplication: {
             clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
             clp.addPositionalArgument(u"application-id"_s, u"The id of an installed application."_s);
-            clp.process(a);
+            clp.process(tool);
 
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
@@ -566,18 +243,18 @@ int main(int argc, char *argv[])
             const QString appId = clp.positionalArguments().at(1);
             const bool json = clp.isSet(u"json"_s);
 
-            a.runLater([=] { showApplication(appId, json); });
+            tool.runLater([=] { showApplication(appId, json); });
             break;
         }
         case ListPackages:
-            clp.process(a);
-            a.runLater(listPackages);
+            clp.process(tool);
+            tool.runLater(listPackages);
             break;
 
         case ShowPackage: {
             clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
             clp.addPositionalArgument(u"package-id"_s, u"The id of an installed package."_s);
-            clp.process(a);
+            clp.process(tool);
 
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
@@ -585,14 +262,14 @@ int main(int argc, char *argv[])
             const QString appId = clp.positionalArguments().at(1);
             const bool json = clp.isSet(u"json"_s);
 
-            a.runLater([=] { showPackage(appId, json); });
+            tool.runLater([=] { showPackage(appId, json); });
             break;
         }
         case InstallPackage: {
             clp.addOption({ { u"l"_s, u"location"_s }, u"Set a custom installation location (deprecated and ignored)."_s, u"installation-location"_s, u"internal-0"_s });
             clp.addOption({ { u"a"_s, u"acknowledge"_s }, u"Automatically acknowledge the installation (unattended mode)."_s });
             clp.addPositionalArgument(u"package"_s, u"The file name of the package; can be - for stdin."_s);
-            clp.process(a);
+            clp.process(tool);
 
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
@@ -602,14 +279,14 @@ int main(int argc, char *argv[])
             const QString package = clp.positionalArguments().at(1);
             const bool acknowledge = clp.isSet(u"a"_s);
 
-            a.runLater([=] { installPackage(package, acknowledge); });
+            tool.runLater([=] { installPackage(package, acknowledge); });
             break;
         }
         case RemovePackage: {
             clp.addOption({ { u"f"_s, u"force"_s }, u"Force removal of package."_s });
             clp.addOption({ { u"k"_s, u"keep-documents"_s }, u"Keep the document folder of the application."_s });
             clp.addPositionalArgument(u"package-id"_s, u"The id of an installed package."_s);
-            clp.process(a);
+            clp.process(tool);
 
             if (clp.positionalArguments().size() != 2)
                 clp.showHelp(1);
@@ -618,18 +295,18 @@ int main(int argc, char *argv[])
             const bool force = clp.isSet(u"f"_s);
             const bool keepDocuments = clp.isSet(u"k"_s);
 
-            a.runLater([=] { removePackage(packageId, keepDocuments, force); });
+            tool.runLater([=] { removePackage(packageId, keepDocuments, force); });
             break;
         }
         case ListInstallationTasks:
-            clp.process(a);
-            a.runLater(listInstallationTasks);
+            clp.process(tool);
+            tool.runLater(listInstallationTasks);
             break;
 
         case CancelInstallationTask: {
             clp.addPositionalArgument(u"task-id"_s, u"The id of an active installation task."_s);
             clp.addOption({ { u"a"_s, u"all"_s }, u"Cancel all active installation tasks."_s });
-            clp.process(a);
+            clp.process(tool);
 
             qsizetype args = clp.positionalArguments().size();
             bool all = clp.isSet(u"a"_s);
@@ -638,24 +315,24 @@ int main(int argc, char *argv[])
 
             const QString taskId = (args == 2) ? clp.positionalArguments().at(1) : QString();
 
-            a.runLater([=] { cancelInstallationTask(all, taskId); });
+            tool.runLater([=] { cancelInstallationTask(all, taskId); });
             break;
         }
         case ShowInstallationLocation: {
             clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
-            clp.process(a);
+            clp.process(tool);
 
             if (clp.positionalArguments().size() > 1)
                 clp.showHelp(1);
 
             const bool json = clp.isSet(u"json"_s);
 
-            a.runLater([=] { showInstallationLocation(json); });
+            tool.runLater([=] { showInstallationLocation(json); });
             break;
         }
         case ListInstances:
-            clp.process(a);
-            a.runLater(listInstances);
+            clp.process(tool);
+            tool.runLater(listInstances);
             break;
 
         case InjectIntentRequest: {
@@ -664,7 +341,7 @@ int main(int argc, char *argv[])
             clp.addOption({ u"requesting-application-id"_s, u"Fake the requesting application id."_s, u"id"_s, u":sysui:"_s });
             clp.addOption({ u"application-id"_s, u"Specify the handling application id."_s, u"id"_s });
             clp.addOption({ u"broadcast"_s, u"Create a broadcast request."_s });
-            clp.process(a);
+            clp.process(tool);
 
             bool isBroadcast = clp.isSet(u"broadcast"_s);
             QString appId = clp.value(u"application-id"_s);
@@ -685,7 +362,7 @@ int main(int argc, char *argv[])
 
             const QString intentId = clp.positionalArguments().at(1);
 
-            a.runLater([=] {
+            tool.runLater([=] {
                 injectIntentRequest(intentId, isBroadcast, requestingAppId, appId, jsonParams);
             });
             break;
@@ -698,7 +375,7 @@ int main(int argc, char *argv[])
                            "pass:<password>, env:<envvar>, file:<path>, fd:<number> or stdin. "
                            "See the documentation for details."_s,
                            u"format[:value]"_s });
-            clp.process(a);
+            clp.process(tool);
 
             const bool isClear = clp.isSet(u"clear"_s);
             const bool hasPassword = clp.isSet(u"p"_s);
@@ -710,38 +387,34 @@ int main(int argc, char *argv[])
                 throw Exception("Cannot use --password and --clear at the same time.");
 
             const QString certificate = isClear ? QString() : clp.positionalArguments().at(1);
-            QString password = hasPassword ? clp.value(u"p"_s) : QString();
+            QString password = clp.value(u"p"_s);
 
             if ((certificate == u"-") && (password == u"stdin"))
                 throw Exception("Cannot read both the certificate and the password from stdin");
 
-            if (hasPassword)
-                password = readPassword(password, u"PKCS#12 certificate password"_s);
+            password = tool.parsePasswordOption(password, u"PKCS#12 certificate password"_s);
 
-            a.runLater([=] { setDeveloperCertificate(certificate, password, isClear); });
+            tool.runLater([=] { setDeveloperCertificate(certificate, password, isClear); });
             break;
         }
         case ShowDevelopmentMode:
             clp.addOption({ u"json"_s, u"Output in JSON format instead of YAML."_s });
-            clp.process(a);
+            clp.process(tool);
 
             if (clp.positionalArguments().size() > 1)
                 clp.showHelp(1);
 
             const bool json = clp.isSet(u"json"_s);
 
-            a.runLater([=] { showDevelopmentMode(json); });
+            tool.runLater([=] { showDevelopmentMode(json); });
             break;
         }
 
-        int result = a.exec();
-        if (a.exception())
-            throw *a.exception();
-        return result;
+        return tool.exec();
 
-    } catch (const Exception &e) {
-        std::cerr << "ERROR: " << qPrintable(e.errorString()) << std::endl;
-        return int(e.errorCode());
+    } catch (const std::exception &e) {
+        std::cerr << "ERROR: " << e.what() << std::endl;
+        return 2;
     }
 }
 
@@ -1358,5 +1031,3 @@ void showDevelopmentMode(bool asJson)
                          : YamlEmitter::fromVariantDocuments({ out }).constData()) << '\n';
     qApp->quit();
 }
-
-#include "controller.moc"

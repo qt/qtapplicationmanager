@@ -5,6 +5,7 @@ qt_internal_add_tool(${target_name}
     EXCEPTIONS
     TOOLS_TARGET AppManSystemUIPrivate
     SOURCES
+        ../shared/toolapplication.h ../shared/toolapplication.cpp
         packager.cpp
         packagingjob.cpp packagingjob.h
     LIBRARIES

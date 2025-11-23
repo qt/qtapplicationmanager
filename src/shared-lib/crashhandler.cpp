@@ -204,18 +204,22 @@ static void initBacktrace() __attribute__((constructor(101)));
 
 
 #  elif defined(Q_OS_WINDOWS) && defined(Q_CC_MSVC)
-// this will make it run before all other static constructor functions
-#    pragma warning(push)
-#    pragma warning(disable: 4074)
-#    pragma init_seg(compiler)
 
 static void initBacktrace();
 
-static struct InitBacktrace
+static int initBacktrace2()
 {
-    InitBacktrace() { initBacktrace(); }
-} dummy;
-#    pragma warning(pop)
+    initBacktrace();
+    return 0;
+}
+
+// This will make it run before all other static constructor functions in this module
+// See initBacktraceWindows for the implications of "in this module"
+#    pragma warning(push)
+#    pragma warning(disable: 4074)
+#    pragma data_seg(".CRT$XCU") // 'CRT' segment, 'C' := C++ initializers, 'U' := User group
+static int (*initBacktracePtr)() = initBacktrace2;
+#    pragma data_seg()
 #  endif
 
 #  if defined(Q_OS_UNIX)
@@ -822,6 +826,33 @@ struct _s__ThrowInfo
 };
 #  endif // defined(Q_CC_MSVC)
 
+static void PreventSetUnhandledExceptionFilter()
+{
+    static const unsigned char return0[] = { // std::array does not work here
+#  if defined(_M_IX86)    // xor eax,eax ; ret 4
+        0x33, 0xC0, 0xC2, 0x04, 0x00
+#  elif defined(_M_X64)   // xor eax,eax ; ret
+        0x33, 0xC0, 0xC3
+#  elif defined(_M_ARM64) // mov x0, #0  ; ret
+        0x00, 0x00, 0x80, 0xD2, 0xC0, 0x03, 0x5F, 0xD6
+#  else
+#    error "This code works only on x86, x64 and arm64!"
+#  endif
+    };
+
+    void *func = reinterpret_cast<void *>(&SetUnhandledExceptionFilter);
+
+    DWORD rwxBefore = 0;
+    bool rwxSet = ::VirtualProtect(func, sizeof(return0), PAGE_EXECUTE_READWRITE, &rwxBefore);
+
+    ::WriteProcessMemory(::GetCurrentProcess(), func, return0, sizeof(return0), nullptr);
+
+    if (rwxSet && (rwxBefore != PAGE_EXECUTE_READWRITE)) {
+        DWORD dummy;
+        ::VirtualProtect(func, sizeof(return0), rwxBefore, &dummy);
+    }
+}
+
 #  define EXCEPTION_CPP_EXCEPTION    0xE06D7363  // internal MSVC value
 #  define EXCEPTION_MINGW_EXCEPTION  0xE014e9aa  // custom AM value
 
@@ -876,12 +907,14 @@ static LONG WINAPI windowsExceptionFilter(EXCEPTION_POINTERS *ep)
         std::type_info *type = nullptr;
         bool is64bit = (sizeof(void *) == 8);
         if (ep->ExceptionRecord->NumberParameters == (is64bit ? 4 : 3)) {
+            // NOLINTNEXTLINE(performance-no-int-to-ptr)
             auto hInstance = (is64bit ? reinterpret_cast<char *>(ep->ExceptionRecord->ExceptionInformation[3])
                                       : nullptr);
 
             // since all "pointers" are 32bit values even on 64bit Windows, we have to add the
             // hInstance segment pointer to each of the 32bit pointers to get a real 64bit address
             if (!is64bit || hInstance) {
+                // NOLINTNEXTLINE(performance-no-int-to-ptr)
                 const auto *ti = reinterpret_cast<_s__ThrowInfo *>(ep->ExceptionRecord->ExceptionInformation[2]);
                 if (ti) {
                     auto cta = reinterpret_cast<_s__CatchableTypeArray *>(hInstance + ti->pCatchableTypeArray);
@@ -897,10 +930,10 @@ static LONG WINAPI windowsExceptionFilter(EXCEPTION_POINTERS *ep)
 
         // (b) re-throw and catch the exception
         try {
-            RaiseException(EXCEPTION_CPP_EXCEPTION,
-                           EXCEPTION_NONCONTINUABLE,
-                           ep->ExceptionRecord->NumberParameters,
-                           ep->ExceptionRecord->ExceptionInformation);
+            // This function is implicitly declared by the compiler
+            _CxxThrowException(reinterpret_cast<void *>(ep->ExceptionRecord->ExceptionInformation[1]),
+                               reinterpret_cast<const _ThrowInfo *>(
+                                   ep->ExceptionRecord->ExceptionInformation[2]));
         } catch (const std::exception &exc) {
             snprintf(buffer, sizeof(buffer), "uncaught exception of type %s (%s)", typeName, exc.what());
         } catch (const std::exception *exc) {
@@ -945,6 +978,18 @@ static void initBacktraceWindows()
 
     // handle Windows' Structured Exceptions
     SetUnhandledExceptionFilter(windowsExceptionFilter);
+
+    // We are a shared library, so any static constructor will run (via DllMain) before the CRT
+    // initialization of the main executable, but MSVC's CRT will unconditionally overwrite any
+    // previously set "SetUnhandledExceptionFilter" (in pre_cpp_initialization() /
+    // __scrt_set_unhandled_exception_filter()).
+    // This is a general problem on Windows as well, as ANY library can overwrite that handler for
+    // the whole process at any time.
+    // In order to mitigate this, we borrow a trick from the StackWalker project here: after
+    // installing our handler, we "disable" the SetUnhandledExceptionFilter function by overwriting
+    // its first bytes with an assembly blob representing "return 0;", effectively preventing anyone
+    // else from changing the filter again in this process.
+    PreventSetUnhandledExceptionFilter();
 
 #if defined(Q_CC_MINGW)
     // MinGW does handle the exceptions like gcc does on Unix, instead of using a structured

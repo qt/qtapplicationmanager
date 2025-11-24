@@ -12,7 +12,6 @@ ui:
 
 systemProperties:
   public:
-    serverBaseDir: '${EXECUTABLE_DIR}/ps-data'
     packageServer:
       url: "http://localhost:8020"
       projectId: 'PROJECT'

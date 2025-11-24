@@ -46,6 +46,12 @@ ApplicationWindow {
                              "\n\n", "  ", ApplicationManager.systemProperties.serverBinary, "--dd",
                              ApplicationManager.systemProperties.serverBaseDir,
                              "\n\n")
+            } else if (ApplicationManager.systemProperties.crossBuild) {
+                console.info("\n\n", "You need to start an appman-package-server instance on your desktop",
+                             "\n", "and then adapt the 'Packages' > 'Server' URL accordingly.",
+                             "\n\n", "Starting the same example on your desktop tells you how to start the",
+                             "\n", "appman-package-server with the right parameters.",
+                             "\n\n")
             }
         }
     }

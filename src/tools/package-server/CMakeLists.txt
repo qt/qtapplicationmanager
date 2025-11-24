@@ -1,6 +1,9 @@
 
-qt_internal_add_app(appman-package-server
+qt_get_tool_target_name(target_name appman-package-server)
+qt_internal_add_tool(${target_name}
+    USER_FACING
     EXCEPTIONS
+    TOOLS_TARGET AppManSystemUIPrivate
     SOURCES
         package-server.cpp package-server.h
         psconfiguration.h psconfiguration.cpp
@@ -16,5 +19,4 @@ qt_internal_add_app(appman-package-server
     DEFINES
         AM_COMPILING_APPMAN
 )
-
-set_target_properties(appman-package-server PROPERTIES WIN32_EXECUTABLE FALSE)
+qt_internal_return_unless_building_tools()

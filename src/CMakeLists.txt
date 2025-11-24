@@ -41,16 +41,16 @@ if(NOT QT_FEATURE_am_tools_only)
         add_subdirectory(application-main-lib)
         add_subdirectory(tools/controller)
 
-        if (QT_FEATURE_am_multi_process)
+        if(QT_FEATURE_am_multi_process)
             add_subdirectory(tools/launcher-qml)
         endif()
     endif()
-
-    if(QT_FEATURE_am_package_server)
-        add_subdirectory(tools/package-server)
-    endif()
 endif()
 
-if (QT_FEATURE_am_installer)
+if(QT_FEATURE_am_installer)
     add_subdirectory(tools/packager)
+endif()
+
+if(QT_FEATURE_am_package_server)
+    add_subdirectory(tools/package-server)
 endif()

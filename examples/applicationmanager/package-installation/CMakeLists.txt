@@ -23,14 +23,27 @@ qt_add_executable(package-installation WIN32
 # This define flags us as an "appman" and allows us to link against the AppMan's private libraries
 target_compile_definitions(package-installation PRIVATE AM_COMPILING_APPMAN)
 
-file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/extra.yaml CONTENT
+if(CMAKE_CROSSCOMPILING)
+    set(SYSPROP_CROSS   "crossBuild: true")
+    set(SYSPROP_BINARY  "")
+    set(SYSPROP_BASEDIR "")
+else()
+    set(SYSPROP_CROSS   "")
+    set(SYSPROP_BINARY  "serverBinary: '${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}/appman-package-server'")
+    set(SYSPROP_BASEDIR "serverBaseDir: '\${EXECUTABLE_DIR}/ps-data'")
+endif()
+
+file(CONFIGURE @ONLY OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/extra.yaml CONTENT
 "
 formatVersion: 1
 formatType: am-configuration
 ---
 systemProperties:
   public:
-    serverBinary: '${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}/appman-package-server'"
+    @SYSPROP_CROSS@
+    @SYSPROP_BINARY@
+    @SYSPROP_BASEDIR@
+"
 )
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/extra.yaml PROPERTIES QT_RESOURCE_ALIAS extra.yaml)
 

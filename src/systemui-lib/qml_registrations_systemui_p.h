@@ -102,6 +102,7 @@ class ForeignPackageManager
     QML_NAMED_ELEMENT(PackageManager)
     QML_ADDED_IN_VERSION(2, 0)
     QML_SINGLETON
+    QML_EXTENDED_NAMESPACE(QtAM::AsynchronousTask) // for the TaskState enum
 public:
     static QtAM::PackageManager *create(QQmlEngine *, QJSEngine *)
     {

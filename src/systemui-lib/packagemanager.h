@@ -62,8 +62,6 @@ class Q_APPMANSYSTEMUI_EXPORT PackageManager : public QAbstractListModel
     Q_PROPERTY(QVariantMap documentLocation READ documentLocation CONSTANT FINAL)
 
 public:
-    Q_ENUMS(QtAM::AsynchronousTask::TaskState)
-
     enum CacheMode {
         NoCache,
         UseCache,

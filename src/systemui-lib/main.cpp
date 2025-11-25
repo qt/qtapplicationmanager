@@ -997,7 +997,7 @@ void Main::setupDBus(const Configuration *cfg)
             for (const auto &[path, adaptor] : std::as_const(m_p2pAdaptors).asKeyValueRange())
                 adaptor->registerOnDBus(conn, path);
 
-            auto *timer = new QTimer();
+            auto *timer = new QTimer(m_p2pServer);
             // The connName capture is on purpose to avoid holding a reference to conn
             connect(timer, &QTimer::timeout, this, [timer, connName = conn.name()]() {
                 if (!QDBusConnection(connName).isConnected()) {

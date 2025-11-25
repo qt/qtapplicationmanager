@@ -96,7 +96,7 @@ void ProcessTitle::setTitle(QByteArrayView title)
         // man 5 proc_pid_stat
         // Since we started parsing after the process name, we have a -2 offset.
         // We also add another -1, because the kernel docs are 1-based.
-        auto parseField = [&](int index) -> __u64 {
+        auto parseField = [&](int index) -> uint64_t {
             bool ok = false;
             if (auto f = statList.at(index - 2 - 1).toULongLong(&ok); ok)
                 return f;
@@ -113,10 +113,10 @@ void ProcessTitle::setTitle(QByteArrayView title)
             .start_data  = parseField(45),
             .end_data    = parseField(46),
             .start_brk   = parseField(47),
-            .brk         = __u64(::syscall(__NR_brk, 0)),
+            .brk         = uint64_t(::syscall(__NR_brk, 0)),
             .start_stack = parseField(28),
-            .arg_start   = __u64(argStart.get()),
-            .arg_end     = __u64(argStart.get() + t.size() + 1),
+            .arg_start   = uint64_t(argStart.get()),
+            .arg_end     = uint64_t(argStart.get() + t.size() + 1),
             .env_start   = parseField(50),
             .env_end     = parseField(51),
             .auxv        = 0ULL,
@@ -124,7 +124,7 @@ void ProcessTitle::setTitle(QByteArrayView title)
             .exe_fd      = -1U,
         };
 
-        if (::prctl(PR_SET_MM, __u64(PR_SET_MM_MAP), &map, __u64(sizeof(map)), 0ULL) != 0) {
+        if (::prctl(PR_SET_MM, uint64_t(PR_SET_MM_MAP), &map, uint64_t(sizeof(map)), 0ULL) != 0) {
             if (errno == EINVAL) {
                 if (QVersionNumber::fromString(QSysInfo::kernelVersion()) < QVersionNumber(3, 18))
                     throw Exception("the kernel is older than 3.18");

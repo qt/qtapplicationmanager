@@ -51,6 +51,11 @@ endif()
 
 include(src/main-lib/Qt6AppManMainPrivateMacros.cmake)
 
+if(NOT QT_FEATURE_ssl)
+    message(NOTICE "Skipping the build as SSL support in Qt is not available")
+    return()
+endif()
+
 if(NOT TARGET Qt::Gui OR NOT TARGET Qt::Quick)
     message(NOTICE "Skipping the build as QtGui and/or QtQuick are not available.")
     return()

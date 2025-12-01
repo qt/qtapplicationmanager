@@ -58,7 +58,7 @@ qt_feature("am-bubblewrap-container" PUBLIC
 
 qt_feature("am-installer" PUBLIC
     LABEL "Enable the installer component"
-    CONDITION QT_FEATURE_ssl AND NOT IOS
+    CONDITION NOT IOS
     ENABLE INPUT_installer STREQUAL 'yes'
     DISABLE INPUT_installer STREQUAL 'no'
 )

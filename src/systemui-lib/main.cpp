@@ -298,9 +298,11 @@ void Main::shutDown(const char *shutdownReason, int exitCode)
     };
 
     auto checkNextDown = [this, finalShutdown](int nextDown) {
-        m_shutdownStage |= nextDown;
-        if (m_shutdownStage == AllDown)
-            finalShutdown(false);
+        if (!(m_shutdownStage & nextDown)) {
+            m_shutdownStage |= nextDown;
+            if (m_shutdownStage == AllDown)
+                finalShutdown(false);
+        }
     };
 
     if (m_applicationManager) {

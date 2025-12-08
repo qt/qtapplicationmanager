@@ -353,11 +353,20 @@ void MonitorModel::readDataSourcesAndAddRow()
         endInsertRows();
         emit countChanged();
     } else {
-        // recycle the oldest row
-        beginMoveRows(QModelIndex(), /* sourceFirst */ 0, /* sourceLast */ 0,
-                QModelIndex(), /* destination */ m_rows.count());
-        m_rows.append(m_rows.takeFirst());
-        endMoveRows();
+        // this should really be begin/endMoveRows, but something is broken in QML's ListView:
+        // we get a constant 7 fps render load with spikes into 60 fps in this case.
+
+        emit layoutAboutToBeChanged({ }, VerticalSortHint);
+        const QModelIndexList before = persistentIndexList();
+
+        std::rotate(m_rows.begin(), m_rows.begin() + 1, m_rows.end());
+
+        QModelIndexList after;
+        after.reserve(before.size());
+        for (const QModelIndex &idx : before)
+            after.append(index((idx.row() > 0) ? (idx.row() - 1) : (m_rows.count() - 1), idx.column()));
+        changePersistentIndexList(before, after);
+        emit layoutChanged({ }, VerticalSortHint);
 
         {
             fillDataRow(m_rows.last());
@@ -369,6 +378,7 @@ void MonitorModel::readDataSourcesAndAddRow()
 
 void MonitorModel::fillDataRow(DataRow *dataRow)
 {
+    dataRow->dataFromRoleIndex.clear();
     for (int i = 0; i < m_dataSources.count(); ++i) {
         readDataSource(m_dataSources[i], dataRow);
     }

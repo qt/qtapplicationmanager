@@ -34,6 +34,7 @@ logging:
 
 installer:
   caCertificates: [ cert1, cert2 ]
+  allowedURLs: [ url1, url2 ]
 
 dbus:
   iface1:

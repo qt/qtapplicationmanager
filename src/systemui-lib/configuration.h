@@ -73,6 +73,7 @@ struct Q_APPMANSYSTEMUI_EXPORT ConfigurationData
             QStringList store;
         } issuerCertificateFingerprints;
         QStringList certificateRevocationLists;
+        QStringList allowedURLs;
     } installer;
 
     struct {

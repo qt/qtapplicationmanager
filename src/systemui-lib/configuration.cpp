@@ -533,7 +533,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 24;
+    return 25;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -567,6 +567,7 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.installer.issuerCertificateFingerprints.developer
         & cd.installer.issuerCertificateFingerprints.store
         & cd.installer.certificateRevocationLists
+        & cd.installer.allowedURLs
         & cd.dbus.policies
         & cd.dbus.registrations
         & cd.quicklaunch.idleLoad
@@ -651,6 +652,7 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(installer.issuerCertificateFingerprints.developer);
     MERGE_FIELD(installer.issuerCertificateFingerprints.store);
     MERGE_FIELD(installer.certificateRevocationLists);
+    MERGE_FIELD(installer.allowedURLs);
     MERGE_FIELD(dbus.policies);
     MERGE_FIELD(dbus.registrations);
     MERGE_FIELD(quicklaunch.idleLoad);
@@ -834,6 +836,8 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                      { "disable", false, YamlParser::Scalar, [&]() {
                           qCDebug(LogDeployment) << "ignoring 'installer/disable'";
                           (void) yp.parseBool(); } },
+                     { "allowedURLs", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          cd.installer.allowedURLs = yp.parseStringOrStringList(); } },
                      { "certificateRevocationLists", false, YamlParser::Scalar, [&]() {
                           cd.installer.certificateRevocationLists = yp.parseStringOrStringList(); } },
                      { "caCertificates", false, YamlParser::Scalar | YamlParser::List | YamlParser::Map, [&]() {

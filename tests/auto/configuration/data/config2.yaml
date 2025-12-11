@@ -52,6 +52,7 @@ installer:
     - fp_dev
     store:
     - fp_store
+  allowedURLs: [ url3 ]
 
 dbus:
   iface1:

@@ -474,6 +474,15 @@ ui:
         \li A list of file paths to CA-certifcates that are used to verify packages. For more
             details, see the \l {Public Key Infrastructure} {Installer documentation}.
     \row
+        \li [\c installer/allowedURLs]
+        \li list<string>
+        \target allowed installation urls
+        \li This is a list of URLs that you want to white-list for
+            PackageManager::startPackageInstallation. All entries in this list need to be URLs:
+            use a \c{file:///} prefix for actual files and FIFOs. If an entry contains the \c{*}
+            wildcard character, it will be matched using the wildcard rules of QRegularExpression.
+            If this list is empty or not set at all, then any URL is accepted.
+    \row
         \li [\c crashAction]
         \li object
         \li Specifies which actions to take, if the application manager is crashing. For more

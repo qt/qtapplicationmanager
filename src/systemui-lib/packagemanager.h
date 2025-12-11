@@ -118,6 +118,8 @@ public:
     void setIssuerCertificateFingerprints(const QStringList &developer,
                                           const QStringList &store);
 
+    void setAllowedInstallationURLs(const QStringList &allowedURLs);
+
     void lockConfiguration();
     bool isConfigurationLocked() const;
 

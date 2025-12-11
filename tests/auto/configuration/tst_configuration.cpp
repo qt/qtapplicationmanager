@@ -115,6 +115,7 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.yaml.installer.caCertificates.store, {});
     QCOMPARE(c.yaml.installer.issuerCertificateFingerprints.developer, {});
     QCOMPARE(c.yaml.installer.issuerCertificateFingerprints.store, {});
+    QCOMPARE(c.yaml.installer.allowedURLs, {});
 
     QCOMPARE(c.yaml.plugins.container, {});
     QCOMPARE(c.yaml.plugins.startup, {});
@@ -238,6 +239,7 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.yaml.installer.caCertificates.store, {});
     QCOMPARE(c.yaml.installer.issuerCertificateFingerprints.developer, {});
     QCOMPARE(c.yaml.installer.issuerCertificateFingerprints.store, {});
+    QCOMPARE(c.yaml.installer.allowedURLs, QStringList({ u"url1"_s, u"url2"_s }));
 
     QCOMPARE(c.yaml.plugins.startup, QStringList({ u"s1"_s, u"s2"_s }));
     QCOMPARE(c.yaml.plugins.container, QStringList({ u"c1"_s, u"c2"_s }));
@@ -387,6 +389,7 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.yaml.installer.caCertificates.store, QStringList({ u"store_cert1"_s, u"store_cert2"_s }));
     QCOMPARE(c.yaml.installer.issuerCertificateFingerprints.developer, QStringList({ u"fp_dev"_s }));
     QCOMPARE(c.yaml.installer.issuerCertificateFingerprints.store, QStringList({ u"fp_store"_s }));
+    QCOMPARE(c.yaml.installer.allowedURLs, QStringList({ u"url1"_s, u"url2"_s, u"url3"_s }));
 
     QCOMPARE(c.yaml.plugins.container, QStringList({ u"c1"_s, u"c2"_s, u"c3"_s, u"c4"_s }));
     QCOMPARE(c.yaml.plugins.startup, QStringList({ u"s1"_s, u"s2"_s, u"s3"_s }));
@@ -519,6 +522,7 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.yaml.installer.caCertificates.store, {});
     QCOMPARE(c.yaml.installer.issuerCertificateFingerprints.developer, {});
     QCOMPARE(c.yaml.installer.issuerCertificateFingerprints.store, {});
+    QCOMPARE(c.yaml.installer.allowedURLs, {});
 
     QCOMPARE(c.yaml.plugins.container, {});
     QCOMPARE(c.yaml.plugins.startup, {});

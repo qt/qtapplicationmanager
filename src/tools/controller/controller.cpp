@@ -634,9 +634,14 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
             throw Exception(Error::IO, "Could not copy from stdin to temporary file %1").arg(package);
     }
 
-    QFileInfo fi(packageFile);
-    if (!fi.exists() || !fi.isReadable() || !fi.isFile())
-        throw Exception(Error::IO, "Package file is not readable: %1").arg(packageFile);
+    if (packageFile.startsWith(u"file://"))
+        packageFile = QUrl(packageFile).toLocalFile();
+    if (!packageFile.startsWith(u"http://") && !packageFile.startsWith(u"https://")) {
+        QFileInfo fi(packageFile);
+        if (!fi.exists() || !fi.isReadable() || !fi.isFile())
+            throw Exception(Error::IO, "Package file is not readable: %1").arg(packageFile);
+        packageFile = fi.absoluteFilePath();
+    }
 
     std::cout << "Starting installation of package " << qPrintable(packageFile) << "...\n";
 
@@ -685,7 +690,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
 
     // start the package installation
 
-    auto reply = dbus()->packager()->startPackageInstallation(fi.absoluteFilePath());
+    auto reply = dbus()->packager()->startPackageInstallation(packageFile);
     reply.waitForFinished();
     if (reply.isError())
         throw Exception(Error::IO, "failed to call startPackageInstallation via DBus: %1").arg(reply.error().message());

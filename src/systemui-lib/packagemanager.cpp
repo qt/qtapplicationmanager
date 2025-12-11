@@ -9,6 +9,7 @@
 #include <QCoreApplication>
 #include <QScopedValueRollback>
 #include <QStandardPaths>
+#include <QRegularExpression>
 #include "packagemanager.h"
 #include "packagedatabase.h"
 #include "packagemanager_p.h"
@@ -930,6 +931,12 @@ void PackageManager::setIssuerCertificateFingerprints(const QStringList &develop
     }
 }
 
+void PackageManager::setAllowedInstallationURLs(const QStringList &allowedURLs)
+{
+    if (!isConfigurationLocked())
+        d->allowedInstallationURLs = allowedURLs;
+}
+
 void PackageManager::lockConfiguration()
 {
     d->configurationIsLocked = true;
@@ -1254,6 +1261,25 @@ QString PackageManager::startPackageInstallationInternal(const QUrl &sourceUrl, 
 {
     AM_TRACE(LogInstaller, sourceUrl, fromApplicationDeveloper)
 
+    if (!d->allowedInstallationURLs.isEmpty()) {
+        bool allowed = false;
+        QString sourceUrlStr = sourceUrl.toString();
+        for (const QString &allowedUrl : std::as_const(d->allowedInstallationURLs)) {
+            if (allowedUrl.contains(u'*')) { // wildcard match
+                const auto re = QRegularExpression::fromWildcard(allowedUrl);
+                allowed = re.match(sourceUrlStr).hasMatch();
+            } else { // exact match
+                allowed = (allowedUrl == sourceUrlStr);
+            }
+            if (allowed)
+                break;
+        }
+        if (!allowed) {
+            throw Exception("Package installation from URL '%1' is not allowed by configuration")
+                .arg(sourceUrlStr);
+        }
+    }
+
 #if QT_CONFIG(am_installer)
     if (d->enableInstaller) {
         auto task = new InstallationTask(d->installationPath, d->documentPath, sourceUrl,
@@ -1288,7 +1314,13 @@ QString PackageManager::startPackageInstallationInternal(const QUrl &sourceUrl, 
 */
 QString PackageManager::startPackageInstallation(const QString &sourceUrl)
 {
-    return startPackageInstallationInternal(QUrl::fromUserInput(sourceUrl));
+    try {
+        return startPackageInstallationInternal(QUrl::fromUserInput(sourceUrl));
+    } catch (const Exception &e) {
+        qCWarning(LogInstaller) << "Failed to start package installation:"
+                                << qPrintable(e.errorString());
+        return { };
+    }
 }
 
 /*!

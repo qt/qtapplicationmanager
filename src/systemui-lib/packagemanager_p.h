@@ -35,6 +35,7 @@ public:
     QByteArray developerSignature;
     bool allowInstallationOfUnsignedPackages = false;
     bool useSudoForDirectoryRemoval = false;
+    QStringList allowedInstallationURLs;
     bool configurationIsLocked = false;
 
     QString installationPath;

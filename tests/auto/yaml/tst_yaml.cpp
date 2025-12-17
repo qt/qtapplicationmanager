@@ -53,8 +53,10 @@ tst_Yaml::tst_Yaml()
     qInfo() << "Verbose mode is" << (verbose ? "on" : "off") << "(change by (un)setting $AM_VERBOSE_TEST)";
     QLoggingCategory::setFilterRules(u"*.debug=%1"_s.arg(verbose ? "true" : "false"));
 
+#if QT_AM_VERSION < QT_VERSION_CHECK(6, 13, 0)
     // remove this line to see all the YAML 1.1 deprecation warnings
     YamlParser::disableDeprecationWarnings();
+#endif
 }
 
 void tst_Yaml::parser_data()
@@ -112,9 +114,8 @@ void tst_Yaml::parser()
         QFile f(file);
         QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
         QByteArray ba = f.readAll();
-        if (yaml12)
-            ba.prepend("%YAML 1.2\n---\n");
         QVERIFY(!ba.isEmpty());
+        ba.prepend(yaml12 ? "%YAML 1.2\n---\n" : "%YAML 1.1\n---\n");
         YamlParser yp(ba, f.fileName());
         auto header = yp.parseHeader();
 
@@ -302,6 +303,7 @@ void tst_Yaml::documentParser()
         QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
         QByteArray ba = f.readAll();
         QVERIFY(!ba.isEmpty());
+        ba.prepend("%YAML 1.1\n---\n");
         QVector<QVariant> docs = YamlParser::parseAllDocuments(ba);
         QCOMPARE(docs.size(), 2);
         QCOMPARE(docs.at(0).toMap().size(), 2);
@@ -505,6 +507,7 @@ void tst_Yaml::parallel()
     QVERIFY2(f.open(QFile::ReadOnly), qPrintable(f.errorString()));
     QByteArray ba = f.readAll();
     QVERIFY(!ba.isEmpty());
+    ba.prepend("%YAML 1.1\n---\n");
 
     constexpr int threadCount = 16;
 
@@ -657,7 +660,7 @@ void tst_Yaml::generate()
     QVERIFY_THROWS_NO_EXCEPTION(docs = YamlParser::parseAllDocuments(ba));
     QCOMPARE(docs.size(), 1);
 
-    QByteArray baGen = YamlEmitter::fromVariantDocuments(docs);
+    QByteArray baGen = YamlEmitter::fromVariantDocuments(docs, YamlVersion::V1_1);
     QCOMPARE(ba, baGen);
 }
 
@@ -673,10 +676,10 @@ void tst_Yaml::emitter()
     auto yamlV11 = YamlEmitter::fromVariantDocuments({m}, YamlVersion::V1_1);
     auto yamlV12 = YamlEmitter::fromVariantDocuments({m}, YamlVersion::V1_2);
 
-#if QT_AM_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#if QT_AM_VERSION < QT_VERSION_CHECK(6, 13, 0)
     QCOMPARE(yamlV11, yamlDef);
 #else
-    QCOMPARE(ba2, bad);
+    QCOMPARE(yamlV12, yamlDef);
 #endif
 
     const QByteArray expectedV11 =

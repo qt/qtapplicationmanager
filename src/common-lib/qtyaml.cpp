@@ -23,7 +23,7 @@ using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-#if QT_AM_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#if QT_AM_VERSION < QT_VERSION_CHECK(6, 13, 0)
 static constexpr YamlVersion defaultVersion = YamlVersion::V1_1;
 
 static bool showDeprecationWarnings = true;

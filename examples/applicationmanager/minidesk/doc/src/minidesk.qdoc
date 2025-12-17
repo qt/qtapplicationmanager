@@ -101,10 +101,10 @@ now let's focus on what this Repeater's delegate consists of:
     \li The centerpiece: a \l WindowItem to render the \c WindowObject in the System UI; similar to
         the relationship between image files and QML's Image component.
     \li And finally code to remove a row from the ListModel once its window has been destroyed from
-        the application (client) side - either because it was closed, made invisible, or the
-        application itself quit or crashed. Any of these cases results in the \l WindowObject
-        losing its surface. A more sophisticated System UI could animate the disappearance of a
-        window, as illustrated in the \l {Animated Windows System UI Example}.
+        the application (client) side - either because it was closed, or the application itself
+        quit or crashed. Any of these cases results in the \l WindowObject losing its surface. A
+        more sophisticated System UI could animate the disappearance of a window, as illustrated in
+        the \l {Animated Windows System UI Example}.
 \endlist
 
 \section2 Pop-ups
@@ -205,6 +205,6 @@ do some clean-up and it must subsequently confirm with
 \printuntil /^\s{4}\}/
 
 Note that App1 is not well-behaved: it does not acknowledge the \c quit signal and will hence simply
-be terminated by the application manager.
+be killed by the application manager.
 
 */

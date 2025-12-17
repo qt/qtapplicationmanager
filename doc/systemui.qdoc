@@ -46,7 +46,7 @@ The System UI has the following tasks:
             started, by showing statistics such as frame rate, the amount of CPU currently used,
             and memory resources.
     \row
-        \li Manage idle time and display the \uicontrol{Home Screen}
+        \li Manage idle time and display the Home Screen
         \li Display the default view to the user after startup. \br
             Display essential data, such as the current time. \br
             Display a view composed of several selected applications.

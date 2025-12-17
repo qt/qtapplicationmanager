@@ -1324,7 +1324,7 @@ QString PackageManager::startPackageInstallation(const QString &sourceUrl)
 }
 
 /*!
-    \qmlmethod void PackageManager::acknowledgePackageInstallation(string taskId)
+    \qmlmethod PackageManager::acknowledgePackageInstallation(string taskId)
 
     Calling this function enables the installer to complete the installation task identified by \a
     taskId. Normally, this function is called after receiving the taskRequestingInstallationAcknowledge()

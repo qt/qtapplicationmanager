@@ -47,8 +47,8 @@ Instead of using WindowManager directly as our model we use a plain ListModel:
 \printuntil delegate: Rectangle
 
 We remove a WindowObject from that model only after it has reached its end state:
-WindowObject.NoSurface and is no longer being shown on screen; any state transition has already
-finished.
+WindowObject.NoSurface and is no longer being shown on screen (the state transition has already
+finished).
 
 \skipto property bool safeToRemove
 \printuntil onSafeToRemoveChanged

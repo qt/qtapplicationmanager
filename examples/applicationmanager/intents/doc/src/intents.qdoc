@@ -86,7 +86,7 @@ directory.
     \endlist
 \endlist
 
-As you can see above, each application, besides its main QML file, also has an icon and a
+As you can see above, each application, besides its main QML file, also has an icon and an
 \tt{info.yaml} file that contains the application metadata, which also includes the
 definition of the intents that this application can handle.
 
@@ -203,7 +203,7 @@ intent handlers in applications.
 
 \section2 Disambiguation of Intent Requests
 
-The example implements an UI that lets the user choose how to
+The example implements a UI that lets the user choose how to
 \l {IntentServer::disambiguationRequest}{to disambiguate incoming intent requests}.
 Registering for the IntentServer's disambiguation requests is done here:
 

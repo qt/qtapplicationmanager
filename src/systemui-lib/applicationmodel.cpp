@@ -35,7 +35,7 @@
     \note If you require a model with all applications, with no filtering whatsoever, you should
     use the ApplicationManager directly, as it has better performance.
 
-    The following code snippet displays all the icons of non-aliased applications in a list:
+    The following code snippet displays all the icons of built-in applications in a list:
 
     \qml
     import QtQuick
@@ -44,7 +44,7 @@
     ListView {
         model: ApplicationModel {
             filterFunction: function(application) {
-                return !application.alias;
+                return application.package.builtIn;
             }
         }
 
@@ -92,7 +92,7 @@
     null value.
 
     \note Whenever this function is changed, the model is sorted. However, dynamic properties used
-    in this function, like \c isRunning, don't trigge a sort when when those properties change.
+    in this function, like \c isRunning, don't trigger a sort when when those properties change.
     Changes in the source model are reflected. To force a complete reevaluation, call
     \l {ApplicationModel::invalidate()}{invalidate()}.
 */

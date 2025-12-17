@@ -78,8 +78,9 @@ should see a similar output:
 
 If \c GL_RENDERER is \c llvmpipe, you're using software rendering for your Wayland clients.
 
-\note This information is also available for the System UI itself, based on the application's ID in
-the prefix. In the example above, \c{com.pelagicore.music} is truncated to \c{c.p.music}.
+\note In the example above, the application ID \c{com.pelagicore.music} is truncated to
+\c{c.p.music}. The information is also available for the System UI itself (with an empty
+application ID).
 
 
 \section1 How do I enable hardware acceleration?

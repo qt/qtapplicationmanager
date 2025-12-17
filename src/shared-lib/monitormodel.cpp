@@ -104,7 +104,7 @@ using namespace Qt::StringLiterals;
     \endqml
 
     Thus, in the MonitorModel above, every row will have two roles: \c foo and \c bar. If plotted,
-    you would see an ever incresing \c foo and an oscillating \c bar.
+    you would see an ever increasing \c foo and an oscillating \c bar.
 
     QtApplicationManager comes with a number of components that are readily usable as data sources,
     namely:
@@ -402,7 +402,7 @@ void MonitorModel::readDataSource(DataSource *dataSource, DataRow *dataRow)
     \qmlproperty int MonitorModel::maximumCount
 
     The maximum number of rows that the MonitorModel will keep. After this limit is reached the
-    oldest rows start to get discarded to make room for the new ones coming in.
+    oldest rows start to get discarded to make room for the new ones coming in. (default: 10)
 
     \sa count, clear
 */
@@ -438,7 +438,7 @@ void MonitorModel::trimHistory()
 /*!
     \qmlmethod MonitorModel::clear
 
-    Empties the model, removing all exising rows.
+    Empties the model, removing all existing rows.
 
     \sa count
 */

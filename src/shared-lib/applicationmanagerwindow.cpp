@@ -13,7 +13,7 @@ QT_BEGIN_NAMESPACE_AM
     \qmltype ApplicationManagerWindow
     \inqmlmodule QtApplicationManager.Application
     \ingroup app-instantiatable
-    \inherits Window
+    \inherits QObject
     \brief The window root element of an application.
 
     This QML item can be used as the root item in your QML application. In doing so, you enable
@@ -158,7 +158,7 @@ QObject *ApplicationManagerWindow::backingObject() const
 }
 
 /*!
-    \qmlmethod void ApplicationManagerWindow::setWindowProperty(string name, var &value)
+    \qmlmethod ApplicationManagerWindow::setWindowProperty(string name, var &value)
     Sets this application window's shared property identified by \a name to the given \a value.
 
     These properties are shared between the System UI and the client applications: in single-process
@@ -238,7 +238,7 @@ void ApplicationManagerWindow::close()
 */
 
 /*!
-    \qmlmethod void ApplicationManagerWindow::hide()
+    \qmlmethod ApplicationManagerWindow::hide()
 
     Hides the window.
 
@@ -252,7 +252,7 @@ void ApplicationManagerWindow::hide()
 }
 
 /*!
-    \qmlmethod void ApplicationManagerWindow::show()
+    \qmlmethod ApplicationManagerWindow::show()
 
     Shows the window.
 
@@ -266,7 +266,7 @@ void ApplicationManagerWindow::show()
 }
 
 /*!
-    \qmlmethod void ApplicationManagerWindow::showFullScreen()
+    \qmlmethod ApplicationManagerWindow::showFullScreen()
 
     This call is passed through to the underlying QWindow object in multi-process mode. The
     single-process mode does not support window states, so this call gets mapped to a simple show().
@@ -279,7 +279,7 @@ void ApplicationManagerWindow::showFullScreen()
 }
 
 /*!
-    \qmlmethod void ApplicationManagerWindow::showMinimized()
+    \qmlmethod ApplicationManagerWindow::showMinimized()
 
     This call is passed through to the underlying QWindow object in multi-process mode. The
     single-process mode does not support window states, so this call gets mapped to a simple show().
@@ -292,7 +292,7 @@ void ApplicationManagerWindow::showMinimized()
 }
 
 /*!
-    \qmlmethod void ApplicationManagerWindow::showMaximized()
+    \qmlmethod ApplicationManagerWindow::showMaximized()
 
     This call is passed through to the underlying QWindow object in multi-process mode. The
     single-process mode does not support window states, so this call gets mapped to a simple show().
@@ -305,7 +305,7 @@ void ApplicationManagerWindow::showMaximized()
 }
 
 /*!
-    \qmlmethod void ApplicationManagerWindow::showNormal()
+    \qmlmethod ApplicationManagerWindow::showNormal()
 
     This call is passed through to the underlying QWindow object in multi-process mode. The
     single-process mode does not support window states, so this call gets mapped to a simple show().

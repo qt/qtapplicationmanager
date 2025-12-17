@@ -17,13 +17,16 @@ using namespace Qt::StringLiterals;
     \qmltype FrameTimer
     \inqmlmodule QtApplicationManager
     \ingroup common-instantiatable
-    \brief Provides frame-rate information about a given window.
+    \brief Provides frame rate information about a given window.
 
-    FrameTimer is used to get frame-rate information for a given window. The window can be either
-    a toplevel Window (from the \c QtQuick.Window module) or a WindowObject
-    (from the \c QtApplicationManager.SystemUI module).
+    FrameTimer is used to get frame rate information for a given \l window. For measuring the frame
+    rate of a System UI window, \l window must be a toplevel Window. The frame rate of application
+    windows can be measured from the System UI, by setting \l window to a WindowObject or in the
+    application itself, by setting \l window to an ApplicationManagerWindow (or toplevel Window).
+    An application window's frame rate is only meaningful and consequently can only be measured in
+    multi-process mode.
 
-    The following snippet shows how to use FrameTimer to display the frame-rate of a Window:
+    The following snippet shows how to use FrameTimer to display the frame rate of a Window:
 
     \qml
     import QtQuick
@@ -104,6 +107,7 @@ qreal FrameTimer::averageFps() const
 
     The minimum frame rate of the given \l window, in frames per second, since update()
     was last called (either manually or automatically in case \l running is set to \c true).
+    It is calculated from the maximum time between two consecutive frames.
 
     \sa window running update()
 */
@@ -118,6 +122,7 @@ qreal FrameTimer::minimumFps() const
 
     The maximum frame rate of the given \l window, in frames per second, since update()
     was last called (either manually or automatically in case \l running is set to \c true).
+    It is calculated from the minimum time between two consecutive frames.
 
     \sa window running update()
 */
@@ -132,6 +137,8 @@ qreal FrameTimer::maximumFps() const
 
     The frame rate jitter of the given \l window, in frames per second, since update()
     was last called (either manually or automatically in case \l running is set to \c true).
+    It is calculated from the average deviation between the actual frame time and an ideal
+    frame time of 16.667 ms (equivalent to 60 fps).
 
     \sa window running update()
 */
@@ -143,9 +150,10 @@ qreal FrameTimer::jitterFps() const
 /*!
     \qmlproperty Object FrameTimer::window
 
-    The window to be monitored, from which frame-rate information will be gathered.
-    It can be either a toplevel Window (from the \c QtQuick.Window module) or a WindowObject
-    (from the \c QtApplicationManager.SystemUI module).
+    The window to be monitored, from which frame rate information will be gathered.
+    It can be either a toplevel Window (from the \c QtQuick.Window module), an
+    ApplicationManagerWindow (from the \c QtApplicationManager.Application module) or a
+    WindowObject (from the \c QtApplicationManager.SystemUI module).
 
     \sa WindowObject
 */
@@ -264,7 +272,7 @@ void FrameTimer::setRunning(bool running)
 /*!
     \qmlproperty int FrameTimer::interval
 
-    The interval, in milliseconds, between update() calls while \l running is \c true.
+    The interval, in milliseconds, between update() calls while \l running is \c true. (default: 1000)
 
     \sa update() running
 */

@@ -148,7 +148,7 @@ Some noteworthy differences between application windows in single- and multi-pro
            sharing the same QML scene.
     \endlist
 \li Some properties, functions, and signals defined in a window will behave differently depending on
-    on the run mode: most importantly the lack of window states (like maximized or fullscreen) in
+    the run mode: most importantly the lack of window states (like maximized or fullscreen) in
     single-process mode. Please refer to the documentation of ApplicationManagerWindow for more
     details.
 \li Focus handling does work the same in both modes, but you have to be aware that in single-process
@@ -179,7 +179,7 @@ schedule more processes and potentially better utilize the cores.
 However, the memory consumption per application in multi-process mode is higher compared to
 single-process mode. The GPU needs more memory, to allocate additional window surface buffers.
 Also, textures that hold application assets are not shared. If two applications render the same
-image file, two textures are created in multi-process mode; instead of one only one in
+image file, two textures are created in multi-process mode; instead of only one in
 single-process mode.
 
 The CPU memory consumption per application is higher due to additional data structures. For

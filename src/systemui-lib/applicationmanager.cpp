@@ -987,10 +987,10 @@ void ApplicationManager::stopAllApplications(bool forceKill)
 /*!
     \qmlmethod bool ApplicationManager::openUrl(string url)
 
-    Tries start an application that is capable of handling \a url. The application manager will
+    Tries to start an application that is capable of handling \a url. The application manager will
     first look at the URL's scheme:
     \list
-    \li If it is \c{file:}, the operating system's MIME database will be consulted, which will
+    \li If it is "\c{file:}", the operating system's MIME database will be consulted, which will
         try to find a MIME type match, based on file endings or file content. In case this is
         successful, the application manager will use this MIME type to find all of its applications
         that claim support for it (see the \l{mimeTypes field} in the application's manifest).
@@ -999,7 +999,7 @@ void ApplicationManager::stopAllApplications(bool forceKill)
         \badcode
         mimeTypes: [ 'audio/mpeg', 'audio/wav' ]
         \endcode
-    \li If it is something other than \c{file:}, the application manager will consult its
+    \li If it is something other than "\c{file:}", the application manager will consult its
         internal database of applications that claim support for a matching \c{x-scheme-handler/...}
         MIME type. In order to have your web-browser application handle \c{http:} and \c{https:}
         URLs, you would have to have this in your application's manifest:

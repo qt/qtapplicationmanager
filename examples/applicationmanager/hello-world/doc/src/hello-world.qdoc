@@ -86,7 +86,7 @@ In addition the configuration file specifies the location of the main QML file b
 \c ui/mainQml to \c "${CONFIG_DIR}/system-ui.qml".
 
 For information on the contents of \c am-config.yaml and other command line options you can run
-\tt{appman --help} or have a look at the \l{Configuration} documentation.
+\tt{appman \-\-help} or have a look at the \l{Configuration} documentation.
 
 In addition to the System UI itself, the application packages also need to be added to our
 CMakeLists.txt file. This is done by adding the following lines:

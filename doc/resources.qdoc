@@ -119,11 +119,11 @@ If your files aren't found in the resource file system, you can list the content
 resource file system with the following code snippet:
 
 \code
-QDirIterator it(u":"_s, QDirIterator::Subdirectories);
-while (it.hasNext()) {
-    const QString fn = it.next();
-    if (!fn.startsWith(u":/qt-project.org"_s))  // exclude Qt internal files
-        qDebug() << fn;
+using F = QDirListing::IteratorFlag;
+for (const auto &entry : QDirListing(u":"_s, F::FilesOnly | F::Recursive)) {
+    const QStringView fp = entry.filePath();
+    if (!fp.startsWith(u":/qt-project.org"_s) && !fp.startsWith(u":/qpdf"_s))    // exclude Qt internal files
+        qDebug() << fp;
 }
 \endcode
 

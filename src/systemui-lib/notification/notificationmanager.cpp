@@ -109,7 +109,7 @@ using namespace Qt::StringLiterals;
             For backwards compatibility, \c isClickable can also be used to refer to this role.
     \row
         \li \c isSytemNotification
-        \li url
+        \li bool
         \li Holds \c true for notifications originating not from an application, but some system
             service. Always holds \c false for notifications coming from UI applications.
     \row

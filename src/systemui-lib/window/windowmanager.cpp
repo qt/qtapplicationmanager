@@ -469,7 +469,7 @@ QHash<int, QByteArray> WindowManager::roleNames() const
     \qmlproperty int WindowManager::count
     \readonly
 
-    This property holds the number of applications available.
+    This property holds the number of window surfaces available.
 */
 int WindowManager::count() const
 {
@@ -522,7 +522,8 @@ Window *WindowManager::window(int index) const
     \qmlmethod list<WindowObject> WindowManager::windowsOfApplication(string applicationId)
 
     Returns a list of \l{WindowObject}{windows} belonging to the given \a applicationId in the
-    model, or an empty list if the applicationId is invalid.
+    model. The list is empty, if the corresponding application doesn't show any windows, or the
+    applicationId is invalid.
 
     \note The object ownership of the returned Window objects stays with the application manager.
           If you want to store these pointers, you can use the WindowManager's QAbstractListModel

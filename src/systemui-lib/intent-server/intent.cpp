@@ -69,7 +69,7 @@ QT_BEGIN_NAMESPACE_AM
 /*! \qmlproperty var IntentObject::parameterMatch
     \readonly
     A handling application can limit what parameter values it accepts. The property itself is an
-    object that corresponds to a subset of allowed parameter object of this intent.
+    object that corresponds to a subset of allowed parameters of this intent.
     When set, the parameters of each incoming intent request are matched against this object,
     following these rules:
     \list
@@ -149,7 +149,7 @@ QT_BEGIN_NAMESPACE_AM
 
     By default, applications are automatically started when a request is targeted at them, but
     they are not currently running. If this property is set to \c true, then any requests for this
-    intent will only be forwarded to its handling application, if the application is actuallly
+    intent will only be forwarded to its handling application, if the application is already
     running.
     This is useful for system-wide broadcasts that are only relevant if an application is active
     (e.g. changes in internet availability).

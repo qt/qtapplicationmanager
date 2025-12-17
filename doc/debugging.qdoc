@@ -95,12 +95,10 @@ tasks only. They are also useful for various other tasks that involve running th
 test through a wrapper, like profiling tools.
 
 When it comes to debugging via \c gdb or \c gdbserver specifically, you might also want to have a
-look at \l{https://doc.qt.io/qtcreator/creator-debugger-operating-modes.html}
-{the debugging documentation in the QtCreator manual}.
+look at \l{creator-debugging}{the debugging documentation in the QtCreator manual}.
 
 If you need to use \c gdbserver (to debug apps in multi-process mode, or to debug the appman process
-itself), check out \l{https://doc.qt.io/qtcreator/creator-debugger-operating-modes.html#remote-debugging}
-{the chapter about remote debugging}.
+itself), check out \l{creator-debugging-remote}{the chapter about remote debugging}.
 
 
 \section2 Environment Variables
@@ -180,7 +178,7 @@ appman-controller debug-application "QT_DEBUG_PLUGINS=1 QML_IMPORT_TRACE=1" io.q
 
 If any of your environment variables or command arguments contain spaces, you have to escape them:
 \badcode
-appman-controller debug-application -e 'QT_MESSAGE_PATTERN="%{time}\ %{message}" io.qt.browser
+appman-controller debug-application -e 'QT_MESSAGE_PATTERN="%{time}\ %{message}"' io.qt.browser
 \endcode
 
 When using complex debug wrappers on the command line often, it's advisable to create aliases or

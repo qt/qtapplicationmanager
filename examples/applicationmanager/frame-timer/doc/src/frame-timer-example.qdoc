@@ -40,7 +40,7 @@ instantly raise the frame-rate of System UI to 25 FPS as well.
 
 \quotefromfile applicationmanager/frame-timer/apps/frame-timer.fish/fish.qml
 \skipto Timer
-\printuntil /^\}/
+\printuntil /^\s{8}\}/
 
 The Rabbit application animates at native speed, which is as fast as the system can or is
 configured to do, which is usually 60 FPS. Consequently, running this application raises the
@@ -48,6 +48,6 @@ System UI's FPS further, to 60 FPS.
 
 \quotefromfile applicationmanager/frame-timer/apps/frame-timer.rabbit/rabbit.qml
 \skipto RotationAnimation
-\printuntil /^\}/
+\printuntil /^\s{8}\}/
 
 */

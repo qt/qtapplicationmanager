@@ -101,7 +101,7 @@ interface definition.
 The \l{Bubblewrap Container} plugin can be used as a blueprint to integrate another container
 solution.
 
-Following a brief introduction what steps needs to be done to build your own plugin. First you
+Following a brief introduction what steps need to be done to build your own plugin. First you
 need to configure your build system.
 
 Here's a snippet on how to do this with cmake:

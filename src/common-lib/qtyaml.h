@@ -116,7 +116,7 @@ public:
 
     void parseFields(const Fields &fields);
 
-#if QT_AM_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#if QT_AM_VERSION < QT_VERSION_CHECK(6, 13, 0)
     // for auto-test:
     static void disableDeprecationWarnings();
 #endif

@@ -122,7 +122,7 @@ For each package, we define one application that gets the same id as the package
 \printto intents:
 
 Every package will at least register one \c launch intent in the \c launcher category. The exact name
-of the intent does not really matter in this case, since the system-ui will just request all
+of the intent does not really matter in this case, since the System UI will just request all
 intents that are in the \c launcher category.
 The name and icon of an intent default to the name and icon of the package, but we override the name
 here:

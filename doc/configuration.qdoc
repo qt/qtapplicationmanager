@@ -79,8 +79,6 @@ In addition, a zero time duration can also be specified as \c off.
 A very minimalistic \c am-config.yaml example would be something like this, which defines the
 main qml entry point and two import paths:
 
-\section1 Main Configuration
-
 \badcode
 formatVersion: 1
 formatType: am-configuration
@@ -89,6 +87,8 @@ ui:
   mainQml: "${CONFIG_DIR}/main.qml"
   importPaths: [ "${CONFIG_DIR}/imports/shared", "${CONFIG_DIR}/imports/sysui" ]
 \endcode
+
+\section1 Main Configuration
 
 \table 100%
     \header
@@ -101,7 +101,7 @@ ui:
         \li string
         \li The main QML file.
     \row
-        \li \b --help
+        \li \b --help or \b -h
         \li bool
         \li Prints the supported options and exits.
     \row
@@ -279,7 +279,7 @@ ui:
             this data via the \c $AM_RUNTIME_SYSTEM_PROPERTIES environment variable, as a YAML
             snippet.
     \row
-        \li \b --verbose
+        \li \b --verbose or \b -v
         \li bool
         \li Enables verbose output. All logging categories and message types are enabled with the
             exception of some Qt internal debug messages; \c logging-rules is ignored.
@@ -300,10 +300,16 @@ ui:
     \row
         \li \b --development-mode
             \br [\c flags/developmentMode]
-        \li bool
+        \li string
         \target development-mode
         \li Allows the installation of packages that only come with a valid developer signature.
-            (default: false)
+            Must be either \c disabled, \c system or \c application:
+            \list
+                \li \c disabled: the development mode is disabled (default)
+                \li \c system: the development mode is enabled with full system access
+                \li \c application: a reduced development mode is enabled for 3rd party application
+                                    developers (needs a valid developer certificate)
+            \endlist
     \row
         \li [\c flags/allowUnsignedPackages]
         \li bool
@@ -383,7 +389,7 @@ ui:
             using automotive DLT. The default behavior is to truncate the message to the maximum
             possible size. Other options are \c split to cut the message into several smaller
             messages, \c pass to forward it as-is to DLT or \c truncate to explicitly request the
-            default behvior.
+            default behavior.
     \row
         \li \b --no-dlt-logging
         \li bool
@@ -523,7 +529,7 @@ ui:
         \li \b --setuid
         \li string
         \target setuid
-        \li Please read the \l{System Integration} documenation to learn how the application
+        \li Please read the \l{System Integration} documentation to learn how the application
             manager needs and uses root privileges.
 
             This option is only valid on Linux and only if the application manager is started by

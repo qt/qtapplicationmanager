@@ -252,7 +252,7 @@ logging settings; the System UI specific one would for example have the QML impo
 the paths to built-in apps.
 
 If you have the target settings in \c /etc/target-am-config.yaml and the System UI with its
-\c am-config.yaml and \c main.qml files at \c /path/to/system-ui, you can then the
+\c am-config.yaml and \c main.qml files at \c /path/to/system-ui, you can start the
 application manager like so:
 
 \badcode

@@ -25,3 +25,13 @@
     \externalpage https://github.com/rgriebl/wlanalyze
     \title wlanalyze
 */
+
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debugging.html
+    \title creator-debugging
+*/
+
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debugging.html#remote-debugging
+    \title creator-debugging-remote
+*/

@@ -107,7 +107,7 @@ qt_am_create_installable_package(myapp
 )
 \endcode
 
-See the \l {Package Installation Example}} for a complete example.
+See the \l {Package Installation Example} for a complete example.
 
 \section2 Using the QML script compiler in Applications
 
@@ -132,6 +132,7 @@ qt_am_create_builtin_package(myapp
     DEPENDENCIES
         mymodule
 )
+\endcode
 
 Load the module library file instead of the application's QML file in the info.yaml file:
 \code

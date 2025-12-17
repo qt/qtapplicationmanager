@@ -144,7 +144,7 @@ QT_BEGIN_NAMESPACE_AM
     needs to check the succeeded property to decided whether errorMessage or result are actually
     valid.
 
-    \note This signal will only ever by emitted for request objects created by
+    \note This signal will only ever be emitted for request objects created by
           IntentClient::sendIntentRequest().
 */
 
@@ -214,7 +214,7 @@ QString IntentClientRequest::errorMessage() const
 /*! \qmlmethod IntentRequest::sendReply(var result)
 
     An IntentHandler needs to call this function to send its \a result back to the system in reply
-    to an request received via IntentHandler::requestReceived().
+    to a request received via IntentHandler::requestReceived().
 
     Only either sendReply() or sendErrorReply() can be used on a single IntentRequest.
 

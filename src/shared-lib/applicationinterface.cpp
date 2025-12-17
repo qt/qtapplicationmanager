@@ -72,7 +72,7 @@ QT_BEGIN_NAMESPACE_AM
     \qmlproperty var ApplicationInterface::name
     \readonly
 
-    An object containing language (\c string) to application name (\c string) mapppings. See
+    An object containing language (\c string) to application name (\c string) mappings. See
     \l{application-name-map}{name} in the manifest (info.yaml) definition.
 */
 

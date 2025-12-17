@@ -18,7 +18,7 @@ system-bus; don't run it with \c{--dbus none}.
 
 If you are running multiple application manager instances in the same system, you need to tell the
 controller which instance you are addressing.
-The default id for any system-ui is \c appman, but you can \l{instance-id}{assign custom instance-ids}.
+The default id for any System UI is \c appman, but you can \l{instance-id}{assign custom instance-ids}.
 In addition, a unique number is appended to this configured id to make it possible to disambiguate
 between instances with the same id.
 
@@ -115,14 +115,10 @@ The following commands are available:
     \li \c{<task-id>}
     \li Cancels an active installation task, specified with \c task-id.
 \row
-    \li \span {style="white-space: nowrap"} {\c list-installation-locations}
-    \li (none)
-    \li Lists all installaton locations.
-\row
     \li \span {style="white-space: nowrap"} {\c show-installation-location}
-    \li \c{<installation-location>}
-    \li Shows details for the specified \c installation-location in YAML format. Alternatively, use
-        \c{--json} to get the location details in JSON format instead.
+    \li (none)
+    \li Shows details for the installation location in YAML format. Alternatively, use \c{--json}
+        to get the location details in JSON format instead.
 \row
     \li \span {style="white-space: nowrap"} {\c list-instances}
     \li (none)

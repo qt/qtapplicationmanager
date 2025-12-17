@@ -38,8 +38,8 @@ QT_BEGIN_NAMESPACE_AM
     \brief The System UI side singleton representing the Intents sub-system.
 
     This singleton serves two purposes: for one, it gives the System UI access to the database of
-    all the available intents via its item model API, plus it exposes the API to deal with ambigous intent
-    requests. Intent requests can be ambigous if the requesting party only specified the \c
+    all the available intents via its item model API, plus it exposes the API to deal with ambiguous
+    intent requests. Intent requests can be ambiguous if the requesting party only specified the \c
     intentId, but not the targeted \c applicationId in its call to
     IntentClient::sendIntentRequest(). In these cases, it is the responsibility of the System UI to
     disambiguate these requests by reacting on the disambiguationRequest() signal.

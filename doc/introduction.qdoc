@@ -147,8 +147,8 @@ applications themselves.
 \list
 \li As a developer you can choose which desktop OS you want to develop on. For single-process
     testing you can choose from Windows, macOS, or Linux; without requiring Wayland. For
-    multi-process, you can choose between Linux or macOS. On Linux, the application manager uses
-    nested Wayland. On macOS, Wayland support is experimental.
+    multi-process, you can choose between Linux or macOS. On Linux, the application manager might
+    use nested Wayland. On macOS, Wayland support is experimental.
 \li Both modes can be mixed, for example, third–party applications could be run in separate
     processes (or even in a secure container), while built-in QML applications could be
     loaded in-process. This configuration results in quicker startup times.

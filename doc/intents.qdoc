@@ -25,7 +25,7 @@ The \l{https://developer.android.com/guide/components/intents-filters}{Android d
 has a nice introduction to this concept.
 
 \section1 The Application Manager's Approach to Intents
-The application manager's approach to intents is much simpler: although it (still) lacks a few
+The application manager's approach to intents is much simpler, it also (still) lacks a few
 features compared to other solutions. For example, support for binary data or system broadcasts.
 However, compared to other solutions, it comes with a very simple and straight forward API.
 

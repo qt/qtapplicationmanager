@@ -13,7 +13,7 @@
 
     A WindowObject represents a window from a client application. Each visible
     ApplicationManagerWindow on the application side will be reflected by a
-    corresponding WindowObject on the server, System UI, side.
+    corresponding WindowObject on the server (System UI) side.
 
     To render a WindowObject inside your System UI you have to assign it to a WindowItem.
 
@@ -59,7 +59,7 @@
 /*!
     \qmlmethod var WindowObject::resize(Size size)
 
-    Resizes the WindowObject to the given \a size, in pixels. Usually you don't have to call
+    Resizes the client window to the given \a size, in pixels. Usually you don't have to call
     this yourself as WindowItem takes care of it by default.
 
     \sa WindowObject::size, WindowItem::objectFollowsItemSize
@@ -107,7 +107,7 @@
 /*!
     \qmlmethod WindowObject::close()
 
-    Sends a close event to the WindowObject.
+    Sends a close event to the client window (usually an ApplicationManagerWindow).
 
     \sa Window::close()
 */
@@ -116,11 +116,23 @@
     \qmlproperty WaylandSurface WindowObject::waylandSurface
     \readonly
 
-    This property exists only when running in multi-process mode. Enables
+    This property exists only when running in multi-process mode. It enables
     you to access the underlying WaylandSurface of this window, if any.
     It will be null in case WindowObject::contentState is WindowObject.NoSurface.
 
-    Naturally you should avoid using this property in code that should work in
+    Naturally, you should avoid using this property in code that should work in
+    both single and multi-process modes.
+*/
+
+/*!
+    \qmlproperty WaylandXdgSurface WindowObject::waylandXdgSurface
+    \readonly
+
+    This property exists only when running in multi-process mode. It enables
+    you to access the underlying WaylandXdgSurface of this window, if any.
+    It will be null in case WindowObject::contentState is WindowObject.NoSurface.
+
+    Naturally, you should avoid using this property in code that should work in
     both single and multi-process modes.
 */
 

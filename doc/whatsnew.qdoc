@@ -118,7 +118,7 @@ In addition, here are some additional, noteworthy changes:
 
 The application manager now has full support for QML tooling (like compilation) for System UIs
 and applications. The \l{Application Features Example}{application-features example} was adapted
-to makes use of these new features.
+to make use of these new features.
 In order to achieve this, large parts of the QML object implementations had to be rewritten. This
 means that some APIs are no longer backwards-compatible.
 We tried to keep the changes to a minimum and provide compatibility aliases where possible, but
@@ -136,7 +136,7 @@ for all cases:
     \li Tracking the window's \l{ApplicationManagerWindow::}{active} state and its
         \l{ApplicationManagerWindow::}{activeFocusItem} is now supported also in single-process mode.
     \li Embedding an ApplicationManagerWindow into another one similar to the preliminary
-        Window::parent mechanism is not supported yet.
+        Window::parent mechanism (finally replaced by WindowContainer) is not supported yet.
     \li There still is full access to the \l{ApplicationManagerWindow::}{backingObject} (\l Window
         or \l Item) if needed.
 \endlist

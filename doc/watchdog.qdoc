@@ -21,7 +21,7 @@ frame, the watchdog will first issue a warning (see \c warnTimeout) and eventual
 (see \c killTimeout) the affected thread or client.
 Please keep in mind, that due to the periodic nature of this check, the actual warning and killing
 timeout messages might be delayed by up to the \c checkInterval.
-Killing the affected thread directly (instead of just aborting the whole process)
+Killing the affected thread directly (instead of just terminating the whole process)
 will cause the application manager's crash handler to print a backtrace for the stuck thread,
 which can be very useful to diagnose freezes.
 

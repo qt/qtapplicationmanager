@@ -143,8 +143,8 @@ checks, and auto-generation of files like qmldir.
 
 \section2 System UI QML Module
 
-In the \c{CMakeLists.txt} file, the \c QML module is directly compiled into the application-feature
-executable:
+In the \c{CMakeLists.txt} file, the \c QML module is directly compiled into the
+application-features executable:
 \quotefromfile applicationmanager/application-features/CMakeLists.txt
 \skipto qt_add_qml_module(application-features
 \printuntil /^\)$/

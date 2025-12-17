@@ -107,7 +107,7 @@ QString Notification::summary() const
     \qmlproperty string Notification::body
 
     Holds a multi-line body of text. Each line is a paragraph, and server implementations are free to
-    word wrap dthem as they see fit.
+    word wrap them as they see fit.
 
     The body may contain simple HTML markup. If the body is omitted, just the \l summary is displayed.
 */
@@ -266,7 +266,7 @@ qreal Notification::progress() const
 
     Holds a list of the possible actions the user can choose from. Every key in
     this map is an \c actionId and its corresponding value is an \c actionText. The
-    notification-manager should eiher display the \c actionText or an icon, depending on the
+    notification-manager should either display the \c actionText or an icon, depending on the
     showActionsAsIcons property.
 
     \sa actionTriggered()
@@ -302,7 +302,7 @@ bool Notification::showActionsAsIcons() const
     are communicated to the server automatically.
 
     \note This property is just a hint to the notification manager; how and
-    when a notifications actually appears on the screen is up to the server-side implementation.
+    when a notification actually appears on the screen is up to the server-side implementation.
 
     The default value is \c false.
 

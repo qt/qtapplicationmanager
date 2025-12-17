@@ -134,10 +134,10 @@
     \endlist
 */
 /*!
-    \qmlproperty Package ApplicationObject::package
+    \qmlproperty PackageObject ApplicationObject::package
     \readonly
 
-    Returns the Package object that contains this application.
+    Returns the package object that contains this application.
 */
 /*!
     \qmlsignal ApplicationObject::activated()
@@ -226,7 +226,7 @@
     \readonly
     \qmlobsolete
 
-    Use PackageObject::version.
+    Use PackageObject::blocked.
 */
 /*!
     \qmlproperty url ApplicationObject::icon
@@ -271,7 +271,7 @@
     \readonly
 
     Returns an object with all the language code to localized description mappings as provided in
-    the applications's info.yaml file. If the application does not specify a \c descriptions object,
+    the applications' info.yaml file. If the application does not specify a \c descriptions object,
     this will return the same as the containing PackageObject::descriptions.
 */
 /*!

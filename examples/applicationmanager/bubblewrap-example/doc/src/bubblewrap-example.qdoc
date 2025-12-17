@@ -4,7 +4,7 @@
 /*!
 
 \example applicationmanager/bubblewrap-example
-\brief Learn how to use Bubblewrap Containers with the Application Manager.
+\brief Learn how to use Bubblewrap Containers with the application manager.
 \ingroup applicationmanager-examples
 \examplecategory {Embedded}
 \title Bubblewrap Container Example
@@ -45,7 +45,7 @@ bwrap: execvp /usr/bin/appman-launcher-qml: No such file or directory
 \endcode
 
 This happens because the default configuration of the bubblewrap container doesn't share any
-directory into the newly created kernel namespace. That basically means we tried to start a
+directory into the newly created kernel namespace. That basically means we tried to start an
 application without having any user-space libraries.
 
 A good starting point for the container configuration is shown here:
@@ -77,7 +77,7 @@ Right now all our applications are started when the corresponding button is pres
 starting a new container process and within this container process start the application process,
 which then starts loading the application's QML code.
 
-When quick-launch is enabled, a container running the application managers's QML launcher is
+When quick-launch is enabled, a container running the application manager's QML launcher is
 started in the background. Once the application should be started the QML launcher just needs to
 load the application QML code. For this to work correctly with the bubblewrap container, root
 permissions are needed, in order to mount the correct application directory into the container.

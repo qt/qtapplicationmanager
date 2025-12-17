@@ -27,10 +27,10 @@ root directory of the package.
 \section1 Package Manifest
 
 This is an example of a full-featured \c info.yaml file, that also shows how you can mix and match
-classic YAML and JSON style in YAML 1.1 documents:
+classic YAML and JSON style in YAML 1.2 documents:
 
 \badcode
-%YAML 1.1
+%YAML 1.2
 ---
 formatVersion: 1
 formatType: am-package
@@ -48,7 +48,7 @@ applications:
   code: "radio.qml"
 
   runtime: qml
-  runtimeParameters: { quitTime: 100 }
+  runtimeParameters: { importPaths: "/some/path" }
 
   capabilities:
   - cameraAccess
@@ -227,7 +227,7 @@ The fields used for each item within the \c applications list are as follows:
     \li Exports user-defined properties (key/value pairs) to the application and the System UI. The
         actual properties must be listed under the \c private and \c protected access control
         tag; other properties are ignored. These properties are exposed as
-        ApplicationManager::application() to the System UI and as
+        ApplicationObject::applicationProperties to the System UI and as
         ApplicationInterface::applicationProperties to the QML application:
         \list
         \li The application has access to private and protected properties. Private keys overwrite
@@ -243,8 +243,8 @@ The fields used for each item within the \c applications list are as follows:
         four characters, additional characters are discarded. If an ID is not provided, it defaults
         to 'A' followed by a three digit application number.
 
-        \note For QML runtimes, the ID is "PCLQ" from the very start of the application process,
-              until you change it as described.
+        \note For QML runtimes, the ID is "QTLQ" from the very start of the application process,
+              once the actual application ID is known, it is changed as described above.
 \row
     \li \c logging/dlt/description
     \li string
@@ -316,7 +316,7 @@ The fields used for each item within the \c intents list are as follows:
     \li By default, applications are automatically started when a request is targeted at them, but
         they are not currently running. Setting the \c handleOnlyWhenRunning flag to \c true will
         prevent this behavior and any requests for this intent will only be forwarded to its
-        handling application, if the application is actuallly running.
+        handling application, if the application is already running.
         This is useful for system-wide broadcasts that are only relevant if an application is active
         (e.g. changes in internet availability).
 \row

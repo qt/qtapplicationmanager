@@ -17,8 +17,8 @@
 \section1 Introduction
 
 This example shows you how to assign the same WindowObject to multiple WindowItems, resulting in
-the same surface being rendered multiple times on screen. The example also illustrates the pros
-and cons of a primary window.
+the same surface being rendered multiple times on screen. The example also illustrates the specific
+characteristic of a primary window in terms of input handling.
 
 \b Prerequisites: You're already familiar with the concepts and topics introduced in the
    \l{Animated Windows System UI Example}.

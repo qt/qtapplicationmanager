@@ -5,7 +5,7 @@
 
 \page appman-package-server.html
 \title Package-Server
-\brief A command-line utility for serve packages for dynamic installation.
+\brief A command-line utility acting as a server for dynamic package installation.
 \ingroup qtappman-tools
 
 The \c{appman-package-server} is a command-line utility that can be used by the developer to

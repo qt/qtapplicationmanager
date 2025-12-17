@@ -83,7 +83,7 @@ static constexpr const char *s_defaultSystemUiDltDescription = "Qt Application M
 \row
     \li \c am.runtime.qml
     \li \c QMRT
-    \li QML messages from the application managers's runtime
+    \li QML messages from the application manager's runtime
 \row
     \li \c am.notify
     \li \c NTFY

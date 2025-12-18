@@ -111,6 +111,9 @@ public:
     // Notification helper
     Notification *createNotification(QObject *parent = nullptr);
 
+    // For last window closed
+    void handleQuit();
+
 public:
     bool notify(QObject *receiver, QEvent *event) override;
 

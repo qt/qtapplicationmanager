@@ -478,6 +478,11 @@ Notification *ApplicationMain::createNotification(QObject *parent)
     return new Notification(parent, applicationId());
 }
 
+void ApplicationMain::handleQuit()
+{
+    m_applicationInterfaceImpl.get()->handleQuit();
+}
+
 bool ApplicationMain::notify(QObject *receiver, QEvent *event)
 {
     const SharedMain::EventNotifyWatcher enw(receiver, event);

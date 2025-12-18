@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:execute-external-code
 
+#include <iostream>
 #include <memory>
 #include <cstdlib>
 #include <qglobal.h>
@@ -161,12 +162,6 @@ Main::Main(int &argc, char **argv, InitFlags initFlags)
             UnixSignalHandler::instance()->resetToDefault(sig);
             static_cast<Main *>(QCoreApplication::instance())->shutDown((sig == SIGINT) ? "Ctrl+C" : "SIGTERM");
         });
-
-        atexit([]() {
-            if (unexpectedShutdown)
-                fputs("ERROR: Some code outside the Qt ApplicationManager called exit()\n", stderr);
-            unexpectedShutdown = true;
-        });
     }
     StartupTimer::instance()->checkpoint("after application constructor");
 }
@@ -199,6 +194,16 @@ Main::~Main()
 void Main::setup(const Configuration *cfg) noexcept(false)
 {
     StartupTimer::instance()->checkpoint("after configuration parsing");
+
+    static bool once = false;
+    if (!once) {
+        once = true;
+        atexit([]() {    // registered after configuration parsing, because some options like '-h' might exit
+            if (unexpectedShutdown)
+                std::cerr << "ERROR: Some code outside the Qt ApplicationManager called exit()" << std::endl;
+            unexpectedShutdown = true;
+        });
+    }
 
     CrashHandler::setCrashActionConfiguration(cfg->yaml.crashAction.printBacktrace,
                                               cfg->yaml.crashAction.printQmlStack,

@@ -148,14 +148,6 @@ Main::Main(int &argc, char **argv, InitFlags initFlags)
             if (auto *main = qobject_cast<Main *>(QCoreApplication::instance()))
                 main->shutDown((sig == SIGINT) ? "Ctrl+C" : "SIGTERM");
         });
-
-        atexit([]() {
-            if (unexpectedShutdown) {
-                std::cerr << "ERROR: Some code outside the Qt ApplicationManager called exit()"
-                          << std::endl;
-            }
-            unexpectedShutdown = true;
-        });
     }
     StartupTimer::instance()->checkpoint("after application constructor");
 }
@@ -188,6 +180,16 @@ Main::~Main()
 void Main::setup(const Configuration *cfg) noexcept(false)
 {
     StartupTimer::instance()->checkpoint("after configuration parsing");
+
+    static bool once = false;
+    if (!once) {
+        once = true;
+        atexit([]() {    // registered after configuration parsing, because some options like '-h' might exit
+            if (unexpectedShutdown)
+                std::cerr << "ERROR: Some code outside the Qt ApplicationManager called exit()" << std::endl;
+            unexpectedShutdown = true;
+        });
+    }
 
     qCInfo(LogSystem) << "Development mode:" <<
         ((cfg->yaml.flags.developmentMode == ConfigurationData::Flags::DevelopmentMode::Application)

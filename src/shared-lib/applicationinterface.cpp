@@ -128,10 +128,10 @@ QT_BEGIN_NAMESPACE_AM
 /*!
     \qmlsignal ApplicationInterface::quit()
 
-    The application manager will send out this signal to an application to request a
-    controlled shutdown. The application is given a certain amount of time defined in
-    the configuration (\l {qml quitTime} {\c quitTime}). If the time elapses before acknowledgeQuit() is
-    called, the application will simply be killed.
+    The application manager will send out this signal to an application to request a controlled
+    shutdown. The application is given a certain amount of time defined in the configuration
+    (\l {qml quitTime} {\c quitTime}). If the time elapses before acknowledgeQuit() is called and
+    the shutdown was not due to closing the last window, the application will simply be killed.
 
     \note Starting with version 6.6, acknowledgeQuit() will automatically be called if you do not
     connect to this signal explicitly.

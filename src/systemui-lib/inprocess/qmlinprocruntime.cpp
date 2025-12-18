@@ -270,7 +270,7 @@ void QmlInProcRuntime::stop(Am::ExitStatus exitStatus)
             qt = 250;
         QTimer::singleShot(qt, this, [this]() {
             if (state() != Am::NotRunning)
-                finish(Am::ForcedExit);
+                finish(m_allWindowsClosed ? Am::NormalExit : Am::ForcedExit);
         });
     } else {
         finish(exitStatus);
@@ -335,15 +335,15 @@ void QmlInProcRuntime::finish(int exitCode, Am::ExitStatus status)
 
 void QmlInProcRuntime::stopIfLastWindowClosed()
 {
-    bool allClosed = true;
+    m_allWindowsClosed = true;
     for (const auto &s : std::as_const(m_surfaces)) {
         if (s->visibleClientSide() || !s->isClosed()) {
-            allClosed = false;
+            m_allWindowsClosed = false;
             break;
         }
     }
 
-    if (allClosed)
+    if (m_allWindowsClosed)
         stop(Am::NormalExit);
 }
 

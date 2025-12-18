@@ -57,7 +57,7 @@ QStringList AbstractIntentHandler::intentIds() const
                 request.sendErrorReply("Only file:// urls are supported")
             } else {
                 viewer.source = url
-                request.sendReply({ "status": source.status })
+                request.sendReply({ "status": viewer.source.status })
             }
         }
     }

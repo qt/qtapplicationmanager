@@ -19,6 +19,7 @@
 #include <QRegularExpression>
 #include <QCommandLineParser>
 #include <QLibraryInfo>
+#include <QTimer>
 
 #include <QDBusConnection>
 #include <QDBusInterface>
@@ -143,6 +144,16 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched)
     : QObject(am)
     , m_quickLaunched(quickLaunched)
 {
+    am->setQuitOnLastWindowClosed(false);
+    connect(am, &QGuiApplication::lastWindowClosed, this, [am] {
+        am->handleQuit();
+        bool ok;
+        int qt = am->runtimeConfiguration().value(u"quitTime"_s).toInt(&ok);
+        if (!ok || qt < 0)
+            qt = 250;
+        QTimer::singleShot(qt, [] { QCoreApplication::instance()->quit(); });
+    });
+
     connect(&m_engine, &QObject::destroyed, QCoreApplication::instance(), &QCoreApplication::quit);
     CrashHandler::setQmlEngine(&m_engine);
 

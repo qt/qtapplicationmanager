@@ -79,6 +79,7 @@ private:
     QString m_componentErrorString;
     QQmlIncubator m_incubator;
     QTimer *m_incubationTimer = nullptr;
+    bool m_allWindowsClosed = false;
 
     friend class QmlInProcApplicationManagerWindowImpl; // for emitting signals on behalf of this class in onComplete
     friend class QmlInProcApplicationInterfaceImpl; // for handling the quit() signal

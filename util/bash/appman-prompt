@@ -3,23 +3,35 @@
 # Copyright (C) 2018 Pelagicore AG
 # SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
+# Completion for Qt Application Manager 6.11 (only partially matches other versions)
+
+# Only simple expansion of "~/"
+expand_tilde()
+{
+    if  [[ ${1} == "~/"* ]] ; then
+        printf '%s\n' "${HOME}/${1#*~/}"
+    else
+        printf '%s\n' "${1}"
+    fi
+}
+
+# ========================= appman ========================
 _appman()
 {
-    local cur opts dbusopts
+    local cur opts
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     opts="-c -h -o -v -I --build-config --builtin-apps-manifest-dir --clear-cache --config-file --development-mode \
---dbus --disable-installer --disable-intents --disable-watchdog --document-dir --force-multi-process \
---force-single-process --fullscreen --help --installation-dir --instance-id --log-instant \
---logging-rule --no-cache --no-dlt-logging --no-fullscreen --no-security --option --qml-debug --single-app \
---slow-animations --verbose --version --wayland-socket-name"
-    dbusopts="auto session system none"
+--disable-installer --disable-intents --disable-watchdog --document-dir --force-multi-process --force-single-process \
+--fullscreen --help --installation-dir --instance-id --log-instant --logging-rule --no-cache --no-dlt-logging \
+--no-fullscreen --no-security --no-ui-watchdog --option --qml-debug --setuid --single-app --slow-animations --verbose \
+--version --wayland-socket-name"
 
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
     else
-        if [ ${COMP_CWORD} -gt 1 ] && [[ ${COMP_WORDS[COMP_CWORD-1]} == "--dbus" ]] ; then
-            COMPREPLY=( $(compgen -W "${dbusopts}" -- ${cur}) )
+        if [ ${COMP_CWORD} -gt 1 ] && [[ ${COMP_WORDS[COMP_CWORD-1]} == "--development-mode" ]] ; then
+            COMPREPLY=( $(compgen -W "application disabled system" -- ${cur}) )
         else
             COMPREPLY=( $(compgen -f -- ${cur}) )
         fi
@@ -27,6 +39,7 @@ _appman()
 }
 complete -o filenames -F _appman appman appman-qmltestrunner
 
+# =================== appman-controller ===================
 _appman-controller()
 {
     local cur commands opts pos args
@@ -34,11 +47,14 @@ _appman-controller()
     cur="${COMP_WORDS[COMP_CWORD]}"
     commands="start-application debug-application stop-application stop-all-applications list-applications \
 show-application list-packages show-package install-package remove-package list-installation-tasks \
-cancel-installation-task list-installation-locations show-installation-location list-instances inject-intent-request"
-    opts="-h -v --help --help-all --version"
+cancel-installation-task show-installation-location list-instances inject-intent-request"
+    opts="-h -v --help --help-all --instance-id --version"
 
-    if [ ${COMP_CWORD} -eq 1 ] && [[ ${cur} == -* ]] ; then
+    if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    elif [[ ${COMP_WORDS[COMP_CWORD-1]} == "--instance-id" ]] ; then
+        local instances="$($(expand_tilde ${COMP_WORDS[0]}) list-instances 2> /dev/null)"
+        COMPREPLY=( $(compgen -W "${instances}" -- ${cur}) )
     else
         pos=0
         args=()
@@ -46,49 +62,54 @@ cancel-installation-task list-installation-locations show-installation-location 
             [[ ${i} != -* ]] && ((++pos)) && args+=(${i})
         done
 
-        if [ ${pos} -eq 1 ]; then
-            COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
-        elif [ ${pos} -eq 2 ]; then
-            case "${args[0]}" in
-            start-application|debug-application|stop-application|show-application)
-                eval cmd="${COMP_WORDS[0]}"
-                apps="$(${cmd} list-applications 2> /dev/null)"
+        case ${pos} in
+        1)  COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+            ;;
+        2)  case "${args[0]}" in
+            start-application|stop-application|show-application)
+                local apps="$($(expand_tilde ${COMP_WORDS[0]}) list-applications 2> /dev/null)"
                 COMPREPLY=( $(compgen -W "${apps}" -- ${cur}) )
                 ;;
             install-package)
                 COMPREPLY=( $(compgen -f -- ${cur}) )
                 ;;
             cancel-installation-task)
-                eval cmd="${COMP_WORDS[0]}"
-                tasks="$(${cmd} list-installation-tasks 2> /dev/null)"
+                local tasks="$($(expand_tilde ${COMP_WORDS[0]}) list-installation-tasks 2> /dev/null)"
                 COMPREPLY=( $(compgen -W "${tasks}" -- ${cur}) )
                 ;;
-            show-installation-location)
-                eval cmd="${COMP_WORDS[0]}"
-                apps="$(${cmd} list-applications 2> /dev/null)"
-                COMPREPLY=( $(compgen -W "${apps}" -- ${cur}) )
-                ;;
             show-package|remove-package)
-                eval cmd="${COMP_WORDS[0]}"
-                packages="$(${cmd} list-packages 2> /dev/null)"
+                local packages="$($(expand_tilde ${COMP_WORDS[0]}) list-packages 2> /dev/null)"
                 COMPREPLY=( $(compgen -W "${packages}" -- ${cur}) )
                 ;;
             esac
-        fi
+            ;;
+        3)  if [[ ${args[0]} == "debug-application" ]] ; then
+                local apps="$($(expand_tilde ${COMP_WORDS[0]}) list-applications 2> /dev/null)"
+                COMPREPLY=( $(compgen -W "${apps}" -- ${cur}) )
+            fi
+            ;;
+        esac
     fi
 }
 complete -o filenames -F _appman-controller appman-controller
 
+# ==================== appman-packager ====================
 _appman-packager()
 {
-    local cur commands opts pos args
+    local cur commands opts createopts pos args
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     commands="create-package dev-sign-package dev-verify-package store-sign-package store-verify-package yaml-to-json"
-    opts="-h -v --help --help-all --version"
+    opts="-h -v --help --help-all --verbose --version"
+    createopts="-m -M -s -S --extra-metadata --extra-metadata-file --extra-signed-metadata \
+--extra-signed-metadata-file --json"
 
-    if [ ${COMP_CWORD} -eq 1 ] && [[ ${cur} == -* ]] ; then
-        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    if [[ ${cur} == -* ]] ; then
+        if [[ ${COMP_WORDS[1]} == create-package ]] ; then
+            COMPREPLY=( $(compgen -W "${opts} ${createopts}" -- ${cur}) )
+        else
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        fi
     else
         pos=0
         args=()
@@ -96,10 +117,10 @@ _appman-packager()
             [[ ${i} != -* ]] && ((++pos)) && args+=(${i})
         done
 
-        if [ ${pos} -eq 1 ]; then
+        if [ ${pos} -eq 1 ] ; then
             COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
         else
-            file=0
+            local file=0
             case "${args[0]}" in
             create-package)
                 [ ${pos} -eq 3 ] && file=1
@@ -117,12 +138,13 @@ _appman-packager()
 }
 complete -o filenames -F _appman-packager appman-packager
 
+# ================= appman-package-server =================
 _appman-package-server()
 {
     local cur opts fopts
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
-    opts="-h -v --help --help-all --version --dd --data-directory --la --listen-address --pi --project-id \
+    opts="-h --help --help-all --version --dd --data-directory --la --listen-address --pi --project-id \
 --sc --sp --dc --cc --create-config"
     fopts=("--dd" "--data-directory" "--sc" "--dc")
 

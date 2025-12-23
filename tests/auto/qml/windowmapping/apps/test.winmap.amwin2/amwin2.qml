@@ -11,14 +11,7 @@ ApplicationManagerWindow {
     visible: false
     objectName: "root"
 
-    Rectangle { id: rect; anchors.fill: parent; color: "green" }
-    RotationAnimation {
-        // this animation is a workaround for a (Qt)Wayland bug -- see test_amwin_close
-        target: rect
-        from: 0; to: 360; duration: 10000
-        loops: Animation.Infinite
-        running: true
-    }
+    Rectangle { anchors.fill: parent; color: "green" }
 
     ApplicationManagerWindow {
         id: sub

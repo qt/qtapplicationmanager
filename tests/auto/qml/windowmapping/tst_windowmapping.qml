@@ -150,11 +150,8 @@ TestCase {
         app.start("show-main");
         tryCompare(WindowManager, "count", 1, spyTimeout);
 
-        // (Qt)Wayland bug here: without an animation in the client to keep the Wayland events
-        // flowing, this close call will fail!
-        // We always send out an xdg_toplevel.close(), but according to WAYLAND_DEBUG=1 this message
-        // is sometimes (especially under high CPU load) NOT received at the client side at all.
         topChrome.window.close()
+        AmTest.aboutToBlock();   // see QTBUG-83422
         tryCompare(WindowManager, "count", 0, spyTimeout);
 
         // last window closed -> exit

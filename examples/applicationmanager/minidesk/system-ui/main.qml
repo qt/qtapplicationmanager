@@ -50,6 +50,7 @@ Window {
             required property int index
             required property WindowObject window
 
+            visible: window.contentState === WindowObject.SurfaceWithContent
             width: chromeImg.width
             height: chromeImg.height
             z: index
@@ -112,9 +113,10 @@ Window {
     // System UI for a pop-up
     WindowItem {
         id: popUpContainer
-        z: 9998
+        visible: window?.contentState === WindowObject.SurfaceWithContent
         width: 200; height: 60
         anchors.centerIn: parent
+        z: 9998
 
         Connections {
             target: popUpContainer.window

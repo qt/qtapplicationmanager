@@ -308,18 +308,24 @@ TestCase {
 
     // Starting with Qt 6.9, hide() does not delete the Wayland surface anymore
     function test_window_show_hide() {
-        var app = ApplicationManager.application("test.winmap.amwin");
+        let app = ApplicationManager.application("test.winmap.amwin");
 
         app.start("show-main");
         tryCompare(WindowManager, "count", 1, spyTimeout);
-
+        compare(topChrome.window.contentState, WindowObject.SurfaceWithContent);
         compare(lastWindowAdded.windowProperty("objectName"), 42);
+        let img = grabImage(topChrome.Window.contentItem);
+        compare(img.pixel(1,1), "#fea500")
 
         app.start("hide-main");
-        tryCompare(WindowManager, "count", 1, spyTimeout);
-        app.start("show-main");
-        tryCompare(WindowManager, "count", 1, spyTimeout);
+        tryCompare(topChrome.window, "contentState", WindowObject.SurfaceNoContent, spyTimeout);
+        compare(WindowManager.count, 1);
+        img = grabImage(topChrome.Window.contentItem);
+        compare(img.pixel(1,1), "#ffffff")
 
+        app.start("show-main");
+        tryCompare(topChrome.window, "contentState", WindowObject.SurfaceWithContent, spyTimeout);
+        compare(WindowManager.count, 1);
         compare(lastWindowAdded.windowProperty("objectName"), 42);
     }
 }

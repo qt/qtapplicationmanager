@@ -67,6 +67,7 @@ Window {
             border.width: 3
             border.color: "grey"
             z: index
+            visible: chrome.window.contentState === WindowObject.SurfaceWithContent
 
             Image {
                 id: draggrab
@@ -139,6 +140,7 @@ Window {
 
             z: 9999 + model.index
             anchors.centerIn: parent
+            visible: model.window.contentState === WindowObject.SurfaceWithContent
             window: model.window
 
             Connections {

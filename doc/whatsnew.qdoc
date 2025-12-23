@@ -8,6 +8,14 @@
 \title What's New
 \brief Important changes in Qt Application Manager
 
+\section1 Qt ApplicationManager 6.11
+\list
+\li The \c documentUrl field in manifest files (info.yaml) with format \c am-package has already
+    been ignored, when starting applications. It will be ignored in legacy \c am-application files
+    now, as well.
+\endlist
+
+
 \section1 Qt ApplicationManager 6.10
 
 This release is mostly about quality-of-live improvements:

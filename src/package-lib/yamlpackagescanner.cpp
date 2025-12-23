@@ -104,7 +104,9 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                  for (auto it = pri.cbegin(); it != pri.cend(); ++it)
                      legacyAppInfo->m_allAppProperties.insert(it.key(), it.value()); } },
             { legacy, "documentUrl", false, YamlParser::Scalar, [&]() {
-                 legacyAppInfo->m_documentUrl = yp.parseString(); } },
+                 (void)yp.parseString();
+                 qCWarning(LogDeployment).nospace() << fileName << ": documentUrl is deprecated and will be ignored";
+              } },
             { legacy, "mimeTypes", false, YamlParser::Scalar | YamlParser::List, [&]() {
                  legacyAppInfo->m_supportedMimeTypes = yp.parseStringOrStringList();
                  legacyAppInfo->m_supportedMimeTypes.sort(); } },

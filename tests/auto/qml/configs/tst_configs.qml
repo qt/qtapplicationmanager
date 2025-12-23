@@ -49,8 +49,7 @@ TestCase {
         id: windowPropertyChangedSpy
         // Workaround to flush Wayland messages, see https://bugreports.qt.io/browse/AUTOSUITE-709
         // A proper solution in QtWayland is sought here: https://bugreports.qt.io/browse/QTBUG-83422
-        function aboutToBlockWait(timeout)
-        {
+        function aboutToBlockWait(timeout) {
             AmTest.aboutToBlock();
             wait(timeout);
         }

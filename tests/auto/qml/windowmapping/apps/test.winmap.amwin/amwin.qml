@@ -8,6 +8,7 @@ import QtApplicationManager.Application 2.0
 
 ApplicationManagerWindow {
     id: root
+    color: "#fea500"
 
     ApplicationManagerWindow {
         id: sub

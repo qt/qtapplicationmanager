@@ -150,6 +150,7 @@ void InProcessSurfaceItem::setVisibleClientSide(bool visible)
         m_closed = false;
 
     if (visible != m_visibleClientSide) {
+        setVisible(visible);
         m_visibleClientSide = visible;
         emit visibleClientSideChanged();
     }

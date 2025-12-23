@@ -9,6 +9,10 @@ QtObject {
     property var win1: ApplicationManagerWindow {
         color: "lightsteelblue"
 
+        TapHandler {
+            onTapped: win2.visible = !win2.visible;
+        }
+
         Rectangle {
             width: 80; height: 80; radius: 40
             color: "orange"

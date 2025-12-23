@@ -167,12 +167,9 @@ QT_BEGIN_NAMESPACE_AM
     already running instance will just receive this signal, instead of starting a
     separate application instance.
     The \a documentUrl parameter received by this function can either be the
-    \c documentUrl argument of ApplicationManager::startApplication, the \c documentUrl
-    field of the \l{Manifest definition}{info.yaml} manifest when calling
-    ApplicationManager::startApplication without a \c documentUrl argument or
-    the \c target argument of Qt::openUrlExternally, when your application matches
-    a MIME-type request. In the latter case \a mimeType contains the MIME-type detected
-    by the application manager.
+    \c documentUrl argument of ApplicationManager::startApplication or the \c target argument
+    of Qt::openUrlExternally, when your application matches a MIME-type request. In the latter
+    case \a mimeType contains the MIME-type detected by the application manager.
 */
 
 

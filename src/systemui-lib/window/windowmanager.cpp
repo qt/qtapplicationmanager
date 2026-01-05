@@ -877,7 +877,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     \qmlmethod bool WindowManager::makeScreenshot(string filename, string selector)
 
     Creates one or several screenshots depending on the \a selector, saving them to the files
-    specified by \a filename.
+    specified by \a filename. Either System UI or application windows can be captured.
 
     The \a filename argument can either be a plain file name for single screenshots, or it can
     contain format sequences that will be replaced accordingly, if multiple screenshots are
@@ -889,11 +889,15 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
         \li Description
     \row
         \li \c{%s}
-        \li Will be replaced with the screen-id of this particular screenshot.
+        \li Will be replaced with the compositor (System UI) window index (first window: '0',
+            second: '1', and so on).
     \row
         \li \c{%i}
         \li Will be replaced with the application id, when making screenshots of application
             windows.
+    \row
+        \li \c{%w}
+        \li Will be replaced with the application window index (in the WindowManager model).
     \row
         \li \c{%%}
         \li Will be replaced by a single \c{%} character.
@@ -901,42 +905,46 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
 
     The \a selector argument is a string which is parsed according to this pattern:
     \badcode
-    <application-id>[window-property=value]:<screen-id>
+    <application-id>[window-property=value]:<compositor-window-index>
     \endcode
 
     All parts are optional, so if you specify an empty string, the call will create a screenshot
-    of every screen.
-    If you specify an \c application-id, a screenshot will be made for each window of this application.
+    of every System UI window.
+    If you specify an \c application-id (which can also contain wildcards for matching multiple
+    applications), a screenshot will be made for each matching application window.
     If only specific windows of one or more applications should be used to create screenshots, you
     can specify a \c window-property selector, which will only select windows that have a matching
     WindowManager::windowProperty.
-    Adding a \c screen-id will restrict the creation of screenshots to the the specified screen.
+    Adding a \c compositor-window-index will restrict the creation of screenshots to the specified
+    System UI window.
 
-    Here is an example, creating screenshots of all windows on the second screen, that have the
-    window-property \c type set to \c cluster:
+    Here is an example, creating screenshots of all application windows on the second System UI
+    window, that have the window-property \c type set to \c cluster:
     \badcode
-    [type=cluster]:1
+    *[type=cluster]:1
     \endcode
 
     Returns \c true on success and \c false otherwise.
 
-    \note This call will be handled asynchronously, so even a positive return value does not mean
-          that all screenshot images have been created already.
+    \note For application windows, this call will be handled asynchronously, so even a positive
+          return value does not mean that all screenshot images have been created already.
 */
 //TODO: either change return value to list of to-be-created filenames or add a 'finished' signal
 bool WindowManager::makeScreenshot(const QString &filename, const QString &selector)
 {
     // filename:
-    // %s -> screenId
+    // %s -> compWinIdx
     // %i -> appId
+    // %w -> appWinIdx
     // %% -> %
 
     // selector:
-    // <appid>[attribute=value]:<screenid>
+    // <application-id>[window-property=value]:<compositor-window-index>
     // e.g. com.pelagicore.music[windowType=widget]:1
     //      com.pelagicore.*[windowType=]
 
-    auto substituteFilename = [filename](const QString &screenId, const QString &appId) -> QString {
+    auto substituteFilename = [filename](const QString &compWinIdx, const QString &appId, const QString &appWinIdx)
+                              -> QString {
         QString result;
         bool percent = false;
         for (int i = 0; i < filename.size(); ++i) {
@@ -952,10 +960,13 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
                     result.append(c);
                     break;
                 case 's':
-                    result.append(screenId);
+                    result.append(compWinIdx);
                     break;
                 case 'i':
                     result.append(appId);
+                    break;
+                case 'w':
+                    result.append(appWinIdx);
                     break;
                 default:
                     break;
@@ -966,15 +977,15 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
         return result;
     };
 
-    static const QRegularExpression re(u"^([a-z.-]+)?(\\[([a-zA-Z0-9_.]+)=([^\\]]*)\\])?(:([0-9]+))?"_s);
+    static const QRegularExpression re(u"^([^\\[:]+)?(\\[([a-zA-Z0-9_.]+)=([^\\]]*)\\])?(:([0-9]+))?"_s);
     auto match = re.match(selector);
-    QString screenId = match.captured(6);
+    QString compWinIdx = match.captured(6);
     QString appId = match.captured(1);
     QString attributeName = match.captured(3);
     QString attributeValue = match.captured(4);
 
     // qWarning() << "Matching result:" << match.isValid();
-    // qWarning() << "  screen ...... :" << screenId;
+    // qWarning() << "  comp. window  :" << compWinIdx;
     // qWarning() << "  app ......... :" << appId;
     // qWarning() << "  attributeName :" << attributeName;
     // qWarning() << "  attributeValue:" << attributeValue;
@@ -983,24 +994,23 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
     bool foundAtLeastOne = false;
 
     if (appId.isEmpty() && attributeName.isEmpty()) {
-        // fullscreen screenshot
-
+        // capture compositor windows
         for (int i = 0; i < d->views.count(); ++i) {
-            if (screenId.isEmpty() || screenId.toInt() == i) {
-                QImage img = d->views.at(i)->grabWindow();
-
+            if (compWinIdx.isEmpty() || compWinIdx.toInt() == i) {
                 foundAtLeastOne = true;
-                result &= img.save(substituteFilename(QString::number(i), QString()));
+                QImage img = d->views.at(i)->grabWindow();
+                result &= img.save(substituteFilename(QString::number(i), QString(), QString()));
             }
         }
     } else {
-        // app without System UI
-
-        // either all apps or a specific one
-        QVector<Application *> apps;
+        // capture application windows
+        QList<Application *> apps;
         if (!appId.isEmpty()) {
-            if (auto *app = ApplicationManager::instance()->application(appId))
-                apps << app;
+            QRegularExpression wre = QRegularExpression(QRegularExpression::wildcardToRegularExpression(appId));
+            for (auto app : ApplicationManager::instance()->applications()) {
+                if (wre.match(app->id()).hasMatch())
+                    apps << app;
+            }
         } else {
             apps = ApplicationManager::instance()->applications();
         }
@@ -1008,52 +1018,43 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
         if (apps.isEmpty())
             return false;
 
-        auto grabbers = new QList<QSharedPointer<const QQuickItemGrabResult>>;
-
+        int appWinIdx = -1;
         for (const Window *w : std::as_const(d->windowsInModel)) {
-            if (apps.contains(w->application())) {
-                if (attributeName.isEmpty()
-                        || (w->windowProperty(attributeName).toString() == attributeValue)) {
-                    for (int i = 0; i < d->views.count(); ++i) {
-                        if (screenId.isEmpty() || screenId.toInt() == i) {
-                            QQuickWindow *view = d->views.at(i);
+            ++appWinIdx;
+            if (apps.contains(w->application()) &&
+                (attributeName.isEmpty() || (w->windowProperty(attributeName).toString() == attributeValue))) {
+                for (int i = 0; i < d->views.count(); ++i) {
+                    if (compWinIdx.isEmpty() || compWinIdx.toInt() == i) {
+                        auto itemList = w->items().values();
+                        if (itemList.count() == 0)
+                            continue;
 
-                            bool onScreen = false;
+                        // grab the first view - they all have the same content anyway
+                        WindowItem *windowItem = itemList.first();
+                        bool onWindow = windowItem->QQuickItem::window() == d->views.at(i);
+                        if (!onWindow)
+                            continue;
 
-                            auto itemList = w->items().values();
-                            if (itemList.count() == 0)
-                                continue;
+                        foundAtLeastOne = true;
 
-                            // grab the first view - they all have the same content anyway
-                            WindowItem *windowItem = itemList.first();
-
-                            onScreen = windowItem->QQuickItem::window() == view;
-
-                            if (onScreen) {
-                                foundAtLeastOne = true;
-                                QSharedPointer<const QQuickItemGrabResult> grabber = windowItem->grabToImage();
-
-                                if (!grabber) {
-                                    result = false;
-                                    continue;
-                                }
-
-                                QString saveTo = substituteFilename(QString::number(i), w->application()->id());
-                                grabbers->append(grabber);
-                                connect(grabber.data(), &QQuickItemGrabResult::ready, this, [grabbers, grabber, saveTo]() {
-                                    grabber->saveToFile(saveTo);
-                                    grabbers->removeOne(grabber);
-                                    if (grabbers->isEmpty())
-                                        delete grabbers;
-                                });
-
-                            }
+                        QSharedPointer<const QQuickItemGrabResult> grabber = windowItem->grabToImage();
+                        if (!grabber) {
+                            result = false;
+                            continue;
                         }
+
+                        QString saveTo = substituteFilename(QString::number(i), w->application()->id(),
+                                                            QString::number(appWinIdx));
+                        connect(grabber.data(), &QQuickItemGrabResult::ready, this, [grabber, saveTo]() mutable {
+                            grabber->saveToFile(saveTo);
+                            grabber.clear();
+                        });
                     }
                 }
             }
         }
     }
+
     return foundAtLeastOne && result;
 }
 

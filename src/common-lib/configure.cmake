@@ -129,6 +129,13 @@ qt_feature("am-legacy-certificates" PUBLIC
     DISABLE INPUT_legacy-certificates STREQUAL 'no'
 )
 
+qt_feature("am-reproducible-build" PRIVATE
+    LABEL "Make the build fully reproducible"
+    AUTODETECT OFF
+    ENABLE INPUT_reproducible-build STREQUAL 'yes'
+    DISABLE INPUT_reproducible-build STREQUAL 'no'
+)
+
 qt_configure_add_summary_section(NAME "Qt Application Manager")
 qt_configure_add_summary_entry(ARGS "am-system-libyaml")
 qt_configure_add_summary_entry(ARGS "am-system-libarchive")
@@ -153,5 +160,6 @@ if (NOT QT_FEATURE_am_tools_only)
     qt_configure_add_summary_entry(ARGS "am-libdbus")
     qt_configure_add_summary_entry(ARGS "am-libbacktrace")
     qt_configure_add_summary_entry(ARGS "am-stackwalker")
+    qt_configure_add_summary_entry(ARGS "am-reproducible-build")
 endif()
 qt_configure_end_summary_section() # end of "Qt ApplicationManger" section

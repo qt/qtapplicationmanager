@@ -46,8 +46,11 @@ function(qtam_internal_add_build_config target)
 
     set(build_config "${CMAKE_CURRENT_BINARY_DIR}/build-config.yaml")
     file(WRITE "${build_config}" "---\n")
-    foreach(VAR _DATE_ MODULE_VERSION GIT_VERSION SOURCE_DIR BUILD_DIR INSTALL_PREFIX
-                QT_ARCH QT_VERSION QT_FEATURES DEFINES)
+    set(VARS MODULE_VERSION GIT_VERSION QT_ARCH QT_VERSION QT_FEATURES DEFINES)
+    if(NOT QT_FEATURE_am_reproducible_build)
+        list(APPEND VARS _DATE_ SOURCE_DIR BUILD_DIR INSTALL_PREFIX)
+    endif()
+    foreach(VAR ${VARS})
         if(NOT VAR)
             file(APPEND "${build_config}" "${VAR}: ~\n")
         elseif("${${VAR}_TYPE}" STREQUAL "array")

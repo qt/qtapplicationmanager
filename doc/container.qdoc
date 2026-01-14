@@ -279,6 +279,7 @@ containers:
   bubblewrap:
     sharedNamespaces: [ '-all', '+net' ]
     bindMountHome: yes
+    bindMountQtPaths: yes
     environmentFiles: 'myEnv.env'
     configuration:
     - symlink:
@@ -352,6 +353,11 @@ The \c bubblewrap container accepts the following configuration settings:
     \li bool
     \li Mounts the whole Home directory of the current user into the container. This can be used
         for development purposes. (default: false)
+
+  \row
+    \li \c bindMountQtPaths
+    \li bool
+    \li Mounts all runtime relevant paths as reported by QLibraryInfo into the container. (default: false)
 
   \row
     \li \c sharedNamespaces

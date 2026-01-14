@@ -160,14 +160,16 @@ void BubblewrapContainerManager::setConfiguration(const QVariantMap &configurati
     m_bwrapArguments += u"--new-session"_s;
 
     // export all needed Qt paths
-    for (auto p : { QLibraryInfo::LibrariesPath, QLibraryInfo::LibraryExecutablesPath,
-                   QLibraryInfo::BinariesPath, QLibraryInfo::PluginsPath,
-                   QLibraryInfo::Qml2ImportsPath, QLibraryInfo::ArchDataPath,
-                   QLibraryInfo::DataPath, QLibraryInfo::TranslationsPath,
-                   QLibraryInfo::SettingsPath}) {
-        const auto lip = QLibraryInfo::path(p);
-        if (!lip.isEmpty() && QDir(lip).exists())
-            m_bwrapArguments += { u"--ro-bind"_s, lip, lip };
+    if (m_configuration.value(u"bindMountQtPaths"_s).toBool()) {
+        for (auto p : { QLibraryInfo::LibrariesPath, QLibraryInfo::LibraryExecutablesPath,
+                       QLibraryInfo::BinariesPath, QLibraryInfo::PluginsPath,
+                       QLibraryInfo::Qml2ImportsPath, QLibraryInfo::ArchDataPath,
+                       QLibraryInfo::DataPath, QLibraryInfo::TranslationsPath,
+                       QLibraryInfo::SettingsPath}) {
+            const auto lip = QLibraryInfo::path(p);
+            if (!lip.isEmpty() && QDir(lip).exists())
+                m_bwrapArguments += { u"--ro-bind"_s, lip, lip };
+        }
     }
 
     const QStringList envFiles = variantToStringList(m_configuration.value(u"environmentFiles"_s));

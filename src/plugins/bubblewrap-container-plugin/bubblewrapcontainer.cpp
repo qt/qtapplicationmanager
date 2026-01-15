@@ -567,7 +567,16 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
             auto exitCodeIt = root.constFind(u"exit-code"_s);
             if (exitCodeIt != root.constEnd()) {
                 m_hasExitCode = true;
-                m_exitCode = int(exitCodeIt->toInteger());
+                int exitCode = int(exitCodeIt->toInteger());
+
+                // bwrap uses bash conventions to communicate a signal kill: 128 + signal number
+                if ((exitCode > 128) && (exitCode < 193)) {
+                    m_exitCode = exitCode - 128;
+                    m_exitStatus = QProcess::CrashExit;
+                } else {
+                    m_exitCode = exitCode;
+                    m_exitStatus = QProcess::NormalExit;
+                }
             }
         } while (true);
     });
@@ -709,9 +718,9 @@ BubblewrapContainer::RunState BubblewrapContainer::state() const
 
 void BubblewrapContainer::containerExited(int exitCode, QProcess::ExitStatus exitStatus)
 {
-    if (m_hasExitCode) { // bwrap may have crashed, but the app terminated normally
+    if (m_hasExitCode) { // bwrap may have crashed, but the app itself may have exited differently
         exitCode = m_exitCode;
-        exitStatus = QProcess::NormalExit;
+        exitStatus = m_exitStatus;
     }
 
     ExitStatus status = NormalExit;

@@ -78,6 +78,7 @@ private:
     QByteArray m_statusBuffer;
     bool m_hasExitCode = false;
     int m_exitCode = 0;
+    QProcess::ExitStatus m_exitStatus = { };
 
     QProcess *m_process = nullptr;
 };

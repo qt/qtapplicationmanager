@@ -245,8 +245,14 @@ void WaylandXdgWatchdog::onPongKillTimeout()
             if (cd->m_runtimes.isEmpty()) {
                 cd->m_client->kill(UnixSignalHandler::watchdogSignal());
             } else {
-                for (auto *runtime : std::as_const(cd->m_runtimes))
+                for (auto *runtime : std::as_const(cd->m_runtimes)) {
+                    if (runtime->application() && (runtime->state() == Am::ShuttingDown)) {
+                        qCCritical(LogWatchdog).noquote() << "Wayland client" << runtime->application()->id()
+                                                          << "is in shutdown phase already, not killing client";
+                        continue;
+                    }
                     runtime->stop(Am::WatchdogExit);
+                }
             }
         }
     }

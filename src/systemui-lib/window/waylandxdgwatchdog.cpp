@@ -239,8 +239,10 @@ void WaylandXdgWatchdog::onPongKillTimeout()
                 continue;
             }
 
-            if ((cd->m_pid > 0) && isDebuggerAttached(cd->m_pid))
+            if ((cd->m_pid > 0) && isDebuggerAttached(cd->m_pid)) {
                 qCCritical(LogWatchdog).noquote() << cd->m_description << "has a debugger attached, not killing client";
+                continue;
+            }
 
             if (cd->m_runtimes.isEmpty()) {
                 cd->m_client->kill(UnixSignalHandler::watchdogSignal());

@@ -541,6 +541,13 @@ ui:
             If the group is missing, the main group of the given user is used instead.
             You can add more than one \c{<group>} field and these additional groups will extend
             (but not override) the supplementary groups for the user.
+
+            If this option is \b not set, the application manager tries to read the environment
+            variable \c AM_SETUID instead, which uses the same syntax for specifying the user and
+            group.
+
+            If neither the command line option or the environment variable are set, root privileges
+            are not dropped and the application manager will print a warning.
 \endtable
 
 \section1 D-Bus Specification

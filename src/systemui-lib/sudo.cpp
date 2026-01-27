@@ -182,12 +182,15 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
     if (realUid != 0)
         return fallbackServer();
 
+    if (!setuidArg)
+        setuidArg = ::getenv("AM_SETUID");
+
     uid_t effectiveUid = ::geteuid();
     if (realUid != effectiveUid)
         throw Exception("Running as suid executable is not supported anymore");
 
     if ((realUid != 0) && setuidArg)
-        throw Exception("Cannot use the --setuid argument when not running as root");
+        throw Exception("Cannot use the --setuid argument or $AM_SETUID when not running as root");
 
     static auto parseUser = [](const QByteArray &user) -> struct ::passwd * {
         bool ok;
@@ -245,7 +248,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
                 throw Exception("SUDO_UID/SUDO_GID: %1").arg(e.errorString());
             }
         } else {
-            qCCritical(LogSystem) << "Running as root is not recommended! Please use --setuid=<user>[:<group>]* or sudo to run as an unprivileged user";
+            qCCritical(LogSystem) << "Running as root is not recommended! Please use --setuid=<user>[:<group>]*, set $AM_SETUID or use sudo to run as an unprivileged user";
         }
     } else {
         try {
@@ -266,7 +269,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
                     .arg(setPw->pw_name).arg(setGr->gr_name).arg(setSupGids);
             }
         } catch (const Exception &e) {
-            throw Exception("Error parsing --setuid: %1").arg(e.errorString());
+            throw Exception("Error parsing --setuid / $AM_SETUID: %1").arg(e.errorString());
         }
     }
 
@@ -352,7 +355,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
             setSupGids.unite(QSet<gid_t> { supGids, supGids + supGidsLen });
             setSupGids.remove(setGr->gr_gid);
             if (setSupGids.size() > NGROUPS_MAX)
-                throw Exception("Too many supplementary groups when combining the groups of user %1 with the ones specified for --setuid").arg(setPw->pw_name);
+                throw Exception("Too many supplementary groups when combining the groups of user %1 with the ones specified for --setuid / $AM_SETUID").arg(setPw->pw_name);
             if (::setgroups(setSupGids.size(), QVector<gid_t>(setSupGids.cbegin(), setSupGids.cend()).constData()) < 0)
                 throw Exception(errno, "Could not set supplementary groups (%2) for user %1").arg(setPw->pw_name).arg(setSupGids);
 

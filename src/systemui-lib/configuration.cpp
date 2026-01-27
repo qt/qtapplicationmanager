@@ -256,6 +256,8 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
         "                         this, if the application manager's crash handler is\n"
         "                         interfering with other debugging tools you are using.\n"
         "\n"
+        " AM_SETUID               Fallback to use if --setuid is not set.\n"
+        "\n"
         " AM_TAGGED_WAYLAND_DEBUG If set to '1', all server-side 'WAYLAND_DEBUG' messages\n"
         "                         are tagged with an '<app-id>'.\n";
 

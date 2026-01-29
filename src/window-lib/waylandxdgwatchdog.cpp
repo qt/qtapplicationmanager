@@ -240,10 +240,14 @@ void WaylandXdgWatchdog::onPongKillTimeout()
             } else {
                 for (auto *app : std::as_const(cd->m_apps)) {
                     qint64 pid = app->currentRuntime() ? app->currentRuntime()->applicationProcessId() : 0;
-                    if ((pid > 0) && isDebuggerAttached(pid))
+                    if ((pid > 0) && isDebuggerAttached(pid)) {
                         qCCritical(LogWatchdog).noquote() << "Debugger is attached to the app, not killing" << app->id();
-                    else
+                    } else if (app->runState() == Am::ShuttingDown) {
+                        qCCritical(LogWatchdog).noquote() << "Wayland client" << app->id()
+                                                          << "is in shutdown phase already, not killing client";
+                    } else {
                         ApplicationManager::instance()->stopApplicationInternal(app, Am::WatchdogExit);
+                    }
                 }
             }
         }

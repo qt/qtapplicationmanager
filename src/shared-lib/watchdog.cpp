@@ -83,11 +83,6 @@ static quintptr currentThreadHandle()
 
 static void killThread(quintptr threadHandle)
 {
-    if (isDebuggerAttached()) {
-        qCCritical(LogWatchdog) << "Debugger is attached, not killing thread";
-        return;
-    }
-
 #if defined(Q_OS_DARWIN)
     ::pthread_kill(reinterpret_cast<pthread_t>(threadHandle), UnixSignalHandler::watchdogSignal());
 #elif defined(Q_OS_UNIX)
@@ -405,14 +400,22 @@ void WatchdogPrivate::eventLoopCheck()
         const auto elapsed = std::chrono::milliseconds(timeNow - lastEvent);
 
         if (m_killEventLoopTime.count() && (elapsed > m_killEventLoopTime) && eld->m_thread) {
+            const char *noKillReason = nullptr;
+            if (isDebuggerAttached())
+                noKillReason = "a debugger is attached";
+
             qCCritical(LogWatchdog).nospace()
-                << "Event loop of thread " << static_cast<void *>(eld->m_thread.get())
-                << " is getting killed, because it is now stuck for over " << elapsed
-                << " (the kill threshold is " << m_killEventLoopTime << ")";
+                << "Event loop of thread " << static_cast<void *>(eld->m_thread.get()) << " "
+                << (noKillReason ? "would be" : "is")
+                << " getting killed, because it is now stuck for over " << elapsed
+                << " (the kill threshold is " << m_killEventLoopTime << ")"
+                << (noKillReason ? ", but " : "")
+                << (noKillReason ? noKillReason : "");
 
             // avoid multiple messages, until the thread is actually killed
             m_threadIsBeingKilled = 1;
-            killThread(eld->m_threadHandle);
+            if (!noKillReason)
+                killThread(eld->m_threadHandle);
         } else if (m_warnEventLoopTime.count() && (elapsed > m_warnEventLoopTime)
                    && (elapsed > (m_eventLoopCheckInterval / 2))) {
             qCWarning(LogWatchdog).nospace()
@@ -664,16 +667,24 @@ void WatchdogPrivate::quickWindowCheck()
         const auto elapsed = std::chrono::milliseconds(timeNow - qwd->m_timer);
 
         if (m_killQuickWindowTime.count() && (elapsed > m_killQuickWindowTime) && qwd->m_renderThread) {
+            const char *noKillReason = nullptr;
+            if (isDebuggerAttached())
+                noKillReason = "a debugger is attached";
+
             qCCritical(LogWatchdog).nospace()
-                << "Window " << static_cast<void *>(qwd->m_window.get())
-                << " is getting its render thread (" << static_cast<void *>(qwd->m_renderThread.get())
+                << "Window " << static_cast<void *>(qwd->m_window.get()) << " "
+                << (noKillReason ? "would be" : "is")
+                << " getting its render thread (" << static_cast<void *>(qwd->m_renderThread.get())
                 << ") killed, because it is now stuck in state "
                 << renderState << " for over " << elapsed
-                << " (the kill threshold is " << m_killQuickWindowTime << ")";
+                << " (the kill threshold is " << m_killQuickWindowTime << ")"
+                << (noKillReason ? ", but " : "")
+                << (noKillReason ? noKillReason : "");
 
             // avoid multiple messages, until the thread is actually killed
             m_threadIsBeingKilled = 1;
-            killThread(qwd->m_renderThreadHandle);
+            if (!noKillReason)
+                killThread(qwd->m_renderThreadHandle);
         } else if (m_warnQuickWindowTime.count() && (elapsed > m_warnQuickWindowTime)
                    && (elapsed > (m_quickWindowCheckInterval / 2))) {
             qCWarning(LogWatchdog).nospace()

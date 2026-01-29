@@ -20,5 +20,5 @@ ApplicationManagerWindow {
         source: "Compositor.qml"
     }
 
-    onClosing: ldr.item?.close();
+    onClosing: (ldr.item as Compositor)?.close()
 }

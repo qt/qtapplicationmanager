@@ -25,7 +25,8 @@ Frame {
                 source: root.application.icon
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: root.application.runState === Am.Running ? application.stop() : application.start()
+                    onClicked: root.application.runState === Am.Running ? root.application.stop()
+                                                                        : root.application.start()
                 }
             }
             Label {

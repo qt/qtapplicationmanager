@@ -14,21 +14,28 @@ Item {
         Repeater {
             model: ApplicationManager
             Item {
+                id: delegate
+                required property url icon
+                required property bool isRunning
+                required property string name
+                required property ApplicationObject application
+
                 width: 200
                 height: 200
 
                 Image {
                     id: icon
-                    source: model.icon
+                    source: delegate.icon
                     anchors.centerIn: parent
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: model.isRunning ? application.stop() : application.start()
+                        onClicked: delegate.isRunning ? delegate.application.stop()
+                                                      : delegate.application.start()
                     }
                 }
                 Text {
                     font.pixelSize: 15
-                    text: model.name
+                    text: delegate.name
                     anchors.top: icon.bottom
                     anchors.topMargin: 5
                     anchors.horizontalCenter: icon.horizontalCenter
@@ -45,6 +52,8 @@ Item {
         Repeater {
             model: WindowManager
             WindowItem {
+                required property var model
+
                 width: 600
                 height: 200
                 window: model.window

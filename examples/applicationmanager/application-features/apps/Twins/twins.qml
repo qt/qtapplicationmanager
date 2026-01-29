@@ -6,11 +6,13 @@ import QtQuick
 import QtApplicationManager.Application
 
 QtObject {
+    id: root
+
     property var win1: ApplicationManagerWindow {
         color: "lightsteelblue"
 
         TapHandler {
-            onTapped: win2.visible = !win2.visible;
+            onTapped: root.win2.visible = !root.win2.visible;
         }
 
         Rectangle {

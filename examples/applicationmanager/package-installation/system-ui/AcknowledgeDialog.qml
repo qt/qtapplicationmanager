@@ -2,10 +2,15 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 import QtQml
+import QtQuick.Window
 import QtQuick.Dialogs as QD
 import QtApplicationManager.SystemUI
 
 QtObject {
+    id: root
+
+    required property Window parentWindow
+
     enum AcknowledgeMode {
         Always,                // always ask the user
         Never,                 // never ask the user
@@ -22,18 +27,18 @@ QtObject {
             pkg.applications.forEach((app) => app.capabilities.forEach((cap) => capsSet.add(cap)))
             let capabilities = Array.from(capsSet)
 
-            if ((mode === AcknowledgeDialog.Never)
-                    || ((mode === AcknowledgeDialog.CapabilitiesOnly) && !capabilities.length)) {
+            if ((root.mode === AcknowledgeDialog.Never)
+                    || ((root.mode === AcknowledgeDialog.CapabilitiesOnly) && !capabilities.length)) {
                 PackageManager.acknowledgePackageInstallation(taskId)
 
-            } else if ((mode === AcknowledgeDialog.Always)
-                    || ((mode === AcknowledgeDialog.CapabilitiesOnly) && capabilities.length)) {
-                let d = acknowledgeDialog.createObject(root.contentItem, {
-                                                           taskId: taskId,
-                                                           packageName: pkg.name,
-                                                           capabilities: capabilities
-                                                       })
-                d.open()
+            } else if ((root.mode === AcknowledgeDialog.Always)
+                    || ((root.mode === AcknowledgeDialog.CapabilitiesOnly) && capabilities.length)) {
+                let d = root.acknowledgeDialog.createObject(root.parentWindow.contentItem, {
+                                                                taskId: taskId,
+                                                                packageName: pkg.name,
+                                                                capabilities: capabilities
+                                                            })
+                (d as root.acknowledgeDialog).open()
             }
         }
     }
@@ -59,10 +64,10 @@ QtObject {
                 target: PackageManager
                 function onTaskStateChanged(taskId, state) {
                     // if somebody else (e.g. appman-controller) acknowledged already, just close
-                    if (visible && (taskId === dialog.taskId)
+                    if (dialog.visible && (taskId === dialog.taskId)
                             && (state !== PackageManager.AwaitingAcknowledge)) {
-                        acknowledged = true
-                        close()
+                        dialog.acknowledged = true
+                        dialog.close()
                     }
                 }
             }

@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import QtApplicationManager.SystemUI
 
+pragma ComponentBehavior: Bound
 
 ApplicationWindow {
     id: root
@@ -58,6 +59,7 @@ ApplicationWindow {
 
     AcknowledgeDialog {
         id: acknowledgeDialog
+        parentWindow: root
     }
 
     component TaskButton: Button {
@@ -188,6 +190,7 @@ ApplicationWindow {
                         }
 
                         delegate: ItemDelegate {
+                            id: packageDelegate
                             required property string id
                             required property var name
                             required property string iconUrl
@@ -201,17 +204,17 @@ ApplicationWindow {
                             Connections {
                                 target: PackageManager
                                 function onPackageAdded(pkgId) {
-                                    if (pkgId === id)
-                                        isInstalled = true
+                                    if (pkgId === packageDelegate.id)
+                                        packageDelegate.isInstalled = true
                                 }
                                 function onPackageAboutToBeRemoved(pkgId) {
-                                    if (pkgId === id)
-                                        isInstalled = false
+                                    if (pkgId === packageDelegate.id)
+                                        packageDelegate.isInstalled = false
                                 }
                             }
 
                             Image {
-                                source: isInstalled ? "uninstall" : "install"
+                                source: packageDelegate.isInstalled ? "uninstall" : "install"
                                 width: height
                                 height: parent.height / 2
                                 anchors.verticalCenter: parent.verticalCenter
@@ -228,9 +231,9 @@ ApplicationWindow {
 
                             onClicked: {
                                 if (isInstalled)
-                                    packageServerInterface.remove(id)
+                                    packageServerInterface.remove(packageDelegate.id)
                                 else
-                                    packageServerInterface.install(id)
+                                    packageServerInterface.install(packageDelegate.id)
                             }
                         }
                     }

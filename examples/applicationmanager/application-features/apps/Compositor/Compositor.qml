@@ -66,7 +66,7 @@ Item {
         target: ApplicationInterface
         function onQuit() {
             root.close();
-            target.acknowledgeQuit();
+            ApplicationInterface.acknowledgeQuit();
         }
     }
 

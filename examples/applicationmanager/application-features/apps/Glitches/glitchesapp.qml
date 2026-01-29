@@ -51,13 +51,16 @@ ApplicationManagerWindow {
             wrap: false
 
             delegate: Rectangle {
+                id: delegateRect
                 required property int index
 
                 Text {
                     anchors.centerIn: parent
-                    text: (index / 5.0).toFixed(1)
-                    font.bold: index === tumbler.currentIndex
-                    font.pixelSize: fontMetrics.font.pixelSize * (4 - Math.abs(tumbler.currentIndex - index)) * 0.4
+                    text: (delegateRect.index / 5.0).toFixed(1)
+                    font.bold: delegateRect.index === tumbler.currentIndex
+                    font.pixelSize: fontMetrics.font.pixelSize
+                                    * (4 - Math.abs(tumbler.currentIndex - delegateRect.index))
+                                    * 0.4
                 }
             }
         }
@@ -73,8 +76,8 @@ ApplicationManagerWindow {
                     required property var modelData
 
                     width: 120; height: 40
-                    text: `${modes[modelData].name} ${(tumbler.currentIndex / 5.0).toFixed(1)}s`
-                    onClicked: modes[modelData].method();
+                    text: `${root.modes[modelData].name} ${(tumbler.currentIndex / 5.0).toFixed(1)}s`
+                    onClicked: root.modes[modelData].method();
                 }
             }
         }

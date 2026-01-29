@@ -68,12 +68,6 @@ public:
         return *this;
     }
 
-    Exception &arg(const char *str) noexcept
-    {
-        m_errorString = m_errorString.arg(QString::fromUtf8(str));
-        return *this;
-    }
-
     // this will generate compiler errors if there's no suitable QString::arg(const Ts &) overload
     template <typename... Ts> Exception &arg(const Ts & ...ts) noexcept
     {

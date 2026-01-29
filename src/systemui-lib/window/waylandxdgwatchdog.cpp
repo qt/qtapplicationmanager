@@ -229,31 +229,38 @@ void WaylandXdgWatchdog::onPongKillTimeout()
         if (cd->m_pingSerial) {
             cd->m_pingSerial = 0;
 
-            qCCritical(LogWatchdog).nospace().noquote()
-                << cd->m_description
-                << " is getting killed, because it failed to send a pong reply to a ping request within "
-                << m_killTimeout;
-
+            const char *noKillReason = nullptr;
             if (isDebuggerAttached()) {
-                qCCritical(LogWatchdog).noquote() << "Debugger is attached to the system ui, not killing client";
-                continue;
-            }
-
-            if ((cd->m_pid > 0) && isDebuggerAttached(cd->m_pid)) {
-                qCCritical(LogWatchdog).noquote() << cd->m_description << "has a debugger attached, not killing client";
-                continue;
-            }
-
-            if (cd->m_runtimes.isEmpty()) {
-                cd->m_client->kill(UnixSignalHandler::watchdogSignal());
+                noKillReason = "a debugger is attached to the system ui";
+            } else if ((cd->m_pid > 0) && isDebuggerAttached(cd->m_pid)) {
+                noKillReason = "a debugger is attached";
             } else {
+                // check if all apps belonging to this client are shutting down right now
+                bool inShutdown = true;
                 for (auto *runtime : std::as_const(cd->m_runtimes)) {
-                    if (runtime->application() && (runtime->state() == Am::ShuttingDown)) {
-                        qCCritical(LogWatchdog).noquote() << "Wayland client" << runtime->application()->id()
-                                                          << "is in shutdown phase already, not killing client";
-                        continue;
+                    if (!runtime->application() || (runtime->state() != Am::ShuttingDown)) {
+                        inShutdown = false;
+                        break;
                     }
-                    runtime->stop(Am::WatchdogExit);
+                }
+                if (inShutdown)
+                    noKillReason = "the app(s) are already in their shutdown phase";
+            }
+
+            qCCritical(LogWatchdog).nospace().noquote()
+                << cd->m_description << " "
+                << (noKillReason ? "would be" : "is")
+                << " getting killed, because it failed to send a pong reply to a ping request within "
+                << m_killTimeout
+                << (noKillReason ? ", but " : "")
+                << (noKillReason ? noKillReason : "");
+
+            if (!noKillReason) {
+                if (cd->m_runtimes.isEmpty()) {
+                    cd->m_client->kill(UnixSignalHandler::watchdogSignal());
+                } else {
+                    for (auto *runtime : std::as_const(cd->m_runtimes))
+                        runtime->stop(Am::WatchdogExit);
                 }
             }
         }

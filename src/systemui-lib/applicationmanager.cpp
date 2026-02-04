@@ -18,9 +18,6 @@
 #if defined(QT_GUI_LIB)
 #  include <QDesktopServices>
 #endif
-#if defined(Q_OS_WINDOWS)
-#  define write(a, b, c) _write(a, b, static_cast<unsigned int>(c))
-#endif
 
 #include "applicationinfo.h"
 #include "installationreport.h"
@@ -792,9 +789,15 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
                 if (fd < 0)
                     fd = stdioRedirections.value(1, -1);
                 if (fd >= 0) {
+#if defined(Q_OS_WINDOWS)
+#  define write(a, b, c) ::_write(a, b, static_cast<unsigned int>(c))
+#endif
                     auto dummy = write(fd, noRedirectMsg, qstrlen(noRedirectMsg));
                     dummy += write(fd, "\n", 1);
                     Q_UNUSED(dummy)
+#if defined(Q_OS_WINDOWS)
+#  undef write
+#endif
                 }
                 qCWarning(LogSystem) << noRedirectMsg;
             }

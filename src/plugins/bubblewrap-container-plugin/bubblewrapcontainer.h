@@ -49,6 +49,7 @@ public:
     void stop(ContainerInterface::ExitStatus exitStatus) override;
 
 private:
+    void setupCustomBindMounts(bool ignoreCapabilities = false);
     void containerExited(int exitCode, QProcess::ExitStatus exitStatus);
 
     enum class NetworkScriptEvent {
@@ -81,6 +82,8 @@ private:
     QProcess::ExitStatus m_exitStatus = { };
     QString m_currentControlGroup;
     static bool s_hasCGroupV2;
+    QHash<QString, QString> m_roBindMounts;
+    QHash<QString, QString> m_rwBindMounts;
 
     QProcess *m_process = nullptr;
 };

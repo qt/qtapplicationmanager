@@ -15,6 +15,9 @@ public:
     explicit Helper(QObject *parent = nullptr);
 
     Q_INVOKABLE QByteArray getEnv(const QByteArray &envName);
+    Q_INVOKABLE bool pathExists(const QString &path);
+    Q_INVOKABLE QString readFile(const QString &path);
+    Q_INVOKABLE bool canWrite(const QString &dirPath);
 };
 
 #endif // HELPER_H

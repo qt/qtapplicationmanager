@@ -15,6 +15,7 @@ TestCase {
     property bool appStarted: false
     property var appEnv
     property var netscriptArgs: ([])
+    property var mountResult: null
 
     SignalSpy {
         id: windowAddedSpy
@@ -45,7 +46,25 @@ TestCase {
         }
     }
 
-    function test_bubblewrap() {
+    IntentServerHandler {
+        intentIds: "mount-test-result"
+        visibility: IntentObject.Public
+
+        onRequestReceived: function(request) {
+            testCase.mountResult = request.parameters
+            request.sendReply({ })
+        }
+    }
+
+    function initTestCase() {
+        AmTest.runProgram([ "mkdir", "-p", "/tmp/qt-am-bwrap-rw-test" ])
+    }
+
+    function cleanupTestCase() {
+        AmTest.runProgram([ "rm", "-rf", "/tmp/qt-am-bwrap-rw-test" ])
+    }
+
+    function skipIfUnsupported() {
         if (ApplicationManager.singleProcess)
             skip("Test not supported in single-process mode")
         if (!ApplicationManager.availableContainerIds.includes("bubblewrap"))
@@ -57,14 +76,34 @@ TestCase {
         let bwrapVersion = bwrapVersionOutput.split(' ')[1].split('.')
         if ((parseInt(bwrapVersion[0]) === 0) && (parseInt(bwrapVersion[1]) < 5))
             skip("Test needs at least bwrap 0.5.0")
+    }
 
-        var app = ApplicationManager.application("TestApp")
+    function startApp(app) {
+        appStarted = false
+        mountResult = null
+        windowAddedSpy.clear()
         runStateChangedSpy.target = app
-
         app.start()
         windowAddedSpy.wait(spyTimeout)
         tryCompare(testCase, "appStarted", true, spyTimeout)
+        tryVerify(function() { return testCase.mountResult !== null }, spyTimeout)
         runStateChangedSpy.clear()
+    }
+
+    function stopApp(app) {
+        app.stop(false)
+        runStateChangedSpy.wait(spyTimeout)    // wait for ShuttingDown
+        runStateChangedSpy.wait(spyTimeout)    // wait for NotRunning
+        verify(app.runState === Am.NotRunning)
+        compare(app.lastExitCode, 0)
+    }
+
+    function test_bubblewrap() {
+        skipIfUnsupported()
+
+        var app = ApplicationManager.application("TestApp")
+        netscriptArgs = []
+        startApp(app)
 
         compare(appEnv["FOO"], "bar");
         compare(appEnv["BAR"], "quoted string");
@@ -72,21 +111,51 @@ TestCase {
         compare(appEnv["BAD"], "");
         compare(appEnv["BAD_TWO"], "");
 
-        app.stop(false)
-        runStateChangedSpy.wait(spyTimeout)    // wait for ShuttingDown
-        runStateChangedSpy.wait(spyTimeout)    // wait for NotRunning
-
-        verify(app.runState === Am.NotRunning)
-        compare(app.lastExitCode, 0)
+        stopApp(app)
 
         tryCompare(testCase.netscriptArgs, "length", 2)
         let netStart = netscriptArgs[0].split(' ')
-        let netStop = netscriptArgs[1].split(' ')
+        let netStop  = netscriptArgs[1].split(' ')
         compare(netStart[0], "start")
         compare(netStop [0], "stop")
         compare(netStart[1], app.id)
         compare(netStop [1], app.id)
         compare(netStart[2], netStop[2])
         verify(netStart[2] !== '')
+    }
+
+    function test_customBindMounts() {
+        skipIfUnsupported()
+
+        var app = ApplicationManager.application("TestApp")
+        startApp(app)
+
+        // ro-bind: marker file inside the ro-mounted directory is readable
+        compare(mountResult["ro-marker"].trim(), "ro-test")
+        // ${APPLICATION_ID} substitution: the app-id was substituted in the host path
+        compare(mountResult["appid-marker"].trim(), "appid-test")
+        // rw-bind: writing to the mount point succeeds
+        verify(mountResult["rw-writable"])
+        // capability-gated mount: absent because TestApp has no 'special-cap' capability
+        verify(!mountResult["cap-present"])
+        // customBindMounts.app: the app itself is mounted at the configured path
+        verify(mountResult["app-path"])
+
+        stopApp(app)
+    }
+
+    function test_customBindMountsWithCap() {
+        skipIfUnsupported()
+
+        var app = ApplicationManager.application("TestAppWithCap")
+        startApp(app)
+
+        // capability-gated mount: present because TestAppWithCap has 'special-cap'
+        verify(mountResult["cap-present"])
+        compare(mountResult["cap-marker"].trim(), "cap-test")
+        // customBindMounts.app: the app itself is mounted at the configured path
+        verify(mountResult["app-path"])
+
+        stopApp(app)
     }
 }

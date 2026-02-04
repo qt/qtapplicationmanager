@@ -1,13 +1,14 @@
 formatVersion: 1
 formatType: am-package
 ---
-id:      'TestApp'
+id:      'TestAppWithCap'
 icon:    'icon.png'
 name:
-  en: 'TestApp'
+  en: 'TestAppWithCap'
 version: '1.0'
 
 applications:
-- id:      'TestApp'
+- id:      'TestAppWithCap'
   code:    'app.qml'
   runtime: 'qml'
+  capabilities: [ special-cap ]

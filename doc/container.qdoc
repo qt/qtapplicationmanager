@@ -391,5 +391,79 @@ The \c bubblewrap container accepts the following configuration settings:
         container. The files are read in order and the variables are set in the container's
         environment. This is useful to pass additional environment variables to the application
         running inside the container. (default: empty)
+
+  \row
+    \li \c customBindMounts
+    \li object
+    \li Configures additional bind mounts that are applied on a per-application basis when an
+        application starts. The following sub-keys are supported:
+
+        \table
+          \header
+            \li Key
+            \li Type
+            \li Description
+          \row
+            \li \c app
+            \li string
+            \li Overrides the container path at which the application's own directory is mounted.
+                (default: \c{/app})
+          \row
+            \li \c extra
+            \li object
+            \li A map of additional bind mounts. Each key is the \e{host} path to mount, and the
+                corresponding value describes the \e{container} path and mount options.
+                The special placeholder \c{${APPLICATION_ID}} in a host path is substituted with
+                the running application's ID at mount time, enabling per-application host
+                directories. The placeholder is \e not supported in container paths.
+
+                Each entry can be specified in two forms:
+
+                \list
+                  \li \b{Simple form}: The value is a plain string containing the container path.
+                      The mount is read-write.
+                  \li \b{Extended form}: The value is a map with the following keys:
+                    \table
+                      \header
+                        \li Key
+                        \li Type
+                        \li Description
+                      \row
+                        \li \c path
+                        \li string
+                        \li (Required) The container path at which to mount.
+                      \row
+                        \li \c mode
+                        \li string
+                        \li Mount mode: \c ro (read-only) or \c rw (read-write). (default: \c rw)
+                      \row
+                        \li \c capabilities
+                        \li list<string>
+                        \li An optional list of application capabilities required for this mount to
+                            be applied. The mount is skipped if the application does not possess
+                            all listed capabilities.
+                    \endtable
+                \endlist
+        \endtable
+
+        Example:
+        \badcode
+        customBindMounts:
+          app: '/opt/app'
+          extra:
+            /run/shared/config:
+              path: '/config'
+              mode: ro
+            /var/data/${APPLICATION_ID}:
+              path: '/data'
+              mode: rw
+            /dev/custom-device:
+              path: '/dev/custom-device'
+              mode: rw
+              capabilities: [ hardware-access ]
+        \endcode
+
+        \note Mount entries in \c extra whose host path does not exist at container start time
+              will cause \c bwrap to fail. Ensure all configured paths are present.
 \endtable
 */

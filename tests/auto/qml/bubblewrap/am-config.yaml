@@ -7,13 +7,15 @@ applications:
 runtimes:
   qml:
     quitTime: 10000  # coin can be VERY slow
+    importPaths: [ '${CONFIG_DIR}/apps/helper' ]
 
 flags:
   developmentMode: true
 
 containers:
   selection:
-    - "TestApp": "bubblewrap"
+    - "TestApp":        "bubblewrap"
+    - "TestAppWithCap": "bubblewrap"
 
   bubblewrap:
     sharedNamespaces: [ '-all', '+net' ]
@@ -22,6 +24,22 @@ containers:
 
     # set to true, if you build against a system or Installer Qt and the launcher cannot be found
     bindMountHome: true
+    customBindMounts:
+      app: '/custom-app'
+      extra:
+        '${CONFIG_DIR}/mount-test-data/ro-source':
+          path: '/bwrap-ro-mount'
+          mode: ro
+        '${CONFIG_DIR}/mount-test-data/${APPLICATION_ID}':
+          path: '/bwrap-appid-mount'
+          mode: ro
+        /tmp/qt-am-bwrap-rw-test:
+          path: '/bwrap-rw-mount'
+          mode: rw
+        '${CONFIG_DIR}/mount-test-data/cap-source':
+          path: '/bwrap-cap-mount'
+          mode: ro
+          capabilities: [ special-cap ]
     configuration:
     - symlink:
         usr/bin: [ '/bin', '/sbin' ]

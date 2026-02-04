@@ -350,15 +350,34 @@ bool BubblewrapContainer::attachApplication(const QVariantMap &application)
 
     m_appRelativeCodePath = application.value(u"codeFilePath"_s).toString();
 
+    Q_ASSERT(!m_application.value(u"id"_s).toString().isEmpty());
+    setupCustomBindMounts();
+
     if (m_state == Running && m_namespacePid != 0) {
         // attaching to an existing quick-launcher instance
 
-        try {
-            m_manager->helpers()->bindMountFileSystem(m_hostPath, m_containerPath, true, m_namespacePid);
-        } catch (const std::exception &e) {
-            qCWarning(lcBwrap) << "Mounting the application directory failed:" << e.what();
-            return false;
+        for (const auto &[hostPath, containerPath] : m_roBindMounts.asKeyValueRange()) {
+            try {
+                qCDebug(lcBwrap) << "Mounting app specific mount path from" << hostPath << "to"<< containerPath;
+                m_manager->helpers()->bindMountFileSystem(hostPath, containerPath, true, m_namespacePid);
+            } catch (const std::exception &e) {
+                qCWarning(lcBwrap) << "Mounting the app specific mount path from" << hostPath
+                                   << "to" << containerPath << "failed:" << e.what();
+                return false;
+            }
         }
+
+        for (const auto &[hostPath, containerPath] : m_rwBindMounts.asKeyValueRange()) {
+            try {
+                qCDebug(lcBwrap) << "Mounting app specific mount path from" << hostPath << "to" << containerPath;
+                m_manager->helpers()->bindMountFileSystem(hostPath, containerPath, false, m_namespacePid);
+            } catch (const std::exception &e) {
+                qCWarning(lcBwrap) << "Mounting the app specific mount path from" << hostPath
+                                   << "to" << containerPath << "failed:" << e.what();
+                return false;
+            }
+        }
+
         if (!runNetworkSetupScript(NetworkScriptEvent::Start)) {
             qCWarning(lcBwrap) << "Network setup (start app in quick-launcher) failed!";
             return false;
@@ -368,6 +387,73 @@ bool BubblewrapContainer::attachApplication(const QVariantMap &application)
     m_ready = true;
     emit ready();
     return true;
+}
+
+void BubblewrapContainer::setupCustomBindMounts(bool ignoreCapabilities)
+{
+    m_roBindMounts.clear();
+    m_rwBindMounts.clear();
+
+    auto customBindMounts = m_manager->configuration().value(u"customBindMounts"_s).toMap();
+    if (customBindMounts.contains(u"app"_s))
+        m_containerPath = customBindMounts.value(u"app"_s).toString();
+    m_roBindMounts.insert(m_hostPath, m_containerPath);
+
+    QString appId = m_application.value(u"id"_s).toString();
+    QStringList capabilities = m_application.value(u"capabilities"_s).toStringList();
+
+    auto addToMountList = [appId, this](const QString &hostPath, const QString &containerPath, bool readOnly) {
+        QString newPath = hostPath;
+        newPath = newPath.replace(u"${APPLICATION_ID}"_s, appId);
+
+        if (containerPath.contains(u"${APPLICATION_ID}"_s))
+            qCCritical(lcBwrap) << "Can't substitute ${APPLICATION_ID} for mount destination paths:" << containerPath;
+
+        if (readOnly)
+            m_roBindMounts.insert(newPath, containerPath);
+        else
+            m_rwBindMounts.insert(newPath, containerPath);
+    };
+
+    auto extra = customBindMounts.value(u"extra"_s).toMap();
+    for (const auto &[key, value] : extra.asKeyValueRange()) {
+        if (value.canConvert<QVariantMap>()) {
+            QVariantMap config = value.toMap();
+            if (!config.contains(u"path"_s)) {
+                qCCritical(lcBwrap) << "Invalid customBindMounts/extra config: No path configured for" << key;
+                continue;
+            }
+            const QString devicePath = config.value(u"path"_s).toString();
+            const QString mode = config.value(u"mode"_s, u"rw"_s).toString();
+            bool readOnly = false;
+            if (mode == u"ro") {
+                readOnly = true;
+            } else if (mode == u"rw") {
+                readOnly = false;
+            } else {
+                qCCritical(lcBwrap) << "Invalid customMount config: Invalid option" << mode << "for 'mode' (expected 'ro' or 'rw')";
+                continue;
+            }
+
+            if (!ignoreCapabilities) {
+                bool capabilitiesOk = true;
+                const QStringList neededCapabilities = config.value(u"capabilities"_s).toStringList();
+                for (const auto &cap : neededCapabilities) {
+                    if (!capabilities.contains(cap)) {
+                        capabilitiesOk = false;
+                        break;
+                    }
+                }
+                if (!capabilitiesOk) {
+                    qCDebug(lcBwrap) << "Ignoring customMount config" << key << "because app" << appId << "does not have all the required capabilities";
+                    continue;
+                }
+            }
+            addToMountList(key, devicePath, readOnly);
+        } else {
+            addToMountList(key, value.toString(), false /*readOnly*/);
+        }
+    }
 }
 
 QString BubblewrapContainer::controlGroup() const
@@ -615,13 +701,23 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
         return false;
     }
 
-    // If the hostPath exists we can mount it directly.
+    // If the m_roBindMounts are already available we can mount them directly
     // Otherwise we are quick launching a container and have to make sure the container path exists
     // to be able to mount to it afterwards.
-    if (QFile::exists(m_hostPath))
-        bwrapCommand += { u"--ro-bind"_s, m_hostPath, m_containerPath };
-    else
-        bwrapCommand += { u"--dir"_s, m_containerPath };
+    if (!m_roBindMounts.isEmpty() || !m_rwBindMounts.isEmpty()) {
+        for (const auto &[hostPath, containerPath] : m_roBindMounts.asKeyValueRange())
+            bwrapCommand += { u"--ro-bind"_s, hostPath, containerPath };
+        for (const auto &[hostPath, containerPath] : m_rwBindMounts.asKeyValueRange())
+            bwrapCommand += { u"--bind"_s, hostPath, containerPath };
+    } else {
+        // We can't check for the capabilities as we don't know the app yet, but we already need
+        // to know the paths in order be able to mount them later.
+        setupCustomBindMounts(true /*ignoreCapabilities*/);
+        for (const auto & [hostPath, containerPath] : m_roBindMounts.asKeyValueRange())
+            bwrapCommand += { u"--dir"_s, containerPath };
+        for (const auto & [hostPath, containerPath] : m_rwBindMounts.asKeyValueRange())
+            bwrapCommand += { u"--dir"_s, containerPath };
+    }
 
     // Add all needed env variables
     const auto allEnvKeys = QProcessEnvironment::systemEnvironment().keys();

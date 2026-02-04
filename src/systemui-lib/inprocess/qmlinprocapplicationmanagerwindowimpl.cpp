@@ -102,6 +102,10 @@ void QmlInProcApplicationManagerWindowImpl::connectActiveFocusItem()
 QmlInProcApplicationManagerWindowImpl::~QmlInProcApplicationManagerWindowImpl()
 {
     m_surfaceItem->setDeadClientSide();
+
+    // Make sure to remove ourselves from the incomplete windows list (we could still be in there
+    // if the application is stopped before one of our windows is fully constructed).
+    s_inCompleteWindows.removeAll(this);
 }
 
 bool QmlInProcApplicationManagerWindowImpl::isSingleProcess() const

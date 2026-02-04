@@ -74,6 +74,10 @@ QmlInProcessApplicationManagerWindow::QmlInProcessApplicationManagerWindow(QObje
 QmlInProcessApplicationManagerWindow::~QmlInProcessApplicationManagerWindow()
 {
     setVisible(false);
+
+    // Make sure to remove ourselves from the incomplete windows list (we could still be in there
+    // if the application is stopped before one of our windows is fully constructed).
+    s_inCompleteWindows.removeAll(this);
 }
 
 bool QmlInProcessApplicationManagerWindow::isVisible() const

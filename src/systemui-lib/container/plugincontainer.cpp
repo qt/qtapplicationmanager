@@ -197,7 +197,7 @@ void PluginContainerHelperFunctions::bindMountFileSystem(const QString &from, co
         if (!sudo->bindMountFileSystem(from, to, readOnly, namespacePid))
             throw std::runtime_error(qPrintable(sudo->lastError()));
     } else {
-        throw std::runtime_error("Cannot call bindMountFileSystem: root privileges are required. Run appman via 'sudo' or 'chmod +s'.");
+        throw std::runtime_error("Cannot call bindMountFileSystem without root privileges: make sure the sudo-helper is enabled.");
     }
 }
 

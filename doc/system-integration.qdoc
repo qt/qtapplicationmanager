@@ -60,7 +60,7 @@ application installations. This is optional and depends on your specific setup a
 In order to accomplish both these opposing goals, the application manager can be started as root
 user together with the \c{--setuid <user>[:<group>]*} command line option or the
 \c{AM_SETUID=<user>[:<group>]*} environment variable. If this is the case, the
-application manager will fork off a simple server (the so called \e{sudo helper}) that talks to the
+application manager will fork off a simple server (the so called \e{sudo-helper}) that talks to the
 main process over a private socket and executes the aforementioned privileged operations on behalf
 of the main process.
 

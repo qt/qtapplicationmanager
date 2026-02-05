@@ -147,6 +147,177 @@ static void checkSetuidArg(int argc, char *argv[], char *envp[])
 decltype(checkSetuidArg) *init_checkSetuidArg
     __attribute__((section(".init_array"), used)) = checkSetuidArg;
 
+class Group;
+
+class User
+{
+public:
+    User() : User(nullptr) { }
+    User(const User &other)
+        : m_valid(other.m_valid)
+        , m_name(other.m_name)
+        , m_uid(other.m_uid)
+        , m_gid(other.m_gid)
+        , m_dir(other.m_dir)
+        , m_shell(other.m_shell)
+    {
+        ++s_count;
+    }
+
+    ~User()
+    {
+        if (--s_count == 0)
+            ::endpwent();
+    }
+
+    User &operator=(const User &) = default;
+
+    bool isValid() const { return m_valid; }
+    uid_t uid() const { return m_uid; }
+    gid_t gid() const { return m_gid; }
+    const char *name() const { return m_name.constData(); }
+    const char *dir() const { return m_dir.constData(); }
+    const char *shell() const { return m_shell.constData(); }
+
+    QSet<gid_t> supplementaryGroupIds(const Group &group);
+
+    void setCurrent(bool permanently = true)
+    {
+        if (::setresuid(uid(), uid(), permanently ? uid() : 0) < 0) {
+            throw Exception(errno, "Could not %1set the user to %2")
+                .arg(permanently ? "permanently " : "").arg(name());
+        }
+    }
+
+    static void setCurrentSupplementaryGroupIds(const QSet<gid_t> setSupGids)
+    {
+        if (::setgroups(setSupGids.size(), QVector<gid_t>(setSupGids.cbegin(), setSupGids.cend()).constData()) < 0)
+            throw Exception(errno, "Could not set supplementary groups (%2)").arg(setSupGids);
+    }
+
+    // The result is always valid
+    static User parse(const QByteArray &user)
+    {
+        bool ok;
+        if (uid_t uid = user.toUInt(&ok); ok) {
+            if (struct ::passwd *pw = ::getpwuid(uid))
+                return User(pw);
+        }
+        if (struct ::passwd *pw = ::getpwnam(user.constData()))
+            return User(pw);
+
+        throw Exception("unknown user '%1'").arg(user);
+    }
+
+private:
+    explicit User(const struct ::passwd *pw)
+        : m_valid(pw)
+        , m_name(pw ? pw->pw_name : "")
+        , m_uid(pw ? pw->pw_uid : static_cast<uid_t>(-1))
+        , m_gid(pw ? pw->pw_gid : static_cast<gid_t>(-1))
+        , m_dir(pw ? pw->pw_dir : "")
+        , m_shell(pw ? pw->pw_shell : "")
+    {
+        ++s_count;
+    }
+
+    bool m_valid;
+    QByteArray m_name;
+    uid_t m_uid = static_cast<uid_t>(-1);
+    gid_t m_gid = static_cast<gid_t>(-1);
+    QByteArray m_dir;
+    QByteArray m_shell;
+    static quint64 s_count;
+};
+
+quint64 User::s_count = 0;
+
+class Group
+{
+public:
+    Group() : Group(nullptr) { }
+    Group(const Group &other)
+        : m_valid(other.m_valid)
+        , m_name(other.m_name)
+        , m_gid(other.m_gid)
+    {
+        ++s_count;
+    }
+
+    ~Group()
+    {
+        if (--s_count == 0)
+            ::endgrent();
+    }
+
+    Group &operator=(const Group &) = default;
+
+    bool isValid() const { return m_valid; }
+    gid_t gid() const { return m_gid; }
+    const char *name() const { return m_name.constData(); }
+
+    void setCurrent(bool permanently = true)
+    {
+        if (::setresgid(gid(), gid(), permanently ? gid() : 0) < 0) {
+            throw Exception(errno, "Could not %1set the group to %2")
+                .arg(permanently ? "permanently ": "").arg(name());
+        }
+    }
+
+    // The result is always valid
+    static Group parse(const QByteArray &group)
+    {
+        bool ok;
+        if (gid_t gid = group.toUInt(&ok); ok) {
+            if (struct ::group *gr = ::getgrgid(gid))
+                return Group(gr);
+        }
+        if (struct ::group *gr = ::getgrnam(group.constData()))
+            return Group(gr);
+        throw Exception("unknown user '%1'").arg(group);
+    }
+
+    // The result is always valid
+    static Group fromUser(const User &user)
+    {
+        if (user.isValid()) {
+            if (struct ::group *gr = ::getgrgid(user.gid()))
+                return Group(gr);
+        }
+        throw Exception("cannot determine group of user '%1'").arg(user.isValid() ? user.name() : "<unknown>");
+    }
+
+    static constexpr int MaxSupplementary = NGROUPS_MAX;
+
+private:
+    explicit Group(const struct ::group *gr)
+        : m_valid(gr)
+        , m_name(gr ? gr->gr_name : "")
+        , m_gid(gr ? gr->gr_gid : static_cast<gid_t>(-1))
+    {
+        ++s_count;
+    }
+
+    bool m_valid;
+    QByteArray m_name;
+    gid_t m_gid;
+    static quint64 s_count;
+};
+
+quint64 Group::s_count = 0;
+
+QSet<gid_t> User::supplementaryGroupIds(const Group &mainGroup)
+{
+    gid_t supGids[NGROUPS_MAX + 1];
+    int supGidsLen = NGROUPS_MAX + 1;
+    gid_t mainGid = mainGroup.isValid() ? mainGroup.gid() : gid();
+    if (::getgrouplist(name(), mainGid, supGids, &supGidsLen) < 0)
+        throw Exception("Could not get supplementary groups for user %1").arg(name());
+    QSet<gid_t> result { supGids, supGids + supGidsLen };
+    result.remove(mainGid);
+    return result;
+}
+
 QT_END_NAMESPACE_AM
 
 #endif // Q_OS_LINUX
@@ -179,51 +350,22 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
     return fallbackServer();
 #else
     uid_t realUid = ::getuid();
+    uid_t effectiveUid = ::geteuid();
+
+    if (realUid != effectiveUid)
+        throw Exception("Running as suid executable is not supported anymore");
+
     if (realUid != 0)
         return fallbackServer();
 
     if (!setuidArg)
         setuidArg = ::getenv("AM_SETUID");
 
-    uid_t effectiveUid = ::geteuid();
-    if (realUid != effectiveUid)
-        throw Exception("Running as suid executable is not supported anymore");
-
     if ((realUid != 0) && setuidArg)
         throw Exception("Cannot use the --setuid argument or $AM_SETUID when not running as root");
 
-    static auto parseUser = [](const QByteArray &user) -> struct ::passwd * {
-        bool ok;
-        if (uid_t uid = user.toUInt(&ok); ok) {
-            if (auto *pw = ::getpwuid(uid))
-                return pw;
-        }
-        if (auto *pw = ::getpwnam(user.constData()))
-            return pw;
-        throw Exception("unknown user '%1'").arg(user);
-    };
-
-    static auto parseGroup = [](const QByteArray &group) -> struct ::group * {
-        bool ok;
-        if (gid_t gid = group.toUInt(&ok); ok) {
-            if (auto *gr = ::getgrgid(gid))
-                return gr;
-        }
-        if (auto *gr = ::getgrnam(group.constData()))
-            return gr;
-        throw Exception("unknown user '%1'").arg(group);
-    };
-
-    static auto groupForUser = [](struct ::passwd *pw) -> struct ::group * {
-        if (pw) {
-            if (auto *gr = ::getgrgid(pw->pw_gid))
-                return gr;
-        }
-        throw Exception("cannot determine group of user '%1'").arg(pw ? pw->pw_name : "<unknown>");
-    };
-
-    struct ::passwd *setPw = nullptr;
-    struct ::group *setGr = nullptr;
+    User setUser;
+    Group setGroup;
     QSet<gid_t> setSupGids;
 
     // setuidArg is initialized in checkSetuidArg, before main()
@@ -234,12 +376,12 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         const QByteArray sudoGid = ::getenv("SUDO_GID");
         if (!sudoUid.isEmpty() && !sudoGid.isEmpty()) {
             try {
-                setPw = parseUser(sudoUid);
-                setGr = parseGroup(sudoGid);
+                setUser = User::parse(sudoUid);
+                setGroup = Group::parse(sudoGid);
 
-                if ((setPw->pw_uid == 0) || (setGr->gr_gid == 0)) {
+                if ((setUser.uid() == 0) || (setGroup.gid() == 0)) {
                     throw Exception("the user and group invoking sudo needs to be unprivileged (got: %1:%2)")
-                        .arg(setPw->pw_name).arg(setGr->gr_name);
+                        .arg(setUser.name()).arg(setGroup.name());
                 }
 
                 for (const auto *env : { "SUDO_UID", "SUDO_GID", "SUDO_USER", "SUDO_COMMAND", "SUDO_HOME", "SUDO_TTY" })
@@ -248,25 +390,27 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
                 throw Exception("SUDO_UID/SUDO_GID: %1").arg(e.errorString());
             }
         } else {
-            qCCritical(LogSystem) << "Running as root is not recommended! Please use --setuid=<user>[:<group>]*, set $AM_SETUID or use sudo to run as an unprivileged user";
+            qCCritical(LogSystem) << "Running as root is not recommended! Please use "
+                                     "--setuid=<user>[:<group>]*, set $AM_SETUID or use "
+                                     "sudo to run as an unprivileged user";
         }
     } else {
         try {
             const auto list = QByteArray(setuidArg).trimmed().split(':');
 
-            setPw = parseUser(list.at(0));
-            setGr = (list.size() >= 2) ? parseGroup(list.at(1))
-                                       : groupForUser(setPw);
+            setUser = User::parse(list.at(0));
+            setGroup = (list.size() >= 2) ? Group::parse(list.at(1))
+                                          : Group::fromUser(setUser);
             const auto supGroups = list.mid(2);
             for (const auto &supGroup : supGroups)
-                setSupGids << parseGroup(supGroup)->gr_gid;
+                setSupGids << Group::parse(supGroup).gid();
 
-            if (setSupGids.size() > NGROUPS_MAX)
-                throw Exception("too many supplementary groups, the maximum is %1").arg(NGROUPS_MAX);
+            if (setSupGids.size() > Group::MaxSupplementary)
+                throw Exception("too many supplementary groups, the maximum is %1").arg(Group::MaxSupplementary);
 
-            if ((setPw->pw_uid == 0) || (setGr->gr_gid == 0) || setSupGids.contains(0)) {
+            if ((setUser.uid() == 0) || (setGroup.gid() == 0) || setSupGids.contains(0)) {
                 throw Exception("user and group(s) need to be unprivileged (got: %1:%2, supplementary: %3)")
-                    .arg(setPw->pw_name).arg(setGr->gr_name).arg(setSupGids);
+                    .arg(setUser.name()).arg(setGroup.name()).arg(setSupGids);
             }
         } catch (const Exception &e) {
             throw Exception("Error parsing --setuid / $AM_SETUID: %1").arg(e.errorString());
@@ -293,7 +437,6 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         // child process, this is now the sudo-helper
         ::close(0);
         ::setsid();
-        ::endgrent(); // force libc to cleanup
 
         // reset umask
         if (realUmask)
@@ -346,51 +489,44 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         if (realUmask)
             ::umask(realUmask);
 
-        if (setPw && setGr) {
+        if (setUser.isValid() && setGroup.isValid()) {
             // combine the user's supplementary groups with the additonal groups given to --setuid:
-            gid_t supGids[NGROUPS_MAX + 1];
-            int supGidsLen = NGROUPS_MAX + 1;
-            if (::getgrouplist(setPw->pw_name, setGr->gr_gid, supGids, &supGidsLen) < 0)
-                throw Exception("Could not get supplementary groups for user %1").arg(setPw->pw_name);
-            setSupGids.unite(QSet<gid_t> { supGids, supGids + supGidsLen });
-            setSupGids.remove(setGr->gr_gid);
-            if (setSupGids.size() > NGROUPS_MAX)
-                throw Exception("Too many supplementary groups when combining the groups of user %1 with the ones specified for --setuid / $AM_SETUID").arg(setPw->pw_name);
-            if (::setgroups(setSupGids.size(), QVector<gid_t>(setSupGids.cbegin(), setSupGids.cend()).constData()) < 0)
-                throw Exception(errno, "Could not set supplementary groups (%2) for user %1").arg(setPw->pw_name).arg(setSupGids);
+            auto supGids = setUser.supplementaryGroupIds(setGroup);
+            setSupGids.unite(supGids);
+            setSupGids.remove(setGroup.gid());
+            if (setSupGids.size() > Group::MaxSupplementary) {
+                throw Exception("Too many supplementary groups when combining the groups of user "
+                                "%1 with the ones specified for --setuid / $AM_SETUID")
+                    .arg(setUser.name());
+            }
+            User::setCurrentSupplementaryGroupIds(setSupGids);
 
             // drop all root privileges
-            if (dropPrivileges == DropPrivilegesPermanently) {
-                if (::setresgid(setGr->gr_gid, setGr->gr_gid, setGr->gr_gid) < 0)
-                    throw Exception(errno, "Could not permanently set the group to %1").arg(setGr->gr_name);
-                if (::setresuid(setPw->pw_uid, setPw->pw_uid, setPw->pw_uid) < 0)
-                    throw Exception(errno, "Could not permanently set the user to %1").arg(setPw->pw_name);
-            } else {
-                if (::setresgid(setGr->gr_gid, setGr->gr_gid, 0) < 0)
-                    throw Exception(errno, "Could not set the group to %1").arg(setGr->gr_name);
-                if (::setresuid(setPw->pw_uid, setPw->pw_uid, 0) < 0)
-                    throw Exception(errno, "Could not set the user to %1").arg(setPw->pw_name);
-                qCCritical(LogSystem) << "\nSudo was instructed to NOT drop root privileges permanently.\nThis is dangerous and should only be used in auto-tests!\n";
+            const bool dropPermanently = (dropPrivileges == DropPrivilegesPermanently);
+            setGroup.setCurrent(dropPermanently);
+            setUser.setCurrent(dropPermanently);
+
+            if (!dropPermanently) {
+                qCCritical(LogSystem) << "\nSudo was instructed to NOT drop root privileges permanently.\n"
+                                         "This is dangerous and should only be used in auto-tests!\n";
             }
 
             // Fix env variables
             // ::system("env"); // for testing
-            ::setenv("HOME", setPw->pw_dir, 1);
-            ::setenv("USER", setPw->pw_name, 1);
-            ::setenv("LOGNAME", setPw->pw_name, 1);
-            ::setenv("SHELL", setPw->pw_shell, 1);
+            ::setenv("HOME", setUser.dir(), 1);
+            ::setenv("USER", setUser.name(), 1);
+            ::setenv("LOGNAME", setUser.name(), 1);
+            ::setenv("SHELL", setUser.shell(), 1);
             QByteArray xdgRTD = ::getenv("XDG_RUNTIME_DIR");
             if (xdgRTD.endsWith("/0")) {
                 xdgRTD.chop(1);
-                xdgRTD.append(QByteArray::number(setPw->pw_uid));
+                xdgRTD.append(QByteArray::number(setUser.uid()));
                 ::setenv("XDG_RUNTIME_DIR", xdgRTD.constData(), 1);
             }
             // We are NOT changing to the user's home dir on purpose to avoid overriding a systemd setting
 
             qCInfo(LogSystem).nospace() << "The sudo-helper process is active and the main process is now running as "
-                                        << setPw->pw_name << ":" << setGr->gr_name;
-
-            ::endgrent(); // force libc to cleanup
+                                        << setUser.name() << ":" << setGroup.name();
         }
 
         SudoClient::createInstance(socketFds[1]);

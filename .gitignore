@@ -28,6 +28,10 @@ branch-coverage
 *.cache
 *.vscode
 build
+builds
+CMakePresets.json
+CMakeUserPresets.json
+.qmlls.ini
 
 config.tests/*/*
 !config.tests/*/*[.]*

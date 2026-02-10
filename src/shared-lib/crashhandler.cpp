@@ -383,7 +383,7 @@ static void initBacktraceUnix()
 
     UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler,
                                            AM_UNIX_CRASH_SIGNALS,
-                                           [](int sig) {
+                                           [](int sig, int /*senderPid*/) {
         UnixSignalHandler::instance()->resetToDefault(sig);
         char buffer[256];
         bool isWatchdogSig = (sig == UnixSignalHandler::watchdogSignal());

@@ -131,9 +131,9 @@ std::vector<int> UnixSignalHandler::reinstallIfNeeded(std::initializer_list<int>
 #if defined(AM_POSIX_SIGNALS)
             ::sigaddset(&unblockSet, sig);
 
-            if ((::sigaction(sig, nullptr, &sigact) < 0) || (sigact.sa_handler != &signalHandler)) {
-                sigact.sa_flags = SA_ONSTACK;
-                sigact.sa_handler = &signalHandler;
+            if ((::sigaction(sig, nullptr, &sigact) < 0) || (sigact.sa_sigaction != &signalHandler)) {
+                sigact.sa_flags = SA_ONSTACK | SA_SIGINFO;
+                sigact.sa_sigaction = &signalHandler;
                 ::sigemptyset(&sigact.sa_mask);
                 ::sigaction(sig, &sigact, nullptr);
                 result.push_back(sig);
@@ -151,8 +151,17 @@ std::vector<int> UnixSignalHandler::reinstallIfNeeded(std::initializer_list<int>
     return result;
 }
 
+#if defined(AM_POSIX_SIGNALS)
+void UnixSignalHandler::signalHandler(int sig, siginfo_t *info, void *)
+{
+    int senderPid = 0;
+    if (info && (info->si_code == SI_USER || info->si_code == SI_QUEUE || info->si_code == SI_MESGQ))
+        senderPid = info->si_pid;
+#else
 void UnixSignalHandler::signalHandler(int sig)
 {
+    int senderPid = 0;
+#endif
     // this function is the low-level signal handler multiplexer
     auto that = UnixSignalHandler::instance();
     if (!isValidSignal(sig))
@@ -164,10 +173,12 @@ void UnixSignalHandler::signalHandler(int sig)
     auto clearCurrentSignal = qScopeGuard([=]() { that->m_currentSignal = 0; });
 
     if (!sh->m_eventLoop) {
-        sh->m_handler(sig);
+        sh->m_handler(sig, senderPid);
     } else {
 #if defined(Q_OS_UNIX)
-        (void) qt_safe_write(that->m_pipe[1], &sig, sizeof(int));
+        std::array<int, 2> pipeMsg = { sig, senderPid };
+        const qint64 pipeMsgSize = pipeMsg.size() * sizeof(decltype(pipeMsg)::value_type);
+        (void) qt_safe_write(that->m_pipe[1], pipeMsg.data(), pipeMsgSize);
 #elif defined(Q_OS_WIN)
         // we're running in a separate thread now
         that->m_winLock.lock();
@@ -185,13 +196,13 @@ void UnixSignalHandler::deleteAfterGracePeriod(SigHandler *sh)
         QTimer::singleShot(10min, this, [sh] { delete sh; });
 };
 
-bool UnixSignalHandler::install(Type handlerType, int sig, const std::function<void (int)> &handler)
+bool UnixSignalHandler::install(Type handlerType, int sig, const std::function<void (int, int)> &handler)
 {
     return install(handlerType, { sig }, handler);
 }
 
 bool UnixSignalHandler::install(Type handlerType, std::initializer_list<int> sigs,
-                                const std::function<void(int)> &handler)
+                                const std::function<void(int, int)> &handler)
 {
     for (int sig : sigs) {
         if (!isValidSignal(sig)) {
@@ -214,17 +225,18 @@ bool UnixSignalHandler::install(Type handlerType, std::initializer_list<int> sig
             auto sn = new QSocketNotifier(m_pipe[0], QSocketNotifier::Read, this);
             connect(sn, &QSocketNotifier::activated, qApp, [this]() {
                 // this lambda is the "signal handler" multiplexer within the Qt event loop
-                int sig = 0;
+                std::array<int, 2> pipeMsg = { 0, 0 };
+                const qint64 pipeMsgSize = pipeMsg.size() * sizeof(decltype(pipeMsg)::value_type);
 
-                if (qt_safe_read(m_pipe[0], &sig, sizeof(int)) != sizeof(int)) {
+                if (qt_safe_read(m_pipe[0], pipeMsg.data(), pipeMsgSize) != pipeMsgSize) {
                     qCWarning(LogSystem) << "Error reading from signal handler:" << strerror(errno);
                     return;
                 }
 
-                if (isValidSignal(sig)) {
-                    if (auto sh = m_handlers[sig - 1].loadAcquire()) {
+                if (isValidSignal(pipeMsg[0])) {
+                    if (auto sh = m_handlers[pipeMsg[0] - 1].loadAcquire()) {
                         if (sh->m_handler && sh->m_eventLoop)
-                            sh->m_handler(sig);
+                            sh->m_handler(pipeMsg[0], pipeMsg[1]);
                     }
                 }
             });
@@ -240,7 +252,7 @@ bool UnixSignalHandler::install(Type handlerType, std::initializer_list<int> sig
                     if (isValidSignal(sig)) {
                         if (auto sh = m_handlers[sig - 1].loadAcquire()) {
                             if (sh->m_handler && sh->m_eventLoop)
-                                sh->m_handler(sig);
+                                sh->m_handler(sig, 0);
                         }
                     }
                 }
@@ -266,8 +278,8 @@ bool UnixSignalHandler::install(Type handlerType, std::initializer_list<int> sig
 
 #if defined(AM_POSIX_SIGNALS)
     struct ::sigaction sigact;
-    sigact.sa_flags = SA_ONSTACK;
-    sigact.sa_handler = &signalHandler;
+    sigact.sa_flags = SA_ONSTACK | SA_SIGINFO;
+    sigact.sa_sigaction = &signalHandler;
 
     ::sigemptyset(&sigact.sa_mask);
     ::sigset_t unblockSet;

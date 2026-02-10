@@ -79,7 +79,7 @@ void PSPackages::initialize()
     d->lockFilePath = d->lockFile->fileName().toLocal8Bit();
 
     UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler, AM_PS_SIGNALS,
-                                           [this](int sig) {
+                                           [this](int sig, int /*senderPid*/) {
         UnixSignalHandler::instance()->resetToDefault(sig);
 #if defined(Q_OS_WINDOWS)
         if (!d->lockFilePath.isEmpty())

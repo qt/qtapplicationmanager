@@ -42,7 +42,7 @@ QT_USE_NAMESPACE_AM
 
 Q_GLOBAL_STATIC(DBus, dbus)
 
-static void installInterruptHandler(const std::function<void (int)> &handler)
+static void installInterruptHandler(const std::function<void (int, int)> &handler)
 {
 #if defined(Q_OS_UNIX)
 #  define AM_SIGNALS  { SIGTERM, SIGINT, SIGPIPE, SIGHUP }
@@ -518,7 +518,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
     if (stdRedirections.isEmpty() || !isStarted) {
         qApp->exit(isStarted ? 0 : 2);
     } else {
-        installInterruptHandler([appId](int sig) {
+        installInterruptHandler([appId](int sig, int /*senderPid*/) {
             std::cout << "Stopping application due to signal " << UnixSignalHandler::signalName(sig)
                       << ".\n";
             auto stopReply = dbus()->manager()->stopApplication(appId, true);
@@ -701,7 +701,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
 
     // cancel the job on Ctrl+C
 
-    installInterruptHandler([](int sig) {
+    installInterruptHandler([](int sig, int /*senderPid*/) {
         std::cout << "Cancelling package installation due to signal "
                   << UnixSignalHandler::signalName(sig) << ".\n";
         auto cancelReply = dbus()->packager()->cancelTask(installationId);

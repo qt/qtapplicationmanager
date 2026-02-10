@@ -143,7 +143,7 @@ Main::Main(int &argc, char **argv, InitFlags initFlags)
         once = true;
 
         UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
-                                               { SIGINT, SIGTERM }, [](int sig) {
+                                               { SIGINT, SIGTERM }, [](int sig, int /*senderPid*/) {
             UnixSignalHandler::instance()->resetToDefault(sig);
             if (auto *main = qobject_cast<Main *>(QCoreApplication::instance()))
                 main->shutDown((sig == SIGINT) ? "Ctrl+C" : "SIGTERM");

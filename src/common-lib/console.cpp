@@ -133,7 +133,7 @@ ConsoleGlobal::ConsoleGlobal()
     }
 
 #if defined(Q_OS_UNIX) && defined(SIGWINCH)
-    UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler, SIGWINCH, [](int) {
+    UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler, SIGWINCH, [](int, int) {
         // we are in a signal handler, so we just clear the cached value in the atomic int
         cg()->consoleWidthCached = 0;
     });

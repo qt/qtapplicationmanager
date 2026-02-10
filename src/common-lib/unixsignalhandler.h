@@ -45,9 +45,9 @@ public:
         ForwardedToEventLoopHandler
     };
 
-    bool install(Type handlerType, int sig, const std::function<void(int)> &handler);
+    bool install(Type handlerType, int sig, const std::function<void(int, int)> &handler);
     bool install(Type handlerType, std::initializer_list<int> sigs,
-                 const std::function<void(int)> &handler);
+                 const std::function<void(int, int)> &handler);
 
     static constexpr bool isValidSignal(int sig) { return ((sig > 0) && (sig < NSIG)); }
 
@@ -55,15 +55,19 @@ private:
     UnixSignalHandler();
     static UnixSignalHandler *s_instance;
 
+#if defined(Q_OS_UNIX) && !defined(Q_OS_QNX)
+    static void signalHandler(int sig, siginfo_t *info, void *ucontext);
+#else
     static void signalHandler(int sig);
+#endif
 
     struct SigHandler
     {
-        explicit SigHandler(bool eventLoop, const std::function<void(int)> &handler)
+        explicit SigHandler(bool eventLoop, const std::function<void(int, int)> &handler)
             : m_eventLoop(eventLoop), m_handler(handler) { }
 
         bool m_eventLoop;
-        std::function<void(int)> m_handler;
+        std::function<void(int, int)> m_handler;
     };
 
     void deleteAfterGracePeriod(SigHandler *sh);

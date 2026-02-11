@@ -14,8 +14,10 @@ qt_add_executable(package-installation WIN32
     main.cpp
 )
 
-# This define flags us as an "appman" and allows us to link against the AppMan's private libraries
-target_compile_definitions(package-installation PRIVATE AM_COMPILING_APPMAN)
+if (QT_FEATURE_static)
+    # This define flags us as an "appman" and allows us to link against the AppMan's private libraries
+    target_compile_definitions(package-installation PRIVATE AM_COMPILING_APPMAN)
+endif()
 
 if(CMAKE_CROSSCOMPILING)
     set(SYSPROP_CROSS   "crossBuild: true")

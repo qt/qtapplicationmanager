@@ -31,5 +31,7 @@ qt_add_qml_module(tst_monitormodel
         am-config.yaml
 )
 
-# This define flags us as an "appman" and allows us to link against the AppMan's private libraries
-target_compile_definitions(tst_monitormodel PRIVATE AM_COMPILING_APPMAN)
+if (QT_FEATURE_static)
+    # This define flags us as an "appman" and allows us to link against the AppMan's private libraries
+    target_compile_definitions(tst_monitormodel PRIVATE AM_COMPILING_APPMAN)
+endif()

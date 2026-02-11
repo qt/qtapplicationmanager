@@ -9,8 +9,10 @@ qt_add_executable(custom-appman WIN32
     custom-appman.cpp
 )
 
-# This define flags us as an "appman" and allows us to link against the AppMan's private libraries
-target_compile_definitions(custom-appman PRIVATE AM_COMPILING_APPMAN)
+if (QT_FEATURE_static)
+    # This define flags us as an "appman" and allows us to link against the AppMan's private libraries
+    target_compile_definitions(custom-appman PRIVATE AM_COMPILING_APPMAN)
+endif()
 
 target_compile_definitions(custom-appman PRIVATE
     QT_MESSAGELOGCONTEXT

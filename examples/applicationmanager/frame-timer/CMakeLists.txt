@@ -14,8 +14,10 @@ qt_add_executable(frame-timer WIN32
     main.cpp
 )
 
-# This define flags us as an "appman" and allows us to link against the AppMan's private libraries
-target_compile_definitions(frame-timer PRIVATE AM_COMPILING_APPMAN)
+if (QT_FEATURE_static)
+    # This define flags us as an "appman" and allows us to link against the AppMan's private libraries
+    target_compile_definitions(frame-timer PRIVATE AM_COMPILING_APPMAN)
+endif()
 
 qt_add_qml_module(frame-timer
     URI SystemUI

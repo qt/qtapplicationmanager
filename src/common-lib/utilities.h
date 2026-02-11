@@ -102,6 +102,7 @@ Q_APPMANCOMMON_EXPORT bool recursiveOperation(const QDir &path, const std::funct
 Q_APPMANCOMMON_EXPORT bool safeRemove(const QString &path, RecursiveOperationType type);
 
 Q_APPMANCOMMON_EXPORT qint64 getParentPid(qint64 pid);
+Q_APPMANCOMMON_EXPORT size_t getProcessName(qint64 pid, char *buffer, size_t bufferSize);
 
 Q_APPMANCOMMON_EXPORT QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) noexcept(false);
 

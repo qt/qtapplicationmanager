@@ -143,10 +143,22 @@ Main::Main(int &argc, char **argv, InitFlags initFlags)
         once = true;
 
         UnixSignalHandler::instance()->install(UnixSignalHandler::ForwardedToEventLoopHandler,
-                                               { SIGINT, SIGTERM }, [](int sig, int /*senderPid*/) {
+                                               { SIGINT, SIGTERM }, [](int sig, int senderPid) {
             UnixSignalHandler::instance()->resetToDefault(sig);
-            if (auto *main = qobject_cast<Main *>(QCoreApplication::instance()))
-                main->shutDown((sig == SIGINT) ? "Ctrl+C" : "SIGTERM");
+            if (auto *main = qobject_cast<Main *>(QCoreApplication::instance())) {
+                QByteArray reason = (sig == SIGINT) ? "Ctrl+C" : "SIGTERM";
+                if (senderPid) {
+                    reason += " from PID " + QByteArray::number(senderPid);
+
+                    QByteArray processName;
+                    processName.resize(256);
+                    if (auto len = getProcessName(senderPid, processName.data(), processName.size())) {
+                        processName.resize(len);
+                        reason += " (" + processName + ")";
+                    }
+                }
+                main->shutDown(reason);
+            }
         });
     }
     StartupTimer::instance()->checkpoint("after application constructor");
@@ -269,7 +281,7 @@ bool Main::isRunningOnEmbedded() const
     return s_isRunningOnEmbedded;
 }
 
-void Main::shutDown(const char *shutdownReason, int exitCode)
+void Main::shutDown(const QString &shutdownReason, int exitCode)
 {
     if (m_shutdownStarted) // avoid recursion
         return;
@@ -285,14 +297,14 @@ void Main::shutDown(const char *shutdownReason, int exitCode)
     m_shutdownStarted = true;
     m_shutdownStage = AllDown;
     m_shutdownExitCode = exitCode;
-    m_shutdownReason = shutdownReason;
 
     Systemd::instance()->notify(u"STOPPING=1"_s);
 
+    if (!shutdownReason.isEmpty() && (qEnvironmentVariableIntValue("QT_QTESTLIB_RUNNING") != 1))
+        qCInfo(LogSystem).noquote() << "Shutting down due to" << shutdownReason;
+
     auto finalShutdown = [this](bool force) {
         unexpectedShutdown = false;
-        if (m_shutdownReason && (qEnvironmentVariableIntValue("QT_QTESTLIB_RUNNING") != 1))
-            qCInfo(LogSystem) << "Shutting down due to" << m_shutdownReason;
         if (force)
             ::exit(m_shutdownExitCode);
         else

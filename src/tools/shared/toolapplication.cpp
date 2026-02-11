@@ -193,7 +193,7 @@ QString ToolApplicationBase::readPasswordFromConsole(const QString &prompt)
             throw Exception("Cannot set terminal attributes");
 
         QByteArray baPrompt = prompt.toLocal8Bit();
-        ::write(ttyFd, baPrompt.constData(), baPrompt.size());
+        auto ignore [[maybe_unused]] = ::write(ttyFd, baPrompt.constData(), baPrompt.size());
 
         QByteArray password(1023, 0);
         int nread = ::read(ttyFd, password.data(), password.size());
@@ -203,7 +203,7 @@ QString ToolApplicationBase::readPasswordFromConsole(const QString &prompt)
         while (password.endsWith('\n') || password.endsWith('\r'))
             password.chop(1);
 
-        ::write(ttyFd, "\n", 1);
+        ignore += ::write(ttyFd, "\n", 1);
         return QString::fromLocal8Bit(password);
 
 #elif defined(Q_OS_WINDOWS)

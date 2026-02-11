@@ -79,6 +79,8 @@ public:
                                   QVector<int> &&stdioRedirections = QVector<int>()) noexcept(false);
     void stopApplicationInternal(Application *app, Am::ExitStatus exitStatus = Am::NormalExit);
 
+    void shutDown();
+
     // only use these two functions for development!
     bool securityChecksEnabled() const;
     void setSecurityChecksEnabled(bool enabled);
@@ -122,9 +124,6 @@ public:
     Q_SCRIPTABLE QtAM::Am::RunState applicationRunState(const QString &id) const;
 
     ApplicationManagerInternalSignals internalSignals;
-
-public Q_SLOTS:
-    void shutDown();
 
 Q_SIGNALS:
     Q_SCRIPTABLE void applicationRunStateChanged(const QString &id, QtAM::Am::RunState runState);

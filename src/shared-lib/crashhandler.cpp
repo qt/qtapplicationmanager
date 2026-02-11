@@ -373,6 +373,19 @@ static void logQmlBacktrace(LogToDestination logTo)
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID)
 
+static size_t snprintfcat(char *buffer, size_t bufferSize, const char *format, ...) Q_ATTRIBUTE_FORMAT_PRINTF(3, 4);
+static size_t snprintfcat(char *buffer, size_t bufferSize, const char *format, ...)
+{
+    size_t bufferLen = qstrnlen(buffer, bufferSize);
+
+    va_list arglist;
+    va_start(arglist, format);
+    int catLen = vsnprintf(buffer + bufferLen, bufferSize - bufferLen, format, arglist);
+    va_end(arglist);
+
+    return bufferLen + catLen;
+}
+
 static void crashHandler(const char *why, int stackFramesToIgnore);
 
 static void initBacktraceUnix()
@@ -383,7 +396,7 @@ static void initBacktraceUnix()
 
     UnixSignalHandler::instance()->install(UnixSignalHandler::RawSignalHandler,
                                            AM_UNIX_CRASH_SIGNALS,
-                                           [](int sig, int /*senderPid*/) {
+                                           [](int sig, int senderPid) {
         UnixSignalHandler::instance()->resetToDefault(sig);
         char buffer[256];
         bool isWatchdogSig = (sig == UnixSignalHandler::watchdogSignal());
@@ -391,6 +404,13 @@ static void initBacktraceUnix()
             snprintf(buffer, sizeof(buffer), "killed by watchdog (signal %d)", sig);
         else
             snprintf(buffer, sizeof(buffer), "uncaught signal %d (%s)", sig, UnixSignalHandler::signalName(sig));
+
+        if (senderPid) {
+            snprintfcat(buffer, sizeof(buffer), " from PID %d", senderPid);
+            std::array<char, 128> processName;
+            if (getProcessName(senderPid, processName.data(), processName.size()))
+                snprintfcat(buffer, sizeof(buffer), " (%s)", processName.data());
+        }
 
         crashHandler(buffer, chg()->stackFramesToIgnoreOnCrash);
 

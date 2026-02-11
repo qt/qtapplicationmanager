@@ -214,7 +214,7 @@ void tst_ControllerTool::cleanupTestCase()
 {
     if (m_main) {
         if (m_mainSetupDone) {
-            m_main->shutDown();
+            m_main->shutDown({});
             m_main->exec();
         }
         delete m_main;

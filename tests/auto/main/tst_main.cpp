@@ -145,7 +145,7 @@ void tst_Main::destroyMain()
 {
     if (main) {
         if (mainSetupDone) {
-            main->shutDown();
+            main->shutDown({});
             main->exec();
         } else {
             // without this, the watchdog cannot cleanly shutdown

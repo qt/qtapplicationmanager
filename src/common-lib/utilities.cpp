@@ -166,6 +166,40 @@ qint64 getParentPid(qint64 pid)
     return ppid;
 }
 
+size_t getProcessName(qint64 pid, char *buffer, size_t bufferSize)
+{
+    // This function is allocation free on purpose, since it is used in signal handlers.
+
+    if (!buffer || !bufferSize)
+        return 0;
+
+#if defined(Q_OS_LINUX)
+    std::array<char, 64> procExePath { };
+    ::snprintf(procExePath.data(), procExePath.size(), "/proc/%lld/exe", static_cast<long long>(pid));
+    ssize_t len = ::readlink(procExePath.data(), buffer, bufferSize - 1);
+    if (len < 0)
+        len = 0;
+    buffer[len] = '\0';
+    return len;
+
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+    std::array<int, 4> mib { CTL_KERN, KERN_PROC, KERN_PROC_PID, (pid_t) pid };
+    ::kinfo_proc procInfo;
+    size_t procInfoSize = sizeof(procInfo);
+
+    if (::sysctl(mib.data(), mib.size(), &procInfo, &procInfoSize, nullptr, 0) == 0) {
+        qstrncpy(buffer, procInfo.kp_proc.p_comm, bufferSize);
+        return qstrlen(buffer);
+    } else {
+        return 0;
+    }
+
+#else
+    Q_UNUSED(pid)
+    return 0;
+#endif
+}
+
 int timeoutFactor()
 {
     static int tf = 0;

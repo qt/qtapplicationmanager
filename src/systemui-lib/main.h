@@ -75,11 +75,11 @@ public:
     void loadQml() noexcept(false);
     void showWindow();
 
-    Q_INVOKABLE void shutDown(const char *shutdownReason = nullptr, int exitCode = 0);
-
     QQmlApplicationEngine *qmlEngine() const;
 
     static int exec();
+
+    void shutDown(const QString &shutdownReason, int exitCode = 0);
 
 protected:
     void registerResources(const QStringList &resources) const;
@@ -124,7 +124,6 @@ private:
     bool m_shutdownStarted = false;
     int m_shutdownExitCode = 0;
     int m_shutdownStage = 0;
-    const char *m_shutdownReason = nullptr;
     std::chrono::milliseconds m_shutdownTimeout { 0 };
 
     QQmlApplicationEngine *m_engine = nullptr;

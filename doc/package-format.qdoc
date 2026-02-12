@@ -77,7 +77,7 @@ The actual calculation of this checksum is done as follows:
       the digest. Afterwards the following UTF-8 encoded string is also added to the digest: \c {
       "F/<file size in bytes>/<file path>"} (e.g. the file \c{foo/test.qml} with a size of 250 bytes
       would generate \c{F/250/foo/test.qml})
-  \li For every directory, the following UTF-8 encoded string is added to the digst: \c {
+  \li For every directory, the following UTF-8 encoded string is added to the digest: \c {
       "D/0/<directory path>"} (e.g. the directory \c{foo/images} would generate \c{D/0/foo/images})
 \endlist
 

@@ -827,7 +827,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
         app = apps.constFirst();
     } else if (apps.size() > 1) {
         // if there is more than one app within the same process, check the XDG surface appId
-        const QString xdgAppId = surface->applicationId();
+        const QString xdgAppId = surface->xdgAppId();
         if (!xdgAppId.isEmpty()) {
             for (const auto &checkApp : apps) {
                 if (checkApp->id() == xdgAppId) {
@@ -1096,9 +1096,9 @@ QString WindowManagerPrivate::applicationId(Application *app, WindowSurface *win
     if (app)
         return app->id();
     else if (windowSurface && windowSurface->surface() && windowSurface->surface()->client())
-        return u"pid: "_s + QString::number(windowSurface->surface()->client()->processId());
+        return u"[pid: %1]"_s.arg(windowSurface->surface()->client()->processId());
     else
-        return u"<unknown client>"_s;
+        return u"[external app]"_s;
 }
 
 #endif // QT_CONFIG(am_multi_process)

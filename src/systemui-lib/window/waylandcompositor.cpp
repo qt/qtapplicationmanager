@@ -63,7 +63,7 @@ WaylandCompositor *WindowSurface::compositor() const
     return m_compositor;
 }
 
-QString WindowSurface::applicationId() const
+QString WindowSurface::xdgAppId() const
 {
     if (m_xdgSurface && m_xdgSurface->toplevel())
         return m_xdgSurface->toplevel()->appId();

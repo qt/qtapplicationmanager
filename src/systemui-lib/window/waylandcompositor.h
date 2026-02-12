@@ -58,7 +58,7 @@ public:
     QWaylandXdgSurface *xdgSurface() const;
     WaylandCompositor *compositor() const;
 
-    QString applicationId() const;
+    QString xdgAppId() const;
     bool isPopup() const;
     QRect popupGeometry() const;
     void sendResizing(const QSize &size);

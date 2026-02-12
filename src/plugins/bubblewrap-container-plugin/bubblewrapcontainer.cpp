@@ -181,7 +181,7 @@ void BubblewrapContainerManager::setConfiguration(const QVariantMap &configurati
 
     QVariant config = m_configuration.value(u"configuration"_s);
     if (config.metaType() == QMetaType::fromType<QVariantMap>()) {
-        qCWarning(lcBwrap) << "Using a unordered map for the bwrap configuration is deprecated. Please convert to a list of key-value pairs.";
+        qCWarning(lcBwrap) << "Using an unordered map for the bwrap configuration is deprecated. Please convert to a list of key-value pairs.";
         QVariantList to;
         QVariantMap from = config.toMap();
         for (auto it = from.cbegin(); it != from.cend(); ++it)

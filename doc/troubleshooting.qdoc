@@ -127,7 +127,7 @@ For example, shaders.
 
 Most likely your appman-controller and the appman instances are running under different Unix user
 accounts on your target device. If your shell user is \c root, but the appman is running under an
-unpriviledged account, you can use this setup: rename the \c appman-controller executable to
+unprivileged account, you can use this setup: rename the \c appman-controller executable to
 \c appman-controller.bin and save the following script as \c appman-controller in place of the
 original executable. Don't forget to replace \c <your-appman-user> with the actual user name.
 

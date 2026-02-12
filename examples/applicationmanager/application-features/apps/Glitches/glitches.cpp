@@ -53,7 +53,7 @@ QSGNode *Glitches::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     if (m_sleepSync) {
         qreal s = m_sleepSync;
         m_sleepSync = 0;
-        qCInfo(appGlitches) << "Render thread: going to sleep in for" << s << "seconds in sync state ...";
+        qCInfo(appGlitches) << "Render thread: going to sleep for" << s << "seconds in sync state ...";
         QThread::msleep(s * 1000.0);
         qCInfo(appGlitches) << "Render thread: returning from" << s << "seconds sleep in sync state";
     }

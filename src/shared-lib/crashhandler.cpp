@@ -318,7 +318,7 @@ static void logBacktraceLine(LogToDestination logTo, int level, const char *symb
         cprt << ColorPrint::bwhite << (symbol ? symbol : "?") << ColorPrint::reset;
 
     if (file) {
-        static const char *filePrefix =
+        static const char filePrefix[] =
 #  if defined(Q_OS_WINDOWS)
                 "file:///";
 #  else

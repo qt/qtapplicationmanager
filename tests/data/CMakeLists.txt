@@ -112,3 +112,7 @@ endif()
 add_custom_target(create-test-packages ALL
                   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/packages
 )
+
+set_target_properties(create-test-packages PROPERTIES
+                      ADDITIONAL_CLEAN_FILES ${CMAKE_CURRENT_BINARY_DIR}/packages
+)

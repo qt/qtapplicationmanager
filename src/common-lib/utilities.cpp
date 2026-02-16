@@ -17,8 +17,6 @@
 #include "utilities.h"
 #include "exception.h"
 
-#include <cerrno>
-
 #if defined(Q_OS_UNIX)
 #  include <unistd.h>
 #endif

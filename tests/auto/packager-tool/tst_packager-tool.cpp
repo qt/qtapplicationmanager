@@ -108,10 +108,13 @@ void tst_PackagerTool::initTestCase()
                << AM_TESTDATA_DIR u"certificates/dev-ca/dev-ca.crl"_s
                << AM_TESTDATA_DIR u"certificates/store-ca/store-ca.crl"_s;
 
-    QVERIFY_THROWS_NO_EXCEPTION(m_pm->loadCertificates(m_commonCaFiles,
-                                                       m_devCaFiles,
-                                                       m_storeCaFiles,
-                                                       m_crlFiles));
+    QList<CaCertificate> caCerts = {
+        CaCertificate(m_commonCaFiles[0], CaCertificate::Scope::Common, CaCertificate::Role::Root),
+        CaCertificate(m_devCaFiles[0], CaCertificate::Scope::Developer, CaCertificate::Role::Issuer),
+        CaCertificate(m_storeCaFiles[0], CaCertificate::Scope::Store, CaCertificate::Role::Issuer)
+    };
+
+    QVERIFY_THROWS_NO_EXCEPTION(m_pm->loadCertificates(caCerts, m_crlFiles));
     m_devPassword   = u"password"_s;
     m_storePassword = u"password"_s;
 

@@ -37,12 +37,9 @@ void Signature::requirePackageId(const QString &packageId)
     d->requirePackageId = packageId;
 }
 
-void Signature::requireIssuerFingerprint(FingerprintHash hash, const QStringList &fingerprints)
+void Signature::requireCertificateRoles(const QHash<QByteArray, CertificateRole> &trustedCertDataToRole)
 {
-    // The hash parameter is for future-proofing. Right now, we only support Sha256
-    Q_ASSERT(hash == FingerprintHash::Sha256);
-    if (hash == FingerprintHash::Sha256)
-        d->requiredIssuerFingerprints = fingerprints;
+    d->requiredRoles = trustedCertDataToRole;
 }
 
 void Signature::requireRevocationCheck(const QByteArrayList &crls)
@@ -50,14 +47,13 @@ void Signature::requireRevocationCheck(const QByteArrayList &crls)
     d->requiredCRLs = crls;
 }
 
-
 QByteArray Signature::create(const QByteArray &signingCertificatePkcs12,
                              const QByteArray &signingCertificatePassword)
 {
     if (!d->requiredCRLs.isEmpty())
-        qCWarning(LogCrypto)<< "CRL checking is ignored as it does not work when creating signatures";
-    if (!d->requiredIssuerFingerprints.isEmpty())
-        qCWarning(LogCrypto) << "Issuer fingerprint checking is ignored as it does not work when creating signatures";
+        qCWarning(LogCrypto) << "CRL checking is ignored as it does not work when creating signatures";
+    if (!d->requiredRoles.isEmpty())
+        qCWarning(LogCrypto) << "Certificate role requirements are ignored when creating signatures";
 
     // Although OpenSSL could, the macOS Security Framework (pre macOS 12) cannot
     // process empty detached data. So we better just not support it at all.
@@ -65,7 +61,7 @@ QByteArray Signature::create(const QByteArray &signingCertificatePkcs12,
         throw Exception("cannot sign an empty hash value");
 
     QByteArray sig = d->create(signingCertificatePkcs12, signingCertificatePassword,
-                               [this](const Certificate &signer) { d->checkCertificate(signer, { }); });
+                               [this](const Certificate &signer) { d->checkSignerCertificate(signer); });
     // very useful while debugging
     // static int counter = 0;
     // QFile f(QDir::home().absoluteFilePath(u"sig%1.der"_s.arg(++counter)));
@@ -75,19 +71,15 @@ QByteArray Signature::create(const QByteArray &signingCertificatePkcs12,
 }
 
 Signature::VerificationResult Signature::verify(const QByteArray &signaturePkcs7,
-                                                const QByteArrayList &chainOfTrust) noexcept(false)
+                                                const QByteArrayList &trustedCertsData) noexcept(false)
 {
-    VerificationResult result = d->verify(signaturePkcs7, chainOfTrust);
-    d->checkCertificate(result.signer,
-                        result.issuers.isEmpty() ? Certificate {} : result.issuers.constFirst());
+    VerificationResult result = d->verify(signaturePkcs7, trustedCertsData);
+    d->checkSignerCertificate(result.signer());
     return result;
 }
 
-void SignaturePrivate::checkCertificate(const Certificate &signer, const Certificate &issuer)
+void SignaturePrivate::checkSignerCertificate(const Certificate &signer)
 {
-    // qWarning().noquote() << QtYaml::yamlFromVariantDocuments(
-    //     { QVariantMap{{ u"signer"_s, signer.toVariant() }, { u"issuer"_s, issuer.toVariant() }}});
-
     if (!requirePackageId.isEmpty()) {
         if (!signer.matchPackageId(requirePackageId)) {
             throw Exception("Package ID mismatch on certificate, expected one of '%1', but got '%2'")
@@ -103,20 +95,6 @@ void SignaturePrivate::checkCertificate(const Certificate &signer, const Certifi
                     .arg(requiredKeyUsages.toInt(), 3, 16, u'0')
                     .arg(signer.keyUsages().toInt(), 3, 16, u'0');
             }
-        }
-    }
-
-    if (!requiredIssuerFingerprints.isEmpty()) {
-        if (issuer.subject().isEmpty())
-            throw Exception("Missing issuer certificate for fingerprint verification");
-
-        const QString fingerprint = issuer.fingerprints().value(u"SHA-256"_s).toString();
-        if (fingerprint.isEmpty())
-            throw Exception("Missing issuer certificate SHA-256 fingerprint for verification");
-
-        if (!requiredIssuerFingerprints.contains(fingerprint)) {
-            throw Exception("Issuer fingerprint mismatch on certificate, expected one of '%1', but got '%2'")
-                .arg(requiredIssuerFingerprints).arg(fingerprint);
         }
     }
 }
@@ -177,6 +155,33 @@ void SignaturePrivate::setDNByOid(QVariantMap &map, const QString &oid, const QS
         *it = QString(it->toString() + u", " + name);
     } else {
         map.insert(oidName, name);
+    }
+}
+
+void SignaturePrivate::verifyCertificateRole(const QString &subject, int position, int chainSize,
+                                             Signature::CertificateRole role) noexcept(false)
+{
+    switch (role) {
+    case Signature::CertificateRole::Any:
+        break;
+    case Signature::CertificateRole::Issuer:
+        if (position != 1) {
+            throw Exception("Certificate '%1' has role 'Issuer' but is not the second certificate in the chain")
+                    .arg(subject);
+        }
+        break;
+    case Signature::CertificateRole::Intermediate:
+        if ((position <= 2) || (position == (chainSize - 1))) {
+            throw Exception("Certificate '%1' has role 'Intermediate' but appears at position %2 in the verification chain")
+                    .arg(subject).arg(position);
+        }
+        break;
+    case Signature::CertificateRole::Root:
+        if (position != (chainSize - 1)) {
+            throw Exception("Certificate '%1' has role 'Root' but is not the last certificate in the chain")
+                    .arg(subject);
+        }
+        break;
     }
 }
 

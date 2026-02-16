@@ -197,7 +197,7 @@ void tst_Signature::basicCheck()
 #else
     const QString brokenSigError = u"not read"_s;
 #endif
-    AM_VERIFY_THROWS_EXCEPTION(brokenSigError, s.verify(hash, QByteArrayList() << m_signingP12));
+    AM_VERIFY_THROWS_EXCEPTION(brokenSigError, s.verify(hash, m_verifyingPEM));
 
     Signature s4 { QByteArray() };
     AM_VERIFY_THROWS_EXCEPTION(u"cannot sign an empty hash value", s4.create(m_signingP12, m_signingPassword));
@@ -238,16 +238,15 @@ void tst_Signature::certificateData()
     QVERIFY_THROWS_NO_EXCEPTION(result = s.verify(signature, m_verifyingPEM));
 
     QVERIFY(result.isValid());
-    const auto signer = result.signer;
+    const auto signer = result.signer();
     QVERIFY(signer.isValid());
-    QVERIFY(!result.issuers.isEmpty());
-    const auto issuer = result.issuers.constFirst();
+    QVERIFY(!result.issuers().isEmpty());
+    const auto issuer = result.issuers().constFirst();
     QVERIFY(issuer.isValid());
 
     const QString expectedIssuerSerial = m_devcaInfo.value(u"serial"_s).toString();
     const QDateTime expectedIssuerNotBefore = QDateTime::fromString(m_devcaInfo.value(u"notBefore"_s).toString().simplified(), u"MMM d HH:mm:ss yyyy t"_s);
     const QDateTime expectedIssuerNotAfter = QDateTime::fromString(m_devcaInfo.value(u"notAfter"_s).toString().simplified(), u"MMM d HH:mm:ss yyyy t"_s);
-    const QString expectedIssuerSHA1 = m_devcaInfo.value(u"sha1 Fingerprint"_s).toString().toLower();
     const QString expectedIssuerSHA256 = m_devcaInfo.value(u"sha256 Fingerprint"_s).toString().toLower();
 
 
@@ -260,11 +259,7 @@ void tst_Signature::certificateData()
     QCOMPARE(issuer.validityNotBefore(), expectedIssuerNotBefore);
     QCOMPARE(issuer.validityNotAfter(), expectedIssuerNotAfter);
 
-    const QVariantMap issuerFingerprints {
-        { u"SHA-1"_s,   expectedIssuerSHA1  },
-        { u"SHA-256"_s, expectedIssuerSHA256 },
-    };
-    QCOMPARE(issuer.fingerprints(), issuerFingerprints);
+    QCOMPARE(issuer.fingerprintAsString(), expectedIssuerSHA256);
 
     const QVariantMap issuerSubject {
         { u"commonName"_s, u"Pelagicore Developer CA"_s },
@@ -277,7 +272,6 @@ void tst_Signature::certificateData()
     const QString expectedSignerSerial = m_devInfo.value(u"serial"_s).toString();
     const QDateTime expectedSignerNotBefore = QDateTime::fromString(m_devInfo.value(u"notBefore"_s).toString().simplified(), u"MMM d HH:mm:ss yyyy t"_s);
     const QDateTime expectedSignerNotAfter = QDateTime::fromString(m_devInfo.value(u"notAfter"_s).toString().simplified(), u"MMM d HH:mm:ss yyyy t"_s);
-    const QString expectedSignerSHA1 = m_devInfo.value(u"sha1 Fingerprint"_s).toString().toLower();
     const QString expectedSignerSHA256 = m_devInfo.value(u"sha256 Fingerprint"_s).toString().toLower();
 
     QCOMPARE(signer.keyUsages(), Certificate::KeyUsage::DigitalSignature
@@ -290,11 +284,7 @@ void tst_Signature::certificateData()
     QCOMPARE(signer.validityNotBefore(), expectedSignerNotBefore);
     QCOMPARE(signer.validityNotAfter(), expectedSignerNotAfter);
 
-    const QVariantMap signerFingerprints {
-        { u"SHA-1"_s,   expectedSignerSHA1 },
-        { u"SHA-256"_s, expectedSignerSHA256 },
-    };
-    QCOMPARE(signer.fingerprints(), signerFingerprints);
+    QCOMPARE(signer.fingerprintAsString(), expectedSignerSHA256);
 
     const QVariantMap signerSubject {
         { u"commonName"_s, u"Developer 1"_s },
@@ -308,37 +298,27 @@ void tst_Signature::verifySignature_data()
 {
     QTest::addColumn<int>("keyUsage");
     QTest::addColumn<QString>("subjectAlternativeName");
-    QTest::addColumn<QStringList>("issuerFingerprints");
     QTest::addColumn<QString>("errorString");
 
-    QTest::newRow("none") << 0 << QString { } << QStringList { } << QString { };
+    QTest::newRow("none") << 0 << QString { } << QString { };
     QTest::newRow("full") << int(Certificate::KeyUsage::DigitalSignature
                                  | Certificate::KeyUsage::NonRepudiation
                                  | Certificate::KeyUsage::KeyEncipherment
                                  | Certificate::KeyUsage::DecipherOnly) // == 0x107
                           << u"test-pkg"_s
-                          << QStringList { m_devcaInfo.value(u"sha256 Fingerprint"_s).toString().toLower() }
                           << QString { };
     QTest::newRow("multiple-shas") << 0x107 << u"test-pkg"_s
-                                   << QStringList {
-                                          m_devcaInfo.value(u"sha256 Fingerprint"_s).toString().toLower(),
-                                          u"02:84:9c:0b:dd:46:9b:e2:85:0a:a0:f4:c6:b4:cf:62:f4:49:67:8e:20:fa:3f:0e:ee:53:43:8c:5d:14:0a:f0"_s
-                                      }
                                    << QString { };
-    QTest::newRow("wrong-keyusage") << 0x7 << u"test-pkg"_s << QStringList { }
+    QTest::newRow("wrong-keyusage") << 0x7 << u"test-pkg"_s
                                     << u"Key usage mismatch on certificate: expected 0x007, but got 0x107"_s;
-    QTest::newRow("wrong-san") << 0x107 << u"test+pkg"_s << QStringList { }
+    QTest::newRow("wrong-san") << 0x107 << u"test+pkg"_s
                                << u"Package ID mismatch on certificate, expected one of"_s;
-    QTest::newRow("wrong-sha") << 0x107 << u"test-pkg"_s
-                               << QStringList { u"02:84:9c:0b:dd:46:9b:e2:85:0a:a0:f4:c6:b4:cf:62:f4:49:67:8e:20:fa:3f:0e:ee:53:43:8c:5d:14:0a:f0"_s }
-                               << u"Issuer fingerprint mismatch on certificate, expected one of"_s;
 }
 
 void tst_Signature::verifySignature()
 {
     QFETCH(int, keyUsage);
     QFETCH(QString, subjectAlternativeName);
-    QFETCH(QStringList, issuerFingerprints);
     QFETCH(QString, errorString);
 
     QByteArray hash("foo");
@@ -351,8 +331,6 @@ void tst_Signature::verifySignature()
         s.requireKeyUsage(Certificate::KeyUsages(keyUsage));
     if (!subjectAlternativeName.isEmpty())
         s.requirePackageId(subjectAlternativeName);
-    if (!issuerFingerprints.isEmpty())
-        s.requireIssuerFingerprint(Signature::FingerprintHash::Sha256, issuerFingerprints);
 
     Signature::VerificationResult result;
     try {
@@ -360,9 +338,9 @@ void tst_Signature::verifySignature()
         QVERIFY2(errorString.isEmpty(), "Verification should have failed");
 
         QVERIFY(result.isValid());
-        QVERIFY(result.signer.isValid());
-        QVERIFY(!result.issuers.isEmpty());
-        QVERIFY(result.issuers.constFirst().isValid());
+        QVERIFY(result.signer().isValid());
+        QVERIFY(!result.issuers().isEmpty());
+        QVERIFY(result.issuers().constFirst().isValid());
     } catch (const Exception &e) {
         QVERIFY2(!errorString.isEmpty(), qPrintable(u"Verification should have succeeded, but failed with: %1"_s
                                                         .arg(e.errorString())));

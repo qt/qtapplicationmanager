@@ -320,7 +320,7 @@ void PackagingJob::execute() noexcept(false)
                     sig.requireRevocationCheck(crls);
                     auto result = sig.verify(report.developerSignature(), certificates);
                     m_output = u"valid developer signature\n\n"_s
-                               + QString::fromUtf8(QJsonDocument::fromVariant(result.signer.toVariant()).toJson());
+                               + QString::fromUtf8(QJsonDocument::fromVariant(result.signer().toVariant()).toJson());
                 } catch (const Exception &e) {
                     m_output = u"invalid developer signature ("_s + e.errorString() + u")"_s;
                     m_resultCode = 2;
@@ -344,7 +344,7 @@ void PackagingJob::execute() noexcept(false)
                     sig.requireRevocationCheck(crls);
                     auto result = sig.verify(report.storeSignature(), certificates);
                     m_output = u"valid store signature\n\n"_s
-                               + QString::fromUtf8(QJsonDocument::fromVariant(result.signer.toVariant()).toJson());
+                               + QString::fromUtf8(QJsonDocument::fromVariant(result.signer().toVariant()).toJson());
                 } catch (const Exception &e) {
                     m_output = u"invalid store signature ("_s + e.errorString() + u")"_s;
                     m_resultCode = 2;

@@ -149,19 +149,13 @@ Certificate CertificateParser::parseCertContext(PCCERT_CONTEXT cert)
         info.m_keyUsages = Certificate::KeyUsages::fromInt(qFromLittleEndian<quint16>(keyUsage));
     }
 
-    QVariantMap fingerprints;
-    QByteArray shaBuffer(32, '\0'); // 20 bytes for SHA-1 and 32 bytes for SHA-256
-    DWORD shaBufferSize = shaBuffer.size();
-    if (::CertGetCertificateContextProperty(cert, CERT_SHA1_HASH_PROP_ID, shaBuffer.data(), &shaBufferSize)
-        && (shaBufferSize == 20)) {
-        fingerprints[u"SHA-1"_s] = QString::fromLatin1(shaBuffer.first(20).toHex(':'));
+    DWORD sha256Len = 256 / 8;
+    QByteArray shaBuffer(sha256Len, '\0');
+    if (!::CertGetCertificateContextProperty(cert, CERT_SHA256_HASH_PROP_ID, shaBuffer.data(), &sha256Len)
+            || (sha256Len != shaBuffer.size())) {
+        throw WinCryptException("could not calculate SHA-256 fingerprint");
     }
-    shaBufferSize = shaBuffer.size();
-    if (::CertGetCertificateContextProperty(cert, CERT_SHA256_HASH_PROP_ID, shaBuffer.data(), &shaBufferSize)
-        && (shaBufferSize == 32)) {
-        fingerprints[u"SHA-256"_s] = QString::fromLatin1(shaBuffer.toHex(':'));
-    }
-    info.m_fingerprints = fingerprints;
+    info.m_fingerprint = shaBuffer;
 
     QStringList subjectAlternativeNames;
     if (PCERT_EXTENSION sanExt = ::CertFindExtension(szOID_SUBJECT_ALT_NAME2,
@@ -287,7 +281,7 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
 }
 
 Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signaturePkcs7,
-                                                       const QByteArrayList &chainOfTrust)
+                                                       const QByteArrayList &trustedCertsData)
 {
     PCCERT_CONTEXT signerCert = nullptr;
     HCERTSTORE msgCertStore = nullptr;
@@ -295,7 +289,11 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
     HCERTCHAINENGINE certChainEngine = nullptr;
     PCCERT_CHAIN_CONTEXT chainContext = nullptr;
 
+    QHash<PCCERT_CONTEXT, Signature::CertificateRole> certContextToRole;
+
     auto cleanup = qScopeGuard([&] {
+        for (auto cert : certContextToRole.keys())
+            ::CertFreeCertificateContext(cert);
         if (chainContext)
             ::CertFreeCertificateChain(chainContext);
         if (certChainEngine)
@@ -337,19 +335,25 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
     if (!rootCertStore)
         throw WinCryptException("Could not create temporary root certificate store");
 
-    for (const QByteArray &trustedCertPEM : chainOfTrust) {
+    for (const QByteArray &trustedCertData : trustedCertsData) {
         QByteArrayList trustedCertList;
         try {
-            trustedCertList = importPEMasDER(trustedCertPEM);
+            trustedCertList = importPEMasDER(trustedCertData);
         } catch (const Exception &e) {
             throw Exception("Could not load a certificate from the chain of trust: %1").arg(e.errorString());
         }
         for (const QByteArray &trustedCert : std::as_const(trustedCertList)) {
+            PCCERT_CONTEXT cert = nullptr;
             if (!::CertAddEncodedCertificateToStore(rootCertStore, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
                                                     (const BYTE *) trustedCert.constData(), trustedCert.size(),
-                                                    CERT_STORE_ADD_ALWAYS, nullptr)) {
+                                                    CERT_STORE_ADD_ALWAYS, &cert)) {
                 throw WinCryptException("Could not add a certificate from the chain of trust to the certificate store");
             }
+
+            if (auto it = requiredRoles.constFind(trustedCertData); it != requiredRoles.constEnd())
+                certContextToRole.insert(cert, it.value());
+            else
+                ::CertFreeCertificateContext(cert);
         }
     }
 
@@ -401,16 +405,41 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
     if (chainContext->rgpChain[0]->rgpElement[0]->pCertContext != signerCert)
         throw Exception("Invalid verification chain: does not contain signer certificate");
 
-    PCCERT_CONTEXT issuerCert = chainContext->rgpChain[0]->rgpElement[1]->pCertContext;
-    if (!issuerCert)
-        throw Exception("Invalid issuer certificate");
+    // Parse all certificates in the verification chain
+    // The chain contains: [0]=signer, [1..n-1]=intermediates, [n-1]=root
+    QList<Certificate> chain;
+    DWORD chainContextLength = chainContext->rgpChain[0]->cElement;
+    for (DWORD i = 0; i < chainContextLength; ++i) {
+        PCCERT_CONTEXT chainCert = chainContext->rgpChain[0]->rgpElement[i]->pCertContext;
+        if (!chainCert)
+            throw Exception("Invalid certificate at position %1 in the verification chain").arg(i);
 
-    if (!::CertCompareCertificateName(X509_ASN_ENCODING, &signerCert->pCertInfo->Issuer,
-                                      &issuerCert->pCertInfo->Subject)) {
-        throw Exception("Issuer certificate does not immediately follow the signer certificate");
+        try {
+            const auto c = CertificateParser::parseCertContext(chainCert);
+            if ((i >= 1) && !requiredRoles.isEmpty()) {
+                // Find the matching trusted certificate by comparing certificate contexts
+                Signature::CertificateRole role;
+                bool found = false;
+                for (const auto &[pc, r] : certContextToRole.asKeyValueRange()) {
+                    if (::CertCompareCertificate(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                            chainCert->pCertInfo, pc->pCertInfo)) {
+                        role = r;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    throw Exception("Certificate at position %1 in the verification chain is not trusted").arg(i);
+                verifyCertificateRole(c.subjectAsString(), i, chainContextLength, role);
+            }
+            chain.append(c);
+        } catch (const Exception &e) {
+            throw Exception("Could not parse certificate at position %1 in the verification chain: %2")
+                .arg(i).arg(e.errorString());
+        }
     }
 
-    return createSignatureVerificationResult(&CertificateParser::parseCertContext, signerCert, issuerCert);
+    return { chain };
 }
 
 QT_END_NAMESPACE_AM

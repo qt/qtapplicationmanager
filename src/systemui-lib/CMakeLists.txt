@@ -11,6 +11,7 @@ qt_internal_add_module(AppManSystemUIPrivate
         application.cpp application.h
         applicationmanager.cpp applicationmanager.h applicationmanager_p.h
         applicationmodel.cpp applicationmodel.h
+        cacertificate.cpp cacertificate.h
         configuration.cpp configuration.h configuration_p.h
         debugwrapper.cpp debugwrapper.h
         intentaminterface.cpp intentaminterface.h

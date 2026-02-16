@@ -194,8 +194,7 @@ void InstallationTask::execute()
                 Signature storeSig(sigDigest);
                 storeSig.requireRevocationCheck(m_pm->certificateRevocationLists());
                 storeSig.requireKeyUsage(Certificate::KeyUsage::Store);
-                storeSig.requireIssuerFingerprint(Signature::FingerprintHash::Sha256,
-                                                  m_pm->issuerCertificateFingerprintsStore());
+                storeSig.requireCertificateRoles(m_pm->certificateRoles());
 
                 try {
                     (void) storeSig.verify(m_extractor->installationReport().storeSignature(),
@@ -207,8 +206,7 @@ void InstallationTask::execute()
                         Signature storeHwidSig(sigDigest);
                         storeHwidSig.requireRevocationCheck(m_pm->certificateRevocationLists());
                         storeHwidSig.requireKeyUsage(Certificate::KeyUsage::Store);
-                        storeHwidSig.requireIssuerFingerprint(Signature::FingerprintHash::Sha256,
-                                                              m_pm->issuerCertificateFingerprintsStore());
+                        storeHwidSig.requireCertificateRoles(m_pm->certificateRoles());
 
                         try {
                             (void) storeHwidSig.verify(m_extractor->installationReport().storeSignature(),
@@ -248,8 +246,7 @@ void InstallationTask::execute()
                 devSig.requireRevocationCheck(m_pm->certificateRevocationLists());
                 devSig.requireKeyUsage(Certificate::KeyUsage::Developer);
                 devSig.requirePackageId(m_packageId);
-                devSig.requireIssuerFingerprint(Signature::FingerprintHash::Sha256,
-                                                m_pm->issuerCertificateFingerprintsDeveloper());
+                devSig.requireCertificateRoles(m_pm->certificateRoles());
 
                 try {
                     auto result = devSig.verify(m_extractor->installationReport().developerSignature(),
@@ -259,7 +256,7 @@ void InstallationTask::execute()
                         if (m_pm->developmentMode() == PackageManager::DevelopmentMode::Application) {
                             if (!m_pm->developerCertificate().isValid())
                                 throw Exception(Error::Package, "the development mode is set to 'application', but there is no developer certificate set");
-                            else if (m_pm->developerCertificate() != result.signer)
+                            else if (m_pm->developerCertificate() != result.signer())
                                 throw Exception(Error::Package, "the package's developer signature does not match the currently set developer certificate");
                         }
                     }

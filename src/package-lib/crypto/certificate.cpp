@@ -77,15 +77,9 @@ QT_BEGIN_NAMESPACE_AM
 
     The validity end date for this certificate.
 */
-/*! \qmlproperty variant Certificate::fingerprints
+/*! \qmlproperty string Certificate::fingerprint
 
-    This property holds the fingerprints of the certificate as a map of hash algorithm names
-    and their corresponding fingerprint values as hex-encoded strings:
-    Currently, the supported hash algorithms names are:
-    \list
-        \li \c{SHA-1}
-        \li \c{SHA-256}
-    \endlist
+    This property holds the SHA-256 fingerprint of the certificate as hex-encoded string.
 */
 /*! \qmlproperty list<string> Certificate::subjectAlternativeNames
 
@@ -140,6 +134,17 @@ bool Certificate::matchPackageId(const QString &packageId) const
     return foundMatch;
 }
 
+QString Certificate::subjectAsString() const
+{
+    QString subject;
+    for (const auto &s : m_subject.asKeyValueRange()) {
+        if (!subject.isEmpty())
+            subject += u", ";
+        subject += u"%1=%2"_s.arg(s.first, s.second.toString());
+    }
+    return subject;
+}
+
 bool Certificate::operator==(const Certificate &other) const
 {
     return (m_subject == other.m_subject)
@@ -147,7 +152,7 @@ bool Certificate::operator==(const Certificate &other) const
         && (m_keyUsages == other.m_keyUsages)
         && (m_validityNotBefore == other.m_validityNotBefore)
         && (m_validityNotAfter == other.m_validityNotAfter)
-        && (m_fingerprints == other.m_fingerprints)
+        && (m_fingerprint == other.m_fingerprint)
         && (m_subjectAlternativeNames == other.m_subjectAlternativeNames);
 }
 
@@ -172,7 +177,7 @@ QVariant Certificate::toVariant() const
         { u"keyUsages"_s, m_keyUsages.toInt() },
         { u"validityNotBefore"_s, m_validityNotBefore },
         { u"validityNotAfter"_s, m_validityNotAfter },
-        { u"fingerprints"_s, m_fingerprints },
+        { u"fingerprint"_s, fingerprintAsString() },
         { u"subjectAlternativeNames"_s, m_subjectAlternativeNames }
     };
 }

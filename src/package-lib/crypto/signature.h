@@ -25,24 +25,35 @@ public:
 
     struct VerificationResult
     {
-        //TODO: Even though the issuers are a list, I have not yet found a way to return the
-        // complete chain of issuers for all the backends. All do support the direct issuer, though.
+        // The issuers list contains the complete verification chain from the direct issuer
+        // to the root certificate.
+        // Chain order: issuers[0] = direct issuer, issuers[n-1] = root certificate
 
-        Certificate signer;
-        QList<Certificate> issuers;
-        bool isValid() const { return signer.isValid() && !issuers.isEmpty() && issuers.constFirst().isValid(); }
+        QList<Certificate> chain;
+
+        Certificate signer() const { return !chain.isEmpty() ? chain.constFirst() : Certificate(); };
+        QList<Certificate> issuers() const { return chain.mid(1); }
+
+        bool isValid() const
+        {
+            return (chain.size() >= 2) && std::all_of(chain.begin(), chain.end(),
+                                                      [](const auto &cert) { return cert.isValid(); });
+        }
     };
 
     VerificationResult verify(const QByteArray &signaturePkcs7,
-                              const QByteArrayList &chainOfTrust) noexcept(false);
+                              const QByteArrayList &trustedCertsData) noexcept(false);
 
-    enum class FingerprintHash {
-        Sha256 = 1
+    enum class CertificateRole {
+        Any,
+        Issuer,
+        Intermediate,
+        Root,
     };
 
     void requireKeyUsage(Certificate::KeyUsages keyUsages);
     void requirePackageId(const QString &packageId);
-    void requireIssuerFingerprint(FingerprintHash hash, const QStringList &fingerprints); // hex-encoded "01:23:34:..."
+    void requireCertificateRoles(const QHash<QByteArray, CertificateRole> &trustedCertDataToRole);
     void requireRevocationCheck(const QByteArrayList &crls);
 
 private:

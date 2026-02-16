@@ -39,19 +39,21 @@ logging:
 
 installer:
   caCertificates:
-    common:
-    - cert3
-    developer:
-    - dev_cert1
-    - dev_cert2
-    store:
-    - store_cert1
-    - store_cert2
-  issuerCertificateFingerprints:
-    developer:
-    - fp_dev
-    store:
-    - fp_store
+    - file: cert3
+      scope: common
+      role: root
+    - file: dev_cert1
+      scope: developer
+      role: intermediate
+    - file: dev_cert2
+      scope: developer
+      role: issuer
+    - file: store_cert1
+      scope: store
+      role: intermediate
+    - file: store_cert2
+      scope: store
+      role: issuer
   allowedURLs: [ url3 ]
 
 dbus:

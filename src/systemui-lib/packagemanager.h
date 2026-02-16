@@ -11,6 +11,7 @@
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
 #include <QtAppManPackage/packageinfo.h>
 #include <QtAppManSystemUI/asynchronoustask.h>
+#include <QtAppManSystemUI/cacertificate.h>
 #include <QtAppManPackage/signature.h>
 
 
@@ -113,11 +114,7 @@ public:
     QString hardwareId() const;
     void setHardwareId(const QString &hwId);
     QString architecture() const;
-    void loadCertificates(const QStringList &common, const QStringList &developer,
-                          const QStringList &store, const QStringList &crls = { });
-    void setIssuerCertificateFingerprints(const QStringList &developer,
-                                          const QStringList &store);
-
+    void loadCertificates(const QList<CaCertificate> &caCertificates, const QStringList &crls = { });
     void setAllowedInstallationURLs(const QStringList &allowedURLs);
 
     void lockConfiguration();
@@ -207,8 +204,7 @@ private:
     QByteArrayList caCertificatesDeveloper() const;
     QByteArrayList caCertificatesStore() const;
     QByteArrayList certificateRevocationLists() const;
-    QStringList issuerCertificateFingerprintsDeveloper() const;
-    QStringList issuerCertificateFingerprintsStore() const;
+    QHash<QByteArray, Signature::CertificateRole> certificateRoles() const;
 
     // this honors the useSudoForDirectoryRemoval flag
     void removeRecursive(const QString &path) noexcept(false);

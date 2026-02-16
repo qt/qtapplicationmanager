@@ -9,7 +9,52 @@
 \brief Important changes in Qt Application Manager
 
 \section1 Qt ApplicationManager 6.11
+
+The biggest part of this release is the complete overhaul of the runtime package installation
+mechanism. The full documentation is available \l{Package Installation}{here}.
 \list
+\li Developer certificates can now be bound to specific package IDs.
+\li Devices can be put into an \e{application developer} mode that restricts the control APIs
+    exposed via D-Bus and \c appman-controller to the bare minimum that needs to be accessible for a
+    given developer certificate (which is bound to a specific package ID).
+\li Developer and store certificates can not be used interchangeably anymore, and they are now
+    using modern cryptographic algorithms.
+\li Issuer certificates can be limited with a SHA-256 fingerprint whitelist.
+\li Developer certificates can be revoked via local revocation lists (CRLs).
+\li The acceptable package download URLs can be filtered using a whitelist.
+\li Packages can now include POSIX extended attributes that are preserved during installation. This
+    is useful for embedded systems using EVM/IMA.
+\endlist
+
+Also, all the static libraries have been consolidated into fewer ones, that now follow Qt's
+configuration regarding shared/static and also follow a naming scheme that is more consistent with
+the current setup of the application manager (especially in regards to the its QML modules).
+
+If you have been building your own custom \c appman binary, you will need to update your
+\c CMakeLists.txt file to link against the new libraries. Check the
+\l{applicationmanager/custom-appman}{custom-appman} example for details.
+
+Other noteworthy changes in this release:
+\list
+\li When started from \e systemd with \c stderr being connected to the journal (for example, by
+    setting \c{StandardError=journal} in the service file), the application manager switches to
+    direct journald logging. These log messages are also enriched by additional fields from the
+    application manager (Qt logging category and application id).
+\li YAML support was improved to support version 1.2 documents in addition to the previously
+    supported 1.1 version. The default for unversioned documents is still 1.1 for backwards
+    compatibility, but this will change with the 6.13 release. You will get detailed warnings about
+    1.2 incompatible syntax in these unversioned files though.
+\li Window hiding and closing was harmonized between single- and multi-process applications, to
+    follow the way Wayland works.
+\li The D-Bus objects for the application manager's singletons are not registered automatically
+    anymore and accordingly, the \e auto session bus is also not started by default.
+    This makes the D-Bus setup secure by default and you have to explicitly register what you need
+    using the existing configuration mechanism.
+\li The watchdog does not kill applications anymore that are in the process of shutting down
+    already.
+\li The bubblewrap container plugin does not bind mount all the Qt paths automatically anymore,
+    as this would mount nearly all of `/usr/` on Yocto-based systems. If you need the old behavior,
+    you can set the new \c bindMountQtPaths configuration field to \c true.
 \li The \c documentUrl field in manifest files (info.yaml) with format \c am-package has already
     been ignored, when starting applications. It will be ignored in legacy \c am-application files
     now, as well.

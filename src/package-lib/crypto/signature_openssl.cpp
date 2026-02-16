@@ -89,8 +89,9 @@ static QT_AM_LIBCRYPTO_FUNCTION(X509_NAME_entry_count, int (*)(const X509_NAME *
 static QT_AM_LIBCRYPTO_FUNCTION(X509_NAME_get_entry, X509_NAME_ENTRY *(*)(const X509_NAME *, int), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(X509_NAME_get_index_by_NID, int (*)(const X509_NAME *, int, int), -1);
 static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_CTX_free, void(*)(X509_STORE_CTX *));
-static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_CTX_get1_issuer, int (*)(X509 **, X509_STORE_CTX *, X509 *), -1);
+static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_CTX_get_current_cert, X509 *(*)(X509_STORE_CTX *), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_CTX_get_error, int (*)(X509_STORE_CTX *), 0);
+static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_CTX_get0_chain, STACK_OF_X509 *(*)(X509_STORE_CTX *), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_CTX_get0_store, X509_STORE *(*)(const X509_STORE_CTX *), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_CTX_init, int(*)(X509_STORE_CTX *, X509_STORE *, X509 *, STACK_OF_X509 *), 0);
 static QT_AM_LIBCRYPTO_FUNCTION(X509_STORE_CTX_new, X509_STORE_CTX *(*)(), nullptr);
@@ -110,6 +111,7 @@ static QT_AM_LIBCRYPTO_FUNCTION(X509_get0_serialNumber, ASN1_INTEGER *(*)(const 
 static QT_AM_LIBCRYPTO_FUNCTION(X509_get_ext_d2i, void * (*)(const X509 *, int, int *, int *), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(X509_get_issuer_name, X509_NAME *(*)(const X509 *), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(X509_get_subject_name, X509_NAME *(*)(const X509 *), nullptr);
+static QT_AM_LIBCRYPTO_FUNCTION(X509_up_ref, int (*)(X509 *), 0);
 static QT_AM_LIBCRYPTO_FUNCTION(X509_verify_cert_error_string, const char *(*)(long n), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(d2i_PKCS12, PKCS12 *(*)(PKCS12 **, const unsigned char **, long), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(d2i_PKCS7, PKCS7 *(*)(PKCS7 **, const unsigned char **, long), nullptr);
@@ -279,16 +281,11 @@ Certificate CertificateParser::parseX509(X509 *x509)
     }
     info.m_keyUsages = Certificate::KeyUsages::fromInt(keyUsage);
 
-    QVariantMap fingerPrints;
     unsigned int sha256Len = 256 / 8;
-    QByteArray sha256(sha256Len, 0);
-    if (am_X509_digest(x509, am_EVP_sha256(), reinterpret_cast<unsigned char *>(sha256.data()), &sha256Len))
-        fingerPrints[u"SHA-256"_s] = QString::fromLatin1(sha256.toHex(':'));
-    unsigned int sha1Len = 160 / 8;
-    QByteArray sha1(sha1Len, 0);
-    if (am_X509_digest(x509, am_EVP_sha1(), reinterpret_cast<unsigned char *>(sha1.data()), &sha1Len))
-        fingerPrints[u"SHA-1"_s] = QString::fromLatin1(sha1.toHex(':'));
-    info.m_fingerprints = fingerPrints;
+    QByteArray sha256(sha256Len, '\0');
+    if (!am_X509_digest(x509, am_EVP_sha256(), reinterpret_cast<unsigned char *>(sha256.data()), &sha256Len))
+        throw OpenSslException("could not calculate SHA-256 fingerprint");
+    info.m_fingerprint = sha256;
 
     QStringList subjectAlternativeNames;
     if (auto sans = static_cast<OPENSSL_STACK *>(am_X509_get_ext_d2i(x509, 85 /*NID_subject_alt_name*/, nullptr, nullptr))) {
@@ -364,9 +361,16 @@ QByteArray SignaturePrivate::create(const QByteArray &signingCertificatePkcs12,
 }
 
 Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signaturePkcs7,
-                                                       const QByteArrayList &chainOfTrust)
+                                                       const QByteArrayList &trustedCertsData)
 {
     LibCryptoFunctionBase::initialize();
+
+    QHash<X509 *, Signature::CertificateRole> x509ToRole;
+
+    auto cleanup = qScopeGuard([&] {
+        for (auto cert : x509ToRole.keys())
+            am_X509_free(cert);
+    });
 
     auto signatureData = reinterpret_cast<const unsigned char *>(signaturePkcs7.constData());
     OpenSslPointer<PKCS7> signature(am_d2i_PKCS7(nullptr, &signatureData, signaturePkcs7.size()));
@@ -377,11 +381,12 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
     if (!bioHash)
         throw OpenSslException("Could not create BIO buffer for the hash");
 
-    OpenSslPointer<X509_STORE> certChain(am_X509_STORE_new());
-    if (!certChain)
+    OpenSslPointer<X509_STORE> trustedStore(am_X509_STORE_new());
+    if (!trustedStore)
         throw OpenSslException("Could not create a X509 certificate store");
 
-    for (const QByteArray &trustedCertData : chainOfTrust) {
+    for (int i = 0; i < trustedCertsData.size(); ++i) {
+        const QByteArray &trustedCertData = trustedCertsData.at(i);
         OpenSslPointer<BIO> trustedCertBio(am_BIO_new_mem_buf(trustedCertData.constData(), trustedCertData.size()));
         if (!trustedCertBio)
             throw OpenSslException("Could not create BIO buffer for a certificate");
@@ -389,9 +394,17 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
         while (!am_BIO_ctrl(trustedCertBio.get(), 2 /*BIO_CTRL_EOF*/, 0, nullptr)) {
             OpenSslPointer<X509> trustedCert(am_PEM_read_bio_X509(trustedCertBio.get(), nullptr, nullptr, nullptr));
             if (!trustedCert)
-                throw OpenSslException("Could not load a certificate from the chain of trust");
-            if (!am_X509_STORE_add_cert(certChain.get(), trustedCert.get()))
-                throw OpenSslException("Could not add a certificate from the chain of trust to the certificate store");
+                throw OpenSslException("Could not load a certificate from the trusted certificates");
+            if (!am_X509_STORE_add_cert(trustedStore.get(), trustedCert.get()))
+                throw OpenSslException("Could not add a certificate from the trusted certificates to the certificate store");
+
+            if (auto it = requiredRoles.constFind(trustedCertData); it != requiredRoles.constEnd()) {
+                // Keep this certificate for role checking - increase refcount
+                if (!am_X509_up_ref(trustedCert.get()))
+                    throw OpenSslException("Could not increase reference count on certificate");
+                x509ToRole.insert(trustedCert.get(), it.value());
+            }
+            // OpenSslPointer will free trustedCert when it goes out of scope
         }
     }
 
@@ -405,7 +418,7 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
             OpenSslPointer<X509_CRL> crl(am_PEM_read_bio_X509_CRL(bioCRL.get(), nullptr, nullptr, nullptr));
             if (!crl)
                 throw OpenSslException("Could not load a CRL");
-            if (!am_X509_STORE_add_crl(certChain.get(), crl.get()))
+            if (!am_X509_STORE_add_crl(trustedStore.get(), crl.get()))
                 throw OpenSslException("Could not add a CRL to the certificate store");
             hasCRLs = true;
         }
@@ -414,15 +427,35 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
     unsigned long verificationFlags = 0x20 /*X509_V_FLAG_X509_STRICT*/;
     if (hasCRLs)
         verificationFlags |= (0x04 /*X509_V_FLAG_CRL_CHECK*/ | 0x08 /*X509_V_FLAG_CRL_CHECK_ALL*/);
-    if (!am_X509_STORE_set_flags(certChain.get(), verificationFlags))
+    if (!am_X509_STORE_set_flags(trustedStore.get(), verificationFlags))
         throw OpenSslException("Could not set verification flags on the certificate store");
 
-    // the ex_data mechanism is a way to "capture" a variable for the verification callback
+    // the ex_data mechanism is a way to "capture" variables for the verification callback
     QString verificationError;
-    if (!am_X509_STORE_set_ex_data(certChain.get(), 0, &verificationError))
+    if (!am_X509_STORE_set_ex_data(trustedStore.get(), 0, &verificationError))
         throw OpenSslException("Could not set extended data on the certificate store");
 
-    am_X509_STORE_set_verify_cb(certChain.get(), [](int ok, X509_STORE_CTX *ctx) -> int {
+    QList<X509 *> verificationChain;
+    if (!am_X509_STORE_set_ex_data(trustedStore.get(), 1, &verificationChain))
+        throw OpenSslException("Could not set extended data for verification chain on the certificate store");
+
+    am_X509_STORE_set_verify_cb(trustedStore.get(), [](int ok, X509_STORE_CTX *ctx) -> int {
+        // Capture the verification chain on success
+        if (ok) {
+            if (void *exdata = am_X509_STORE_get_ex_data(am_X509_STORE_CTX_get0_store(ctx), 1)) {
+                auto *verificationChain = static_cast<QList<X509 *> *>(exdata);
+                if (X509 *cert = am_X509_STORE_CTX_get_current_cert(ctx)) {
+                    am_X509_up_ref(cert);
+                    verificationChain->prepend(cert);
+                } else {
+                    return 0;
+                }
+            } else {
+                return 0;
+            }
+        }
+
+        // Capture verification errors
         if (int n = am_X509_STORE_CTX_get_error(ctx)) {
             if (void *exdata = am_X509_STORE_get_ex_data(am_X509_STORE_CTX_get0_store(ctx), 0)) {
                 if (const char *str = am_X509_verify_cert_error_string(n))
@@ -432,7 +465,7 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
         return ok;
     });
 
-    if (am_PKCS7_verify(signature.get(), nullptr, certChain.get(), bioHash.get(), nullptr,
+    if (am_PKCS7_verify(signature.get(), nullptr, trustedStore.get(), bioHash.get(), nullptr,
                         0x10000 /*PKCS7_NO_DUAL_CONTENT*/ | 0x8 /*PKCS7_NOCHAIN*/) == 0) {
         if (!verificationError.isEmpty())
             throw Exception("Failed to verify signature: %1").arg(verificationError);
@@ -444,24 +477,36 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
     if (!signers || am_OPENSSL_sk_num(reinterpret_cast<OPENSSL_STACK *>(signers.get())) != 1)
         throw Exception("The PKCS#7 signature does not contain exactly one signer");
 
-    X509 *signerCert = static_cast<X509 *>(am_OPENSSL_sk_value(reinterpret_cast<OPENSSL_STACK *>(signers.get()), 0));
-    if (!signerCert)
-        throw Exception("Could not get the signer certificate from the PKCS#7 signature");
+    // Use the captured verification chain
+    if (verificationChain.isEmpty())
+        throw Exception("Verification chain was not captured during certificate verification");
 
-    OpenSslPointer<X509_STORE_CTX> storeCtx { am_X509_STORE_CTX_new() };
-    if (!am_X509_STORE_CTX_init(storeCtx.get(), certChain.get(), signerCert, nullptr))
-        throw OpenSslException("Could not initialize X509 store context");
+    // The chain contains: [0]=signer, [1..n-1]=intermediates, [n-1]=root
+    if (verificationChain.size() < 2)
+        throw Exception("Expected a verification chain with at least a signer and an issuer certificate");
 
-    X509 *issuerCertRaw = nullptr;
-    int hasIssuer = am_X509_STORE_CTX_get1_issuer(&issuerCertRaw, storeCtx.get(), signerCert);
-    OpenSslPointer<X509> issuerCert { issuerCertRaw }; // ensure it gets freed
+    // Parse all certificates in the verification chain
+    // The chain contains: [0]=signer, [1..n-1]=intermediates, [n-1]=root
+    QList<Certificate> chain;
 
-    if (hasIssuer == -1)
-        throw OpenSslException("Could not get the issuer certifcate");
-    else if ((hasIssuer == 0) || !issuerCert)
-        throw Exception("Expected an issuer certificate, but none was found");
-
-    return createSignatureVerificationResult(&CertificateParser::parseX509, signerCert, issuerCert.get());
+    for (qsizetype i = 0; i < verificationChain.size(); ++i) {
+        OpenSslPointer<X509> chainCert { verificationChain.at(i) }; // takes ownership (we called X509_up_ref earlier)
+        try {
+            const auto c = CertificateParser::parseX509(chainCert.get());
+            if ((i >= 1) && !requiredRoles.isEmpty()) {
+                // Find the matching trusted certificate by comparing X509 pointers
+                auto it = x509ToRole.constFind(chainCert.get());
+                if (it == x509ToRole.constEnd())
+                    throw Exception("Certificate at position %1 in the verification chain is not trusted").arg(i);
+                verifyCertificateRole(c.subjectAsString(), i, verificationChain.size(), it.value());
+            }
+            chain.append(c);
+        } catch (const Exception &e) {
+            throw Exception("Could not parse certificate at position %1 in the verification chain: %2")
+                .arg(i).arg(e.errorString());
+        }
+    }
+    return { chain };
 }
 
 QT_END_NAMESPACE_AM

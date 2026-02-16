@@ -671,13 +671,8 @@ void Main::setupInstaller(const Configuration *cfg) noexcept(false)
         m_packageManager->setAllowInstallationOfUnsignedPackages(true);
 
     if (!cfg->yaml.flags.noSecurity) {
-        m_packageManager->loadCertificates(cfg->yaml.installer.caCertificates.common,
-                                           cfg->yaml.installer.caCertificates.developer,
-                                           cfg->yaml.installer.caCertificates.store,
+        m_packageManager->loadCertificates(cfg->yaml.installer.caCertificates,
                                            cfg->yaml.installer.certificateRevocationLists);
-
-        m_packageManager->setIssuerCertificateFingerprints(cfg->yaml.installer.issuerCertificateFingerprints.developer,
-                                                           cfg->yaml.installer.issuerCertificateFingerprints.store);
     }
 
     m_packageManager->enableInstaller();

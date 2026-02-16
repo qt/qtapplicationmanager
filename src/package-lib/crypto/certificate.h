@@ -25,7 +25,7 @@ class Q_APPMANPACKAGE_EXPORT Certificate
     Q_PROPERTY(Certificate::KeyUsages keyUsages READ keyUsages CONSTANT)
     Q_PROPERTY(QDateTime validityNotBefore READ validityNotBefore CONSTANT)
     Q_PROPERTY(QDateTime validityNotAfter READ validityNotAfter CONSTANT)
-    Q_PROPERTY(QVariantMap fingerprints READ fingerprints CONSTANT)
+    Q_PROPERTY(QString fingerprint READ fingerprintAsString CONSTANT)
     Q_PROPERTY(QStringList subjectAlternativeNames READ subjectAlternativeNames CONSTANT)
 
 public:
@@ -52,11 +52,13 @@ public:
 
     bool isValid() const { return !m_subject.isEmpty(); }
     QVariantMap subject() const { return m_subject; }
+    QString subjectAsString() const;
     QString serialNumber() const { return m_serialNumber; }
     Certificate::KeyUsages keyUsages() const { return m_keyUsages; }
     QDateTime validityNotBefore() const { return m_validityNotBefore; }
     QDateTime validityNotAfter() const { return m_validityNotAfter; }
-    QVariantMap fingerprints() const { return m_fingerprints; }
+    QByteArray fingerprint() const { return m_fingerprint; }
+    QString fingerprintAsString() const { return QString::fromLatin1(m_fingerprint.toHex(':')); }
     QStringList subjectAlternativeNames() const { return m_subjectAlternativeNames; }
 
     bool operator==(const Certificate &other) const;
@@ -72,7 +74,7 @@ private:
     Certificate::KeyUsages m_keyUsages;
     QDateTime m_validityNotBefore;
     QDateTime m_validityNotAfter;
-    QVariantMap m_fingerprints;
+    QByteArray m_fingerprint;
     QStringList m_subjectAlternativeNames;
 
     friend class CertificateParser;

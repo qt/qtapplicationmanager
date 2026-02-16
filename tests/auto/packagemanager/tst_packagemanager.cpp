@@ -20,6 +20,7 @@
 #include "runtimefactory.h"
 #include "qmlinprocruntime.h"
 #include "packageutilities.h"
+#include "cacertificate.h"
 
 #include "../error-checking.h"
 #include "../devmode.h"
@@ -235,9 +236,14 @@ void tst_PackageManager::initTestCase()
     QString devcaFile   = AM_TESTDATA_DIR u"certificates/dev-ca/dev-ca.crt"_s;
     QString storecaFile = AM_TESTDATA_DIR u"certificates/store-ca/store-ca.crt"_s;
 
+    QList<CaCertificate> caCerts = {
+        CaCertificate(rootcaFile,  CaCertificate::Scope::Common,    CaCertificate::Role::Root),
+        CaCertificate(devcaFile,   CaCertificate::Scope::Developer, CaCertificate::Role::Issuer),
+        CaCertificate(storecaFile, CaCertificate::Scope::Store,     CaCertificate::Role::Issuer)
+    };
+
     // no CRLs set on purpose to test verification without CRLs at all
-    QVERIFY_THROWS_NO_EXCEPTION(m_pm->loadCertificates({ rootcaFile }, { devcaFile },
-                                                       { storecaFile }, { }));
+    QVERIFY_THROWS_NO_EXCEPTION(m_pm->loadCertificates(caCerts));
 
     // we do not require valid store signatures for this test run
     m_pm->setDevelopmentMode(PackageManager::DevelopmentMode::System);
@@ -415,7 +421,9 @@ void tst_PackageManager::packageInstallation()
         } else {
             // ...in case of expected success
 
-            QVERIFY(m_finishedSpy->wait(spyTimeout));
+            QVERIFY2(m_finishedSpy->wait(spyTimeout),
+                     m_failedSpy->isEmpty() ? "Did not receive finished signal"
+                                            : qPrintable(m_failedSpy->first()[2].toString()));
             QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
             QVERIFY(!m_progressSpy->isEmpty());
             QCOMPARE(m_progressSpy->last()[0].toString(), taskId);

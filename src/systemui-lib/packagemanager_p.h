@@ -48,8 +48,7 @@ public:
     QByteArrayList caCertificatesDeveloper;
     QByteArrayList caCertificatesStore;
     QByteArrayList certificateRevocationLists;
-    QStringList issuerCertificateFingerprintsDeveloper;
-    QStringList issuerCertificateFingerprintsStore;
+    QHash<QByteArray, Signature::CertificateRole> certificateRoles;
     bool cleanupBrokenInstallationsDone = false;
 
 #if QT_CONFIG(am_installer)

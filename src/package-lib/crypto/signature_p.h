@@ -18,7 +18,7 @@ public:
     QByteArray hash;
     Certificate::KeyUsages requiredKeyUsages;
     QString requirePackageId;
-    QStringList requiredIssuerFingerprints;
+    QHash<QByteArray, Signature::CertificateRole> requiredRoles;
     QByteArrayList requiredCRLs;
 
     QByteArray create(const QByteArray &signingCertificatePkcs12,
@@ -26,28 +26,14 @@ public:
                       const std::function<void(const Certificate &)> &checkCertificate) noexcept(false);
 
     Signature::VerificationResult verify(const QByteArray &signaturePkcs7,
-                                         const QByteArrayList &chainOfTrust) noexcept(false);
+                                         const QByteArrayList &trustedCertsData) noexcept(false);
 
-    void checkCertificate(const Certificate &signer, const Certificate &issuer) noexcept(false);
+    void checkSignerCertificate(const Certificate &signer) noexcept(false);
 
     static void setDNByOid(QVariantMap &map, const QString &oid, const QString &name);
 
-    template<typename PARSER, typename CERT>
-    Signature::VerificationResult createSignatureVerificationResult(PARSER parser, CERT signerCert,
-                                                                    CERT issuerCert)
-    {
-        try {
-            auto signer = parser(signerCert);
-            try {
-                auto issuer = parser(issuerCert);
-                return { signer, { issuer } };
-            } catch (const Exception &e) {
-                throw Exception("Could not parse the direct issuer certificate: %1").arg(e.errorString());
-            }
-        } catch (const Exception &e) {
-            throw Exception("Could not parse the signer certificate: %1").arg(e.errorString());
-        }
-    }
+    static void verifyCertificateRole(const QString &subject, int position, int chainSize,
+                                      Signature::CertificateRole role) noexcept(false);
 };
 
 QT_END_NAMESPACE_AM

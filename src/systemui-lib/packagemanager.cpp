@@ -334,8 +334,10 @@ void PackageManager::enableInstaller()
                     Signature s("developmentMode");
                     s.requireKeyUsage(Certificate::KeyUsage::Developer);
                     s.requireRevocationCheck(d->certificateRevocationLists);
-                    auto result = s.verify(d->developerSignature, d->caCertificatesCommon + d->caCertificatesDeveloper);
-                    d->developerCertificate = result.signer;
+                    s.requireCertificateRoles(d->certificateRoles);
+                    auto result = s.verify(d->developerSignature,
+                                           d->caCertificatesCommon + d->caCertificatesDeveloper);
+                    d->developerCertificate = result.signer();
                 } catch (const Exception &e) {
                     // we could not load the file, so try to get rid of it to at least start over
                     QFile::remove(iniFile);
@@ -740,9 +742,9 @@ void PackageManager::setDeveloperCertificate(const QByteArray &pkcs12Data, const
 
         s.requireRevocationCheck(d->certificateRevocationLists);
         const auto result = s.verify(signature, d->caCertificatesCommon + d->caCertificatesDeveloper);
-        signer = result.signer;
+        signer = result.signer();
 
-        if (result.signer.packageIds().isEmpty())
+        if (signer.packageIds().isEmpty())
             throw Exception("Developer certificates that are not bound to package IDs are not allowed");
     }
     if ((signature == d->developerSignature) && (signer == d->developerCertificate))
@@ -873,14 +875,9 @@ QByteArrayList PackageManager::certificateRevocationLists() const
     return d->certificateRevocationLists;
 }
 
-QStringList PackageManager::issuerCertificateFingerprintsDeveloper() const
+QHash<QByteArray, Signature::CertificateRole> PackageManager::certificateRoles() const
 {
-    return d->issuerCertificateFingerprintsDeveloper;
-}
-
-QStringList PackageManager::issuerCertificateFingerprintsStore() const
-{
-    return d->issuerCertificateFingerprintsStore;
+    return d->certificateRoles;
 }
 
 void PackageManager::removeRecursive(const QString &path) noexcept(false)
@@ -894,41 +891,77 @@ void PackageManager::removeRecursive(const QString &path) noexcept(false)
     }
 }
 
-void PackageManager::loadCertificates(const QStringList &common, const QStringList &developer,
-                                      const QStringList &store, const QStringList &crls)
+void PackageManager::loadCertificates(const QList<CaCertificate> &caCertificates,
+                                      const QStringList &crls)
 {
     if (isConfigurationLocked())
         return;
 
-    auto loadCerts = [](const QStringList &certFiles, const char *type) {
-        QByteArrayList cas;
-        for (const auto &certFile : certFiles) {
-            ensureSafePermissions(certFile);
+    auto loadCertData = [](const QString &certFile, const char *type) -> QByteArray {
+        if (certFile.isEmpty() || !QFile::exists(certFile))
+            throw Exception("%1 file does not exist: %1").arg(type).arg(certFile);
 
-            QFile f(certFile);
-            if (Q_UNLIKELY(!f.open(QFile::ReadOnly)))
-                throw Exception(f, "could not open %1 file").arg(type);
-            QByteArray cert = f.readAll();
-            if (Q_UNLIKELY(cert.isEmpty()))
-                throw Exception(f, "%1 file is empty").arg(type);
-            cas << cert;
-        }
-        return cas;
+        ensureSafePermissions(certFile);
+
+        QFile f(certFile);
+        if (Q_UNLIKELY(!f.open(QFile::ReadOnly)))
+            throw Exception(f, "could not open %1 file").arg(type);
+        QByteArray data = f.readAll();
+        if (Q_UNLIKELY(data.isEmpty()))
+            throw Exception(f, "%1 file is empty").arg(type);
+
+        return data;
     };
 
-    d->caCertificatesCommon = loadCerts(common, "common CA certificate");
-    d->caCertificatesDeveloper = loadCerts(developer, "developer CA certificate");
-    d->caCertificatesStore = loadCerts(store, "store CA certificate");
-    d->certificateRevocationLists = loadCerts(crls, "CRL");
-}
+    for (const auto &cert : caCertificates) {
+        const char *scopeName = nullptr;
+        QList<QByteArray> *scopeList = nullptr;
 
-void PackageManager::setIssuerCertificateFingerprints(const QStringList &developer,
-                                                      const QStringList &store)
-{
-    if (!isConfigurationLocked()) {
-        d->issuerCertificateFingerprintsDeveloper = developer;
-        d->issuerCertificateFingerprintsStore = store;
+        switch (cert.scope) {
+        case CaCertificate::Scope::Common:
+            scopeName = "common CA certificate";
+            scopeList = &d->caCertificatesCommon;
+            break;
+        case CaCertificate::Scope::Developer:
+            scopeName = "developer CA certificate";
+            scopeList = &d->caCertificatesDeveloper;
+            break;
+        case CaCertificate::Scope::Store:
+            scopeName = "store CA certificate";
+            scopeList = &d->caCertificatesStore;
+            break;
+        default:
+            throw Exception("Invalid CA certificate scope: %1").arg(int(cert.scope));
+        }
+
+        QByteArray certData = loadCertData(cert.file, scopeName);
+        if (d->certificateRoles.contains(certData))
+            throw Exception("The same certificate file was added multiple times: %1").arg(cert.file);
+
+        Signature::CertificateRole role;
+        switch (cert.role) {
+        case CaCertificate::Role::Any:
+            role = Signature::CertificateRole::Any;
+            break;
+        case CaCertificate::Role::Issuer:
+            role = Signature::CertificateRole::Issuer;
+            break;
+        case CaCertificate::Role::Intermediate:
+            role = Signature::CertificateRole::Intermediate;
+            break;
+        case CaCertificate::Role::Root:
+            role = Signature::CertificateRole::Root;
+            break;
+        default:
+            throw Exception("Invalid CA certificate role: %1").arg(int(cert.role));
+        }
+
+        d->certificateRoles.insert(certData, role);
+        (*scopeList) << certData;
     }
+
+    for (const auto &crl : crls)
+        d->certificateRevocationLists << loadCertData(crl, "CRL");
 }
 
 void PackageManager::setAllowedInstallationURLs(const QStringList &allowedURLs)

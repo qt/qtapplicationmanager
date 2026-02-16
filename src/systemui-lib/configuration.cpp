@@ -30,6 +30,7 @@
 #include "utilities.h"
 #include "exception.h"
 #include "utilities.h"
+#include "cacertificate.h"
 #include "configuration.h"
 #include "configuration_p.h"
 
@@ -535,7 +536,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 25;
+    return 26;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -563,11 +564,7 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.logging.rules
         & cd.logging.messagePattern
         & cd.logging.useAMConsoleLogger
-        & cd.installer.caCertificates.common
-        & cd.installer.caCertificates.developer
-        & cd.installer.caCertificates.store
-        & cd.installer.issuerCertificateFingerprints.developer
-        & cd.installer.issuerCertificateFingerprints.store
+        & cd.installer.caCertificates
         & cd.installer.certificateRevocationLists
         & cd.installer.allowedURLs
         & cd.dbus.policies
@@ -648,11 +645,7 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(logging.rules);
     MERGE_FIELD(logging.messagePattern);
     MERGE_FIELD(logging.useAMConsoleLogger);
-    MERGE_FIELD(installer.caCertificates.common);
-    MERGE_FIELD(installer.caCertificates.developer);
-    MERGE_FIELD(installer.caCertificates.store);
-    MERGE_FIELD(installer.issuerCertificateFingerprints.developer);
-    MERGE_FIELD(installer.issuerCertificateFingerprints.store);
+    MERGE_FIELD(installer.caCertificates);
     MERGE_FIELD(installer.certificateRevocationLists);
     MERGE_FIELD(installer.allowedURLs);
     MERGE_FIELD(dbus.policies);
@@ -842,25 +835,51 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                           cd.installer.allowedURLs = yp.parseStringOrStringList(); } },
                      { "certificateRevocationLists", false, YamlParser::Scalar, [&]() {
                           cd.installer.certificateRevocationLists = yp.parseStringOrStringList(); } },
-                     { "caCertificates", false, YamlParser::Scalar | YamlParser::List | YamlParser::Map, [&]() {
-                          if (!yp.isMap()) { // legacy format
-                              cd.installer.caCertificates.common = yp.parseStringOrStringList();
-                          } else {
+                     { "caCertificates", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          if (yp.isScalar()) { // simple format (just a file path)
+                              cd.installer.caCertificates << CaCertificate { yp.parseString(),
+                                                                    CaCertificate::Scope::Common,
+                                                                    CaCertificate::Role::Any };
+                              return;
+                          }
+                          yp.parseList([&]() {
+                              if (yp.isScalar()) { // list, but simple format (just a file path)
+                                  cd.installer.caCertificates << CaCertificate { yp.parseString(),
+                                                                        CaCertificate::Scope::Common,
+                                                                        CaCertificate::Role::Any };
+                                  return;
+                              }
+                              CaCertificate cac;
                               yp.parseFields({
-                                  { "common", false, YamlParser::Scalar | YamlParser::List, [&]() {
-                                       cd.installer.caCertificates.common = yp.parseStringOrStringList(); } },
-                                  { "developer", false, YamlParser::Scalar | YamlParser::List, [&]() {
-                                       cd.installer.caCertificates.developer = yp.parseStringOrStringList(); } },
-                                  { "store", false, YamlParser::Scalar | YamlParser::List, [&]() {
-                                       cd.installer.caCertificates.store = yp.parseStringOrStringList(); } },
+                                  { "file", true, YamlParser::Scalar, [&]() {
+                                       cac.file = yp.parseString(); } },
+                                  { "scope", false, YamlParser::Scalar, [&]() {
+                                       QString scope = yp.parseString();
+                                       static const QHash<QString, CaCertificate::Scope> cacScopeMap = {
+                                           { u"common"_s,    CaCertificate::Scope::Common },
+                                           { u"developer"_s, CaCertificate::Scope::Developer },
+                                           { u"store"_s,     CaCertificate::Scope::Store }
+                                       };
+                                       if (auto it = cacScopeMap.constFind(scope.toLower()); it != cacScopeMap.cend())
+                                           cac.scope = it.value();
+                                       else
+                                           throw YamlParserException(&yp, "expected one of %1").arg(cacScopeMap.keys());
+                                       } },
+                                  { "role", false, YamlParser::Scalar, [&]() {
+                                       QString role = yp.parseString();
+                                       static const QHash<QString, CaCertificate::Role> cacRoleMap = {
+                                           { u"any"_s,          CaCertificate::Role::Any },
+                                           { u"issuer"_s,       CaCertificate::Role::Issuer },
+                                           { u"intermediate"_s, CaCertificate::Role::Intermediate },
+                                           { u"root"_s,         CaCertificate::Role::Root }
+                                       };
+                                       if (auto it = cacRoleMap.constFind(role.toLower()); it != cacRoleMap.cend())
+                                           cac.role = it.value();
+                                       else
+                                           throw YamlParserException(&yp, "expected one of %1").arg(cacRoleMap.keys());
+                                       } },
                               });
-                          } } },
-                     { "issuerCertificateFingerprints", false, YamlParser::Map, [&]() {
-                          yp.parseFields({
-                              { "developer", false, YamlParser::Scalar | YamlParser::List, [&]() {
-                                   cd.installer.issuerCertificateFingerprints.developer = yp.parseStringOrStringList(); } },
-                              { "store", false, YamlParser::Scalar | YamlParser::List, [&]() {
-                                   cd.installer.issuerCertificateFingerprints.store = yp.parseStringOrStringList(); } },
+                              cd.installer.caCertificates << cac;
                           }); } }
                  }); } },
             { "quicklaunch", false, YamlParser::Map, [&]() {

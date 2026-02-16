@@ -14,6 +14,7 @@
 #include <chrono>
 #include <memory>
 
+#include "cacertificate.h"
 #include "openglconfiguration.h"
 #include "watchdogconfiguration.h"
 
@@ -62,16 +63,8 @@ struct Q_APPMANSYSTEMUI_EXPORT ConfigurationData
         QVariant useAMConsoleLogger; // true / false / invalid
     } logging;
 
-    struct {
-        struct {
-            QStringList common;
-            QStringList developer;
-            QStringList store;
-        } caCertificates;
-        struct {
-            QStringList developer;
-            QStringList store;
-        } issuerCertificateFingerprints;
+    struct Installer {
+        QList<CaCertificate> caCertificates;
         QStringList certificateRevocationLists;
         QStringList allowedURLs;
     } installer;

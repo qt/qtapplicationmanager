@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <qglobal.h>
 
-#include "qtappmancommon-config_p.h"
+#include "qtappmancommon-config.h"
 
 #if defined(QT_DBUS_LIB)
 #  include <QDBusConnection>
@@ -146,15 +146,15 @@ Main::Main(int &argc, char **argv, InitFlags initFlags)
                                                { SIGINT, SIGTERM }, [](int sig, int senderPid) {
             UnixSignalHandler::instance()->resetToDefault(sig);
             if (auto *main = qobject_cast<Main *>(QCoreApplication::instance())) {
-                QByteArray reason = (sig == SIGINT) ? "Ctrl+C" : "SIGTERM";
+                QString reason = (sig == SIGINT) ? u"Ctrl+C"_s : u"SIGTERM"_s;
                 if (senderPid) {
-                    reason += " from PID " + QByteArray::number(senderPid);
+                    reason += u" from PID "_s + QString::number(senderPid);
 
                     QByteArray processName;
                     processName.resize(256);
                     if (auto len = getProcessName(senderPid, processName.data(), processName.size())) {
                         processName.resize(len);
-                        reason += " (" + processName + ")";
+                        reason += u" (" + QString::fromLocal8Bit(processName) + u")";
                     }
                 }
                 main->shutDown(reason);
@@ -723,8 +723,8 @@ void Main::setupQmlEngine(const QStringList &importPaths, const QString &quickCo
     m_engine = new QQmlApplicationEngine(this);
     disconnect(m_engine, &QQmlEngine::quit, qApp, nullptr);
     disconnect(m_engine, &QQmlEngine::exit, qApp, nullptr);
-    connect(m_engine, &QQmlEngine::quit, this, [this]() { shutDown("Qt.quit()"); });
-    connect(m_engine, &QQmlEngine::exit, this, [this](int retCode) { shutDown("Qt.exit()", retCode); });
+    connect(m_engine, &QQmlEngine::quit, this, [this]() { shutDown(u"Qt.quit()"_s); });
+    connect(m_engine, &QQmlEngine::exit, this, [this](int retCode) { shutDown(u"Qt.exit()"_s, retCode); });
     CrashHandler::setQmlEngine(m_engine);
     new QmlLogger(m_engine);
     m_engine->setOutputWarningsToStandardError(false);
@@ -854,7 +854,7 @@ void Main::loadQml() noexcept(false)
 void Main::showWindow()
 {
     setQuitOnLastWindowClosed(false);
-    connect(this, &QGuiApplication::lastWindowClosed, this, [this]() { shutDown("window closed"); });
+    connect(this, &QGuiApplication::lastWindowClosed, this, [this]() { shutDown(u"window closed"_s); });
 
     QQuickWindow *window = nullptr;
     QObject *rootObject = m_engine->rootObjects().constFirst();

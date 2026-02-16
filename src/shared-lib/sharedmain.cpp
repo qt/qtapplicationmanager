@@ -31,7 +31,6 @@
 #include "utilities.h"
 #include "dbus-utilities.h"
 #include "exception.h"
-#include "crashhandler.h"
 #include "startuptimer.h"
 #include "unixsignalhandler.h"
 #include "watchdog.h"

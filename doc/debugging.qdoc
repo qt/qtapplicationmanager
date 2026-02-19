@@ -131,6 +131,8 @@ to specify which debug wrapper to use:
     \badcode
     qdbus io.qt.ApplicationManager /ApplicationManager debugApplication "gdbserver :5555" io.qt.app
     \endcode
+    \note You have to explicitly register this D-Bus interface via \c am-config.yaml on the system
+          or session bus for this to work.
 \li Using the \c appman-controller which uses D-Bus internally, but is able to find the correct
     bus automatically and supports standard-IO redirection:
     \badcode
@@ -139,9 +141,6 @@ to specify which debug wrapper to use:
     The optional \c -i, \c -o, and \c -e parameters redirect the respective IO streams (\c stdin,
     \c stdout, and \c stderr) to the calling terminal.
 \endlist
-
-\note To use the D-Bus options, the application manager has to be connected to either a session- or
-system-bus; don't run it with \c{--dbus none}.
 
 The debug wrapper specification has to be a single argument string, that is interpreted as a
 command line. If this string contains the \c{%program%} sub-string, it is replaced with the full

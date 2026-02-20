@@ -19,6 +19,7 @@
 
 #if defined(Q_OS_UNIX)
 #  include <unistd.h>
+#  include <QtCore/private/qcore_unix_p.h>
 #endif
 #if defined(Q_OS_WIN)
 #  include <windows.h>
@@ -172,11 +173,23 @@ size_t getProcessName(qint64 pid, char *buffer, size_t bufferSize)
         return 0;
 
 #if defined(Q_OS_LINUX)
-    std::array<char, 64> procExePath { };
-    ::snprintf(procExePath.data(), procExePath.size(), "/proc/%lld/exe", static_cast<long long>(pid));
-    ssize_t len = ::readlink(procExePath.data(), buffer, bufferSize - 1);
-    if (len < 0)
+    std::array<char, 64> procPath { };
+    ::snprintf(procPath.data(), procPath.size(), "/proc/%lld/exe", static_cast<long long>(pid));
+    ssize_t len = ::readlink(procPath.data(), buffer, bufferSize - 1);
+    if (len < 0) {
         len = 0;
+
+        // Plan B: pid most likely belongs to another user, so we cannot access it.
+        ::snprintf(procPath.data(), procPath.size(), "/proc/%lld/comm", static_cast<long long>(pid));
+        if (int fd = ::open(procPath.data(), O_RDONLY | O_CLOEXEC); fd >= 0) {
+            QT_EINTR_LOOP(len, ::read(fd, buffer, bufferSize - 1));
+            ::close(fd);
+            if ((len > 0) && (buffer[len - 1] == '\n'))
+                --len; // remove trailing newline from comm
+            if (len < 0)
+                len = 0;
+        }
+    }
     buffer[len] = '\0';
     return len;
 

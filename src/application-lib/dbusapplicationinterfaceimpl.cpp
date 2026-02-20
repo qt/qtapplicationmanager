@@ -82,4 +82,9 @@ QVariantMap DBusApplicationInterfaceImpl::applicationProperties() const
     return m_applicationMain->applicationProperties();
 }
 
+QVariantMap DBusApplicationInterfaceImpl::extraDirs() const
+{
+    return m_applicationMain->applicationExtraDirs();
+}
+
 QT_END_NAMESPACE_AM

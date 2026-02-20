@@ -82,8 +82,8 @@ private:
     QProcess::ExitStatus m_exitStatus = { };
     QString m_currentControlGroup;
     static bool s_hasCGroupV2;
-    QHash<QString, QString> m_roBindMounts;
-    QHash<QString, QString> m_rwBindMounts;
+    QMap<QString, QString> m_roBindMounts;
+    QMap<QString, QString> m_rwBindMounts;
 
     QProcess *m_process = nullptr;
 };

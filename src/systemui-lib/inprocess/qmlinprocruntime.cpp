@@ -423,6 +423,11 @@ qint64 QmlInProcRuntime::applicationProcessId() const
     return QCoreApplication::applicationPid();
 }
 
+void QmlInProcRuntime::setApplicationExtraDirs(const QMap<QString, QString> &extraPaths)
+{
+    m_applicationExtraDirs = extraPaths;
+}
+
 /*! \internal
   In single process mode, every app plus the System UI itself run within the same QQmlEngine. For
   some operations, we need to figure out though, which app/System UI is the currently "active" one.

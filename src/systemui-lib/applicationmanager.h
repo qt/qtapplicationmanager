@@ -85,6 +85,8 @@ public:
     bool securityChecksEnabled() const;
     void setSecurityChecksEnabled(bool enabled);
 
+    void setApplicationExtraDirs(const QMap<QString, QString> &extraAppPaths);
+
     // container selection
     void setContainerSelectionConfiguration(const QList<std::pair<QString, QString> > &containerSelectionConfig);
     QJSValue containerSelectionFunction() const;

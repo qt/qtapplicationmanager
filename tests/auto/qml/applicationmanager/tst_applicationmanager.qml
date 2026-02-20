@@ -538,6 +538,24 @@ TestCase {
         tryVerify(() => { return simpleApplication.runState === Am.NotRunning })
     }
 
+    function test_extraDirs() {
+        let req = IntentClient.sendIntentRequest("extraDirs", simpleApplication.id, { })
+        verify(req)
+        tryVerify(() => { return req.succeeded }, 5000 * AmTest.timeoutFactor)
+
+        let dirs = req.result.extraDirs
+        verify(dirs !== undefined)
+        compare(Object.keys(dirs).length, 1)
+        compare(dirs["testdata"], "/tmp/qt-am-extradirs-test/" + simpleApplication.id)
+
+        // cleanup
+        compare(simpleApplication.runState, Am.Running)
+        ApplicationManager.stopApplication(simpleApplication.id)
+        tryVerify(() => { return simpleApplication.runState === Am.NotRunning })
+
+        AmTest.runProgram([ "rm", "-rf", "/tmp/qt-am-extradirs-test" ])
+    }
+
     function test_applicationManagerWindow()
     {
         if (testCase.Window.window.flags & Qt.WindowDoesNotAcceptFocus)

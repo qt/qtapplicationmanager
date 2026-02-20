@@ -8,8 +8,10 @@
       <arg name="mimeType" type="s" direction="out"/>
       <arg name="application" type="a{sv}" direction="out"/>
       <arg name="systemProperties" type="a{sv}" direction="out"/>
+      <arg name="extraAppDirs" type="a{sv}" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out4" value="QVariantMap"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out5" value="QVariantMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out6" value="QVariantMap"/>
     </signal>
   </interface>
 </node>

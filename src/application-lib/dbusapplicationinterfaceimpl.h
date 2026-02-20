@@ -29,6 +29,7 @@ public:
     QString version() const override;
     QVariantMap systemProperties() const override;
     QVariantMap applicationProperties() const override;
+    QVariantMap extraDirs() const override;
     void acknowledgeQuit() override;
 
 private:

@@ -84,6 +84,11 @@ void AbstractRuntime::setSlowAnimations(bool slow)
     Q_UNUSED(slow)
 }
 
+void AbstractRuntime::setApplicationExtraDirs(const QMap<QString, QString> &extraPaths)
+{
+    Q_UNUSED(extraPaths);
+}
+
 Application *AbstractRuntime::application() const
 {
     return m_app.data();

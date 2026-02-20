@@ -31,7 +31,7 @@ public:
 public Q_SLOTS:
     void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
                           const QString &mimeType, const QVariantMap &application,
-                          const QVariantMap &systemProperties);
+                          const QVariantMap &systemProperties, const QVariantMap &extraAppDirs);
 
 private:
     QQmlApplicationEngine m_engine;

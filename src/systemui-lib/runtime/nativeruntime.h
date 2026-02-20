@@ -60,6 +60,8 @@ public:
 
     void applicationFinishedInitialization(); // called by the D-Bus adaptor
 
+    void setApplicationExtraDirs(const QMap<QString, QString> &extraPaths) override;
+
     bool start() override;
     void stop(Am::ExitStatus exitStatus) override;
 
@@ -96,6 +98,7 @@ private:
     bool m_connectedToApplicationInterface = false;
     bool m_dbusConnection = false;
     QString m_dbusConnectionName;
+    QMap<QString, QString> m_applicationExtraDirs;
 
     std::unique_ptr<DBusContextAdaptor> m_dbusApplicationInterface;
     std::unique_ptr<DBusContextAdaptor> m_dbusRuntimeInterface;

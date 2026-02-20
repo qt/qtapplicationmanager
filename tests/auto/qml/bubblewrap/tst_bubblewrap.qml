@@ -158,4 +158,23 @@ TestCase {
 
         stopApp(app)
     }
+
+    function test_extraDirs() {
+        skipIfUnsupported()
+
+        var app = ApplicationManager.application("TestApp")
+        startApp(app)
+
+        // The host base path /tmp/qt-am-bwrap-rw-test is bind-mounted as /bwrap-rw-mount (rw).
+        // mapHostPathToContainer translates /tmp/qt-am-bwrap-rw-test/TestApp -> /bwrap-rw-mount/TestApp.
+        let extraDirs = mountResult["extra-dirs"]
+        verify(extraDirs !== undefined)
+        compare(Object.keys(extraDirs).length, 1)
+        compare(extraDirs["testdata"], "/bwrap-rw-mount/" + app.id)
+
+        // The app-specific subdirectory must be accessible inside the container.
+        verify(mountResult["extra-dirs-accessible"])
+
+        stopApp(app)
+    }
 }

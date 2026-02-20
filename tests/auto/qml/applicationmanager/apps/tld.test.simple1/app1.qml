@@ -114,4 +114,11 @@ ApplicationManagerWindow {
             req.sendReply(reply)
         }
     }
+
+    IntentHandler {
+        intentIds: [ "extraDirs" ]
+        onRequestReceived: function(req) {
+            req.sendReply({ "extraDirs": ApplicationInterface.extraDirs })
+        }
+    }
 }

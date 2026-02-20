@@ -99,6 +99,7 @@ struct Q_APPMANSYSTEMUI_EXPORT ConfigurationData
         QString installationDir;
         QString documentDir;
         QString installationDirMountPoint;
+        QMap<QString, QString> extraDirs;
     } applications; // TODO: rename to package?
 
     struct {

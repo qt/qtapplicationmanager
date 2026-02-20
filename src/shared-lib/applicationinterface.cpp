@@ -107,6 +107,19 @@ QT_BEGIN_NAMESPACE_AM
 */
 
 /*!
+    \qmlproperty var ApplicationInterface::extraDirs
+    \readonly
+
+    Returns an object mapping logical names (\c string) to application-specific directory paths
+    (\c string) that were configured via the \l{applications/extraDirs} configuration key.
+
+    For each configured entry, the application manager creates the directory
+    \c{<basePath>/<applicationId>} when the application is started, and exposes it here under
+    the corresponding name. In container runtimes (e.g. bubblewrap), the paths are already
+    translated to their in-container equivalents so that the application can use them directly.
+*/
+
+/*!
     \qmlmethod Notification ApplicationInterface::createNotification()
 
     Calling this function lets you create a \l Notification object dynamically at runtime.
@@ -201,6 +214,11 @@ QVariantMap ApplicationInterface::systemProperties() const
 QVariantMap ApplicationInterface::applicationProperties() const
 {
     return m_impl ? m_impl->applicationProperties() : QVariantMap { };
+}
+
+QVariantMap ApplicationInterface::extraDirs() const
+{
+    return m_impl ? m_impl->extraDirs() : QVariantMap { };
 }
 
 Notification *ApplicationInterface::createNotification()

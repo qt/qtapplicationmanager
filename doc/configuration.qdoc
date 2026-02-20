@@ -202,6 +202,16 @@ ui:
         \li If set, package database loading will be delayed until the specified mount point has been mounted.
             (default: empty/disabled)
     \row
+        \li \target applications/extraDirs
+            [\c applications/extraDirs]
+        \li map<string>
+        \li A map of logical names to base directory paths. For each entry, the application manager
+            creates an application-specific subdirectory \c{<basePath>/<applicationId>} when an
+            application is started, and exposes the resulting paths to the application via
+            \l{ApplicationInterface::extraDirs}. In container runtimes (e.g. bubblewrap), the
+            paths are translated to their in-container equivalents before being handed to the
+            application. (default: empty)
+    \row
         \li \b --dbus
         \li string
         \li Deprecated and ignored; use the \c dbus config key instead.

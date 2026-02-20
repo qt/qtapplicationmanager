@@ -28,7 +28,11 @@ ApplicationManagerWindow {
                                            "rw-writable":  helper.canWrite("/bwrap-rw-mount"),
                                            "cap-present":  helper.pathExists("/bwrap-cap-mount"),
                                            "cap-marker":   helper.readFile("/bwrap-cap-mount/marker.txt"),
-                                           "app-path":     helper.pathExists("/custom-app/info.yaml")
+                                           "app-path":     helper.pathExists("/custom-app/info.yaml"),
+                                           "extra-dirs":   ApplicationInterface.extraDirs,
+                                           "extra-dirs-accessible": ApplicationInterface.extraDirs["testdata"]
+                                               ? helper.pathExists(ApplicationInterface.extraDirs["testdata"])
+                                               : false
                                        })
     }
 }

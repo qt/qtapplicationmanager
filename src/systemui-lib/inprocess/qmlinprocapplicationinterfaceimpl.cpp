@@ -3,6 +3,7 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <QDir>
 #include <QQmlEngine>
 #include <QQmlExpression>
 #include <QQmlInfo>
@@ -83,6 +84,17 @@ QVariantMap QmlInProcApplicationInterfaceImpl::applicationProperties() const
     if (m_runtime && m_runtime->application())
         return m_runtime->application()->info()->allAppProperties();
     return { };
+}
+
+QVariantMap QmlInProcApplicationInterfaceImpl::extraDirs() const
+{
+    if (!m_runtime || !m_runtime->application())
+        return { };
+    const QString appId = m_runtime->application()->id();
+    QVariantMap result;
+    for (const auto &[name, path] : m_runtime->m_applicationExtraDirs.asKeyValueRange())
+        result.insert(name, QDir::cleanPath(path + QDir::separator() + appId));
+    return result;
 }
 
 void QmlInProcApplicationInterfaceImpl::acknowledgeQuit()

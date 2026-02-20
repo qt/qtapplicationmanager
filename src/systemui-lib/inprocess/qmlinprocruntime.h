@@ -49,6 +49,7 @@ public:
     bool start() override;
     void stop(Am::ExitStatus exitStatus) override;
     void stopIfLastWindowClosed();
+    void setApplicationExtraDirs(const QMap<QString, QString> &extraPaths) override;
 
 Q_SIGNALS:
     void aboutToStop(); // used for the ApplicationInterface
@@ -80,6 +81,7 @@ private:
     QQmlIncubator m_incubator;
     QTimer *m_incubationTimer = nullptr;
     bool m_allWindowsClosed = false;
+    QMap<QString, QString> m_applicationExtraDirs;
 
     friend class QmlInProcApplicationManagerWindowImpl; // for emitting signals on behalf of this class in onComplete
     friend class QmlInProcApplicationInterfaceImpl; // for handling the quit() signal

@@ -230,6 +230,11 @@ QVariantMap ApplicationMain::systemProperties() const
     return m_systemProperties;
 }
 
+QVariantMap ApplicationMain::applicationExtraDirs() const
+{
+    return m_applicationExtraDirs;
+}
+
 void ApplicationMain::setApplication(const QVariantMap &application)
 {
     m_application = application;
@@ -238,6 +243,11 @@ void ApplicationMain::setApplication(const QVariantMap &application)
 void ApplicationMain::setSystemProperties(const QVariantMap &properties)
 {
     m_systemProperties = properties;
+}
+
+void ApplicationMain::setExtraAppDirs(const QVariantMap &extraAppDirs)
+{
+    m_applicationExtraDirs = extraAppDirs;
 }
 
 

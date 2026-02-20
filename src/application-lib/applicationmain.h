@@ -75,11 +75,13 @@ public:
     QString applicationVersion() const;
     QVariantMap applicationProperties() const;
     QVariantMap systemProperties() const;
+    QVariantMap applicationExtraDirs() const;
     bool slowAnimations() const;
 
     // These are needed for (Quick)Launchers that receive new data after the initial setup
     void setApplication(const QVariantMap &application);
     void setSystemProperties(const QVariantMap &properties);
+    void setExtraAppDirs(const QVariantMap &extraAppDirs);
     void setSlowAnimations(bool slow);
 
     // DBus ApplicationInterface
@@ -98,7 +100,7 @@ public:
     // DBus RuntimeInterface
     Q_SIGNAL void startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
                                    const QString &mimeType, const QVariantMap &runtimeParams,
-                                   const QVariantMap systemProperties);
+                                   const QVariantMap &systemProperties, const QVariantMap &extraAppDirs);
 
     // DBus NotificationInterface
     Q_SIGNAL void notificationClosed(uint id, uint reason);
@@ -141,6 +143,7 @@ private:
 #endif
     QVariantMap m_application;
     QVariantMap m_systemProperties;
+    QVariantMap m_applicationExtraDirs;
 
     std::unique_ptr<ApplicationInterfaceImpl> m_applicationInterfaceImpl;
 

@@ -3,6 +3,8 @@ formatType: am-configuration
 ---
 applications:
   builtinAppsManifestDir: "${CONFIG_DIR}/apps"
+  extraDirs:
+    testdata: /tmp/qt-am-extradirs-test
 
 ui:
   fullscreen: false

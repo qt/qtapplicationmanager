@@ -25,3 +25,4 @@ intents:
   - id: applicationInterfaceProperties
   - id: qapplicationProperties
   - id: applicationManagerWindow
+  - id: extraDirs

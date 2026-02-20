@@ -440,6 +440,11 @@ void ApplicationManager::setSecurityChecksEnabled(bool enabled)
     d->securityChecksEnabled = enabled;
 }
 
+void ApplicationManager::setApplicationExtraDirs(const QMap<QString, QString> &extraAppPaths)
+{
+    d->applicationExtraDirs = extraAppPaths;
+}
+
 QVariantMap ApplicationManager::systemProperties() const
 {
     return d->systemProperties;
@@ -725,6 +730,12 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
     }
     bool attachRuntime = false;
 
+    for (const auto &[name, path] : d->applicationExtraDirs.asKeyValueRange()) {
+        QDir dir(path + QDir::separator() + appId);
+        if (!dir.mkpath(dir.absolutePath()))
+            throw Exception("ERROR: Couldn't create extra app path: %1 -> %2").arg(name, dir.absolutePath());
+    }
+
     if (!runtime) {
         if (!inProcess) {
             if (QuickLauncher::instance()) {
@@ -849,6 +860,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
     auto doStartInContainer = [this, app, attachRuntime, runtime, containerInfo]() -> bool {
         bool successfullyStarted = false;
         if (app) {
+            runtime->setApplicationExtraDirs(d->applicationExtraDirs);
             successfullyStarted = attachRuntime ? runtime->attachApplicationToQuickLauncher(app)
                                                 : runtime->start();
         }

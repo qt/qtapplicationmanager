@@ -228,7 +228,7 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched)
 
 void Controller::startApplication(const QString &baseDir, const QString &qmlFile, const QString &document,
                                   const QString &mimeType, const QVariantMap &application,
-                                  const QVariantMap &systemProperties)
+                                  const QVariantMap &systemProperties, const QVariantMap &extraAppDirs)
 {
     if (m_launched)
         return;
@@ -302,6 +302,7 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
     auto *am = ApplicationMain::instance();
     am->setApplication(convertFromDBusVariant(application).toMap());
     am->setSystemProperties(convertFromDBusVariant(systemProperties).toMap());
+    am->setExtraAppDirs(convertFromDBusVariant(extraAppDirs).toMap());
 
     auto runtimeParameters = qdbus_cast<QVariantMap>(application.value(u"runtimeParameters"_s));
 

@@ -30,6 +30,8 @@ public:
     QString currentLocale;
     QHash<int, QByteArray> roleNames;
 
+    QMap<QString, QString> applicationExtraDirs;
+
     QList<QPair<QString, QString>> containerSelectionConfig;
     QJSValue containerSelectionFunction;
 

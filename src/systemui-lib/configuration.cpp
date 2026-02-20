@@ -536,7 +536,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 26;
+    return 27;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -588,6 +588,7 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.applications.builtinAppsManifestDir
         & cd.applications.installationDir
         & cd.applications.documentDir
+        & cd.applications.extraDirs
         & cd.applications.installationDirMountPoint
         & cd.crashAction.printBacktrace
         & cd.crashAction.printQmlStack
@@ -669,6 +670,7 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(applications.builtinAppsManifestDir);
     MERGE_FIELD(applications.installationDir);
     MERGE_FIELD(applications.documentDir);
+    MERGE_FIELD(applications.extraDirs);
     MERGE_FIELD(applications.installationDirMountPoint);
     MERGE_FIELD(crashAction.printBacktrace);
     MERGE_FIELD(crashAction.printQmlStack);
@@ -973,7 +975,9 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                           cd.applications.documentDir = yp.parseString(); } },
                      { "installationDirMountPoint", false, YamlParser::Scalar | YamlParser::Scalar, [&]() {
                           cd.applications.installationDirMountPoint = yp.parseString(); } },
-                 }); } },
+                     { "extraDirs", false, YamlParser::Map, [&]() {
+                          cd.applications.extraDirs = yp.parseStringMap(); } },
+             }); } },
             { "flags", false, YamlParser::Map, [&]() {
                  yp.parseFields({
                      { "forceSingleProcess", false, YamlParser::Scalar, [&]() {

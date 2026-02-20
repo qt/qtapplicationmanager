@@ -522,6 +522,12 @@ void NativeRuntime::applicationFinishedInitialization()
     }
 }
 
+void NativeRuntime::setApplicationExtraDirs(const QMap<QString, QString> &extraPaths)
+{
+    m_applicationExtraDirs = extraPaths;
+}
+
+
 bool NativeRuntime::startApplicationViaLauncher()
 {
     if (!m_startedViaLauncher || !m_dbusRuntimeInterface->isRegistered() || !m_app)
@@ -529,11 +535,17 @@ bool NativeRuntime::startApplicationViaLauncher()
 
     QString baseDir = m_container->mapHostPathToContainer(m_app->codeDir());
     QString pathInContainer = m_container->mapHostPathToContainer(m_app->info()->absoluteCodeFilePath());
+    QVariantMap appInfo = m_app->info()->toVariantMap();
+    QVariantMap extraAppDirs;
+    for (const auto &[name, path] : m_applicationExtraDirs.asKeyValueRange()) {
+        extraAppDirs.insert(name, m_container->mapHostPathToContainer(QDir::cleanPath(path + QDir::separator() + m_app->id())));
+    }
 
     emit m_dbusRuntimeInterface->generatedAdaptor<RuntimeInterfaceAdaptor>()
         ->startApplication(baseDir, pathInContainer, m_document, m_mimeType,
-                           convertToDBusVariant(m_app->info()->toVariantMap()).toMap(),
-                           convertToDBusVariant(systemProperties()).toMap());
+                           convertToDBusVariant(appInfo).toMap(),
+                           convertToDBusVariant(systemProperties()).toMap(),
+                           convertToDBusVariant(extraAppDirs).toMap());
     return true;
 }
 

@@ -513,13 +513,28 @@ QString BubblewrapContainer::mapContainerPathToHost(const QString &containerPath
 
 QString BubblewrapContainer::mapHostPathToContainer(const QString &hostPath) const
 {
-    QString containerPath = m_containerPath;
+    // Check if the host path matches any of the configured bind mounts
+    // Use the longest matching path to handle nested mounts correctly
+    QString bestMatch;
+    QString bestContainerPath;
 
-    QFileInfo fileInfo(hostPath);
-    if (fileInfo.isFile())
-        containerPath = m_containerPath + u"/"_s + fileInfo.fileName();
+    auto checkMount = [&](const QMap<QString, QString> &mounts) {
+        for (const auto &[hostMountPath, containerMountPath] : mounts.asKeyValueRange()) {
+            if (hostMountPath.length() > bestMatch.length()
+                    && hostPath.startsWith(hostMountPath)) {
+                bestMatch = hostMountPath;
+                bestContainerPath = containerMountPath;
+            }
+        }
+    };
+    checkMount(m_roBindMounts);
+    checkMount(m_rwBindMounts);
 
-    return containerPath;
+    if (!bestMatch.isEmpty())
+        return QDir::cleanPath(bestContainerPath + u'/' + hostPath.mid(bestMatch.length()));
+
+    // If no mapping found, return the host path as-is
+    return hostPath;
 }
 
 bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString, QString> &runtimeEnvironment,

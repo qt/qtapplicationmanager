@@ -585,6 +585,7 @@ void Main::setupSingletons(const Configuration *cfg) noexcept(false)
 
     m_applicationManager->setSystemProperties(m_systemProperties.at(SP_SystemUi));
     m_applicationManager->setContainerSelectionConfiguration(cfg->yaml.containers.selection);
+    m_applicationManager->setApplicationExtraDirs(cfg->yaml.applications.extraDirs);
 
     StartupTimer::instance()->checkpoint("after ApplicationManager instantiation");
 

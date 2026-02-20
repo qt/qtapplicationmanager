@@ -31,6 +31,7 @@ public:
     virtual QUrl icon() const = 0;
     virtual QString version() const = 0;
     virtual QVariantMap systemProperties() const = 0;
+    virtual QVariantMap extraDirs() const = 0;
     virtual QVariantMap applicationProperties() const = 0;
     virtual void acknowledgeQuit() = 0;
 

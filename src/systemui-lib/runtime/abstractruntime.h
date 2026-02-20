@@ -90,6 +90,8 @@ public:
 
     virtual void setSlowAnimations(bool slow);
 
+    virtual void setApplicationExtraDirs(const QMap<QString, QString> &extraPaths);
+
     void setInProcessQmlEngine(QQmlEngine *view);
     QQmlEngine* inProcessQmlEngine() const;
 

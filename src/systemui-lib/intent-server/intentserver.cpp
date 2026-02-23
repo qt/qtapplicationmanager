@@ -665,7 +665,7 @@ QString IntentServer::packageIdForApplicationId(const QString &applicationId) co
     \sa IntentClient::sendIntentRequest
 */
 
-/*! \qmlmethod IntentServer::acknowledgeDisambiguationRequest(string requestId, Intent selectedIntent)
+/*! \qmlmethod void IntentServer::acknowledgeDisambiguationRequest(string requestId, Intent selectedIntent)
 
     Tells the IntentServer to go ahead with the sender's intent request identified by \a requestId.
     The chosen \a selectedIntent needs to be one of the \c potentialIntents supplied to the
@@ -679,7 +679,7 @@ void IntentServer::acknowledgeDisambiguationRequest(const QString &requestId, In
 }
 
 
-/*! \qmlmethod IntentServer::rejectDisambiguationRequest(string requestId)
+/*! \qmlmethod void IntentServer::rejectDisambiguationRequest(string requestId)
 
     Tells the IntentServer to ignore the sender's intent request identified by \a requestId.
     The original sender will get an error reply back in this case.

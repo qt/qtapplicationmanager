@@ -105,11 +105,11 @@
 */
 
 /*!
-    \qmlmethod WindowObject::close()
+    \qmlmethod void WindowObject::close()
 
     Sends a close event to the client window (usually an ApplicationManagerWindow).
 
-    \sa Window::close()
+    \sa QWindow::close()
 */
 
 /*!

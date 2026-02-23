@@ -126,7 +126,7 @@ QStringList IoStatus::roleNames() const
 }
 
 /*!
-    \qmlmethod IoStatus::update
+    \qmlmethod void IoStatus::update()
 
     Updates the ioLoad property.
 

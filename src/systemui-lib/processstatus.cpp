@@ -141,7 +141,7 @@ ProcessStatus::~ProcessStatus()
 }
 
 /*!
-    \qmlmethod ProcessStatus::update
+    \qmlmethod void ProcessStatus::update()
 
     Updates the cpuLoad, memoryVirtual, memoryRss, and memoryPss properties.
 */

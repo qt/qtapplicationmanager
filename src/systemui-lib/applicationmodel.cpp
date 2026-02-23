@@ -261,7 +261,7 @@ int ApplicationModel::mapFromSource(int sourceIndex) const
 }
 
 /*!
-    \qmlmethod ApplicationModel::invalidate()
+    \qmlmethod void ApplicationModel::invalidate()
 
     Forces a reevaluation of the model.
 */

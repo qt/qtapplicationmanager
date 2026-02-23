@@ -113,7 +113,7 @@ QT_BEGIN_NAMESPACE_AM
 */
 
 /*!
-    \qmlmethod ApplicationInterface::acknowledgeQuit()
+    \qmlmethod void ApplicationInterface::acknowledgeQuit()
 
     This method should be called in response to the \l quit() signal, once the application
     is ready to be terminated (e.g. persistent data has been written).

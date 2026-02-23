@@ -211,7 +211,7 @@ QString IntentClientRequest::errorMessage() const
     return m_errorMessage;
 }
 
-/*! \qmlmethod IntentRequest::sendReply(var result)
+/*! \qmlmethod void IntentRequest::sendReply(var result)
 
     An IntentHandler needs to call this function to send its \a result back to the system in reply
     to a request received via IntentHandler::requestReceived().
@@ -250,7 +250,7 @@ void IntentClientRequest::sendReply(const QVariantMap &result)
     }
 }
 
-/*! \qmlmethod IntentRequest::sendErrorReply(string errorMessage)
+/*! \qmlmethod void IntentRequest::sendErrorReply(string errorMessage)
 
     IntentHandlers can use this function to indicate that they are unable to handle a request that
     they received via IntentHandler::requestReceived(), stating the reason in \a errorMessage.

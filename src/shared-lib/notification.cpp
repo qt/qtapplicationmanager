@@ -340,7 +340,7 @@ QVariantMap Notification::extended() const
 }
 
 /*!
-    \qmlmethod Notification::show()
+    \qmlmethod void Notification::show()
 
     An alias for \c{visible = true}.
 
@@ -352,7 +352,7 @@ void Notification::show()
 }
 
 /*!
-    \qmlmethod Notification::update()
+    \qmlmethod void Notification::update()
 
     Updates notification, which was already shown.
 
@@ -364,7 +364,7 @@ void Notification::update()
 }
 
 /*!
-    \qmlmethod Notification::hide()
+    \qmlmethod void Notification::hide()
 
     An alias for \c{visible = false}.
 

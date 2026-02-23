@@ -90,7 +90,7 @@ using namespace Qt::StringLiterals;
 */
 
 /*!
-    \qmlmethod WindowItem::makePrimary
+    \qmlmethod void WindowItem::makePrimary()
 
     Make the currently displayed window the primary WindowItem.
 

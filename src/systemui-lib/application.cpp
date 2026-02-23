@@ -167,7 +167,7 @@
     ApplicationManager::debugApplication for more information.
 */
 /*!
-    \qmlmethod ApplicationObject::stop(bool forceKill)
+    \qmlmethod void ApplicationObject::stop(bool forceKill)
 
     Stops the application. The meaning of the \a forceKill parameter is runtime dependent, but in
     general you should always try to stop an application with \a forceKill set to \c false first

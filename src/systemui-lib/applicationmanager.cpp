@@ -950,7 +950,7 @@ bool ApplicationManager::debugApplication(const QString &id, const QString &debu
 }
 
 /*!
-    \qmlmethod ApplicationManager::stopApplication(string id, bool forceKill)
+    \qmlmethod void ApplicationManager::stopApplication(string id, bool forceKill)
 
     Tells the application manager to stop an application identified by its unique \a id. The
     meaning of the \a forceKill parameter is runtime dependent, but in general you should always try
@@ -969,7 +969,7 @@ void ApplicationManager::stopApplication(const QString &id, bool forceKill)
 }
 
 /*!
-    \qmlmethod ApplicationManager::stopAllApplications(bool forceKill)
+    \qmlmethod void ApplicationManager::stopAllApplications(bool forceKill)
 
     Tells the application manager to stop all running applications. The meaning of the \a forceKill
     parameter is runtime dependent, but in general you should always try to stop an application
@@ -1109,7 +1109,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
 */
 
 /*!
-    \qmlmethod ApplicationManager::acknowledgeOpenUrlRequest(string requestId, string appId)
+    \qmlmethod void ApplicationManager::acknowledgeOpenUrlRequest(string requestId, string appId)
 
     Tells the application manager to go ahead with the request to open an URL, identified by \a
     requestId. The chosen \a appId needs to be one of the \c possibleAppIds supplied to the
@@ -1140,7 +1140,7 @@ void ApplicationManager::acknowledgeOpenUrlRequest(const QString &requestId, con
 }
 
 /*!
-    \qmlmethod ApplicationManager::rejectOpenUrlRequest(string requestId)
+    \qmlmethod void ApplicationManager::rejectOpenUrlRequest(string requestId)
 
     Tells the application manager to ignore the request to open an URL, identified by \a requestId.
 

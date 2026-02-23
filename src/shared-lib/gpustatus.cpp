@@ -101,7 +101,7 @@ qreal GpuStatus::gpuLoad() const
 }
 
 /*!
-    \qmlmethod GpuStatus::update
+    \qmlmethod void GpuStatus::update()
 
     Updates the gpuLoad property.
 

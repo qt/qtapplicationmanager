@@ -257,7 +257,7 @@ int NotificationModel::mapFromSource(int sourceIndex) const
 }
 
 /*!
-    \qmlmethod NotificationModel::invalidate()
+    \qmlmethod void NotificationModel::invalidate()
 
     Forces a reevaluation of the model.
 */

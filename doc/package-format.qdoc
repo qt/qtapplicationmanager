@@ -138,7 +138,7 @@ are as follows:
     \li \c id
     \li string
     \li The unique ID of the package. This has to match the ID of the package as described by the
-        encompaning \c info.yaml manifest file.
+        \c info.yaml manifest file.
 \row
     \li \c icon
     \li string

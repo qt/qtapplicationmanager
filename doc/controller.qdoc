@@ -153,7 +153,7 @@ The following commands are available:
     \li \c{<certificate>}
     \li Sets the developer certificate to be used when \e{development mode} is set to \e
         application. The certificate contains the package ids the developer is allowed to work with
-        and the application manager will restict access accordingly.
+        and the application manager will restrict access accordingly.
         The certificate has to be provided as a PKCS#12 file. If it is specified as \c{-}, the tool
         tries to read the package from \c stdin.
 

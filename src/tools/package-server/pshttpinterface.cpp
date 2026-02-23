@@ -175,10 +175,10 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
 
             QTemporaryFile f;
             if (!f.open())
-                throw Exception("coud not open temporary file");
+                throw Exception("could not open temporary file");
 
             if (f.write(pkgData) != pkgData.size())
-                throw Exception("coud not write to temporary file");
+                throw Exception("could not write to temporary file");
 
             f.setAutoRemove(false);
             QString pkgFileName = f.fileName();

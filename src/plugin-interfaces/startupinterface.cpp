@@ -16,7 +16,7 @@ StartupInterface::~StartupInterface() { }
     processes. Hence, implementers of the interface can run their custom code at certain points
     during the startup phase.
 
-    A plugin has to implemet the pure virtual functions of the StartupInterface. The interface is
+    A plugin has to implement the pure virtual functions of the StartupInterface. The interface is
     the same for the System UI (appman), as well as for QML applications (appman-launcher-qml). The
     plugins that should be loaded have to be specified in the (am-config.yaml) configuration file.
     The following snippet shows how the application manager can be configured to load and execute

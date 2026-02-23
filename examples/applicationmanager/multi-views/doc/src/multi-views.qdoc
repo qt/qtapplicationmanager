@@ -24,7 +24,7 @@ characteristic of a primary window in terms of input handling.
    \l{Animated Windows System UI Example}.
 
 The button on the top left of the screen shows an icon, a cog, for the only built-in application
-in this example. Overlayed on this icon is the action taken when you click on it. \uicontrol Start
+in this example. Overlaid on this icon is the action taken when you click on it. \uicontrol Start
 is shown when the application is not running, and clicking on it calls
 \l{ApplicationObject::start}{ApplicationObject.start}. Otherwise, the button shows \uicontrol Stop
 and the corresponding action is taken when clicked.

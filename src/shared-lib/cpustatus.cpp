@@ -86,7 +86,7 @@ int CpuStatus::cpuCores() const
 }
 
 /*!
-    \qmlmethod CpuStatus::update
+    \qmlmethod void CpuStatus::update()
 
     Updates the cpuLoad property.
 

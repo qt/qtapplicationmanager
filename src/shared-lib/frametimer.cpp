@@ -218,7 +218,7 @@ QStringList FrameTimer::roleNames() const
 }
 
 /*!
-    \qmlmethod FrameTimer::update
+    \qmlmethod void FrameTimer::update()
 
     Updates the properties averageFps, minimumFps, maximumFps and jitterFps. Then resets the
     internal counters for the new time period starting from the moment this method is called.

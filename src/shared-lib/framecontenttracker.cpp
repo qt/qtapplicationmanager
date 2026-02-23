@@ -68,7 +68,7 @@ QStringList FrameContentTracker::roleNames() const
 }
 
 /*!
-    \qmlmethod FrameContentTracker::update
+    \qmlmethod void FrameContentTracker::update()
 
     Updates the property duplicateFrames. Then resets the internal counters for the new time period
     starting from the moment this method is called.

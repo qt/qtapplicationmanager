@@ -104,14 +104,14 @@
 */
 
 /*!
-    \qmlmethod StartupTimer::checkpoint(string name)
+    \qmlmethod void StartupTimer::checkpoint(string name)
 
     Adds a new checkpoint with the elapsed time and the given \a name. Each checkpoint corresponds
     to a single item in the output created by the next call to createReport.
 */
 
 /*!
-    \qmlmethod StartupTimer::createReport(string title)
+    \qmlmethod void StartupTimer::createReport(string title)
 
     Outputs a report consisting of all checkpoints reported via the checkpoint function.
     The \a title will be appended to the header of the report.

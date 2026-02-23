@@ -107,7 +107,7 @@ QStringList MemoryStatus::roleNames() const
 }
 
 /*!
-    \qmlmethod MemoryStatus::update
+    \qmlmethod void MemoryStatus::update()
 
     Updates the memoryUsed property.
 

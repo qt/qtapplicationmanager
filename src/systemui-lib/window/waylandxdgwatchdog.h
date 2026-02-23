@@ -35,18 +35,12 @@ private:
     bool isClientWatchingEnabled() const;
     void watchClient(QWaylandClient *client);
     void pingClients();
-    void onPongWarnTimeout();
-    void onPongKillTimeout();
-    void onPongReceived(uint serial);
 
     QPointer<QWaylandXdgShell> m_xdgShell;
     std::chrono::milliseconds m_checkInterval { };
     std::chrono::milliseconds m_warnTimeout { };
     std::chrono::milliseconds m_killTimeout { };
     QTimer m_pingTimer;
-    QTimer m_pongWarnTimer;
-    QTimer m_pongKillTimer;
-    QElapsedTimer m_lastPing;
 
     struct ClientData {
         QWaylandClient *m_client = nullptr;
@@ -55,7 +49,14 @@ private:
         QString m_description;
         QList<AbstractRuntime *> m_runtimes;
         bool m_hasDebugWrapper = false;
+        QTimer *m_pongWarnTimer = nullptr;
+        QTimer *m_pongKillTimer = nullptr;
+        QElapsedTimer m_lastPing;
     };
+    void onPongWarnTimeout(ClientData *cd);
+    void onPongKillTimeout(ClientData *cd);
+    void onPongReceived(uint serial);
+
     QList<ClientData *> m_clients;
 };
 

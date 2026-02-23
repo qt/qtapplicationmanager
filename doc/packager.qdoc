@@ -66,7 +66,7 @@ package installations.
         and each option can also be given multiple times. The signed fields are added to the
         package's digest, so that they cannot be changed once the package has been signed. The
         normal fields can however be changed even after package signing: an example would be an
-        appstore-server adding custom tags.
+        app-store-server adding custom tags.
 \row
     \li \span {style="white-space: nowrap"} {\c dev-sign-package}
     \li \c{<package>}
@@ -102,7 +102,7 @@ package installations.
                 better security.
         \endlist
 
-        The following additonal options are supported:
+        The following additional options are supported:
 
         \c{--verbose}: Dump the package's meta-data header and footer information to stdout.
 
@@ -130,7 +130,7 @@ package installations.
         \c{-p} / \c{--password} option. See the \l{packager-dev-sign-package}{dev-sign-package}
         documentation above for details.
 
-        The following additonal options are supported:
+        The following additional options are supported:
 
         \c{--hardware-id}: Bind the resulting package to the given hardware ID, so the package
                            can only be installed on this specific hardware.

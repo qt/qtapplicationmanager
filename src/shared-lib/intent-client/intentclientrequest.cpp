@@ -29,7 +29,7 @@ QT_BEGIN_NAMESPACE_AM
 
     See the IntentClient type for a short example on how to send intent requests to the system.
 
-    The IntentHandler documenatation provides an example showing the use of this type when receiving
+    The IntentHandler documentation provides an example showing the use of this type when receiving
     requests from the system.
 */
 

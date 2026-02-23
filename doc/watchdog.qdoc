@@ -83,7 +83,7 @@ file. Applications inherit these settings, but can also override any value by se
 corresponding key in their \l{Manifest Definition}{info.yaml manifest} file.
 
 The following interval and timeout values listed below let you specify the exact
-\l{Time Duration Values}{times} with milli-seconds precision.
+\l{Time Duration Values}{times} with milliseconds precision.
 
 Setting any of the values to \c 0ms (or \c off) disables the respective functionality.
 

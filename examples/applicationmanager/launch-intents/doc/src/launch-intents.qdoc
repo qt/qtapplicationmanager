@@ -21,7 +21,7 @@ This example shows you how to use intents as a basis for a launcher in a System 
    started in the same way.
 
 Unlike the \l{System UI Example: "Hello World!"}{Hello World} example, we are not using the
-ApplicationObject abstraction layer directly to launch appliations, but instead we are using
+ApplicationObject abstraction layer directly to launch applications, but instead we are using
 \c launch intents registered by the packages. This way we can have multiple icons in a launcher
 that can start the same application, triggering different functionality within the application.
 

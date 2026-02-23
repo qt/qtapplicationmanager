@@ -487,7 +487,7 @@ int NotificationManager::indexOfNotification(uint id) const
 }
 
 /*!
-    \qmlmethod NotificationManager::acknowledgeNotification(int id)
+    \qmlmethod void NotificationManager::acknowledgeNotification(int id)
 
     This function needs to be called by the System UI when the user acknowledged the notification
     identified by \a id (most likely by clicking on it).
@@ -498,7 +498,7 @@ void NotificationManager::acknowledgeNotification(uint id)
 }
 
 /*!
-    \qmlmethod NotificationManager::triggerNotificationAction(int id, string actionId)
+    \qmlmethod void NotificationManager::triggerNotificationAction(int id, string actionId)
 
     This function needs to be called by the System UI when the user triggered a notification action.
     Unless the notification is made resident (\c {dismissOnAction} is \c false), the notification
@@ -540,7 +540,7 @@ void NotificationManager::triggerNotificationAction(uint id, const QString &acti
 }
 
 /*!
-    \qmlmethod NotificationManager::dismissNotification(int id)
+    \qmlmethod void NotificationManager::dismissNotification(int id)
 
     This function needs to be called by the System UI when the notification identified by \a id is
     no longer needed.

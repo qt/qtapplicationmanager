@@ -436,7 +436,7 @@ void MonitorModel::trimHistory()
 }
 
 /*!
-    \qmlmethod MonitorModel::clear
+    \qmlmethod void MonitorModel::clear()
 
     Empties the model, removing all existing rows.
 

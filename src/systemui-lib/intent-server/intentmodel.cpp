@@ -248,7 +248,7 @@ int IntentModel::mapFromSource(int sourceIndex) const
 }
 
 /*!
-    \qmlmethod IntentModel::invalidate()
+    \qmlmethod void IntentModel::invalidate()
 
     Forces a reevaluation of the model.
 */

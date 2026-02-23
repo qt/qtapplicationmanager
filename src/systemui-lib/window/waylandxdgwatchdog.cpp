@@ -23,9 +23,7 @@ WaylandXdgWatchdog::WaylandXdgWatchdog(QWaylandXdgShell *xdgShell)
     : QObject(xdgShell)
     , m_xdgShell(xdgShell)
 {
-    m_pingTimer.setSingleShot(true);
-    m_pongWarnTimer.setSingleShot(true);
-    m_pongKillTimer.setSingleShot(true);
+    m_pingTimer.setSingleShot(false);
 
     // we don't get notified when clients are connecting, so we have to watch for new surfaces
     connect(m_xdgShell, &QWaylandXdgShell::xdgSurfaceCreated,
@@ -44,12 +42,6 @@ WaylandXdgWatchdog::WaylandXdgWatchdog(QWaylandXdgShell *xdgShell)
     // send out pings
     connect(&m_pingTimer, &QTimer::timeout,
             this, &WaylandXdgWatchdog::pingClients);
-
-    // handle missing pong replies
-    connect(&m_pongWarnTimer, &QTimer::timeout,
-            this, &WaylandXdgWatchdog::onPongWarnTimeout);
-    connect(&m_pongKillTimer, &QTimer::timeout,
-            this, &WaylandXdgWatchdog::onPongKillTimeout);
 
     // receive back pongs
     connect(m_xdgShell, &QWaylandXdgShell::pong,
@@ -74,8 +66,13 @@ void WaylandXdgWatchdog::setTimeouts(std::chrono::milliseconds checkInterval,
         m_pingTimer.start();
     } else {
         m_pingTimer.stop();
-        m_pongWarnTimer.stop();
-        m_pongKillTimer.stop();
+        // Stop all per-client timers
+        for (auto *cd : std::as_const(m_clients)) {
+            if (cd->m_pongWarnTimer)
+                cd->m_pongWarnTimer->stop();
+            if (cd->m_pongKillTimer)
+                cd->m_pongKillTimer->stop();
+        }
     }
 
     // these will be picked up automatically
@@ -132,8 +129,6 @@ void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
 
     auto activatePing = [this](ClientData *cd) {
         if (cd->m_hasDebugWrapper) {
-            m_pingTimer.stop();
-
             qCInfo(LogWatchdog).nospace().noquote()
                 << cd->m_description << " is not being watched, because it has a debug wrapper attached";
         } else {
@@ -159,6 +154,18 @@ void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
     auto *cd = new ClientData;
     cd->m_client = client;
     cd->m_pid = client->processId();
+
+    // Initialize per-client timers
+    cd->m_pongWarnTimer = new QTimer(this);
+    cd->m_pongWarnTimer->setSingleShot(true);
+    connect(cd->m_pongWarnTimer, &QTimer::timeout,
+            this, [this, cd]() { onPongWarnTimeout(cd); });
+
+    cd->m_pongKillTimer = new QTimer(this);
+    cd->m_pongKillTimer->setSingleShot(true);
+    connect(cd->m_pongKillTimer, &QTimer::timeout,
+            this, [this, cd]() { onPongKillTimeout(cd); });
+
     updateClientData(cd);
 
     m_clients << cd;
@@ -169,6 +176,8 @@ void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
         qCInfo(LogWatchdog).noquote()
             << cd->m_description << "has disconnected and is not being watched anymore";
         m_clients.removeOne(cd);
+        delete cd->m_pongWarnTimer;
+        delete cd->m_pongKillTimer;
         delete cd;
 
         if (m_clients.isEmpty() && m_pingTimer.isActive())
@@ -178,9 +187,6 @@ void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
 
 void WaylandXdgWatchdog::pingClients()
 {
-    Q_ASSERT(!m_pongWarnTimer.isActive());
-    Q_ASSERT(!m_pongKillTimer.isActive());
-
     if (!m_xdgShell)
         return;
 
@@ -190,97 +196,91 @@ void WaylandXdgWatchdog::pingClients()
     if (m_warnTimeout <= 0ms && m_killTimeout <= 0ms)
         return;
 
-    for (auto *cd : std::as_const(m_clients))
-        cd->m_pingSerial = m_xdgShell->ping(cd->m_client);
-
-    m_lastPing.start();
-
-    m_pongWarnTimer.setInterval(m_warnTimeout);
-    m_pongKillTimer.setInterval(m_killTimeout);
-
-    if (m_warnTimeout > 0ms)
-        m_pongWarnTimer.start();
-    if (m_killTimeout > 0ms)
-        m_pongKillTimer.start();
-}
-
-void WaylandXdgWatchdog::onPongWarnTimeout()
-{
-    Q_ASSERT(!m_pingTimer.isActive());
-    auto elapsed = std::chrono::milliseconds(m_lastPing.elapsed());
-
     for (auto *cd : std::as_const(m_clients)) {
-        if (cd->m_pingSerial) {
-            qCCritical(LogWatchdog).nospace().noquote()
-                << cd->m_description
-                << " still hasn't sent a pong reply to a ping request in over "
-                << elapsed << " (the warn threshold is " << m_warnTimeout << ")";
-        }
-    }
-    if ((m_killTimeout <= 0ms) && (m_checkInterval > 0ms))
-        m_pingTimer.start();
-}
+        if (cd->m_hasDebugWrapper)
+            continue;
 
-void WaylandXdgWatchdog::onPongKillTimeout()
-{
-    Q_ASSERT(!m_pingTimer.isActive());
+        // Only ping if not waiting for a pong
+        if (cd->m_pingSerial == 0) {
+            cd->m_pingSerial = m_xdgShell->ping(cd->m_client);
+            cd->m_lastPing.start();
 
-    for (auto *cd : std::as_const(m_clients)) {
-        if (cd->m_pingSerial) {
-            cd->m_pingSerial = 0;
-
-            const char *noKillReason = nullptr;
-            if (isDebuggerAttached()) {
-                noKillReason = "a debugger is attached to the system ui";
-            } else if ((cd->m_pid > 0) && isDebuggerAttached(cd->m_pid)) {
-                noKillReason = "a debugger is attached";
-            } else {
-                // check if all apps belonging to this client are shutting down right now
-                bool inShutdown = true;
-                for (auto *runtime : std::as_const(cd->m_runtimes)) {
-                    if (!runtime->application() || (runtime->state() != Am::ShuttingDown)) {
-                        inShutdown = false;
-                        break;
-                    }
-                }
-                if (inShutdown)
-                    noKillReason = "the app(s) are already in their shutdown phase";
+            if (m_warnTimeout > 0ms) {
+                cd->m_pongWarnTimer->setInterval(m_warnTimeout);
+                cd->m_pongWarnTimer->start();
             }
-
-            qCCritical(LogWatchdog).nospace().noquote()
-                << cd->m_description << " "
-                << (noKillReason ? "would be" : "is")
-                << " getting killed, because it failed to send a pong reply to a ping request within "
-                << m_killTimeout
-                << (noKillReason ? ", but " : "")
-                << (noKillReason ? noKillReason : "");
-
-            if (!noKillReason) {
-                if (cd->m_runtimes.isEmpty()) {
-                    cd->m_client->kill(UnixSignalHandler::watchdogSignal());
-                } else {
-                    for (auto *runtime : std::as_const(cd->m_runtimes))
-                        runtime->stop(Am::WatchdogExit);
-                }
+            if (m_killTimeout > 0ms) {
+                cd->m_pongKillTimer->setInterval(m_killTimeout);
+                cd->m_pongKillTimer->start();
             }
         }
     }
-    if (m_checkInterval > 0ms)
-        m_pingTimer.start();
+}
+
+void WaylandXdgWatchdog::onPongWarnTimeout(ClientData *cd)
+{
+    if (!cd || cd->m_pingSerial == 0)
+        return;
+
+    auto elapsed = std::chrono::milliseconds(cd->m_lastPing.elapsed());
+
+    qCCritical(LogWatchdog).nospace().noquote()
+        << cd->m_description
+        << " still hasn't sent a pong reply to a ping request in over "
+        << elapsed << " (the warn threshold is " << m_warnTimeout << ")";
+}
+
+void WaylandXdgWatchdog::onPongKillTimeout(ClientData *cd)
+{
+    if (!cd || cd->m_pingSerial == 0)
+        return;
+
+    cd->m_pingSerial = 0;
+
+    const char *noKillReason = nullptr;
+    if (isDebuggerAttached()) {
+        noKillReason = "a debugger is attached to the system ui";
+    } else if ((cd->m_pid > 0) && isDebuggerAttached(cd->m_pid)) {
+        noKillReason = "a debugger is attached";
+    } else {
+        // check if all apps belonging to this client are shutting down right now
+        bool inShutdown = true;
+        for (auto *runtime : std::as_const(cd->m_runtimes)) {
+            if (!runtime->application() || (runtime->state() != Am::ShuttingDown)) {
+                inShutdown = false;
+                break;
+            }
+        }
+        if (inShutdown)
+            noKillReason = "the app(s) are already in their shutdown phase";
+    }
+
+    qCCritical(LogWatchdog).nospace().noquote()
+        << cd->m_description << " "
+        << (noKillReason ? "would be" : "is")
+        << " getting killed, because it failed to send a pong reply to a ping request within "
+        << m_killTimeout
+        << (noKillReason ? ", but " : "")
+        << (noKillReason ? noKillReason : "");
+
+    if (!noKillReason) {
+        if (cd->m_runtimes.isEmpty()) {
+            cd->m_client->kill(UnixSignalHandler::watchdogSignal());
+        } else {
+            for (auto *runtime : std::as_const(cd->m_runtimes))
+                runtime->stop(Am::WatchdogExit);
+        }
+    }
 }
 
 void WaylandXdgWatchdog::onPongReceived(uint serial)
 {
-    auto elapsed = std::chrono::milliseconds(m_lastPing.elapsed());
-
     ClientData *foundCd = nullptr;
-    int missingPongs = 0;
     for (auto *cd : std::as_const(m_clients)) {
         if (cd->m_pingSerial == serial) {
             cd->m_pingSerial = 0;
             foundCd = cd;
-        } else if (cd->m_pingSerial) {
-            ++missingPongs;
+            break;
         }
     }
 
@@ -288,21 +288,17 @@ void WaylandXdgWatchdog::onPongReceived(uint serial)
     if (!foundCd)
         return;
 
+    auto elapsed = std::chrono::milliseconds(foundCd->m_lastPing.elapsed());
+
+    // Stop this client's timers
+    foundCd->m_pongWarnTimer->stop();
+    foundCd->m_pongKillTimer->stop();
+
     if ((m_warnTimeout > 0ms) && (elapsed > m_warnTimeout)) {
         qCWarning(LogWatchdog).nospace().noquote()
             << foundCd->m_description << " needed " << elapsed
             << " to send a pong reply to a ping request (the warn threshold is "
             << m_warnTimeout << ")";
-    }
-
-    // not really expected at this point anymore
-    if (!m_pongWarnTimer.isActive() && !m_pongKillTimer.isActive())
-        return;
-
-    if (!missingPongs) {
-        m_pongWarnTimer.stop();
-        m_pongKillTimer.stop();
-        m_pingTimer.start();
     }
 }
 

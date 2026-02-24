@@ -50,6 +50,7 @@ Item {
 
     // Show windows
     Grid {
+        id: windowGrid
         anchors {
             right: parent.right
             left: launcher.right
@@ -60,8 +61,8 @@ Item {
 
         IntentsUIPage {
             id: sysui_page
-            width: parent.width / 2
-            height: parent.height / 2
+            width: windowGrid.width / 2
+            height: windowGrid.height / 2
             title: "System UI"
 
             onRequest: (intentId, applicationId, parameters) => {

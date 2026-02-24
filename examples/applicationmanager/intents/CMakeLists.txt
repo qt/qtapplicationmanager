@@ -19,22 +19,23 @@ if (QT_FEATURE_static)
     target_compile_definitions(intents PRIVATE AM_COMPILING_APPMAN)
 endif()
 
+qt_add_qml_module(shared
+    URI shared
+    QML_FILES
+        shared/IntentsApplicationWindow.qml
+        shared/IntentsUIPage.qml
+    OUTPUT_DIRECTORY
+        imports/shared
+)
+
 qt_add_qml_module(intents
     URI SystemUI
     QML_FILES
         system-ui.qml
     RESOURCES
         am-config.yaml
-)
-
-qt_add_qml_module(shared
-    URI shared
-    QML_FILES
-        shared/IntentsApplicationWindow.qml
-        shared/IntentsUIPage.qml
-    PLUGIN_TARGET shared
-    OUTPUT_DIRECTORY
-        imports/shared
+    IMPORT_PATH
+        ${CMAKE_CURRENT_BINARY_DIR}/imports
 )
 
 target_link_libraries(intents PRIVATE

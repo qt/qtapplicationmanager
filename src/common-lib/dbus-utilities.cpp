@@ -29,6 +29,28 @@ using namespace Qt::StringLiterals;
 
 #if defined(QT_DBUS_LIB)
 
+#  if QT_VERSION < QT_VERSION_CHECK(6, 10, 0)
+template <typename... T>
+QDBusArgument &operator<<(QDBusArgument &argument, const std::tuple<T...> &tuple)
+{
+    static_assert(sizeof...(T) != 0, "D-Bus doesn't allow empty structs");
+    argument.beginStructure();
+    std::apply([&argument](const auto &...elements) { (argument << ... << elements); }, tuple);
+    argument.endStructure();
+    return argument;
+}
+
+template <typename... T>
+const QDBusArgument &operator>>(const QDBusArgument &argument, std::tuple<T...> &tuple)
+{
+    static_assert(sizeof...(T) != 0, "D-Bus doesn't allow empty structs");
+    argument.beginStructure();
+    std::apply([&argument](auto &...elements) { (argument >> ... >> elements); }, tuple);
+    argument.endStructure();
+    return argument;
+}
+#  endif
+
 namespace {
 
 // QVariant() [undefined] and QVariant(nullptr) [null] are common, but cannot be mapped to any

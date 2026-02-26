@@ -15,5 +15,5 @@ dependencies:
     ref: 3a0b4827a98e1ccbcfb0d7965fd280d2d4c05701
     required: false
   ../qtwayland:
-    ref: 92b7d37e8f267a7a3bf385cde2c446421d5307aa
+    ref: 5da9d05ceb40a43d45836a81c13b141f1fadcc12
     required: false

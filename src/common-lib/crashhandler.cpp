@@ -81,6 +81,15 @@ extern "C" {
 #  endif
 #endif
 
+#if (defined(__SANITIZE_ADDRESS__) || __has_feature(address_sanitizer))
+#  include <sanitizer/lsan_interface.h>
+#  define AM_LSAN_ENABLE __lsan_enable()
+#  define AM_LSAN_DISABLE __lsan_disable()
+#else
+#  define AM_LSAN_ENABLE
+#  define AM_LSAN_DISABLE
+#endif
+
 using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
@@ -126,8 +135,16 @@ struct CrashHandlerGlobal
     }
 };
 
-Q_GLOBAL_STATIC(CrashHandlerGlobal, chg);
-
+// We cannot use Q_GLOBAL_STATIC here, because this instance cannot be destroyed. The crash-handler
+// needs to stay active until the very end and it needs to access chg().
+// The CrashHandlerGlobal instance is thus leaked deliberately.
+static inline CrashHandlerGlobal *chg()
+{
+    AM_LSAN_DISABLE;
+    static CrashHandlerGlobal *instance = new CrashHandlerGlobal;
+    AM_LSAN_ENABLE;
+    return instance;
+}
 
 void CrashHandler::setCrashActionConfiguration(bool printBacktrace, bool printQmlStack,
                                                int waitForGdbAttach, bool dumpCore,

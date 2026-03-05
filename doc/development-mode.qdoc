@@ -1,0 +1,179 @@
+// Copyright (C) 2026 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+
+\page development-mode.html
+\ingroup qtappman
+\title Development Mode
+\brief Describes the effects of enabling the developmentMode configuration option.
+
+\section1 Overview
+
+The \e{Development Mode} is an optional operating mode that makes the application manager expose a
+private P2P D-Bus interface, which is used exclusively by the \l{Controller}{\c appman-controller}
+tool. With this interface, developers can install and manage packages, start and stop applications,
+and inject intent requests from the command line without having to integrate any System UI logic.
+
+Development mode is controlled by the \l{development-mode}{\c flags/developmentMode} configuration
+option and the corresponding \c{--development-mode} command-line flag. The possible values are:
+
+\table
+\header
+    \li Value
+    \li Description
+\row
+    \li \c disabled
+    \li Development mode is off. No private D-Bus interface is created and the
+        \c appman-controller tool cannot connect. This is the default.
+\row
+    \li \c system
+    \li Development mode is enabled with full, unrestricted access. Any developer
+        with access to the device can use \c appman-controller to control the
+        application manager without restrictions.
+\row
+    \li \c application
+    \li A restricted development mode intended for third-party application developers.
+        Access is scoped to the packages and applications whose IDs are covered by a
+        developer certificate that is set at runtime.
+\endtable
+
+\section1 Enabling Development Mode
+
+Set the mode in the \l {Configuration}{configuration file}:
+
+\badcode
+flags:
+  developmentMode: system
+\endcode
+
+Or pass it on the command line:
+
+\badcode
+appman --development-mode system
+\endcode
+
+\note Development mode should never be enabled on production devices. In either \c system or
+\c application mode, the private D-Bus interface can be used to install packages, start
+applications, and inject intents, which bypasses normal access controls.
+
+\section1 System Mode
+
+When \c developmentMode is set to \c system, the application manager grants the
+\c appman-controller tool unrestricted access to all D-Bus operations:
+
+\list
+    \li All packages and applications are visible and manageable.
+    \li Developer-signed packages (without a store signature) can be installed
+        from any valid developer certificate issued by the configured Developer CA.
+    \li All installation tasks are visible and can be cancelled.
+    \li All \c appman-controller commands are available, including commands that
+        are not scoped to a specific package or application, such as taking a
+        screenshot of the entire display.
+    \li Intent requests can be injected for testing via \c{inject-intent-request}.
+\endlist
+
+\section1 Application Mode
+
+When \c developmentMode is set to \c application, access through the
+\c appman-controller tool is restricted to the packages and applications that are
+covered by a developer certificate loaded at runtime. This mode is designed for third-party
+developers who should only be able to manage their own packages on the device, without
+gaining access to system packages or other developers' packages.
+
+\section2 Setting the Developer Certificate
+
+Before using any package- or application-specific operations in application mode,
+a developer certificate must be set using \c appman-controller:
+
+\badcode
+appman-controller set-developer-certificate developer.p12
+\endcode
+
+The certificate is a PKCS#12 file that encodes the package IDs the developer is authorized
+to work with, stored in the \c{subjectAltName} X.509v3 extension as
+\c{URI:qtam://packageid/...} entries. For details on creating certificates,
+see \l{Package Installation}.
+
+The current developer certificate persists across application manager restarts; it is saved
+in the application manager's data directory. Clearing it is done with:
+
+\badcode
+appman-controller set-developer-certificate --clear
+\endcode
+
+\section2 Access Restrictions
+
+Once a developer certificate is set, the following restrictions apply when using the
+\c appman-controller tool via the development mode D-Bus interface:
+
+\list
+    \li \b{Package and application visibility}: Only packages and applications whose IDs
+        match the developer certificate are listed or accessible. Packages and applications
+        belonging to other developers or to the system are hidden.
+    \li \b{Installation task visibility}: Only installation tasks initiated through the
+        development mode D-Bus interface are visible. System-initiated tasks are not accessible.
+    \li \b{Developer-signed package installation}: Installing a package that carries only a
+        developer signature (without a store signature) requires the package ID to match the
+        currently set developer certificate, and the developer signature itself must have been
+        created with the same certificate.
+    \li \b{System-wide operations}: Operations that are not scoped to a specific package or
+        application, such as taking a screenshot of the entire display, are not available.
+        Application-specific variants of such operations remain accessible for matching
+        applications.
+\endlist
+
+\section2 Workflow Example
+
+A typical application developer workflow using application mode:
+
+On the development machine:
+\badcode
+# Sign the package with the developer's own certificate
+appman-packager dev-sign-package myapp.ampkg myapp.dev-signed.ampkg developer.p12
+\endcode
+
+On the device:
+\badcode
+# One time only: set the developer certificate in the running application manager
+appman-controller set-developer-certificate developer.p12
+
+# Install the developer-signed package
+appman-controller install-package myapp.dev-signed.ampkg
+
+# Start the application
+appman-controller start-application com.example.myapp
+
+# Testing: Inject an intent
+appman-controller inject-intent-request com.example.myapp.action '{"key": "value"}'
+\endcode
+
+\section1 Relation to Other Security Flags
+
+Development mode interacts with the following related configuration options:
+
+\table
+\header
+    \li Option
+    \li Interaction
+\row
+    \li \l{no-security}{\c flags/noSecurity}
+    \li Disables \e all security checks including signature verification. Using this flag
+        makes development mode unnecessary for package installation, but is even more permissive
+        and should only be used in controlled local development environments.
+\row
+    \li \l{allow-unsigned-packages}{\c flags/allowUnsignedPackages}
+    \li Allows installation of completely unsigned packages. In application mode, this flag
+        still requires a matching developer certificate when a package originates from a
+        developer D-Bus client.
+\endtable
+
+\section1 Related Content
+
+\list
+  \li \l{Configuration}
+  \li \l{Controller}
+  \li \l{Package Installation}
+  \li \l{PackageManager::developmentMode}{PackageManager.developmentMode}
+\endlist
+*/

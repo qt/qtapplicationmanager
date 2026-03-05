@@ -91,9 +91,10 @@ WatchdogSec=10s
       to \c root and the suid/'s' bit on the application manager executable.
       Then, the service had to be started as the unprivileged user and the suid-root bit would take
       care of starting the process initially as \e root. This was changed to the new scheme for two
-      reasons:
+      reasons: \br
       1) the suid-root scheme can be a big security hole, if the application manager executable's
          execute-permissions are too liberal (as is with any suid-root executable).
+      \br
       2) all processes with suid-root bit set are tagged \c AT_SECURE by the Linux kernel and have
          to live with restrictions forever, even after switching back to an unprivileged user (e.g.
          \c secure_getenv(), \c LD_LIBRARY_PATH).

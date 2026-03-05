@@ -14,9 +14,9 @@ The biggest part of this release is the complete overhaul of the runtime package
 mechanism. The full documentation is available \l{Package Installation}{here}.
 \list
 \li Developer certificates can now be bound to specific package IDs.
-\li Devices can be put into an \e{application developer} mode that restricts the control APIs
-    exposed via D-Bus and \c appman-controller to the bare minimum that needs to be accessible for a
-    given developer certificate (which is bound to a specific package ID).
+\li Devices can be put into an \l{Development Mode}{application development mode} that restricts
+    the control APIs exposed via D-Bus and \c appman-controller to the bare minimum that needs to
+    be accessible for a given developer certificate (which is bound to a specific package ID).
 \li Developer and store certificates can not be used interchangeably anymore, and they are now
     using modern cryptographic algorithms.
 \li Issuer certificates can be limited with a SHA-256 fingerprint whitelist.

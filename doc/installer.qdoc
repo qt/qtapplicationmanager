@@ -93,7 +93,6 @@ New in 6.11:
     that developer and app-store certificates cannot be used interchangeably. The X509 format is not
     easily extensible, but these otherwise unused key-usage bits can easily be set in any tool used
     for creating certificates.
-\li The fingerprints of issuer certificates can optionally be white-listed in the configuration file.
 \li Certificate Revocation Lists (CRLs) can be loaded to revoke developer or app-store certificates.
 \endlist
 
@@ -219,5 +218,6 @@ extension.
   \li \l {Package Format}
   \li \l {Packager}
   \li \l {PackageManager}{PackageManager API}
+  \li \l {Development Mode}
 \endlist
 */

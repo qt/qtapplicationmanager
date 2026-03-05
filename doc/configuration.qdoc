@@ -310,6 +310,7 @@ ui:
                 \li \c application: a reduced development mode is enabled for 3rd party application
                                     developers (needs a valid developer certificate)
             \endlist
+            See also the \l{Development Mode}{full documentation of this feature}.
     \row
         \li [\c flags/allowUnsignedPackages]
         \li bool

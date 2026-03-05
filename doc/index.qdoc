@@ -26,6 +26,7 @@ For a high-level overview, see \l{Introduction}{Introduction to the Qt Applicati
     \li \l{Writing Applications}
     \li \l{Manifest Definition}
     \li \l{Package Installation}
+    \li \l{Development Mode}
     \li \l{Logging and Debugging}
     \li \l{Containers}
     \li \l{Intents}

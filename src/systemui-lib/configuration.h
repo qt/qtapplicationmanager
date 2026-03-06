@@ -14,9 +14,9 @@
 #include <chrono>
 #include <memory>
 
-#include "cacertificate.h"
-#include "openglconfiguration.h"
-#include "watchdogconfiguration.h"
+#include <QtAppManSystemUI/cacertificate.h>
+#include <QtAppManCommon/openglconfiguration.h>
+#include <QtAppManCommon/watchdogconfiguration.h>
 
 QT_BEGIN_NAMESPACE_AM
 

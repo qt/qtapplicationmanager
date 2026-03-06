@@ -132,7 +132,7 @@ TestCase {
 
         // ro-bind: marker file inside the ro-mounted directory is readable
         compare(mountResult["ro-marker"].trim(), "ro-test")
-        // ${APPLICATION_ID} substitution: the app-id was substituted in the host path
+        // %APPLICATION_ID% substitution: the app-id was substituted in the host path
         compare(mountResult["appid-marker"].trim(), "appid-test")
         // rw-bind: writing to the mount point succeeds
         verify(mountResult["rw-writable"])

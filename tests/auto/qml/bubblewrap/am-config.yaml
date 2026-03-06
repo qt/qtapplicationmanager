@@ -32,7 +32,7 @@ containers:
         '${CONFIG_DIR}/mount-test-data/ro-source':
           path: '/bwrap-ro-mount'
           mode: ro
-        '${CONFIG_DIR}/mount-test-data/${APPLICATION_ID}':
+        '${CONFIG_DIR}/mount-test-data/%APPLICATION_ID%':
           path: '/bwrap-appid-mount'
           mode: ro
         /tmp/qt-am-bwrap-rw-test:

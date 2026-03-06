@@ -404,10 +404,10 @@ void BubblewrapContainer::setupCustomBindMounts(bool ignoreCapabilities)
 
     auto addToMountList = [appId, this](const QString &hostPath, const QString &containerPath, bool readOnly) {
         QString newPath = hostPath;
-        newPath = newPath.replace(u"${APPLICATION_ID}"_s, appId);
+        newPath = newPath.replace(u"%APPLICATION_ID%"_s, appId);
 
-        if (containerPath.contains(u"${APPLICATION_ID}"_s))
-            qCCritical(lcBwrap) << "Can't substitute ${APPLICATION_ID} for mount destination paths:" << containerPath;
+        if (containerPath.contains(u"%APPLICATION_ID%"_s))
+            qCCritical(lcBwrap) << "Can't substitute %APPLICATION_ID% for mount destination paths:" << containerPath;
 
         if (readOnly)
             m_roBindMounts.insert(newPath, containerPath);

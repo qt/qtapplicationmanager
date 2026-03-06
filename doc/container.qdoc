@@ -403,7 +403,7 @@ The \c bubblewrap container accepts the following configuration settings:
               directory is mounted. (default: \c{/app})
           \li \b{\c extra} (object): A map of additional bind mounts. Each key is the \e{host}
               path to mount, and the corresponding value describes the \e{container} path and
-              mount options. The special placeholder \c{${APPLICATION_ID}} in a host path is
+              mount options. The special placeholder \c{%APPLICATION_ID%} in a host path is
               substituted with the running application's ID at mount time, enabling
               per-application host directories. The placeholder is \e not supported in container
               paths.
@@ -429,11 +429,11 @@ The \c bubblewrap container accepts the following configuration settings:
         customBindMounts:
           app: '/opt/app'
           extra:
-            /extra/${APPLICATION_ID}: /extra
+            /extra/%APPLICATION_ID%: /extra
             /run/shared/config:
               path: '/config'
               mode: ro
-            /var/data/${APPLICATION_ID}:
+            /var/data/%APPLICATION_ID%:
               path: '/data'
               mode: rw
             /dev/custom-device:

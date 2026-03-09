@@ -406,12 +406,17 @@ function(qt6_am_create_installable_package target)
                                        COMMAND ${CMAKE_COMMAND} -E copy ${ARG_FILES} ${ARG_PACKAGE_DIRECTORY})
     endif()
 
+    set(TOOL_PATH $ENV{PATH})
+    if (WIN32)
+        set(TOOL_PATH "${env_path}${QT_PATH_SEPARATOR}${TOOL_PATH}")
+    endif()
+
     add_custom_command(
         OUTPUT  ${UNSIGNED_PACKAGE_PATH}
         COMMAND ${CMAKE_COMMAND} -E rm -f ${UNSIGNED_PACKAGE_PATH}
         COMMAND ${CMAKE_COMMAND} -E rm -rf /tmp/am-pseudo
         ${COPY_TO_PACKAGEDIR_COMMAND}
-        COMMAND ${CMAKE_COMMAND} -E env "PATH=$ENV{PATH}"
+        COMMAND ${CMAKE_COMMAND} -E env "PATH=${TOOL_PATH}"
                     ${RUN_WITH_FAKEROOT}
                     $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>
                     create-package ${ARG_ADDITIONAL_OPTIONS} ${UNSIGNED_PACKAGE_PATH} ${ARG_PACKAGE_DIRECTORY}
@@ -427,7 +432,7 @@ function(qt6_am_create_installable_package target)
         add_custom_command(
             OUTPUT  ${SIGNED_PACKAGE_PATH}
             COMMAND ${CMAKE_COMMAND} -E rm -f ${SIGNED_PACKAGE_PATH}
-            COMMAND ${CMAKE_COMMAND} -E env "PATH=$ENV{PATH}"
+            COMMAND ${CMAKE_COMMAND} -E env "PATH=${TOOL_PATH}"
                         ${RUN_WITH_FAKEROOT}
                         $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>
                         dev-sign-package ${UNSIGNED_PACKAGE_PATH} ${SIGNED_PACKAGE_PATH} ${ARG_CERTIFICATE} ${OPT_CERTIFICATE_PASSWORD}

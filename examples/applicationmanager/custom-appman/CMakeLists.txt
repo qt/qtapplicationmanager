@@ -5,7 +5,7 @@ find_package(Qt6 COMPONENTS AppManSystemUIPrivate)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
-qt_add_executable(custom-appman WIN32
+qt_add_executable(custom-appman
     custom-appman.cpp
 )
 

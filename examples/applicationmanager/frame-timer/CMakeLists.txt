@@ -10,7 +10,7 @@ endif()
 
 ## System-UI ##
 
-qt_add_executable(frame-timer WIN32
+qt_add_executable(frame-timer
     main.cpp
 )
 

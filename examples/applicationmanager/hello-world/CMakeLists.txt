@@ -10,7 +10,7 @@ endif()
 
 ## System-UI ##
 
-qt_add_executable(hello-world WIN32
+qt_add_executable(hello-world
     main.cpp
 )
 

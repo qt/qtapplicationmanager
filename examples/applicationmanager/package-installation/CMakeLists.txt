@@ -10,7 +10,7 @@ endif()
 
 ## System-UI ##
 
-qt_add_executable(package-installation WIN32
+qt_add_executable(package-installation
     main.cpp
 )
 

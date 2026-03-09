@@ -10,7 +10,7 @@ endif()
 
 ## System-UI ##
 
-qt_add_executable(bubblewrap-example WIN32
+qt_add_executable(bubblewrap-example
     main.cpp
 )
 

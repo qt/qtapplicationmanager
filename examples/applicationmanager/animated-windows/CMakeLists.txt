@@ -10,7 +10,7 @@ endif()
 
 ## System-UI ##
 
-qt_add_executable(animated-windows WIN32
+qt_add_executable(animated-windows
     main.cpp
 )
 

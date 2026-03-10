@@ -3,7 +3,13 @@ qt_standard_project_setup(REQUIRES 6.8)
 
 qt_am_internal_add_qml_test(tst_bubblewrap
     CONFIG_YAML am-config.yaml
-    EXTRA_FILES apps netscript.sh good.env bad.env
+    EXTRA_FILES
+        apps/TestApp/info.yaml
+        apps/TestApp/info.yaml
+        apps/TestApp/app.qml
+        netscript.sh
+        good.env
+        bad.env
     TEST_FILE tst_bubblewrap.qml
     CONFIGURATIONS
         CONFIG NAME multi-process CONDITION QT_FEATURE_am_multi_process ARGS --force-multi-process

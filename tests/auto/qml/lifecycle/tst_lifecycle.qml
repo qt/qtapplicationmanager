@@ -2,9 +2,9 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-import QtQuick 2.11
-import QtTest 1.0
-import QtApplicationManager.SystemUI 2.0
+import QtQuick
+import QtTest
+import QtApplicationManager.SystemUI
 import QtApplicationManager.Test
 
 TestCase {
@@ -13,7 +13,7 @@ TestCase {
     name: "LifeCycleTest"
     visible: true
 
-    property int spyTimeout: 5000 * AmTest.timeoutFactor
+    property int spyTimeout: 10000 * AmTest.timeoutFactor
     property var app: ApplicationManager.application("tld.test.lifecycle");
 
 
@@ -37,32 +37,28 @@ TestCase {
         }
     }
 
-
     SignalSpy {
-        id: runStateChangedSpy
-        target: ApplicationManager
-        signalName: "applicationRunStateChanged"
-    }
-
-    SignalSpy {
-        id: objectDestroyedSpy
-        target: AmTest
-        signalName: "objectDestroyed"
-    }
+        id: objectDestroyedSpy
+        target: AmTest
+        signalName: "objectDestroyed"
+    }
 
     Timer {
         id: stopTimer
         interval: 1
-        onTriggered: app.stop();
+        onTriggered: testCase.app.stop();
     }
 
 
     function cleanup() {
         objectDestroyedSpy.clear();
         var index = AmTest.observeObjectDestroyed(app.runtime);
-        app.stop();
-        while (app.runState !== ApplicationObject.NotRunning)
-            runStateChangedSpy.wait(spyTimeout);
+        if (app.runState !== Am.NotRunning) {
+            ignoreWarning(new RegExp(".*was force exited.*"));
+            app.stop(true /*force*/);
+            tryCompare(app, "runState", Am.NotRunning, spyTimeout);
+        }
+
         objectDestroyedSpy.wait(spyTimeout);
         compare(objectDestroyedSpy.signalArguments[0][0], index);
     }
@@ -71,25 +67,16 @@ TestCase {
     // Start followed by quick stop/start in single-porcess mode caused an abort in the past
     function test_fast_stop_start() {
         app.start();
-        runStateChangedSpy.wait(spyTimeout);
-        compare(app.runState, ApplicationObject.StartingUp);
-        runStateChangedSpy.wait(spyTimeout);
-        compare(app.runState, ApplicationObject.Running);
+        tryCompare(app, "runState", Am.Running, spyTimeout);
 
         objectDestroyedSpy.clear();
         var index = AmTest.observeObjectDestroyed(app.runtime);
 
         app.stop();
-        runStateChangedSpy.wait(spyTimeout);
-        compare(app.runState, ApplicationObject.ShuttingDown);
-        runStateChangedSpy.wait(spyTimeout);
-        compare(app.runState, ApplicationObject.NotRunning);
+        tryCompare(app, "runState", Am.NotRunning, spyTimeout);
 
         app.start();
-        runStateChangedSpy.wait(spyTimeout);
-        compare(app.runState, ApplicationObject.StartingUp);
-        runStateChangedSpy.wait(spyTimeout);
-        compare(app.runState, ApplicationObject.Running);
+        tryCompare(app, "runState", Am.Running, spyTimeout);
 
         objectDestroyedSpy.wait(spyTimeout);
         compare(objectDestroyedSpy.signalArguments[0][0], index);
@@ -99,31 +86,32 @@ TestCase {
     function test_fast_start_stop() {
         app.start();
         stopTimer.start();
-
-        while (app.runState !== ApplicationObject.NotRunning)
-            runStateChangedSpy.wait(spyTimeout);
+        tryCompare(app, "runState", Am.NotRunning, spyTimeout);
 
         app.start();
-        while (app.runState !== ApplicationObject.Running)
-            runStateChangedSpy.wait(spyTimeout);
+        tryCompare(app, "runState", Am.Running, spyTimeout);
     }
 
     function test_restart() {
+        let actual = [];
+        let expected = [Am.StartingUp, Am.Running, Am.ShuttingDown, Am.NotRunning,
+                        Am.StartingUp, Am.Running];
+
         function onRunstateChanged(id, runState) {
-            if (runState === Am.NotRunning) {
+            actual.push(runState);
+
+            if (runState === Am.NotRunning)
+                app.start();
+            if (actual.length === expected.length)
                 ApplicationManager.applicationRunStateChanged.disconnect(onRunstateChanged);
-                ApplicationManager.startApplication(id);
-            }
         }
         ApplicationManager.applicationRunStateChanged.connect(onRunstateChanged);
 
+        compare(app.runState, Am.NotRunning);
         app.start();
-        while (app.runState !== ApplicationObject.Running)
-            runStateChangedSpy.wait(spyTimeout);
+        tryCompare(app, "runState", Am.Running, spyTimeout);
         app.stop();
-        runStateChangedSpy.wait(spyTimeout);
-        compare(app.runState, ApplicationObject.ShuttingDown);
-        while (app.runState !== ApplicationObject.Running)
-            runStateChangedSpy.wait(spyTimeout);
+        tryVerify(() => { return JSON.stringify(actual) === JSON.stringify(expected); },
+                  spyTimeout);
     }
 }

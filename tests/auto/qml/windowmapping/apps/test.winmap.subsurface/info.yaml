@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'test.winmap.subsurface'
+name:
+  en: 'Subsurface'
+applications:
+- id:      'test.winmap.subsurface'
+  code:    'subsurface.qml'
+  runtime: 'qml'

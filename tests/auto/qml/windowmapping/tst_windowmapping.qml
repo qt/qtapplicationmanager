@@ -328,4 +328,14 @@ TestCase {
         compare(WindowManager.count, 1);
         compare(lastWindowAdded.windowProperty("objectName"), 42);
     }
+
+    function test_subsurface_position() {
+        if (ApplicationManager.singleProcess)
+            skip("Can't grab real window in single-process mode.");
+        ApplicationManager.application("test.winmap.subsurface").start();
+        tryCompare(WindowManager, "count", 1, spyTimeout);
+        compare(topChrome.window.contentState, WindowObject.SurfaceWithContent);
+        const img = grabImage(topChrome.Window.contentItem);
+        compare(img.pixel(60,40), "#4682b4");
+    }
 }

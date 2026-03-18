@@ -131,7 +131,7 @@ bool IntentModel::filterAcceptsRow(int source_row, const QModelIndex &source_par
     if (!d->m_engine) {
         d->m_engine = qjsEngine(this);
         if (!d->m_engine)
-            qCWarning(LogIntents) << "IntentModel can't filter without a JavaScript engine";
+            qCWarning(LogIntentClient) << "IntentModel can't filter without a JavaScript engine";
     }
 
     if (d->m_engine && d->m_filterFunction.isCallable()) {
@@ -148,7 +148,7 @@ bool IntentModel::lessThan(const QModelIndex &source_left, const QModelIndex &so
     if (!d->m_engine) {
         d->m_engine = qjsEngine(this);
         if (!d->m_engine)
-            qCWarning(LogIntents) << "IntentModel can't sort without a JavaScript engine";
+            qCWarning(LogIntentClient) << "IntentModel can't sort without a JavaScript engine";
     }
 
     if (d->m_engine && d->m_sortFunction.isCallable()) {

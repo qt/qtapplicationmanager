@@ -20,6 +20,7 @@
 #include <QTimer>
 #include <QDebug>
 #include <QScopedValueRollback>
+#include <QJsonDocument>
 
 #include <QQmlEngine>
 #include <QQmlInfo>
@@ -127,6 +128,67 @@ enum Roles
     IntentItem,
     IntentObject, // needed to keep the roles similar to PackageManager
 };
+
+class IntentDebug
+{
+public:
+    IntentDebug(const QUuid &requestId, const QString &intentId,
+                const QString &requestingApplicationId, const QString &handlingApplicationId)
+        : m_requestId(requestId)
+        , m_intentId(intentId)
+        , m_requestingApplicationId(requestingApplicationId)
+        , m_handlingApplicationId(handlingApplicationId)
+    { }
+
+    IntentDebug(const IntentServerRequest *isr)
+        : m_requestId(isr->requestId())
+        , m_intentId(isr->intentId())
+        , m_requestingApplicationId(isr->requestingApplicationId())
+        , m_handlingApplicationId(isr->selectedIntent() ? isr->selectedIntent()->applicationId() : QString())
+    { }
+
+    QUuid m_requestId;
+    QString m_intentId;
+    QString m_requestingApplicationId;
+    QString m_handlingApplicationId;
+};
+
+class IntentParamsDebug
+{
+public:
+    IntentParamsDebug(const IntentServerRequest *isr)
+        : m_parameters(isr->parameters())
+    { }
+
+    QVariantMap m_parameters;
+};
+
+QDebug operator<<(QDebug ds, const IntentDebug &id)
+{
+    QDebugStateSaver save(ds);
+    ds.nospace().noquote()
+        << id.m_requestId.toString(QUuid::WithoutBraces) << " ["
+        << id.m_intentId << "] {"
+        << (id.m_requestingApplicationId.isEmpty() ? u"?"_s : id.m_requestingApplicationId)
+        << " -> "
+        << (id.m_handlingApplicationId.isEmpty() ? u"?"_s : id.m_handlingApplicationId)
+        << "}";
+    return ds;
+}
+
+QDebug operator<<(QDebug ds, const IntentParamsDebug &ipd)
+{
+    QDebugStateSaver save(ds);
+    QJsonDocument doc = QJsonDocument::fromVariant(ipd.m_parameters);
+    ds.nospace().noquote() << doc.toJson(QJsonDocument::Compact);
+    return ds;
+}
+
+QDebug operator<<(QDebug ds, IntentServerRequest::State state)
+{
+    ds << QMetaEnum::fromType<IntentServerRequest::State>().valueToKey(static_cast<int>(state));
+    return ds;
+}
 
 IntentServer *IntentServer::s_instance = nullptr;
 QHash<int, QByteArray> IntentServer::s_roleNames;
@@ -245,8 +307,8 @@ Intent *IntentServer::addIntent(const QString &id, const QString &packageId,
         if (applicationIntent(id, handlingApplicationId))
             throw Exception("intent with given id/handlingApplicationId already exists");
     } catch (const Exception &e) {
-        qCWarning(LogIntents) << "Cannot add intent" << id << "in package" << packageId
-                              << "handled by" << handlingApplicationId << ":" << e.errorString();
+        qCWarning(LogIntentServer) << "Cannot add intent" << id << "in package" << packageId
+                                   << "handled by" << handlingApplicationId << ":" << e.errorString();
         return nullptr;
     }
 
@@ -271,7 +333,7 @@ void IntentServer::removeIntent(Intent *intent)
         return;
 
     if (m_aboutToBeRemoved) {
-        qCFatal(LogIntents) << "IntentServer::removeIntent was called recursively";
+        qCFatal(LogIntentServer) << "IntentServer::removeIntent was called recursively";
         return;
     }
     QScopedValueRollback<bool> rollback(m_aboutToBeRemoved, true);
@@ -312,15 +374,16 @@ QVector<Intent *> IntentServer::filterByRequestingApplicationId(const QVector<In
 
         if (intent->packageId() != requestingPackageId) {
             if (intent->visibility() == Intent::Private) {
-                qCDebug(LogIntents) << "Not considering" << intent->intentId() << "in package"
-                                    << intent->packageId() << "due to private visibility";
+                qCDebug(LogIntentServer) << IntentDebug(QUuid(), intent->intentId(),
+                                                        requestingApplicationId, intent->applicationId())
+                                         << "not considered, due to private visibility";
                 return false;
             } else if (!intent->requiredCapabilities().isEmpty()
                        && !m_systemInterface->checkApplicationCapabilities(requestingApplicationId,
                                                                            intent->requiredCapabilities())) {
-                qCDebug(LogIntents) << "Not considering" << intent->intentId() << "in package"
-                                    << intent->packageId()
-                                    << "due to missing capabilities of requesting application";
+                qCDebug(LogIntentServer) << IntentDebug(QUuid(), intent->intentId(),
+                                                        requestingApplicationId, intent->applicationId())
+                                         << "not considered, due to missing capabilities of requesting application";
                 return false;
             }
         }
@@ -516,7 +579,6 @@ void IntentServer::triggerRequestQueue()
 
 void IntentServer::enqueueRequest(IntentServerRequest *isr)
 {
-    qCDebug(LogIntents) << "Enqueueing Intent request:" << isr << isr->requestId() << isr->state();
     m_requestQueue.enqueue(isr);
     triggerRequestQueue();
 }
@@ -528,9 +590,11 @@ void IntentServer::processRequestQueue()
 
     IntentServerRequest *isr = m_requestQueue.takeFirst();
 
-    qCDebug(LogIntents) << "Processing intent request" << isr << isr->requestId() << "in state" << isr->state();
+    qCDebug(LogIntentServer) << IntentDebug(isr) << "is now in state" << isr->state();
 
     if (isr->state() == IntentServerRequest::State::ReceivedRequest) { // step 1) disambiguate
+        qCDebug(LogIntentParams) << IntentDebug(isr) << "params:" << IntentParamsDebug(isr);
+
         if (!isr->isBroadcast() && !isr->selectedIntent()) {
             // not disambiguated yet
 
@@ -540,7 +604,8 @@ void IntentServer::processRequestQueue()
             } else {
                 m_disambiguationQueue.enqueue(isr);
                 isr->setState(IntentServerRequest::State::WaitingForDisambiguation);
-                qCDebug(LogIntents) << "Waiting for disambiguation on intent" << isr->intentId();
+                qCDebug(LogIntentServer) << IntentDebug(isr) << "is now in state" << isr->state();
+
                 if (m_disambiguationTimeout > 0) {
                     QTimer::singleShot(m_disambiguationTimeout, this, [this, pisr = QPointer(isr)]() {
                         if (pisr && m_disambiguationQueue.removeOne(pisr)) {
@@ -554,7 +619,7 @@ void IntentServer::processRequestQueue()
             }
         }
         if (isr->isBroadcast() || isr->selectedIntent()) {
-            qCDebug(LogIntents) << "No disambiguation necessary/required for intent" << isr->intentId();
+            qCDebug(LogIntentServer) << IntentDebug(isr) << "does not require disambiguation";
             isr->setState(IntentServerRequest::State::Disambiguated);
         }
     }
@@ -562,17 +627,19 @@ void IntentServer::processRequestQueue()
     if (isr->state() == IntentServerRequest::State::Disambiguated) { // step 2) start app
         auto handlerIPC = m_systemInterface->findClientIpc(isr->selectedIntent()->applicationId());
         if (!handlerIPC) {
-            qCDebug(LogIntents) << "Intent handler" << isr->selectedIntent()->applicationId() << "is not running";
 
             if (isr->selectedIntent()->handleOnlyWhenRunning()) {
-                qCDebug(LogIntents) << " * skipping, because 'handleOnlyWhenRunning' is set";
+                qCDebug(LogIntentServer) << IntentDebug(isr) << "would need to start the handling application, but it's 'handleOnlyWhenRunning'";
                 isr->setRequestFailed(u"Skipping delivery due to handleOnlyWhenRunning"_s);
             } else {
                 m_startingAppQueue.enqueue(isr);
                 isr->setState(IntentServerRequest::State::WaitingForApplicationStart);
+                qCDebug(LogIntentServer) << IntentDebug(isr) << "is now in state" << isr->state();
+
                 if (m_startingAppTimeout > 0) {
                     QTimer::singleShot(m_startingAppTimeout, this, [this, pisr = QPointer(isr)]() {
                         if (pisr && m_startingAppQueue.removeOne(pisr)) {
+                            qCDebug(LogIntentServer) << IntentDebug(pisr.get()) << "starting handler application timed out";
                             pisr->setRequestFailed(u"Starting handler application timed out after %1 ms"_s.arg(m_startingAppTimeout));
                             enqueueRequest(pisr);
                         }
@@ -581,7 +648,7 @@ void IntentServer::processRequestQueue()
                 m_systemInterface->startApplication(isr->selectedIntent()->applicationId());
             }
         } else {
-            qCDebug(LogIntents) << "Intent handler" << isr->selectedIntent()->applicationId() << "is already running";
+            qCDebug(LogIntentServer) << IntentDebug(isr) << "handling application already running";
             isr->setState(IntentServerRequest::State::StartedApplication);
         }
     }
@@ -589,19 +656,17 @@ void IntentServer::processRequestQueue()
     if (isr->state() == IntentServerRequest::State::StartedApplication) { // step 3) send request out
         auto clientIPC = m_systemInterface->findClientIpc(isr->selectedIntent()->applicationId());
         if (!clientIPC) {
-            qCWarning(LogIntents) << "Could not find an IPC connection for application"
-                                  << isr->selectedIntent()->applicationId() << "to forward the intent request"
-                                  << isr->requestId();
-            isr->setRequestFailed(u"No IPC channel to reach target application."_s);
+            qCWarning(LogIntentServer) << IntentDebug(isr) << "could not find an IPC connection for handling application to forward the intent request to";
+            isr->setRequestFailed(u"No IPC channel to reach handling application."_s);
         } else {
-            qCDebug(LogIntents) << "Sending intent request to handler application"
-                                << isr->selectedIntent()->applicationId();
+            qCDebug(LogIntentServer) << IntentDebug(isr) << "sending intent request to handling application";
             if (!isr->isBroadcast()) {
                 m_sentToAppQueue.enqueue(isr);
                 isr->setState(IntentServerRequest::State::WaitingForReplyFromApplication);
                 if (m_sentToAppTimeout > 0) {
                     QTimer::singleShot(m_sentToAppTimeout, this, [this, pisr = QPointer(isr)]() {
                         if (pisr && m_sentToAppQueue.removeOne(pisr)) {
+                            qCDebug(LogIntentServer) << IntentDebug(pisr.get()) << "waiting for reply from handler application timed out";
                             pisr->setRequestFailed(u"Waiting for reply from handler application timed out after %1 ms"_s.arg(m_sentToAppTimeout));
                             enqueueRequest(pisr);
                         }
@@ -617,14 +682,13 @@ void IntentServer::processRequestQueue()
 
     if (isr->state() == IntentServerRequest::State::ReceivedReplyFromApplication) { // step 5) send reply to requesting app
         if (!isr->isBroadcast()) {
+            qCDebug(LogIntentParams) << IntentDebug(isr) << "reply:" << IntentParamsDebug(isr);
+
             auto clientIPC = m_systemInterface->findClientIpc(isr->requestingApplicationId());
             if (!clientIPC) {
-                qCWarning(LogIntents) << "Could not find an IPC connection for application"
-                                      << isr->requestingApplicationId() << "to forward the Intent reply"
-                                      << isr->requestId();
+                qCWarning(LogIntentServer) << IntentDebug(isr) << "could not find an IPC connection for requesting application to forward the intent reply to";
             } else {
-                qCDebug(LogIntents) << "Forwarding intent reply" << isr->requestId()
-                                    << "to requesting application" << isr->requestingApplicationId();
+                qCDebug(LogIntentServer) << IntentDebug(isr) << "forwarding intent reply to requesting application";
                 m_systemInterface->replyFromSystem(clientIPC, isr);
             }
         }
@@ -711,10 +775,9 @@ void IntentServer::internalDisambiguateRequest(const QUuid &requestId, bool reje
             isr->setSelectedIntent(selectedIntent);
             isr->setState(IntentServerRequest::State::Disambiguated);
         } else {
-            qCWarning(LogIntents) << "IntentServer::acknowledgeDisambiguationRequest for intent"
-                                  << requestId << "tried to disambiguate to the intent" << selectedIntent->intentId()
-                                  << "which was not in the list of potential disambiguations";
-
+            qCWarning(LogIntentServer).nospace().noquote()
+                << IntentDebug(isr)
+                << " disambiguated intent id [" << selectedIntent->intentId() << "] is not valid";
             isr->setRequestFailed(u"Failed to disambiguate"_s);
         }
         enqueueRequest(isr);
@@ -728,9 +791,6 @@ void IntentServer::applicationWasStarted(const QString &applicationId)
     for (auto it = m_startingAppQueue.cbegin(); it != m_startingAppQueue.cend(); ) {
         auto isr = *it;
         if (isr->selectedIntent()->applicationId() == applicationId) {
-            qCDebug(LogIntents) << "Intent request" << isr->intentId()
-                                << "can now be forwarded to application" << applicationId;
-
             isr->setState(IntentServerRequest::State::StartedApplication);
             m_requestQueue << isr;
             foundOne = true;
@@ -756,24 +816,21 @@ void IntentServer::replyFromApplication(const QString &replyingApplicationId, co
     }
 
     if (!isr) {
-        qCWarning(LogIntents) << "Got a reply for intent" << requestId << "from application"
-                              << replyingApplicationId << "but no reply was expected for this intent";
+        qCWarning(LogIntentServer).nospace().noquote()
+            << requestId.toString(QUuid::WithoutBraces)
+            << " [?] {? -> " << replyingApplicationId << "} "
+            << "received a reply, but this request ID is not known";
     } else {
         if (isr->selectedIntent() && (isr->selectedIntent()->applicationId() != replyingApplicationId)) {
-            qCWarning(LogIntents) << "Got a reply for intent" << isr->requestId() << "from application"
-                                  << replyingApplicationId << "but expected a reply from"
-                                  << isr->selectedIntent()->applicationId() << "instead";
+            qCWarning(LogIntentServer) << IntentDebug(isr) << "received a reply from the wrong application:"
+                                       << replyingApplicationId;
             isr->setRequestFailed(u"Request reply received from wrong application"_s);
         } else {
             QString errorMessage;
             if (error) {
                 errorMessage = result.value(u"errorMessage"_s).toString();
-                qCDebug(LogIntents) << "Got an error reply for intent" << isr->requestId() << "from application"
-                                    << replyingApplicationId << ":" << errorMessage;
                 isr->setRequestFailed(errorMessage);
             } else {
-                qCDebug(LogIntents) << "Got a reply for intent" << isr->requestId() << "from application"
-                                    << replyingApplicationId << ":" << result;
                 isr->setRequestSucceeded(result);
             }
         }
@@ -785,12 +842,13 @@ IntentServerRequest *IntentServer::requestToSystem(const QString &requestingAppl
                                                    const QString &intentId, const QString &applicationId,
                                                    const QVariantMap &parameters)
 {
-    qCDebug(LogIntents) << "Server: Incoming intent request" << intentId << "from application"
-                        << requestingApplicationId << "to application" << applicationId;
+    auto printWarning = [requestingApplicationId, intentId, applicationId](const char *reason) {
+        qCWarning(LogIntentServer) << IntentDebug(QUuid(), intentId, requestingApplicationId, applicationId)
+                                   << reason;
+    };
 
     if (!m_systemInterface->findClientIpc(requestingApplicationId)) {
-        qCWarning(LogIntents) << "Intent" << intentId << "was requested from unknown application"
-                              << requestingApplicationId;
+        printWarning("was requested from unknown application");
         return nullptr;
     }
 
@@ -804,16 +862,14 @@ IntentServerRequest *IntentServer::requestToSystem(const QString &requestingAppl
     }
 
     if (intents.isEmpty()) {
-        qCWarning(LogIntents) << "Unknown intent" << intentId << "was requested from application"
-                              << requestingApplicationId;
+        printWarning("is an unknown intent");
         return nullptr;
     }
 
     intents = filterByRequestingApplicationId(intents, requestingApplicationId);
 
     if (intents.isEmpty()) {
-        qCWarning(LogIntents) << "Inaccessible intent" << intentId << "was requested from application"
-                              << requestingApplicationId;
+        printWarning("is not accessible for the requesting application");
         return nullptr;
     }
 

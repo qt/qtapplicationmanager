@@ -61,7 +61,7 @@ IntentClient *IntentClient::createInstance(IntentClientSystemInterface *systemIn
     try {
         systemInterface->initialize(ic.get());
     } catch (const std::exception &exc) {
-        qCWarning(LogIntents) << "Failed to initialize IntentClient:" << exc.what();
+        qCWarning(LogIntentClient) << "Failed to initialize IntentClient:" << exc.what();
         return nullptr;
     }
     return s_instance = ic.release();
@@ -114,9 +114,6 @@ IntentClient::~IntentClient()
 void IntentClient::registerHandler(AbstractIntentHandler *handler)
 {
     QString applicationId = m_systemInterface->currentApplicationId(handler);
-
-    qCDebug(LogIntents) << "Client: Registering intent handler" << handler << "for" << handler->intentIds()
-                        << "for application" << applicationId;
 
     const QStringList intentIds = handler->intentIds();
     for (auto intentId : intentIds) {
@@ -220,9 +217,6 @@ IntentClientRequest *IntentClient::requestToSystem(const QString &requestingAppl
                                        requestingApplicationId, QUuid(),
                                        intentId, applicationId, parameters,
                                        applicationId == u":broadcast:");
-
-    qCDebug(LogIntents) << "Application" << requestingApplicationId << "created an intent request for"
-                        << intentId << "(application:" << applicationId << ")";
     m_systemInterface->requestToSystem(ir);
     return ir;
 }
@@ -256,9 +250,10 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
     });
 
     if (it == m_waiting.cend()) {
-        qCWarning(LogIntents) << "IntentClient received an unexpected intent reply for request"
-                              << requestId << " succeeded:" << !error << "error:"
-                              << result.value(u"errorMessage"_s).toString() << "result:" << result;
+        qCWarning(LogIntentClient).nospace().noquote()
+            << requestId.toString(QUuid::WithoutBraces)
+            << " [?] {" << m_systemInterface->currentApplicationId(this) << " -> ?} "
+            << "received a reply for an unknown request id";
         return;
     }
     icr = *it;
@@ -274,10 +269,6 @@ void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVa
         icr->setErrorMessage(result.value(u"errorMessage"_s).toString());
     else
         icr->setResult(result);
-
-    qCDebug(LogIntents) << "Application" << icr->requestingApplicationId() << "received an intent reply for"
-                        << icr->intentId() << " succeeded:" << icr->succeeded() << "error:"
-                        << icr->errorMessage() << "result:" << icr->result();
 }
 
 void IntentClient::requestToApplication(const QUuid &requestId, const QString &intentId,
@@ -285,9 +276,6 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
                                         const QString &applicationId, const QVariantMap &parameters)
 {
     bool broadcast = (requestingApplicationId == u":broadcast:");
-
-    qCDebug(LogIntents) << "Client: Incoming intent request" << requestId << "to application" << applicationId
-                        << "for intent" << intentId << (broadcast ? "(broadcast)" : "") << "parameters" << parameters;
 
     auto *icr = new IntentClientRequest(IntentClientRequest::Direction::ToApplication,
                                         requestingApplicationId, requestId, intentId,
@@ -301,7 +289,10 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
 
         handler->internalRequestReceived(icr);
     } else {
-        qCDebug(LogIntents) << "No Intent handler registered for intent" << intentId;
+        qCDebug(LogIntentClient).nospace().noquote()
+            << requestId.toString(QUuid::WithoutBraces)
+            << " [" << intentId << "] {" << requestingApplicationId << " -> " << applicationId << "} "
+            << "no intent handler registered";
         errorReplyFromApplication(icr, u"No matching IntentHandler found."_s);
         delete icr;
     }

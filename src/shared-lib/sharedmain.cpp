@@ -120,7 +120,7 @@ void SharedMain::setupIconTheme(const QStringList &themeSearchPaths, const QStri
 void SharedMain::setupQmlDebugging(bool qmlDebugging)
 {
     bool hasJSDebugArg = !static_cast<QCoreApplicationPrivate *>
-                         (QObjectPrivate::get(qApp))->qmljsDebugArgumentsString().isEmpty();
+                         (QObjectPrivate::get(qApp))->qmljs_debug_arguments.isEmpty();
 
     if (hasJSDebugArg || qmlDebugging) {
 #if !defined(QT_NO_QML_DEBUGGER)

@@ -32,6 +32,8 @@ builds
 CMakePresets.json
 CMakeUserPresets.json
 .qmlls.ini
+.clang*
+compile_commands.json
 
 config.tests/*/*
 !config.tests/*/*[.]*

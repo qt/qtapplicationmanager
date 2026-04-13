@@ -27,29 +27,44 @@ QVariantMap WaylandQtAMServerExtension::windowProperties(const QWaylandSurface *
 
 void WaylandQtAMServerExtension::setWindowProperty(QWaylandSurface *surface, const QString &name, const QVariant &value)
 {
-    if (setWindowPropertyHelper(surface, name, value)) {
-        if (Resource *target = resourceMap().value(surface->waylandClient())) {
-            QByteArray data;
+    if (!setWindowPropertyHelper(surface, name, value))
+        return;
+    Resource *target = resourceMap().value(surface->waylandClient());
+    if (!target)
+        return;
 
-            switch (target->version()) {
-            case 1: {
-                QDataStream ds(&data, QDataStream::WriteOnly);
-                ds.setVersion(QDataStream::Qt_6_7);
-                ds << value;
-                break;
-            }
-            case 2:
-                data = QCborValue::fromVariant(value).toCbor();
-                break;
-            default:
-                qCWarning(LogWayland) << "Unsupported qtam_extension version:" << target->version();
-                return;
-            }
+    QByteArray data;
 
-            qCDebug(LogWayland) << "window property: server send" << surface << name << value;
-            send_window_property_changed(target->handle, surface->resource(), name, data);
-        }
+    switch (target->version()) {
+    case 1: {
+        QDataStream ds(&data, QDataStream::WriteOnly);
+        ds.setVersion(QDataStream::Qt_6_7);
+        ds << value;
+        break;
     }
+    case 2:
+        data = QCborValue::fromVariant(value).toCbor();
+        break;
+    default:
+        qCWarning(LogWayland) << "Unsupported qtam_extension version:" << target->version();
+        return;
+    }
+
+    static const uint protocolSize = 24; // protocol overhead
+    const uint nameSize = name.toUtf8().size();
+    const uint dataSize = data.size();
+    const uint messageSize = ((protocolSize + nameSize + dataSize + 3) & ~3u); // multiple of 4
+    static const uint maxDefaultSize = 4096u; // default libwayland receive buffer size
+    if (messageSize > maxDefaultSize) {
+        qCCritical(LogWayland) << "Window property" << name << "is too large for the standard "
+                                  "libwayland receive buffer size:" << messageSize << ">"
+                               << maxDefaultSize << "bytes. Expect a crash.";
+        // we send it anyway, because the user might have increased the buffer size on the client
+        // side, but we cannot detect this.
+    }
+
+    qCDebug(LogWayland) << "Window property: server send" << surface << name << value;
+    send_window_property_changed(target->handle, surface->resource(), name, data);
 }
 
 bool WaylandQtAMServerExtension::setWindowPropertyHelper(QWaylandSurface *surface, const QString &name, const QVariant &value)

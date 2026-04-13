@@ -76,7 +76,20 @@ void WaylandQtAMClientExtension::sendPropertyToServer(struct ::wl_surface *surfa
     ds.setVersion(QDataStream::Qt_6_7);
     ds << value;
 
-    qCDebug(LogWayland) << "window property: client send:" << surface << name << value;
+    static const uint protocolSize = 24u; // protocol overhead
+    const uint nameSize = name.toUtf8().size();
+    const uint dataSize = data.size();
+    const uint messageSize = ((protocolSize + nameSize + dataSize + 3) & ~3u); // multiple of 4
+    static const uint maxDefaultSize = 4096u; // default libwayland receive buffer size
+    if (messageSize > maxDefaultSize) {
+        qCCritical(LogWayland) << "Window property" << name << "is too large for the standard "
+                                  "libwayland receive buffer size:" << messageSize << ">"
+                               << maxDefaultSize << "bytes. Expect a crash.";
+        // we send it anyway, because the user might have increased the buffer size on the server
+        // side, but we cannot detect this.
+    }
+
+    qCDebug(LogWayland) << "Window property: client send:" << surface << name << value;
     set_window_property(surface, name, data);
 }
 

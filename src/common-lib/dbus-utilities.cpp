@@ -31,7 +31,7 @@ using namespace Qt::StringLiterals;
 
 #  if QT_VERSION < QT_VERSION_CHECK(6, 10, 0)
 template <typename... T>
-QDBusArgument &operator<<(QDBusArgument &argument, const std::tuple<T...> &tuple)
+[[maybe_unused]] QDBusArgument &operator<<(QDBusArgument &argument, const std::tuple<T...> &tuple)
 {
     static_assert(sizeof...(T) != 0, "D-Bus doesn't allow empty structs");
     argument.beginStructure();
@@ -41,7 +41,7 @@ QDBusArgument &operator<<(QDBusArgument &argument, const std::tuple<T...> &tuple
 }
 
 template <typename... T>
-const QDBusArgument &operator>>(const QDBusArgument &argument, std::tuple<T...> &tuple)
+[[maybe_unused]] const QDBusArgument &operator>>(const QDBusArgument &argument, std::tuple<T...> &tuple)
 {
     static_assert(sizeof...(T) != 0, "D-Bus doesn't allow empty structs");
     argument.beginStructure();
@@ -64,12 +64,12 @@ public:
     DBusNull(const DBusNull &) = default;
 };
 
-void operator<<(QDBusArgument &arg, const DBusNull &) // ((y)y) 0x0000
+[[maybe_unused]] void operator<<(QDBusArgument &arg, const DBusNull &) // ((y)y) 0x0000
 {
     arg << std::tuple<std::tuple<uchar>, uchar>{ 0x00, 0x00 };
 }
 
-void operator>>(const QDBusArgument &arg, DBusNull &)
+[[maybe_unused]] void operator>>(const QDBusArgument &arg, DBusNull &)
 {
     std::tuple<std::tuple<uchar>, uchar> t; arg >> t;
     Q_ASSERT((t == std::tuple<std::tuple<uchar>, uchar>{ 0x00, 0x00 }));
@@ -82,12 +82,12 @@ public:
     DBusInvalid(const DBusInvalid &) = default;
 };
 
-void operator<<(QDBusArgument &arg, const DBusInvalid &) // (y(y)) 0xffff
+[[maybe_unused]] void operator<<(QDBusArgument &arg, const DBusInvalid &) // (y(y)) 0xffff
 {
     arg << std::tuple<uchar, std::tuple<uchar>>{ 0xff, 0xff };
 }
 
-void operator>>(const QDBusArgument &arg, DBusInvalid &)
+[[maybe_unused]] void operator>>(const QDBusArgument &arg, DBusInvalid &)
 {
     std::tuple<uchar, std::tuple<uchar>> t; arg >> t;
     Q_ASSERT((t == std::tuple<uchar, std::tuple<uchar>>{ 0xff, 0xff }));
@@ -109,12 +109,12 @@ public:
 };
 
 
-void operator<<(QDBusArgument &arg, const DBusUrl &url) // ((ay))
+[[maybe_unused]] void operator<<(QDBusArgument &arg, const DBusUrl &url) // ((ay))
 {
     arg << std::tuple<std::tuple<QByteArray>>{ url.m_url.toEncoded() };
 }
 
-void operator>>(const QDBusArgument &arg, DBusUrl &url)
+[[maybe_unused]] void operator>>(const QDBusArgument &arg, DBusUrl &url)
 {
     std::tuple<std::tuple<QByteArray>> t; arg >> t;
     url.m_url = QUrl::fromEncoded(std::get<0>(std::get<0>(t)));

@@ -88,7 +88,7 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
     QDir(socketPath).mkpath(u"."_s);
 
     QString dbusAddress = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    socketPath = socketPath + u"/dbus-" + dbusAddress;
+    socketPath = escapeDBusAddressName(socketPath + u"/dbus-" + dbusAddress);
 
     m_applicationInterfaceServer = new QDBusServer(u"unix:path="_s + socketPath, this);
     m_applicationInterfaceServer->setAnonymousAuthenticationAllowed(true);

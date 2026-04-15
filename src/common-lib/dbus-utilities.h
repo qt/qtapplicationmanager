@@ -19,6 +19,8 @@ Q_APPMANCOMMON_EXPORT void registerDBusTypes();
 
 Q_APPMANCOMMON_EXPORT void ensureLibDBusIsAvailable();
 
+Q_APPMANCOMMON_EXPORT QString escapeDBusAddressName(const QString &name);
+
 QT_END_NAMESPACE_AM
 
 #endif // DBUS_UTILITIES_H

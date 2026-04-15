@@ -318,4 +318,19 @@ void ensureLibDBusIsAvailable()
 #endif
 }
 
+QString escapeDBusAddressName(const QString &name)
+{
+    QByteArray escaped;
+    const QByteArray unescaped = name.toUtf8();
+    for (const char c : unescaped) {
+        if (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9'))
+            || (c == '-') || (c == '_') || (c == '/') || (c == '\\') || (c == '*') || (c == '.')) {
+            escaped += c;
+        } else {
+            escaped = escaped + '%' + QByteArray(1, c).toHex(c);
+        }
+    }
+    return QString::fromLatin1(escaped);
+}
+
 QT_END_NAMESPACE_AM

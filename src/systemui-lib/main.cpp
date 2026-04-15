@@ -1037,6 +1037,8 @@ void Main::setupDBus(const Configuration *cfg)
             if (dbusName.isEmpty() || (dbusName == u"none"))
                 continue;
 
+            dbusName = escapeDBusAddressName(dbusName);
+
             if (first) {
                 qCDebug(LogDBus) << "Registering external D-Bus services:";
                 first = false;

@@ -132,7 +132,8 @@ void LibCryptoFunctionBase::loadLibCrypto()
 #endif
         }
         throw Exception("Loaded libcrypto (%1), but the version is too old: 0x%2 (minimum supported version is: 0x%3")
-            .arg(s_library->fileName()).arg(version, 8, 16, u'0').arg(MinimumOpenSslVersion, 8, 16, u'0');
+            .arg(s_library->fileName()).arg(version, 8, 16, QChar(u'0'))
+            .arg(MinimumOpenSslVersion, 8, 16, QChar(u'0'));
 
     } catch (const Exception &e) {
         s_library->unload();

@@ -190,3 +190,6 @@ qt_internal_add_qml_module(AppManSystemUIQmlPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )
+target_compile_definitions(AppManSystemUIQmlPrivateplugin PRIVATE AM_COMPILING_APPMAN)
+qt_internal_set_exceptions_flags(AppManSystemUIQmlPrivateplugin TRUE)
+target_link_libraries(AppManSystemUIQmlPrivateplugin PRIVATE Qt::QuickPrivate)

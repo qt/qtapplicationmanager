@@ -89,6 +89,8 @@ qt_internal_add_qml_module(AppManSharedQmlPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )
+target_compile_definitions(AppManSharedQmlPrivateplugin PRIVATE AM_COMPILING_APPMAN)
+qt_internal_set_exceptions_flags(AppManSharedQmlPrivateplugin TRUE)
 
 qt_internal_add_qml_module(AppManApplicationQmlPrivate
     URI QtApplicationManager.Application
@@ -107,3 +109,5 @@ qt_internal_add_qml_module(AppManApplicationQmlPrivate
     DEFINES
         AM_COMPILING_APPMAN
 )
+target_compile_definitions(AppManApplicationQmlPrivateplugin PRIVATE AM_COMPILING_APPMAN)
+qt_internal_set_exceptions_flags(AppManApplicationQmlPrivateplugin TRUE)

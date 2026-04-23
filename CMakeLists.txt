@@ -13,7 +13,7 @@ project(QtApplicationManager
 
 set(QT_NO_INTERNAL_COMPATIBILITY_FUNCTIONS TRUE)
 add_compile_definitions(
-    QT_ENABLE_STRICT_MODE_UP_TO=0x060900
+    "QT_ENABLE_STRICT_MODE_UP_TO=QT_VERSION_CHECK(6,11,0)"
 )
 
 # populate the platform check variables

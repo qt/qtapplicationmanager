@@ -6,8 +6,10 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+#include <functional>
+#include <utility>
+
 #include <QtCore/QVector>
-#include <QtCore/QPair>
 #include <QtCore/QByteArray>
 #include <QtCore/QVariant>
 #include <QtCore/QString>
@@ -18,7 +20,6 @@
 
 #include <QtAppManCommon/qtappmancommonglobal.h>
 
-#include <functional>
 
 QT_FORWARD_DECLARE_CLASS(QDir)
 QT_FORWARD_DECLARE_CLASS(QJSEngine)
@@ -28,7 +29,7 @@ QT_BEGIN_NAMESPACE_AM
 Q_APPMANCOMMON_EXPORT int timeoutFactor();
 Q_APPMANCOMMON_EXPORT qreal slowAnimationSpeed();
 
-using YamlFormat = QPair<QString, int>;
+using YamlFormat = std::pair<QString, int>;
 
 Q_APPMANCOMMON_EXPORT YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
                                                  const QVector<YamlFormat> &formatTypesAndVersions) noexcept(false);

@@ -117,7 +117,7 @@ void IntentClient::registerHandler(AbstractIntentHandler *handler)
 
     const QStringList intentIds = handler->intentIds();
     for (auto intentId : intentIds) {
-        auto key = qMakePair(intentId, applicationId);
+        auto key = std::make_pair(intentId, applicationId);
 
         if (m_handlers.contains(key)) {
             qmlWarning(handler) << "Double registration for intent " << intentId << " within application "
@@ -281,7 +281,7 @@ void IntentClient::requestToApplication(const QUuid &requestId, const QString &i
                                         requestingApplicationId, requestId, intentId,
                                         applicationId, parameters, broadcast);
 
-    AbstractIntentHandler *handler = m_handlers.value(qMakePair(intentId, applicationId));
+    AbstractIntentHandler *handler = m_handlers.value(std::make_pair(intentId, applicationId));
     if (handler) {
         QQmlEngine::setObjectOwnership(icr, QQmlEngine::JavaScriptOwnership);
         if (!broadcast)

@@ -6,12 +6,13 @@
 #ifndef INTENTCLIENT_H
 #define INTENTCLIENT_H
 
+#include <utility>
+
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariantMap>
 #include <QtCore/QList>
 #include <QtCore/QMap>
-#include <QtCore/QPair>
 #include <QtCore/QElapsedTimer>
 
 #include <QtAppManShared/qtappmansharedglobal.h>
@@ -74,7 +75,7 @@ private:
 
     QList<QPointer<IntentClientRequest>> m_waiting;
     QElapsedTimer m_lastWaitingCleanup;
-    QMap<QPair<QString, QString>, AbstractIntentHandler *> m_handlers; // intentId + appId -> handler
+    QMap<std::pair<QString, QString>, AbstractIntentHandler *> m_handlers; // intentId + appId -> handler
 
     // no timeouts by default -- these have to be set at runtime
     int m_replyFromSystemTimeout = 0;

@@ -10,6 +10,7 @@
 #include <QCoreApplication>
 #include <QNetworkInterface>
 #include <QPluginLoader>
+#include <QSet>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <qplatformdefs.h>
@@ -70,7 +71,7 @@ YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
     {
     public:
         StringifyTypeAndVersion() = default;
-        StringifyTypeAndVersion(const QPair<QString, int> &typeAndVersion)
+        StringifyTypeAndVersion(const std::pair<QString, int> &typeAndVersion)
         {
             operator()(typeAndVersion);
         }
@@ -78,7 +79,7 @@ YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
         {
             return m_str;
         }
-        void operator()(const QPair<QString, int> &typeAndVersion)
+        void operator()(const std::pair<QString, int> &typeAndVersion)
         {
             if (!m_str.isEmpty())
                 m_str += u" or ";

@@ -9,6 +9,7 @@
 #include <functional>
 
 #include <QtCore/QUrl>
+#include <QtCore/QHash>
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
 #include <QtAppManCommon/logging.h>
 #include <QtAppManSystemUI/sudo.h>

@@ -6,8 +6,9 @@
 #ifndef QUICKLAUNCHER_H
 #define QUICKLAUNCHER_H
 
+#include <utility>
+
 #include <QtCore/QObject>
-#include <QtCore/QPair>
 #include <QtCore/QVector>
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
 
@@ -31,7 +32,7 @@ public:
     static QuickLauncher *instance();
     ~QuickLauncher() override;
 
-    QPair<AbstractContainer *, AbstractRuntime *> take(const QString &containerId, const QString &runtimeId);
+    std::pair<AbstractContainer *, AbstractRuntime *> take(const QString &containerId, const QString &runtimeId);
     void shutDown();
 
 public Q_SLOTS:
@@ -62,7 +63,7 @@ private:
         void addFailure();
         QVector<qint64> m_failedTimeStamps; // msecs since epoch when the instance failed
 
-        QList<QPair<AbstractContainer *, AbstractRuntime *>> m_containersAndRuntimes;
+        QList<std::pair<AbstractContainer *, AbstractRuntime *>> m_containersAndRuntimes;
     };
 
     QVector<QuickLaunchEntry> m_quickLaunchPool;

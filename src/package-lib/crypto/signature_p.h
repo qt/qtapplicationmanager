@@ -7,6 +7,8 @@
 #define SIGNATURE_P_H
 
 #include <QStringList>
+#include <QHash>
+#include <QVariantMap>
 #include <QtAppManCommon/exception.h>
 #include <QtAppManPackage/signature.h>
 

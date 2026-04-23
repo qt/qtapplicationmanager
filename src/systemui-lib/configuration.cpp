@@ -9,7 +9,7 @@
 #include <QStandardPaths>
 #include <QMetaEnum>
 #include <QProcessEnvironment>
-
+#include <QHash>
 #include <QDataStream>
 #include <QFileInfo>
 #include <QDir>
@@ -765,7 +765,7 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                  QVariant containerSelection = cd.containers.configurations.take(u"selection"_s);
 
 
-                 QList<QPair<QString, QString>> config;
+                 QList<std::pair<QString, QString>> config;
 
                  // this is easy to get wrong in the config file, so we do not just ignore a map here
                  // (this will in turn trigger the warning below)
@@ -773,7 +773,7 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                      containerSelection = QVariantList { containerSelection };
 
                  if (containerSelection.metaType() == QMetaType::fromType<QString>()) {
-                     config.append(qMakePair(u"*"_s, containerSelection.toString()));
+                     config.append(std::make_pair(u"*"_s, containerSelection.toString()));
                  } else if (containerSelection.metaType() == QMetaType::fromType<QVariantList>()) {
                      const QVariantList list = containerSelection.toList();
                      for (const QVariant &v : list) {
@@ -788,7 +788,7 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                              }
 
                              for (auto it = map.cbegin(); it != map.cend(); ++it)
-                                 config.append(qMakePair(it.key(), it.value().toString()));
+                                 config.append(std::make_pair(it.key(), it.value().toString()));
                          }
                      }
                  }

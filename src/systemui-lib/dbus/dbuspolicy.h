@@ -11,6 +11,7 @@
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
 #include <QtCore/QVariantMap>
 #include <QtCore/QByteArray>
+#include <QtCore/QHash>
 
 QT_FORWARD_DECLARE_CLASS(QDBusAbstractAdaptor)
 

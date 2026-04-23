@@ -358,7 +358,7 @@ void PackageManager::registerPackages()
 
     // collect all updates to builtin first, so we can avoid re-creating a lot of objects,
     // if we find an update to a builtin app later on
-    QMap<QString, QPair<PackageInfo *, PackageInfo *>> pkgs;
+    QMap<QString, std::pair<PackageInfo *, PackageInfo *>> pkgs;
 
     // map all the built-in packages first
     const auto builtinPackages = d->database->builtInPackages();
@@ -370,7 +370,7 @@ void PackageManager::registerPackages()
                     .arg(existingPackageInfos.first->manifestPath())
                     .arg(packageInfo->manifestPath());
         }
-        pkgs.insert(packageInfo->id(), qMakePair(packageInfo, nullptr));
+        pkgs.insert(packageInfo->id(), std::make_pair(packageInfo, nullptr));
     }
 
     // next, map all the installed packages, making sure to detect updates to built-in ones
@@ -385,7 +385,7 @@ void PackageManager::registerPackages()
                             .arg(existingPackageInfos.second->manifestPath())
                             .arg(packageInfo->manifestPath());
                 }
-                pkgs[packageInfo->id()] = qMakePair(existingPackageInfos.first, packageInfo);
+                pkgs[packageInfo->id()] = std::make_pair(existingPackageInfos.first, packageInfo);
 
             } else {
                 throw Exception(Error::Package, "Found more than one installed package with the same id '%1' here: %2 and there: %3")
@@ -394,7 +394,7 @@ void PackageManager::registerPackages()
                         .arg(packageInfo->manifestPath());
             }
         } else {
-            pkgs.insert(packageInfo->id(), qMakePair(packageInfo, nullptr));
+            pkgs.insert(packageInfo->id(), std::make_pair(packageInfo, nullptr));
         }
     }
     for (auto it = pkgs.constBegin(); it != pkgs.constEnd(); ++it)

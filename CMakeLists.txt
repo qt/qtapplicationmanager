@@ -14,6 +14,9 @@ project(QtApplicationManager
 set(QT_NO_INTERNAL_COMPATIBILITY_FUNCTIONS TRUE)
 add_compile_definitions(
     "QT_ENABLE_STRICT_MODE_UP_TO=QT_VERSION_CHECK(6,11,0)"
+    "QT_NO_SINGLE_ARGUMENT_QHASH_OVERLOAD=1"
+    "QT_NO_QPAIR=1"
+    "QT_LEAN_HEADERS=1"
 )
 
 # populate the platform check variables

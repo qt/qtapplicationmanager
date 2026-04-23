@@ -14,6 +14,7 @@
 #include <QtCore/QVector>
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
+#include <QtCore/QMap>
 #include <QtCore/QVariant>
 #include <QtAppManCommon/qtappmancommonglobal.h>
 #include <QtAppManCommon/exception.h>
@@ -59,7 +60,7 @@ public:
 
     static QVector<QVariant> parseAllDocuments(const QByteArray &yaml);
 
-    QPair<QString, int> parseHeader();
+    std::pair<QString, int> parseHeader();
 
     bool nextDocument();
     void nextEvent();

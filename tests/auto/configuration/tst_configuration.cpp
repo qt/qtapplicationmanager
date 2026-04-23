@@ -182,7 +182,7 @@ void tst_Configuration::simpleConfig()
     QCOMPARE(c.yaml.ui.opengl.esMajorVersion, 5);
     QCOMPARE(c.yaml.ui.opengl.esMinorVersion, 15);
 
-    QList<QPair<QString, QString>> containerSelection {
+    QList<std::pair<QString, QString>> containerSelection {
         { u"*"_s, u"selectionFunction"_s }
     };
     QCOMPARE(c.yaml.containers.selection, containerSelection);
@@ -310,7 +310,7 @@ void tst_Configuration::mergedConfig()
     QCOMPARE(c.yaml.ui.opengl.esMajorVersion, 2);
     QCOMPARE(c.yaml.ui.opengl.esMinorVersion, 0);
 
-    QList<QPair<QString, QString>> containerSelection {
+    QList<std::pair<QString, QString>> containerSelection {
         { u"*"_s, u"selectionFunction"_s },
         { u"2"_s, u"second"_s }
     };

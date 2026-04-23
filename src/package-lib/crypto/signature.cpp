@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:cryptography
 
+#include <QSet>
+
 #include "signature.h"
 #include "signature_p.h"
 #include "exception.h"

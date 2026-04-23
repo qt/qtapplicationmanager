@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:data-parser
 
+#include <QHash>
 #include <QVariant>
 #include <QRegularExpression>
 #include <QDebug>
@@ -339,7 +340,7 @@ QVector<QVariant> YamlParser::parseAllDocuments(const QByteArray &yaml)
     return result;
 }
 
-QPair<QString, int> YamlParser::parseHeader()
+std::pair<QString, int> YamlParser::parseHeader()
 {
     if (d->parsedHeader)
         throw Exception("Already parsed header");
@@ -350,7 +351,7 @@ QPair<QString, int> YamlParser::parseHeader()
     if (!isMap())
         throw Exception("Header document is not a map");
 
-    QPair<QString, int> result;
+    std::pair<QString, int> result;
 
     const Fields fields = {
         { "formatType", true, YamlParser::Scalar, [&, this]() {

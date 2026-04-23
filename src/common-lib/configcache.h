@@ -5,10 +5,9 @@
 #ifndef CONFIGCACHE_H
 #define CONFIGCACHE_H
 
-#include <functional>
 #include <array>
+#include <type_traits>
 
-#include <QtCore/QPair>
 #include <QtCore/QVector>
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>

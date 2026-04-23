@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+#include <QVariantMap>
+
 #include "startup-plugin.h"
 
 Q_LOGGING_CATEGORY(LogMe, "am.start")

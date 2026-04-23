@@ -11,6 +11,7 @@
 #include <QDataStream>
 #include <qplatformdefs.h>
 #include <QDataStream>
+#include <QSet>
 
 #include "logging.h"
 #include "sudo.h"

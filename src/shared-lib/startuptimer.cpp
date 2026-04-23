@@ -311,7 +311,7 @@ void StartupTimer::checkpoint(const char *name)
 {
     if (Q_LIKELY(m_initialized)) {
         qint64 delta = m_timer.nsecsElapsed();
-        m_checkpoints << qMakePair(quint64(delta / 1000) + m_processCreation, name);
+        m_checkpoints << std::make_pair(quint64(delta / 1000) + m_processCreation, name);
 
         qCDebug(LogStartupTimer) << "Checkpoint:" << name;
     }
@@ -330,7 +330,7 @@ void StartupTimer::checkFirstFrame()
     if (Q_LIKELY(m_initialized)) {
         QByteArray ba = "after first frame drawn";
         m_timeToFirstFrame = quint64(m_timer.nsecsElapsed() / 1000) + m_processCreation;
-        m_checkpoints << qMakePair(m_timeToFirstFrame, ba);
+        m_checkpoints << std::make_pair(m_timeToFirstFrame, ba);
         emit timeToFirstFrameChanged(m_timeToFirstFrame);
     }
 }

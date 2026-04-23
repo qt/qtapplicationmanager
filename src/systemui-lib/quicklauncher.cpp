@@ -210,7 +210,7 @@ void QuickLauncher::rebuild()
                 });
             }
 
-            entry.m_containersAndRuntimes << qMakePair(container, runtime);
+            entry.m_containersAndRuntimes << std::make_pair(container, runtime);
             ++done;
 
             qCDebug(LogQuickLaunch) << "Added new quick-launch entry for container:"
@@ -281,9 +281,9 @@ void QuickLauncher::checkFailedStarts()
     }
 }
 
-QPair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QString &containerId, const QString &runtimeId)
+std::pair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QString &containerId, const QString &runtimeId)
 {
-    QPair<AbstractContainer *, AbstractRuntime *> result(nullptr, nullptr);
+    std::pair<AbstractContainer *, AbstractRuntime *> result(nullptr, nullptr);
 
     // 1st pass: find entry with matching container and runtime
     // 2nd pass: find entry with matching container and no runtime

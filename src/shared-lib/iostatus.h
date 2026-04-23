@@ -12,6 +12,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>
+#include <QtCore/QVariantMap>
 
 
 QT_BEGIN_NAMESPACE_AM

@@ -80,16 +80,16 @@ int main(int argc, char *argv[])
 
             auto parseYamlMetada = [](const QStringList &metadataSnippets, const QStringList &metadataFiles, bool isSigned) -> QVariantMap {
                 QVariantMap result;
-                QVector<QPair<QByteArray, QString>> metadata;
+                QVector<std::pair<QByteArray, QString>> metadata;
 
                 for (const QString &file : metadataFiles) {
                     QFile f(file);
                     if (!f.open(QIODevice::ReadOnly))
                         throw Exception(f, "Could not open metadata file for reading");
-                    metadata.append(qMakePair(f.readAll(), file));
+                    metadata.append(std::make_pair(f.readAll(), file));
                 }
                 for (const QString &snippet : metadataSnippets)
-                    metadata.append(qMakePair(snippet.toUtf8(), QString()));
+                    metadata.append(std::make_pair(snippet.toUtf8(), QString()));
 
                 for (const auto &md : metadata) {
                     QVector<QVariant> docs;

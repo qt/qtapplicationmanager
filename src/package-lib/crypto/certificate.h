@@ -5,6 +5,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QVariant>
+#include <QtCore/QVariantMap>
 #include <QtCore/QDateTime>
 #include <QtAppManPackage/qtappmanpackageglobal.h>
 

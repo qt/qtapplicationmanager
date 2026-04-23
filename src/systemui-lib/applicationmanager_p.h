@@ -32,7 +32,7 @@ public:
 
     QMap<QString, QString> applicationExtraDirs;
 
-    QList<QPair<QString, QString>> containerSelectionConfig;
+    QList<std::pair<QString, QString>> containerSelectionConfig;
     QJSValue containerSelectionFunction;
 
     QSet<QString> registeredMimeSchemes;

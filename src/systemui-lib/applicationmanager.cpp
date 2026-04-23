@@ -760,7 +760,7 @@ bool ApplicationManager::startApplicationInternal(const QString &appId, const QS
                                        << "because" << cannotUseQuickLaunch;
                 } else {
                     // check quicklaunch pool
-                    QPair<AbstractContainer *, AbstractRuntime *> quickLaunch =
+                    std::pair<AbstractContainer *, AbstractRuntime *> quickLaunch =
                             QuickLauncher::instance()->take(containerId, app->info()->runtimeName());
                     container = quickLaunch.first;
                     runtime = quickLaunch.second;

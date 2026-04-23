@@ -7,9 +7,10 @@
 #define STARTUPTIMER_H
 
 #include <cstdio>
+#include <utility>
+
 #include <QtCore/QObject>
 #include <QtCore/QVector>
-#include <QtCore/QPair>
 #include <QtCore/QByteArray>
 #include <QtCore/QElapsedTimer>
 #include <QtAppManShared/qtappmansharedglobal.h>

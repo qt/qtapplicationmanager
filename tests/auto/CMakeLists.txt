@@ -26,7 +26,7 @@ add_subdirectory(yaml)
 
 if (LINUX)
     add_subdirectory(systemd)
-    add_subdirectory(systemreader)
+    add_subdirectory(systemstatus)
     add_subdirectory(processreader)
     add_subdirectory(sudo)
     if (TARGET Qt::DBus)

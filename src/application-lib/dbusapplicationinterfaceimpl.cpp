@@ -39,10 +39,6 @@ void DBusApplicationInterfaceImpl::attach(ApplicationInterface *iface)
 {
     ApplicationInterfaceImpl::attach(iface);
 
-    QObject::connect(m_applicationMain, &ApplicationMain::memoryLowWarning,
-                     iface, &ApplicationInterface::memoryLowWarning);
-    QObject::connect(m_applicationMain, &ApplicationMain::memoryCriticalWarning,
-                     iface, &ApplicationInterface::memoryCriticalWarning);
     QObject::connect(m_applicationMain, &ApplicationMain::openDocument,
                      iface, &ApplicationInterface::openDocument);
 }

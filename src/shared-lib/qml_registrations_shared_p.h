@@ -14,6 +14,7 @@
 #include <QtAppManShared/gpustatus.h>
 #include <QtAppManShared/iostatus.h>
 #include <QtAppManShared/memorystatus.h>
+#include <QtAppManShared/cgroupstatus.h>
 #include <QtAppManShared/monitormodel.h>
 #include <QtAppManShared/startuptimer.h>
 
@@ -113,6 +114,23 @@ class ForeignMemoryStatus
     QML_FOREIGN(QtAM::MemoryStatus)
     QML_NAMED_ELEMENT(MemoryStatus)
     QML_ADDED_IN_VERSION(2, 0)
+};
+
+class ForeignCGroupStatus
+{
+    Q_GADGET
+    QML_FOREIGN(QtAM::CGroupStatus)
+    QML_NAMED_ELEMENT(CGroupStatus)
+    QML_ADDED_IN_VERSION(6, 12)
+};
+
+class ForeignPressureStallInformation
+{
+    Q_GADGET
+    QML_FOREIGN(QtAM::PressureStallInformation)
+    QML_NAMED_ELEMENT(PressureStallInformation)
+    QML_ADDED_IN_VERSION(6, 12)
+    QML_UNCREATABLE("")
 };
 
 class ForeignMonitorModel

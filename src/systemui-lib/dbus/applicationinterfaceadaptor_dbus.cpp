@@ -21,14 +21,6 @@ ApplicationInterfaceAdaptor::ApplicationInterfaceAdaptor(QObject *parent)
     auto *nr = nativeRuntimeFor(this);
     Q_ASSERT(nr);
 
-    connect(ApplicationManager::instance(), &ApplicationManager::memoryLowWarning,
-            this, &ApplicationInterfaceAdaptor::memoryLowWarning);
-    connect(ApplicationManager::instance(), &ApplicationManager::memoryCriticalWarning,
-            this, &ApplicationInterfaceAdaptor::memoryCriticalWarning);
-    connect(nr->container(), &AbstractContainer::memoryLowWarning,
-            this, &ApplicationInterfaceAdaptor::memoryLowWarning);
-    connect(nr->container(), &AbstractContainer::memoryCriticalWarning,
-            this, &ApplicationInterfaceAdaptor::memoryCriticalWarning);
     connect(nr, &NativeRuntime::aboutToStop,
             this, &ApplicationInterfaceAdaptor::quit);
 }

@@ -140,9 +140,6 @@ Q_SIGNALS:
 
     void openUrlRequested(const QString &requestId, const QString &url, const QString &mimeType, const QStringList &possibleAppIds);
 
-    void memoryLowWarning();
-    void memoryCriticalWarning();
-
     void containerSelectionFunctionChanged();
     void shuttingDownChanged();
 

@@ -3,11 +3,25 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include "cpustatus.h"
-
+#include <QFile>
 #include <QThread>
+#include <private/qobject_p.h>
+
+#include "logging.h"
+#include "cpustatus.h"
+#include "utilities.h"
+
+
+#if defined(Q_OS_WINDOWS)
+#  include <windows.h>
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+#  include <mach/mach.h>
+#  include <sys/sysctl.h>
+#endif
 
 using namespace Qt::StringLiterals;
+
+QT_BEGIN_NAMESPACE_AM
 
 /*!
     \qmltype CpuStatus
@@ -51,13 +65,32 @@ using namespace Qt::StringLiterals;
     \endqml
 */
 
-QT_USE_NAMESPACE_AM
+class CpuStatusPrivate : public QObjectPrivate
+{
+public:
+    qreal read();
+
+    qint64 m_lastIdle = 0;
+    qint64 m_lastTotal = 0;
+    qreal m_cpuLoad = 0;
+
+#if defined(Q_OS_LINUX)
+    QFile m_statFile;
+#endif
+};
 
 CpuStatus::CpuStatus(QObject *parent)
-    : QObject(parent)
-    , m_cpuReader(new CpuReader)
-    , m_cpuLoad(0)
+    : QObject(*new CpuStatusPrivate, parent)
 {
+    Q_D(CpuStatus);
+
+#if defined(Q_OS_LINUX)
+    d->m_statFile.setFileName(testRootPathPrefix() + u"/proc/stat");
+    if (!d->m_statFile.open(QIODevice::ReadOnly))
+        qCWarning(LogSystem) << "Cannot read CPU statistics from" << d->m_statFile.fileName();
+#endif
+
+    d->m_cpuLoad = d->read();
 }
 
 /*!
@@ -71,7 +104,8 @@ CpuStatus::CpuStatus(QObject *parent)
 */
 qreal CpuStatus::cpuLoad() const
 {
-    return m_cpuLoad;
+    Q_D(const CpuStatus);
+    return d->m_cpuLoad;
 }
 
 /*!
@@ -94,11 +128,113 @@ int CpuStatus::cpuCores() const
 */
 void CpuStatus::update()
 {
-    qreal newLoad = m_cpuReader->readLoadValue();
-    if (!qFuzzyCompare(newLoad, m_cpuLoad)) {
-        m_cpuLoad = newLoad;
+    Q_D(CpuStatus);
+
+    qreal newReading = d->read();
+
+    if (!qFuzzyCompare(newReading, d->m_cpuLoad)) {
+        d->m_cpuLoad = newReading;
         emit cpuLoadChanged();
     }
+}
+
+qreal CpuStatusPrivate::read()
+{
+    auto totalIdle = [this]() -> std::optional<std::pair<qint64, qint64>> {
+#if defined(Q_OS_LINUX)
+        if (!m_statFile.isOpen())
+            return { };
+        m_statFile.seek(0);
+        const QByteArray buffer = m_statFile.readAll();
+
+        qsizetype pos = 0;
+        qint64 total = 0;
+        QVector<qint64> values;
+
+        while (pos < buffer.size() && values.size() < 4) {
+            if (!::isdigit(buffer.at(pos))) {
+                ++pos;
+                continue;
+            }
+
+            char *endPtr = nullptr;
+            qint64 val = ::strtoll(buffer.constData() + pos,
+                                   &endPtr,
+                                   10); // check missing for over-/underflow
+            values << val;
+            total += val;
+            pos = qsizetype(endPtr - buffer.constData() + 1);
+        }
+
+        if (values.size() < 4)
+            return { };
+
+        qint64 idle = values.at(3);
+        return { { total, idle } };
+
+#elif defined(Q_OS_WIN)
+        Q_UNUSED(this)
+
+        auto winFileTimeToInt64 = [](const ::FILETIME &filetime) {
+            return ((quint64(filetime.dwHighDateTime) << 32) | quint64(filetime.dwLowDateTime));
+        };
+
+        ::FILETIME winIdle, winKernel, winUser;
+        if (!::GetSystemTimes(&winIdle, &winKernel, &winUser))
+            return { };
+        return { { winFileTimeToInt64(winKernel) + winFileTimeToInt64(winUser),
+                   winFileTimeToInt64(winIdle) } };
+
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+        Q_UNUSED(this)
+
+        ::natural_t cpuCount = 0;
+        ::processor_cpu_load_info_t cpuLoadInfo;
+        ::mach_msg_type_number_t cpuLoadInfoCount = 0;
+
+        if (::host_processor_info(::mach_host_self(),
+                                  PROCESSOR_CPU_LOAD_INFO,
+                                  &cpuCount,
+                                  reinterpret_cast<::processor_info_array_t *>(&cpuLoadInfo),
+                                  &cpuLoadInfoCount) != 0) {
+            return { };
+        }
+
+        qint64 idle = 0, total = 0;
+
+        for (natural_t i = 0; i < cpuCount; ++i) {
+            idle += cpuLoadInfo[i].cpu_ticks[CPU_STATE_IDLE];
+            total += cpuLoadInfo[i].cpu_ticks[CPU_STATE_USER]
+                     + cpuLoadInfo[i].cpu_ticks[CPU_STATE_SYSTEM]
+                     + cpuLoadInfo[i].cpu_ticks[CPU_STATE_IDLE]
+                     + cpuLoadInfo[i].cpu_ticks[CPU_STATE_NICE];
+        }
+        ::vm_deallocate(::mach_task_self(),
+                        reinterpret_cast<::vm_address_t>(cpuLoadInfo),
+                        cpuLoadInfoCount);
+
+        return { { total, idle } };
+
+#else
+        return { };
+#endif
+    }();
+
+    if (!totalIdle)
+        return 0;
+
+    qint64 total = totalIdle->first;
+    qint64 idle = totalIdle->second;
+
+    if (total == m_lastTotal) // this can happen in unit tests: prevent division by zero
+        return { };
+
+    qreal newLoad = qreal(1) - (qreal(idle - m_lastIdle) / qreal(total - m_lastTotal));
+
+    m_lastIdle = idle;
+    m_lastTotal = total;
+
+    return newLoad;
 }
 
 /*!
@@ -113,5 +249,7 @@ QStringList CpuStatus::roleNames() const
 {
     return { u"cpuLoad"_s };
 }
+
+QT_END_NAMESPACE_AM
 
 #include "moc_cpustatus.cpp"

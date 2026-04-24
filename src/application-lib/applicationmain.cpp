@@ -378,10 +378,6 @@ void ApplicationMain::connectDBusInterfaces(bool isRuntimeLauncher) noexcept(fal
 
     ok = ok && connect(m_dbusApplicationInterface, &IoQtApplicationManagerApplicationInterfaceInterface::quit,
                        this, &ApplicationMain::quit);
-    ok = ok && connect(m_dbusApplicationInterface, &IoQtApplicationManagerApplicationInterfaceInterface::memoryLowWarning,
-                       this, &ApplicationMain::memoryLowWarning);
-    ok = ok && connect(m_dbusApplicationInterface, &IoQtApplicationManagerApplicationInterfaceInterface::memoryCriticalWarning,
-                       this, &ApplicationMain::memoryCriticalWarning);
     ok = ok && connect(m_dbusApplicationInterface, &IoQtApplicationManagerApplicationInterfaceInterface::openDocument,
                        this, &ApplicationMain::openDocument);
     ok = ok && connect(m_dbusApplicationInterface, &IoQtApplicationManagerApplicationInterfaceInterface::slowAnimationsChanged,

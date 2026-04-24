@@ -13,9 +13,10 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>
 
-#include <QtAppManShared/systemreader.h>
 
 QT_BEGIN_NAMESPACE_AM
+
+class IoStatusPrivate;
 
 class Q_APPMANSHARED_EXPORT IoStatus : public QObject
 {
@@ -43,11 +44,8 @@ Q_SIGNALS:
     void ioLoadChanged();
 
 private:
-    void addIoReader(const QString &deviceName);
-
-    QStringList m_deviceNames;
-    QHash<QString, IoReader *> m_ioHash;
-    QVariantMap m_ioLoad;
+    Q_DECLARE_PRIVATE(IoStatus)
+    Q_DISABLE_COPY(IoStatus)
 };
 
 QT_END_NAMESPACE_AM

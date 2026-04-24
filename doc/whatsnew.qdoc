@@ -8,6 +8,17 @@
 \title What's New
 \brief Important changes in Qt Application Manager
 
+\section1 Qt ApplicationManager 6.12
+
+\list
+\li The dated and deprecated Linux cgroup v1 support was removed, together with the
+    memoryLowWarning and memoryLowCritical signals.
+    As a replacement, explicit \l{Linux cgroup v2}{cgroup v2} support was added in form of the new
+    CGroupStatus type, which also includes support for \l{Linux Pressure Stall Information}
+    {pressure stall information}.
+
+\endlist
+
 \section1 Qt ApplicationManager 6.11
 
 The biggest part of this release is the complete overhaul of the runtime package installation

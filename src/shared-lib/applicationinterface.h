@@ -52,8 +52,10 @@ public:
 
 Q_SIGNALS:
     Q_SCRIPTABLE void quit();
-    Q_SCRIPTABLE void memoryLowWarning();
-    Q_SCRIPTABLE void memoryCriticalWarning();
+#if QT_DEPRECATED_SINCE(6, 12)
+    QT_DEPRECATED_VERSION_X_6_12("Use CGroupStatus instead.") Q_SCRIPTABLE void memoryLowWarning();
+    QT_DEPRECATED_VERSION_X_6_12("Use CGroupStatus instead.") Q_SCRIPTABLE void memoryCriticalWarning();
+#endif
 
     Q_SCRIPTABLE void openDocument(const QString &documentUrl, const QString &mimeType);
 

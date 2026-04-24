@@ -478,4 +478,18 @@ void ensureSafePermissions(const QFileInfo &fi) noexcept(false)
 #endif
 }
 
+#if defined(Q_OS_LINUX)
+static QString s_testRootPathPrefix;
+
+void setTestRootPathPrefix(const QString &path)
+{
+    s_testRootPathPrefix = path;
+}
+
+QString testRootPathPrefix()
+{
+    return s_testRootPathPrefix;
+}
+#endif
+
 QT_END_NAMESPACE_AM

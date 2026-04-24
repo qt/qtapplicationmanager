@@ -95,8 +95,6 @@ public:
 
 Q_SIGNALS:
     void ready();
-    void memoryLowWarning();
-    void memoryCriticalWarning();
     void applicationChanged(QtAM::Application *newApplication);
     void controlGroupChanged(const QString &controlGroup);
 

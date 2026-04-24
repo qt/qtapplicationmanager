@@ -17,7 +17,7 @@ QT_BEGIN_NAMESPACE_AM
 
 class AbstractContainer;
 class AbstractRuntime;
-class CpuReader;
+class CpuStatus;
 
 class Q_APPMANSYSTEMUI_EXPORT QuickLauncher : public QObject
 {
@@ -67,7 +67,7 @@ private:
 
     QVector<QuickLaunchEntry> m_quickLaunchPool;
     QChronoTimer *m_rebuildTimer;
-    CpuReader *m_idleCpu;
+    CpuStatus *m_idleCpu;
     qreal m_idleThreshold;
     bool m_shuttingDown = false;
     int m_failedStartLimit;

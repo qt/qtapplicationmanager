@@ -8,6 +8,7 @@ qt_internal_add_module(AppManSharedPrivate
         applicationinterfaceimpl.cpp applicationinterfaceimpl.h
         applicationmanagerwindow.h applicationmanagerwindow.cpp
         applicationmanagerwindowimpl.h applicationmanagerwindowimpl.cpp
+        cgroupstatus.cpp cgroupstatus.h
         crashhandler.cpp crashhandler.h
         cpustatus.cpp cpustatus.h
         framecontenttracker.h framecontenttracker.cpp
@@ -30,8 +31,8 @@ qt_internal_add_module(AppManSharedPrivate
         intent-client/intenthandler.cpp intent-client/intenthandler.h
 
         monitor/processreader.cpp monitor/processreader.h
-        monitor/systemreader.cpp monitor/systemreader.h
     LIBRARIES
+        Qt::CorePrivate
         Qt::GuiPrivate
         Qt::QuickPrivate
     PUBLIC_LIBRARIES

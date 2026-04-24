@@ -15,7 +15,7 @@
 #include "containerfactory.h"
 #include "runtimefactory.h"
 #include "quicklauncher.h"
-#include "systemreader.h"
+#include "cpustatus.h"
 
 #include <memory>
 
@@ -45,7 +45,6 @@ QuickLauncher *QuickLauncher::instance()
 
 QuickLauncher::~QuickLauncher()
 {
-    delete m_idleCpu;
     s_instance = nullptr;
 }
 
@@ -54,7 +53,7 @@ QuickLauncher::QuickLauncher(const QMap<std::pair<QString, QString>, int> &runti
                              QObject *parent)
     : QObject(parent)
     , m_rebuildTimer(new QChronoTimer(this))
-    , m_idleCpu(new CpuReader())
+    , m_idleCpu(new CpuStatus(this))
     , m_idleThreshold(qBound<qreal>(0, idleLoad, 1))
     , m_failedStartLimit(qMax(0, failedStartLimit))
     , m_failedStartLimitIntervalSec(qMax(0, failedStartLimitIntervalSec))
@@ -133,10 +132,13 @@ void QuickLauncher::rebuild()
     if (m_shuttingDown)
         return;
 
-    if (!qFuzzyIsNull(m_idleThreshold) && (m_idleCpu->readLoadValue() > m_idleThreshold)) {
-        // CPU load too high, try again later
-        triggerRebuild();
-        return;
+    if (!qFuzzyIsNull(m_idleThreshold)) {
+        m_idleCpu->update();
+        if (m_idleCpu->cpuLoad() > m_idleThreshold) {
+            // CPU load too high, try again later
+            triggerRebuild();
+            return;
+        }
     }
 
     int todo = 0;

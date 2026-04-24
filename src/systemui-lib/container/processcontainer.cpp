@@ -12,9 +12,9 @@
 #include "containerfactory.h"
 #include "application.h"
 #include "processcontainer.h"
-#include "systemreader.h"
 #include "debugwrapper.h"
 #include "unixsignalhandler.h"
+#include <mutex>
 
 #if defined(Q_OS_UNIX)
 #  include <csignal>
@@ -164,7 +164,6 @@ void HostProcess::setStopBeforeExec(bool stopBeforeExec)
 }
 
 
-bool ProcessContainer::s_hasCGroupV1 = false;
 bool ProcessContainer::s_hasCGroupV2 = false;
 
 ProcessContainer::ProcessContainer(ProcessContainerManager *manager, Application *app,
@@ -176,14 +175,12 @@ ProcessContainer::ProcessContainer(ProcessContainerManager *manager, Application
     , m_debugWrapperEnvironment(debugWrapperEnvironment)
     , m_debugWrapperCommand(debugWrapperCommand)
 {
-    static bool once = false;
-    if (!once) {
-        once = true;
 #if defined(Q_OS_LINUX)
+    static std::once_flag once;
+    std::call_once(once, [] {
         s_hasCGroupV2 = QFile::exists(u"/sys/fs/cgroup/cgroup.controllers"_s);
-        s_hasCGroupV1 = !s_hasCGroupV2 && QDir(u"/sys/fs/cgroup/"_s).exists();
+    });
 #endif
-    }
 }
 
 ProcessContainer::~ProcessContainer()
@@ -198,60 +195,28 @@ QString ProcessContainer::controlGroup() const
 
 bool ProcessContainer::setControlGroup(const QString &groupName)
 {
-    if (!s_hasCGroupV1 && !s_hasCGroupV2)
+    if (!s_hasCGroupV2)
         return false;
 
     if (groupName == m_currentControlGroup)
         return true;
 
-    QVariantMap map = m_manager->configuration().value(u"controlGroups"_s).toMap();
-    if (s_hasCGroupV2) {
-        // this lets us re-use the v1 code below for v2, as v2 does not need a config map
-        map = QVariantMap { { groupName, QVariantMap { { u"v2"_s, groupName } } } };
+    const QByteArray pidString = QByteArray::number(m_process->processId()) + '\n';
+
+    QString procsFile = u"/sys/fs/cgroup/%1/cgroup.procs"_s.arg(groupName);
+    QFile f(procsFile);
+    bool ok = f.open(QFile::WriteOnly);
+    ok = ok && (f.write(pidString) == pidString.size());
+
+    if (!ok) {
+        qWarning() << "Failed setting cgroup for" << m_program << ", pid" << m_process->processId()
+                   << "to" << groupName;
+        return false;
     }
-    auto git = map.constFind(groupName);
-    if (git != map.constEnd()) {
-        QVariantMap mapping = (*git).toMap();
-        QByteArray pidString = QByteArray::number(m_process->processId());
-        pidString.append('\n');
 
-        for (auto it = mapping.cbegin(); it != mapping.cend(); ++it) {
-            const QString &resource = it.key();
-            const QString &userclass = it.value().toString(); // cgroup name in v2
-
-            // only read "v2" for v2 / ignore it for v1
-            if (s_hasCGroupV2 != (resource == u"v2"))
-                continue;
-
-            //qWarning() << "Setting cgroup for" << m_program << ", pid" << m_process->processId() << ":" << resource << "->" << userclass;
-
-            QString file = s_hasCGroupV1 ? u"/sys/fs/cgroup/%1/%2/cgroup.procs"_s.arg(resource, userclass)
-                                         : u"/sys/fs/cgroup/%1/cgroup.procs"_s.arg(userclass);
-            QFile f(file);
-            bool ok = f.open(QFile::WriteOnly);
-            ok = ok && (f.write(pidString) == pidString.size());
-
-            if (!ok) {
-                qWarning() << "Failed setting cgroup for" << m_program << ", pid" << m_process->processId() << ":" << resource << "->" << userclass;
-                return false;
-            }
-
-            if (resource == u"memory") {
-                if (!m_memWatcher) {
-                    m_memWatcher = new MemoryWatcher(this);
-                    connect(m_memWatcher, &MemoryWatcher::memoryLow,
-                            this, &ProcessContainer::memoryLowWarning);
-                    connect(m_memWatcher, &MemoryWatcher::memoryCritical,
-                            this, &ProcessContainer::memoryCriticalWarning);
-                }
-                m_memWatcher->startWatching(userclass);
-            }
-        }
-        m_currentControlGroup = groupName;
-        emit controlGroupChanged(groupName);
-        return true;
-    }
-    return false;
+    m_currentControlGroup = groupName;
+    emit controlGroupChanged(groupName);
+    return true;
 }
 
 bool ProcessContainer::isReady()

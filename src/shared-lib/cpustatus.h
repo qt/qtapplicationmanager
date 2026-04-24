@@ -6,15 +6,13 @@
 #ifndef CPUSTATUS_H
 #define CPUSTATUS_H
 
-#include <memory>
-
 #include <QtCore/QObject>
 
 #include <QtAppManShared/qtappmansharedglobal.h>
-#include <QtAppManShared/systemreader.h>
-
 
 QT_BEGIN_NAMESPACE_AM
+
+class CpuStatusPrivate;
 
 class Q_APPMANSHARED_EXPORT CpuStatus : public QObject
 {
@@ -38,8 +36,8 @@ Q_SIGNALS:
     void cpuLoadChanged();
 
 private:
-    std::unique_ptr<CpuReader> m_cpuReader;
-    qreal m_cpuLoad;
+    Q_DECLARE_PRIVATE(CpuStatus)
+    Q_DISABLE_COPY(CpuStatus)
 };
 
 QT_END_NAMESPACE_AM

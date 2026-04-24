@@ -132,6 +132,12 @@ Q_APPMANCOMMON_EXPORT bool isDebuggerAttached(qint64 pid = 0);
 Q_APPMANCOMMON_EXPORT void ensureSafePermissions(const QString &path) noexcept(false);
 Q_APPMANCOMMON_EXPORT void ensureSafePermissions(const QFileInfo &fi) noexcept(false);
 
+#if defined(Q_OS_LINUX)
+// test mode support for Linux monitoring classes: redirect access to /sys or /proc
+Q_AUTOTEST_EXPORT void setTestRootPathPrefix(const QString &path);
+Q_APPMANCOMMON_EXPORT QString testRootPathPrefix();
+#endif
+
 QT_END_NAMESPACE_AM
 
 #endif // UTILITIES_H

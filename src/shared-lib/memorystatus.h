@@ -1,4 +1,4 @@
-// Copyright (C) 2021 The Qt Company Ltd.
+// Copyright (C) 2026 The Qt Company Ltd.
 // Copyright (C) 2019 Luxoft Sweden AB
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
@@ -6,14 +6,13 @@
 #ifndef MEMORYSTATUS_H
 #define MEMORYSTATUS_H
 
-#include <memory>
-
 #include <QtCore/QObject>
 
 #include <QtAppManShared/qtappmansharedglobal.h>
-#include <QtAppManShared/systemreader.h>
 
 QT_BEGIN_NAMESPACE_AM
+
+class MemoryStatusPrivate;
 
 class Q_APPMANSHARED_EXPORT MemoryStatus : public QObject
 {
@@ -37,11 +36,10 @@ Q_SIGNALS:
     void memoryUsedChanged();
 
 private:
-    std::unique_ptr<MemoryReader> m_memoryReader;
-    quint64 m_memoryUsed;
+    Q_DECLARE_PRIVATE(MemoryStatus)
+    Q_DISABLE_COPY(MemoryStatus)
 };
 
 QT_END_NAMESPACE_AM
-
 
 #endif // MEMORYSTATUS_H

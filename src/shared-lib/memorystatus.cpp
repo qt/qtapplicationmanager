@@ -3,9 +3,27 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <mutex>
+
+#include <QFile>
+#include <private/qobject_p.h>
+
+#if defined(Q_OS_LINUX)
+#  include <unistd.h>
+#elif defined(Q_OS_WINDOWS)
+#  include <windows.h>
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+#  include <mach/mach.h>
+#  include <sys/sysctl.h>
+#endif
+
+#include "logging.h"
 #include "memorystatus.h"
+#include "utilities.h"
 
 using namespace Qt::StringLiterals;
+
+QT_BEGIN_NAMESPACE_AM
 
 /*!
     \qmltype MemoryStatus
@@ -15,6 +33,10 @@ using namespace Qt::StringLiterals;
 
     MemoryStatus provides information on the status of the system's RAM (random-access memory).
     Its property values are updated whenever the method update() is called.
+
+    \note This type only provides information about the total memory usage of the system, and does
+          not take into account any cgroup-specific limits or usages on Linux. If you want to
+          monitor the memory usage of a specific cgroup, use the CGroupStatus type instead.
 
     You can use this component as a MonitorModel data source if you want to plot its previous
     values over time.
@@ -48,13 +70,77 @@ using namespace Qt::StringLiterals;
     \endqml
 */
 
-QT_USE_NAMESPACE_AM
+
+class MemoryStatusPrivate : public QObjectPrivate
+{
+public:
+    quint64 read();
+
+    quint64 m_memoryUsed = 0u;
+    static quint64 s_totalMemory;
+    static quint64 s_pageSize;
+
+#if defined(Q_OS_LINUX)
+    QFile m_meminfoFile;
+#endif
+};
+
+quint64 MemoryStatusPrivate::s_totalMemory = 0u;
+quint64 MemoryStatusPrivate::s_pageSize = 0u;
 
 MemoryStatus::MemoryStatus(QObject *parent)
-    : QObject(parent)
-    , m_memoryReader(new MemoryReader)
-    , m_memoryUsed(0)
+    : QObject(*new MemoryStatusPrivate, parent)
 {
+    Q_D(MemoryStatus);
+
+    std::once_flag once;
+    std::call_once(once, [] {
+#if defined(Q_OS_LINUX)
+        long pageSize = ::sysconf(_SC_PAGESIZE);
+        long physPages = ::sysconf(_SC_PHYS_PAGES);
+
+        if ((pageSize <= 0) || (physPages <= 0)) {
+            qCCritical(LogSystem) << "Cannot determine the amount of physical RAM in this machine.";
+        } else {
+            MemoryStatusPrivate::s_totalMemory = quint64(physPages) * quint64(pageSize);
+            MemoryStatusPrivate::s_pageSize = pageSize;
+        }
+
+#elif defined(Q_OS_WINDOWS)
+        ::MEMORYSTATUSEX mem;
+        mem.dwLength = sizeof(mem);
+        if (!::GlobalMemoryStatusEx(&mem))
+            qCCritical(LogSystem) << "Cannot determine the amount of physical RAM in this machine.";
+        MemoryStatusPrivate::s_totalMemory = mem.ullTotalPhys;
+
+        ::SYSTEM_INFO sys;
+        ::GetSystemInfo(&sys);
+        MemoryStatusPrivate::s_pageSize = sys.dwPageSize;
+
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+        std::array<int, 2> mib{CTL_HW, HW_MEMSIZE};
+        int64_t hwMem;
+        size_t hwMemSize = sizeof(hwMem);
+
+        if (::sysctl(mib.data(), mib.size(), &hwMem, &hwMemSize, nullptr, 0) == 0)
+            MemoryStatusPrivate::s_totalMemory = quint64(hwMem);
+
+        mib[1] = HW_PAGESIZE;
+        int hwPageSize;
+        size_t hwPageSizeSize = sizeof(hwPageSize);
+
+        if (::sysctl(mib.data(), mib.size(), &hwPageSize, &hwPageSizeSize, nullptr, 0) == 0)
+            MemoryStatusPrivate::s_pageSize = hwPageSize;
+#endif
+    });
+
+#if defined(Q_OS_LINUX)
+    d->m_meminfoFile.setFileName(testRootPathPrefix() + u"/proc/meminfo");
+    if (!d->m_meminfoFile.open(QIODevice::ReadOnly))
+        qCCritical(LogSystem) << "Cannot read memory statistics from" << d->m_meminfoFile.fileName();
+#endif
+
+    d->m_memoryUsed = d->read(); // retrieve initial value
 }
 
 /*!
@@ -67,15 +153,7 @@ MemoryStatus::MemoryStatus(QObject *parent)
 */
 quint64 MemoryStatus::totalMemory() const
 {
-#if defined(Q_OS_LINUX)
-    auto limit = m_memoryReader->groupLimit();
-    if (limit > 0 && limit < m_memoryReader->totalValue())
-        return limit;
-    else
-        return m_memoryReader->totalValue();
-#else
-    return m_memoryReader->totalValue();
-#endif
+    return MemoryStatusPrivate::s_totalMemory;
 }
 
 /*!
@@ -90,7 +168,8 @@ quint64 MemoryStatus::totalMemory() const
 */
 quint64 MemoryStatus::memoryUsed() const
 {
-    return m_memoryUsed;
+    Q_D(const MemoryStatus);
+    return d->m_memoryUsed;
 }
 
 /*!
@@ -115,11 +194,60 @@ QStringList MemoryStatus::roleNames() const
 */
 void MemoryStatus::update()
 {
-    quint64 newReading = m_memoryReader->readUsedValue();
-    if (m_memoryUsed != newReading) {
-        m_memoryUsed = newReading;
+    Q_D(MemoryStatus);
+
+    quint64 newReading = d->read();
+
+    if (d->m_memoryUsed != newReading) {
+        d->m_memoryUsed = newReading;
         emit memoryUsedChanged();
     }
 }
+quint64 MemoryStatusPrivate::read()
+{
+#if defined(Q_OS_LINUX)
+    if (!m_meminfoFile.isOpen())
+        return 0u;
+    m_meminfoFile.seek(0);
+    const QByteArray buffer = m_meminfoFile.read(1500);
+
+    static constexpr char memAvailable[] = "MemAvailable: ";
+    if (auto i = buffer.indexOf(memAvailable); i != -1) {
+        auto available = ::strtoull(buffer.data() + i + sizeof(memAvailable) - 1, nullptr, 10);
+        return s_totalMemory - 1024 * available;
+    } else {
+        return 0u;
+    }
+
+#elif defined(Q_OS_WINDOWS)
+    ::MEMORYSTATUSEX mem;
+    mem.dwLength = sizeof(mem);
+    if (!::GlobalMemoryStatusEx(&mem))
+        return 0u;
+    return mem.ullTotalPhys - mem.ullAvailPhys;
+
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+    ::vm_statistics64_data_t vmStat;
+    ::mach_msg_type_number_t vmStatCount = HOST_VM_INFO64_COUNT;
+
+    if (::host_statistics64(::mach_host_self(),
+                            HOST_VM_INFO64,
+                            reinterpret_cast< ::host_info64_t>(&vmStat),
+                            &vmStatCount)
+        == 0) {
+        quint64 app = vmStat.internal_page_count;
+        quint64 compressed = vmStat.compressor_page_count;
+        quint64 wired = vmStat.wire_count;
+
+        return (app + compressed + wired) * s_pageSize;
+    } else {
+        return 0u;
+    }
+#else
+    return 0u;
+#endif
+}
+
+QT_END_NAMESPACE_AM
 
 #include "moc_memorystatus.cpp"

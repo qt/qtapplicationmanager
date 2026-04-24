@@ -3,6 +3,18 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <mutex>
+
+#include <QCoreApplication>
+
+#if defined(Q_OS_LINUX)
+#  include <QProcess>
+#  include <QOffscreenSurface>
+#  include <QOpenGLContext>
+#  include <QOpenGLFunctions>
+#endif
+
+#include "logging.h"
 #include "gpustatus.h"
 
 using namespace Qt::StringLiterals;
@@ -48,19 +60,187 @@ using namespace Qt::StringLiterals;
     \endqml
 */
 
-QT_USE_NAMESPACE_AM
+QT_BEGIN_NAMESPACE_AM
+
+#if defined(Q_OS_LINUX)
+
+class GpuVendor {
+public:
+    enum Vendor {
+        Undefined = 0, // didn't try to determine the vendor yet
+        Unsupported,
+        Intel,
+        Nvidia
+    };
+    static Vendor get();
+
+private:
+    static void fetch();
+    static Vendor s_vendor;
+};
+
+GpuVendor::Vendor GpuVendor::s_vendor = GpuVendor::Undefined;
+
+GpuVendor::Vendor GpuVendor::get()
+{
+    if (s_vendor == Undefined)
+        fetch();
+
+    return s_vendor;
+}
+
+void GpuVendor::fetch()
+{
+    QByteArray vendor;
+#if !defined(QT_NO_OPENGL)
+    auto readVendor = [&vendor](QOpenGLContext *c) {
+        const GLubyte *p = c->functions()->glGetString(GL_VENDOR);
+        if (p)
+            vendor = QByteArrayView(p).toByteArray().toLower();
+    };
+
+    if (QOpenGLContext::currentContext()) {
+        readVendor(QOpenGLContext::currentContext());
+    } else {
+        QOpenGLContext context;
+        if (context.create()) {
+            QOffscreenSurface surface;
+            surface.setFormat(context.format());
+            surface.create();
+            context.makeCurrent(&surface);
+            readVendor(&context);
+            context.doneCurrent();
+        }
+    }
+#endif
+    if (vendor.contains("intel"))
+        s_vendor = Intel;
+    else if (vendor.contains("nvidia"))
+        s_vendor = Nvidia;
+    else
+        s_vendor = Unsupported;
+}
+
+class GpuTool : protected QProcess
+{
+    Q_OBJECT
+public:
+    GpuTool()
+        : QProcess(qApp)
+    {
+        if (GpuVendor::get() == GpuVendor::Intel) {
+            setProgram(u"intel_gpu_top"_s);
+            setArguments({ u"-o-"_s, u"-s 1000"_s });
+        } else if (GpuVendor::get() == GpuVendor::Nvidia) {
+            setProgram(u"nvidia-smi"_s);
+            setArguments({ u"dmon"_s, u"--select"_s, u"u"_s });
+        }
+
+        connect(this, static_cast<void(QProcess::*)(QProcess::ProcessError error)>(&QProcess::errorOccurred),
+                this, [this](QProcess::ProcessError error) {
+            if (m_refCount)
+                qCWarning(LogSystem) << "GPU monitoring tool:" << program() << "caused error:" << error;
+        });
+
+        connect(this, &QProcess::readyReadStandardOutput, this, [this]() {
+            while (canReadLine()) {
+                const QByteArray str = readLine();
+                if (str.isEmpty() || (str.at(0) == '#'))
+                    continue;
+
+                int pos = (GpuVendor::get() == GpuVendor::Intel) ? 50 : 0;
+                QVector<qreal> values;
+
+                while (pos < str.size() && values.size() < 2) {
+                    if (isspace(str.at(pos))) {
+                        ++pos;
+                        continue;
+                    }
+                    char *endPtr = nullptr;
+#if defined(Q_OS_ANDROID)
+                    qreal val = strtod(str.constData() + pos, &endPtr); // check missing for over-/underflow
+#else
+                    static locale_t cLocale = newlocale(LC_ALL_MASK, "C", nullptr);
+                    qreal val = strtod_l(str.constData() + pos, &endPtr, cLocale); // check missing for over-/underflow
+#endif
+                    values << val;
+                    pos = int(endPtr - str.constData() + 1);
+                }
+
+                switch (GpuVendor::get()) {
+                case GpuVendor::Intel:
+                    if (values.size() > 0)
+                        m_lastValue = values.at(0) / 100;
+                    break;
+                case GpuVendor::Nvidia:
+                    if (values.size() > 1) {
+                        if (qFuzzyIsNull(values.at(0)))  // hardcoded to first gfx card
+                            m_lastValue = values.at(1) / 100;
+                    }
+                    break;
+                default:
+                    m_lastValue = -1;
+                    break;
+                }
+            }
+        });
+    }
+
+    void ref()
+    {
+        if (m_refCount.ref() && !isRunning())
+            start(QIODevice::ReadOnly);
+    }
+
+    void deref()
+    {
+        if (!m_refCount.deref() && isRunning()) {
+            kill();
+            waitForFinished();
+        }
+    }
+
+    bool isRunning() const
+    {
+        return (state() == QProcess::Running);
+    }
+
+    qreal loadValue() const
+    {
+        return m_lastValue;
+    }
+
+private:
+    QAtomicInteger<int> m_refCount;
+    qreal m_lastValue = 0;
+};
+
+GpuTool *GpuStatus::s_gpuToolProcess = nullptr;
+
+#endif // Q_OS_LINUX
+
 
 GpuStatus::GpuStatus(QObject *parent)
     : QObject(parent)
-    , m_gpuReader(new GpuReader)
-    , m_gpuLoad(0)
 {
-    m_gpuReader->setActive(true);
+    std::once_flag once;
+    std::call_once(once, []() {
+#if defined(Q_OS_LINUX)
+        s_gpuToolProcess = new GpuTool();
+        if (GpuVendor::get() == GpuVendor::Unsupported)
+#endif
+            qCWarning(LogSystem) << "GPU monitoring is not supported on this platform.";
+    });
+#if defined(Q_OS_LINUX)
+    s_gpuToolProcess->ref();
+#endif
 }
 
 GpuStatus::~GpuStatus()
 {
-    m_gpuReader->setActive(false);
+#if defined(Q_OS_LINUX)
+    s_gpuToolProcess->deref();
+#endif
 }
 
 /*!
@@ -109,11 +289,13 @@ qreal GpuStatus::gpuLoad() const
 */
 void GpuStatus::update()
 {
-    qreal newLoad = m_gpuReader->readLoadValue();
+#if defined(Q_OS_LINUX)
+    qreal newLoad = s_gpuToolProcess ? s_gpuToolProcess->loadValue() : -1;
     if (!qFuzzyCompare(newLoad, m_gpuLoad)) {
         m_gpuLoad = newLoad;
         emit gpuLoadChanged();
     }
+#endif
 }
 
 /*!
@@ -129,5 +311,7 @@ QStringList GpuStatus::roleNames() const
     return { u"gpuLoad"_s };
 }
 
+QT_END_NAMESPACE_AM
 
+#include "gpustatus.moc"
 #include "moc_gpustatus.cpp"

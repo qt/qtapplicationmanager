@@ -27,7 +27,7 @@ Window {
             MemoryStatus { id: memoryStatus }
             IoStatus {
                 id: ioStatus
-                deviceNames: "sda"
+                deviceNames: [ "nvme0n1" ]
             }
 
             // A custom data source, with two roles
@@ -110,7 +110,7 @@ Window {
                 Label { text: "cpuLoad: " + cpuStatus.cpuLoad }
                 Label { text: "totalMemory: " + memoryStatus.totalMemory }
                 Label { text: "memoryUsed: " + memoryStatus.memoryUsed }
-                Label { text: "ioLoad.sda: " + ioStatus.ioLoad.sda }
+                Label { text: "ioLoad.nvme0n1: " + ioStatus.ioLoad.nvme0n1 }
                 Label { text: "foo: " + fooBarStatus.foo }
                 Label { text: "bar: " + fooBarStatus.bar }
                 Label { text: "alpha: " + alphaStatus.alpha }

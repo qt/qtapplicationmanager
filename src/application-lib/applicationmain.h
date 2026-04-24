@@ -86,8 +86,10 @@ public:
 
     // DBus ApplicationInterface
     Q_SIGNAL void quit();
-    Q_SIGNAL void memoryLowWarning();
-    Q_SIGNAL void memoryCriticalWarning();
+#if QT_DEPRECATED_SINCE(6, 12)
+    QT_DEPRECATED_VERSION_X_6_12("Use CGroupStatus instead.") Q_SIGNAL void memoryLowWarning();
+    QT_DEPRECATED_VERSION_X_6_12("Use CGroupStatus instead.") Q_SIGNAL void memoryCriticalWarning();
+#endif
     Q_SIGNAL void openDocument(const QString &documentUrl, const QString &mimeType);
     Q_SIGNAL void slowAnimationsChanged(bool isSlow);
 

@@ -11,9 +11,10 @@
 #include <QtCore/QObject>
 
 #include <QtAppManShared/qtappmansharedglobal.h>
-#include <QtAppManShared/systemreader.h>
 
 QT_BEGIN_NAMESPACE_AM
+
+class GpuTool;
 
 class Q_APPMANSHARED_EXPORT GpuStatus : public QObject
 {
@@ -36,8 +37,10 @@ Q_SIGNALS:
     void gpuLoadChanged();
 
 private:
-    std::unique_ptr<GpuReader> m_gpuReader;
-    qreal m_gpuLoad;
+#if defined(Q_OS_LINUX)
+    static GpuTool *s_gpuToolProcess;
+#endif
+    qreal m_gpuLoad = 0;
 };
 
 QT_END_NAMESPACE_AM

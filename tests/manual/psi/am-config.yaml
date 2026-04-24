@@ -1,0 +1,5 @@
+formatVersion: 1
+formatType: am-configuration
+---
+ui:
+  mainQml: "${CONFIG_DIR}/main.qml"

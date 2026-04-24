@@ -35,3 +35,13 @@
     \externalpage https://doc.qt.io/qtcreator/creator-debugging.html#remote-debugging
     \title creator-debugging-remote
 */
+
+/*!
+    \externalpage https://docs.kernel.org/admin-guide/cgroup-v2.html
+    \title Linux cgroup v2
+*/
+
+/*!
+    \externalpage https://docs.kernel.org/accounting/psi.html
+    \title Linux Pressure Stall Information
+*/

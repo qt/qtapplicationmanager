@@ -4,8 +4,10 @@
     <signal name="quit">
     </signal>
     <signal name="memoryLowWarning">
+      <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
     </signal>
     <signal name="memoryCriticalWarning">
+      <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
     </signal>
     <signal name="openDocument">
       <arg name="documentUrl" type="s" direction="out"/>

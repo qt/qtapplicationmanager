@@ -32,11 +32,6 @@ void QmlInProcApplicationInterfaceImpl::attach(ApplicationInterface *iface)
 {
     ApplicationInterfaceImpl::attach(iface);
 
-    QObject::connect(ApplicationManager::instance(), &ApplicationManager::memoryLowWarning,
-                     iface, &ApplicationInterface::memoryLowWarning);
-    QObject::connect(ApplicationManager::instance(), &ApplicationManager::memoryCriticalWarning,
-                     iface, &ApplicationInterface::memoryCriticalWarning);
-
     QmlInProcNotificationImpl::initialize();
 }
 

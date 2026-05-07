@@ -397,11 +397,14 @@ bool NativeRuntime::start()
     }
 
     emit signaler()->aboutToStart(this);
+    setState(Am::StartingUp);
 
     m_process = m_container->start(args, env, config);
 
-    if (!m_process)
+    if (!m_process) {
+        setState(Am::NotRunning);
         return false;
+    }
 
     QObject::connect(m_process, &AbstractContainerProcess::started,
                      this, &NativeRuntime::onProcessStarted);
@@ -410,7 +413,6 @@ bool NativeRuntime::start()
     QObject::connect(m_process, &AbstractContainerProcess::finished,
                      this, &NativeRuntime::onProcessFinished);
 
-    setState(Am::StartingUp);
     return true;
 }
 

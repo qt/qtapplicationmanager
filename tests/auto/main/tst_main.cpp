@@ -113,7 +113,7 @@ void tst_Main::cleanUpInstallationDir()
     QDir tempDir(m_tempDirPath);
     if (tempDir.exists())
         tempDir.removeRecursively();
-    tempDir.mkpath(u"."_s);
+    tempDir.mkpath(u"apps"_s);
 }
 
 void tst_Main::init()

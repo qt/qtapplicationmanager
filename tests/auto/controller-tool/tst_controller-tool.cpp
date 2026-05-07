@@ -196,10 +196,14 @@ void tst_ControllerTool::initTestCase()
         m_config->setForceVerbose(true);
 
     try {
-        if (auto idir = m_config->yaml.applications.installationDir; !idir.isEmpty())
+        if (auto idir = m_config->yaml.applications.installationDir; !idir.isEmpty()) {
             recursiveOperation(idir, safeRemove);
-        if (auto ddir = m_config->yaml.applications.documentDir; !ddir.isEmpty())
+            QVERIFY(QDir::root().mkpath(idir));
+        }
+        if (auto ddir = m_config->yaml.applications.documentDir; !ddir.isEmpty()) {
             recursiveOperation(ddir, safeRemove);
+            QVERIFY(QDir::root().mkpath(ddir));
+        }
 
         m_main->setup(m_config);
         m_mainSetupDone = true;

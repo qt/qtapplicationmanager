@@ -15,6 +15,8 @@
 #include <QtAppManShared/iostatus.h>
 #include <QtAppManShared/memorystatus.h>
 #include <QtAppManShared/cgroupstatus.h>
+#include <QtAppManShared/pressurestallinformation.h>
+#include <QtAppManShared/systemstatus.h>
 #include <QtAppManShared/monitormodel.h>
 #include <QtAppManShared/startuptimer.h>
 
@@ -121,6 +123,14 @@ class ForeignCGroupStatus
     Q_GADGET
     QML_FOREIGN(QtAM::CGroupStatus)
     QML_NAMED_ELEMENT(CGroupStatus)
+    QML_ADDED_IN_VERSION(6, 12)
+};
+
+class ForeignSystemStatus
+{
+    Q_GADGET
+    QML_FOREIGN(QtAM::SystemStatus)
+    QML_NAMED_ELEMENT(SystemStatus)
     QML_ADDED_IN_VERSION(6, 12)
 };
 

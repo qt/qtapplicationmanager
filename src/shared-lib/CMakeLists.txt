@@ -20,9 +20,11 @@ qt_internal_add_module(AppManSharedPrivate
         monitormodel.cpp monitormodel.h
         notification.cpp notification.h
         notificationimpl.cpp notificationimpl.h
+        pressurestallinformation.cpp pressurestallinformation.h
         qmllogger.cpp qmllogger.h
         sharedmain.cpp sharedmain.h
         startuptimer.cpp startuptimer.h
+        systemstatus.cpp systemstatus.h
         watchdog.cpp watchdog.h watchdog_p.h
 
         intent-client/intentclient.cpp intent-client/intentclient.h

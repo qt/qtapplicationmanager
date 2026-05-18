@@ -10,6 +10,8 @@
 #include <memorystatus.h>
 #include <iostatus.h>
 #include <cgroupstatus.h>
+#include <pressurestallinformation.h>
+#include <systemstatus.h>
 #include <utilities.h>
 
 
@@ -27,6 +29,7 @@ private Q_SLOTS:
     void memoryStatus();
     void ioStatus();
     void cgroupStatus();
+    void systemStatus();
 
 };
 
@@ -161,6 +164,55 @@ void tst_SystemStatus::cgroupStatus()
     // update() re-reads the same static file -> result must be stable
     cg.update();
     QCOMPARE(cg.memoryUsed(), expectedMemoryUsed);
+}
+
+void tst_SystemStatus::systemStatus()
+{
+    // Reparse the same fixtures used by cpuStatus() and memoryStatus() — SystemStatus
+    // composes CpuStatus and MemoryStatus internally, so it must agree with them.
+    QFile cpuFile(u":/root/proc/stat"_s);
+    QVERIFY(cpuFile.open(QIODevice::ReadOnly));
+    const auto parts = cpuFile.readLine().simplified().split(' ');
+    QVERIFY(parts.size() >= 5 && parts[0] == "cpu");
+    const qint64 idle  = parts[4].toLongLong();
+    const qint64 total = parts[1].toLongLong() + parts[2].toLongLong()
+                         + parts[3].toLongLong() + idle;
+
+    QFile memFile(u":/root/proc/meminfo"_s);
+    QVERIFY(memFile.open(QIODevice::ReadOnly));
+    const QByteArray memBuffer = memFile.readAll();
+    static constexpr char memKey[] = "MemAvailable: ";
+    const qsizetype memIdx = memBuffer.indexOf(memKey);
+    QVERIFY(memIdx >= 0);
+    const quint64 memAvailableKiB = ::strtoull(memBuffer.constData() + memIdx + sizeof(memKey) - 1,
+                                               nullptr, 10);
+
+    SystemStatus sys;
+
+    // Memory: SystemStatus must agree with MemoryStatus on totalMemory() / memoryUsed().
+    QVERIFY(sys.memoryMax() > 0);
+    QCOMPARE(sys.memoryUsed(), sys.memoryMax() - 1024ULL * memAvailableKiB);
+
+    // CPU: SystemStatus must agree with CpuStatus on the constructor's initial read.
+    QCOMPARE(sys.cpuLoad(), qreal(1) - qreal(idle) / qreal(total));
+    QVERIFY(sys.cpuCores() > 0);
+
+    // PSI children must exist, expose the right Type, and start Off.
+    QVERIFY(sys.cpuPSI() != nullptr);
+    QVERIFY(sys.memoryPSI() != nullptr);
+    QVERIFY(sys.ioPSI() != nullptr);
+    QCOMPARE(sys.cpuPSI()->type(), PressureStallInformation::Type::Cpu);
+    QCOMPARE(sys.memoryPSI()->type(), PressureStallInformation::Type::Memory);
+    QCOMPARE(sys.ioPSI()->type(), PressureStallInformation::Type::Io);
+    QCOMPARE(sys.cpuPSI()->mode(), PressureStallInformation::Mode::Off);
+    QCOMPARE(sys.memoryPSI()->mode(), PressureStallInformation::Mode::Off);
+    QCOMPARE(sys.ioPSI()->mode(), PressureStallInformation::Mode::Off);
+
+    // update() re-reads the same static files: memoryUsed is stable, cpuLoad drops to 0
+    // (CpuStatus returns 0 when total is unchanged between reads — see cpuStatus()).
+    sys.update();
+    QCOMPARE(sys.memoryUsed(), sys.memoryMax() - 1024ULL * memAvailableKiB);
+    QCOMPARE(sys.cpuLoad(), 0);
 }
 
 QTEST_APPLESS_MAIN(tst_SystemStatus)

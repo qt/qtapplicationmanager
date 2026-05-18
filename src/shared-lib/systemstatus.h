@@ -1,8 +1,8 @@
 // Copyright (C) 2026 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#ifndef CGROUPSTATUS_H
-#define CGROUPSTATUS_H
+#ifndef SYSTEMSTATUS_H
+#define SYSTEMSTATUS_H
 
 #include <QtCore/QObject>
 
@@ -11,42 +11,33 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-class CGroupStatusPrivate;
+class SystemStatusPrivate;
 
-class Q_APPMANSHARED_EXPORT CGroupStatus : public QObject
+class Q_APPMANSHARED_EXPORT SystemStatus : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString path READ path WRITE setPath NOTIFY pathChanged FINAL)
-
-    Q_PROPERTY(quint64 memoryHigh READ memoryHigh NOTIFY pathChanged FINAL)
-    Q_PROPERTY(quint64 memoryMax READ memoryMax NOTIFY pathChanged FINAL)
+    Q_PROPERTY(quint64 memoryMax READ memoryMax CONSTANT FINAL)
     Q_PROPERTY(quint64 memoryUsed READ memoryUsed NOTIFY memoryUsedChanged FINAL)
 
     Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadChanged FINAL)
+    Q_PROPERTY(int cpuCores READ cpuCores CONSTANT FINAL)
 
     Q_PROPERTY(PressureStallInformation *cpuPSI READ cpuPSI CONSTANT FINAL)
     Q_PROPERTY(PressureStallInformation *memoryPSI READ memoryPSI CONSTANT FINAL)
     Q_PROPERTY(PressureStallInformation *ioPSI READ ioPSI CONSTANT FINAL)
 
-    // returns std::limits<quint64>::max() to express cgroup v2's "max" value
-    Q_PROPERTY(quint64 max READ maxValue CONSTANT FINAL)
-
 public:
-    CGroupStatus(QObject *parent = nullptr);
+    SystemStatus(QObject *parent = nullptr);
 
-    QString path() const;
-    void setPath(const QString &groupPath);
-    quint64 memoryHigh() const;
     quint64 memoryMax() const;
     quint64 memoryUsed() const;
 
     qreal cpuLoad() const;
+    int cpuCores() const;
 
     PressureStallInformation *cpuPSI() const;
     PressureStallInformation *memoryPSI() const;
     PressureStallInformation *ioPSI() const;
-
-    quint64 maxValue() const;
 
     QStringList roleNames() const;
 
@@ -55,13 +46,12 @@ public:
 Q_SIGNALS:
     void memoryUsedChanged();
     void cpuLoadChanged();
-    void pathChanged();
 
 private:
-    Q_DECLARE_PRIVATE(CGroupStatus)
-    Q_DISABLE_COPY(CGroupStatus)
+    Q_DECLARE_PRIVATE(SystemStatus)
+    Q_DISABLE_COPY(SystemStatus)
 };
 
 QT_END_NAMESPACE_AM
 
-#endif // CGROUPSTATUS_H
+#endif // SYSTEMSTATUS_H

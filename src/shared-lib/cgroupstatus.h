@@ -65,6 +65,8 @@ class Q_APPMANSHARED_EXPORT CGroupStatus : public QObject
     Q_PROPERTY(quint64 memoryMax READ memoryMax NOTIFY pathChanged FINAL)
     Q_PROPERTY(quint64 memoryUsed READ memoryUsed NOTIFY memoryUsedChanged FINAL)
 
+    Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadChanged FINAL)
+
     Q_PROPERTY(PressureStallInformation *cpuPSI READ cpuPSI CONSTANT FINAL)
     Q_PROPERTY(PressureStallInformation *memoryPSI READ memoryPSI CONSTANT FINAL)
     Q_PROPERTY(PressureStallInformation *ioPSI READ ioPSI CONSTANT FINAL)
@@ -81,6 +83,8 @@ public:
     quint64 memoryMax() const;
     quint64 memoryUsed() const;
 
+    qreal cpuLoad() const;
+
     PressureStallInformation *cpuPSI() const;
     PressureStallInformation *memoryPSI() const;
     PressureStallInformation *ioPSI() const;
@@ -93,6 +97,7 @@ public:
 
 Q_SIGNALS:
     void memoryUsedChanged();
+    void cpuLoadChanged();
     void pathChanged();
 
 private:

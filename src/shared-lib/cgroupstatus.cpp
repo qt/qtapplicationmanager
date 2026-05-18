@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include <cerrno>
+#include <algorithm>
 #include <chrono>
 #include <limits>
 #include <mutex>
 
+#include <QElapsedTimer>
 #include <QFile>
+#include <QThread>
 #include <QTimer>
 #include <QSocketNotifier>
 #include <private/qobject_p.h>
@@ -35,14 +38,19 @@ QT_BEGIN_NAMESPACE_AM
     pressure stall information (PSI). It defaults to the cgroup of the current process, but you
     can point it at any other cgroup by setting the \l path property.
 
+    If you need system-wide instead of per-cgroup information, see \l SystemStatus.
+
     \note This type only works on Linux systems running \l{Linux cgroup v2}{cgroup v2}. All
           properties return 0 or are non-functional on other platforms or when running under
           cgroup v1.
 
-    \section2 Memory monitoring
+    \section2 Memory and CPU monitoring
 
     The \l memoryHigh and \l memoryMax limits are read once when \l path is set. The current
     memory usage is available via \l memoryUsed, which is updated on every call to \l update().
+
+    Similarly, \l cpuLoad is also updated on every call to \l update(), and reflects the CPU
+    utilization of the cgroup since the previous \l update() call.
 
     You can use this type as a \l MonitorModel data source to record memory usage over time:
 
@@ -110,14 +118,21 @@ class CGroupStatusPrivate : public QObjectPrivate
 public:
     void setControlGroup(const QString &path);
     static quint64 readCGroupValue(const QString &path);
-    quint64 readUsed();
+    quint64 readMemoryUsed();
+    qreal readCpuLoad();
 
     QString m_path { };
     QFile m_memoryCurrentFile;
+    QFile m_cpuStatFile;
 
     quint64 m_memoryHigh = 0u;
     quint64 m_memoryMax = 0u;
     quint64 m_memoryUsed = 0u;
+
+    quint64 m_lastCpuUsageUsec = 0u;
+    QElapsedTimer m_cpuClock;        // used as a monotonic clock; never restarted
+    qint64 m_lastCpuSampleNsec = -1; // no prior sample yet
+    qreal m_cpuLoad = 0;
 
     PressureStallInformation *m_cpuPSI = nullptr;
     PressureStallInformation *m_memoryPSI = nullptr;
@@ -166,6 +181,7 @@ CGroupStatus::CGroupStatus(QObject *parent)
     });
 
     Q_D(CGroupStatus);
+    d->m_cpuClock.start();
     d->m_cpuPSI = new PressureStallInformation(this, PressureStallInformation::Type::Cpu);
     d->m_memoryPSI = new PressureStallInformation(this, PressureStallInformation::Type::Memory);
     d->m_ioPSI = new PressureStallInformation(this, PressureStallInformation::Type::Io);
@@ -236,6 +252,10 @@ void CGroupStatusPrivate::setControlGroup(const QString &path)
         return;
 
     m_memoryCurrentFile.close();
+    m_cpuStatFile.close();
+    m_lastCpuUsageUsec = 0u;
+    m_lastCpuSampleNsec = -1;
+    m_cpuLoad = 0;
 
     const QString base = testRootPathPrefix() + u"/sys/fs/cgroup/" + path + u'/';
     if (!QFile::exists(base + u"memory.current")) {
@@ -254,7 +274,16 @@ void CGroupStatusPrivate::setControlGroup(const QString &path)
         return;
     }
 
-    m_memoryUsed = readUsed();
+    m_memoryUsed = readMemoryUsed();
+
+    m_cpuStatFile.setFileName(base + u"cpu.stat");
+    if (!m_cpuStatFile.open(QIODevice::ReadOnly)) {
+        qCWarning(LogSystem) << "Cannot read cgroup CPU statistics from"
+                             << m_cpuStatFile.fileName();
+        return;
+    }
+
+    m_cpuLoad = readCpuLoad(); // prime usage and sample timestamp
 
 #else
     Q_UNUSED(path)
@@ -303,6 +332,27 @@ quint64 CGroupStatus::memoryUsed() const
 {
     Q_D(const CGroupStatus);
     return d->m_memoryUsed;
+}
+
+/*! \qmlproperty real CGroupStatus::cpuLoad
+    \readonly
+
+    The average CPU utilization of this cgroup over the interval between the two most recent calls
+    to \l update() (or between \l path being set and the first \l update() call), as a value
+    ranging from \c 0 (inclusive, completely idle) to \c 1 (inclusive, all CPU cores fully busy).
+
+    The value is computed from the cgroup's \c cpu.stat \c usage_usec counter, divided by elapsed
+    wall-clock time and normalized by the number of CPU cores on the system.
+
+    Returns 0 if not running under cgroup v2 or if the CPU controller is not enabled for this
+    cgroup.
+
+    \sa update()
+*/
+qreal CGroupStatus::cpuLoad() const
+{
+    Q_D(const CGroupStatus);
+    return d->m_cpuLoad;
 }
 
 /*! \qmlproperty PressureStallInformation CGroupStatus::cpuPSI
@@ -374,28 +424,34 @@ quint64 CGroupStatus::maxValue() const
 */
 QStringList CGroupStatus::roleNames() const
 {
-    return { u"memoryHigh"_s, u"memoryMax"_s, u"memoryUsed"_s };
+    return { u"memoryHigh"_s, u"memoryMax"_s, u"memoryUsed"_s, u"cpuLoad"_s };
 }
 
 /*!
     \qmlmethod void CGroupStatus::update()
 
-    Updates the memoryUsed property.
+    Updates the memoryUsed and cpuLoad properties.
 
-    \sa memoryUsed
+    \sa memoryUsed, cpuLoad
 */
 void CGroupStatus::update()
 {
     Q_D(CGroupStatus);
 
-    const quint64 newReading = d->readUsed();
-    if (d->m_memoryUsed != newReading) {
-        d->m_memoryUsed = newReading;
+    const quint64 newUsed = d->readMemoryUsed();
+    if (d->m_memoryUsed != newUsed) {
+        d->m_memoryUsed = newUsed;
         emit memoryUsedChanged();
+    }
+
+    const qreal newLoad = d->readCpuLoad();
+    if (!qFuzzyCompare(d->m_cpuLoad, newLoad)) {
+        d->m_cpuLoad = newLoad;
+        emit cpuLoadChanged();
     }
 }
 
-quint64 CGroupStatusPrivate::readUsed()
+quint64 CGroupStatusPrivate::readMemoryUsed()
 {
 #if defined(Q_OS_LINUX)
     if (!m_memoryCurrentFile.isOpen())
@@ -405,6 +461,44 @@ quint64 CGroupStatusPrivate::readUsed()
     return ::strtoull(buffer.constData(), nullptr, 10);
 #endif
     return 0u;
+}
+
+qreal CGroupStatusPrivate::readCpuLoad()
+{
+#if defined(Q_OS_LINUX)
+    if (!m_cpuStatFile.isOpen())
+        return 0;
+    m_cpuStatFile.seek(0);
+    // cpu.stat is a list of "<key> <number>" lines. The kernel currently emits usage_usec first,
+    // but the cgroup v2 ABI does not document a field order, so search by key.
+    static constexpr QByteArrayView key("usage_usec ");
+    quint64 usageUsec = 0;
+    while (!m_cpuStatFile.atEnd()) {
+        const QByteArray line = m_cpuStatFile.readLine(64);
+        if (line.startsWith(key)) {
+            usageUsec = ::strtoull(line.constData() + key.size(), nullptr, 10);
+            break;
+        }
+    }
+
+    // inconveniently, there is no QElapsedTimer::nsecsRestart() method
+    const qint64 nowNsec = m_cpuClock.nsecsElapsed();
+
+    qreal load = 0;
+    if (m_lastCpuSampleNsec >= 0) {
+        const qint64 elapsedNsec = nowNsec - m_lastCpuSampleNsec;
+        if ((elapsedNsec > 0) && (usageUsec >= m_lastCpuUsageUsec)) {
+            static const int cores = std::max(1, QThread::idealThreadCount());
+            const qreal deltaUsageNsec = qreal(usageUsec - m_lastCpuUsageUsec) * qreal(1000);
+            load = deltaUsageNsec / (qreal(elapsedNsec) * qreal(cores));
+            load = std::clamp(load, qreal(0), qreal(1));
+        }
+    }
+    m_lastCpuUsageUsec = usageUsec;
+    m_lastCpuSampleNsec = nowNsec;
+    return load;
+#endif
+    return 0;
 }
 
 /*!

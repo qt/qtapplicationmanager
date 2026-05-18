@@ -275,7 +275,8 @@ void ApplicationModel::classBegin()
 
 void ApplicationModel::componentComplete()
 {
-    ensureCurrentContextIsSystemUI(this);
+    if (!ensureCurrentContextIsSystemUI(this))
+        return;
 }
 
 QT_END_NAMESPACE_AM

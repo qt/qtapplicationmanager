@@ -235,7 +235,8 @@ void QmlInProcApplicationManagerWindowImpl::classBegin()
 
 void QmlInProcApplicationManagerWindowImpl::componentComplete()
 {
-    ensureCurrentContextIsInProcessApplication(amWindow());
+    if (!ensureCurrentContextIsInProcessApplication(amWindow()))
+        return;
 
     if (!m_runtime)
         m_runtime = QmlInProcRuntime::determineRuntime(amWindow());

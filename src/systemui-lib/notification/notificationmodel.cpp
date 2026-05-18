@@ -271,7 +271,8 @@ void NotificationModel::classBegin()
 
 void NotificationModel::componentComplete()
 {
-    ensureCurrentContextIsSystemUI(this);
+    if (!ensureCurrentContextIsSystemUI(this))
+        return;
 }
 
 QT_END_NAMESPACE_AM

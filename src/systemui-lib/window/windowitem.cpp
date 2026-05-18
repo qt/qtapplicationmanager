@@ -320,7 +320,8 @@ QQuickItem *WindowItem::backingItem() const
 
 void WindowItem::componentComplete()
 {
-    ensureCurrentContextIsSystemUI(this);
+    if (!ensureCurrentContextIsSystemUI(this))
+        return;
     QQuickFocusScope::componentComplete();
 
     m_complete = true;

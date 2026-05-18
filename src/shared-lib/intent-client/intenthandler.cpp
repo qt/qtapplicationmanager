@@ -116,8 +116,10 @@ void IntentHandler::componentComplete()
 {
     // The ensure...() check would fail in the qml-launcher (or any other custom QML runtime),
     // because there's no context tagging like in the appman itself
-    if (IntentClient::instance()->isSystemUI())
-        ensureCurrentContextIsInProcessApplication(this);
+    if (IntentClient::instance()->isSystemUI()) {
+        if (!ensureCurrentContextIsInProcessApplication(this))
+            return;
+    }
 
     IntentClient::instance()->registerHandler(this);
     m_completed = true;

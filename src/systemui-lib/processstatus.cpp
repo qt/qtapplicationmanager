@@ -359,7 +359,8 @@ void ProcessStatus::classBegin()
 
 void ProcessStatus::componentComplete()
 {
-    ensureCurrentContextIsSystemUI(this);
+    if (!ensureCurrentContextIsSystemUI(this))
+        return;
 }
 
 #include "moc_processstatus.cpp"

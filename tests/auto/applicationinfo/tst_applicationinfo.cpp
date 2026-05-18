@@ -407,6 +407,7 @@ void tst_ApplicationInfo::validApplicationId_data()
     QTest::newRow("shortest") << "t" << true;
     QTest::newRow("valid-chars") << "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ,.';[]{}!#$%^&()-_=+@" << true;
     QTest::newRow("longest-name") << "com.012345678901234567890123456789012345678901234567890123456789012.012345678901234567890123456789012345678901234567890123456789012.0123456789012.test" << true;
+    QTest::newRow("dot-middle") << "com.foo" << true;
 
     // failures
     QTest::newRow("empty") << "" << false;
@@ -423,6 +424,10 @@ void tst_ApplicationInfo::validApplicationId_data()
     QTest::newRow("invalid-char?") << "t?" << false;
     QTest::newRow("invalid-char*") << "t*" << false;
     QTest::newRow("control-char") << "t\t" << false;
+    QTest::newRow("dot") << "." << false;
+    QTest::newRow("dotdot") << ".." << false;
+    QTest::newRow("triple-dot") << "..." << false;
+    QTest::newRow("dot-prefix") << ".hidden" << false;
 }
 
 void tst_ApplicationInfo::validApplicationId()

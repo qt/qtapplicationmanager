@@ -384,6 +384,11 @@ void validateIdForFilesystemUsage(const QString &id)  noexcept(false)
     if (id.length() > maxLength)
         throw Exception(Error::Parse, "the maximum length is %1 characters (found %2 characters)").arg(maxLength, id.length());
 
+    // '.' and '..' are path-traversal; '.foo' would create a hidden installation directory.
+    // Reject all of them with one rule.
+    if (id.startsWith(u'.'))
+        throw Exception(Error::Parse, "must not start with a dot");
+
     // all characters need to be ASCII minus any filesystem special characters:
     bool spaceOnly = true;
     static const char *forbiddenChars = "<>:\"/\\|?*";

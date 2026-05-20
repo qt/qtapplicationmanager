@@ -90,6 +90,11 @@ runSSL req -config openssl-dev-2.cnf -newkey rsa:2048 -nodes -keyout dev-certs/d
 runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-2.crt -infiles dev-certs/dev-2.csr
 runSSL pkcs12 -export -out dev-certs/dev-2.p12 -password pass:password -inkey dev-certs/dev-2-priv.key -nodes -in dev-certs/dev-2.crt -name "Developer 2 Certificate"
 
+info "Generating, signing and exporting the \"narrow\" developer certificate"
+runSSL req -config openssl-dev-narrow.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-narrow-priv.key -out dev-certs/dev-narrow.csr
+runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-narrow.crt -infiles dev-certs/dev-narrow.csr
+runSSL pkcs12 -export -out dev-certs/dev-narrow.p12 -password pass:password -inkey dev-certs/dev-narrow-priv.key -nodes -in dev-certs/dev-narrow.crt -name "Narrow Developer Certificate"
+
 info "Generating, signing and exporting the \"revoked\" developer certificate"
 runSSL req -config openssl-dev-revoked.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-revoked-priv.key -out dev-certs/dev-revoked.csr
 runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-revoked.crt -infiles dev-certs/dev-revoked.csr
@@ -111,8 +116,7 @@ info "Generating the \"other\" CA"
 runSSL req -config openssl-other-ca.cnf -x509 -new -days 3650 -newkey rsa:2048 -nodes -keyout other-ca/other-ca-priv.key -out other-ca/other-ca.crt
 
 info "Generating signing and exporting the \"other\" certificate"
-# the double // in subj is needed to get around MSYS hardwired path replacement
-runSSL req -config openssl-other-ca.cnf -batch -addext "subjectAltName=URI:qtam://packageid/*" -subj '//C=DE/ST=Foo/L=Bar/CN=www.other.com' -newkey rsa:2048 -nodes -keyout other-certs/other-priv.key -out other-certs/other.csr
+runSSL req -config openssl-other.cnf -newkey rsa:2048 -nodes -keyout other-certs/other-priv.key -out other-certs/other.csr
 runSSL ca -batch -config openssl-other-ca.cnf -policy signing_policy -extensions signing_req -out other-certs/other.crt -infiles other-certs/other.csr
 # this one includes the other-ca.crt root CA on purpose
 runSSL pkcs12 -export -out other-certs/other.p12 -password pass:password -inkey other-certs/other-priv.key -nodes -certfile other-ca/other-ca.crt -in other-certs/other.crt -name "Other Certificate"

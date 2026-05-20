@@ -4,28 +4,28 @@ RANDFILE        = $ENV::HOME/.rnd
 ####################################################################
 [ req ]
 prompt              = no
-distinguished_name  = dev2_distinguished_name
-req_extensions      = dev2_req_extensions
+distinguished_name  = dev_narrow_distinguished_name
+req_extensions      = dev_narrow_req_extensions
 string_mask         = utf8only
 
 ####################################################################
-[ dev2_distinguished_name ]
+[ dev_narrow_distinguished_name ]
 C = DE
-O = Developer 2 AG
-CN = Developer 2
-emailAddress = dev2@developer2.com
+O = Narrow Developer GmbH
+CN = Narrow Developer
+emailAddress = narrow@developer.com
 
 ####################################################################
-[ dev2_req_extensions ]
+[ dev_narrow_req_extensions ]
 
 subjectKeyIdentifier= hash
 basicConstraints    = CA:FALSE
 keyUsage            = nonRepudiation, digitalSignature, keyEncipherment, decipherOnly
-subjectAltName      = @dev2_package_restrictions
+subjectAltName      = @dev_narrow_restrictions
 
 ####################################################################
-[ dev2_package_restrictions ]
+[ dev_narrow_restrictions ]
 URI.1 = "qtam://packageid/test-pkg"
-URI.2 = "qtam://applicationid/*"
-URI.3 = "qtam://category/*"
-URI.4 = "qtam://capability/*"
+URI.2 = "qtam://applicationid/test-app"
+URI.3 = "qtam://capability/cap-allowed"
+URI.4 = "qtam://category/test-category"

@@ -53,6 +53,9 @@ public:
 
     void requireKeyUsage(Certificate::KeyUsages keyUsages);
     void requirePackageId(const QString &packageId);
+    void requireApplicationIds(const QStringList &applicationIds);
+    void requireCapabilities(const QStringList &capabilities);
+    void requireCategories(const QStringList &categories);
     void requireCertificateRoles(const QHash<QByteArray, CertificateRole> &trustedCertDataToRole);
     void requireRevocationCheck(const QByteArrayList &crls);
 

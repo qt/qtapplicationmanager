@@ -3,5 +3,7 @@
 *.crt
 *.key
 *.p12
-*index.txt*
-*serial.txt*
+*.crl
+crlnumber.txt*
+index.txt*
+serial.txt*

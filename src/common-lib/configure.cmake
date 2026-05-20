@@ -164,3 +164,13 @@ if (NOT QT_FEATURE_am_tools_only)
     qt_configure_add_summary_entry(ARGS "am-reproducible-build")
 endif()
 qt_configure_end_summary_section() # end of "Qt ApplicationManger" section
+
+qt_configure_add_report_entry(
+    TYPE WARNING
+    MESSAGE [[
+Legacy packaging certificate support is enabled.
+In this mode, restrictions on package-id, application-ids, capabilities or categories in package
+signing certificates are effectively ignored!
+]]
+    CONDITION QT_FEATURE_am_legacy_certificates
+)

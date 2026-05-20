@@ -89,20 +89,49 @@ QT_BEGIN_NAMESPACE_AM
     \sa packageIds
 */
 
+static QStringList sanValues(const QStringList &sans, QStringView host)
+{
+    QStringList result;
+    for (const auto &san : sans) {
+        const QUrl sanUrl(san);
+        if (!sanUrl.isValid() || sanUrl.scheme() != u"qtam" || sanUrl.host() != host)
+            continue;
+        result << sanUrl.path().mid(1); // skip leading '/'
+    }
+    return result;
+}
+
+static bool sanValuesContainAll(const QStringList &sans, QStringView host, const QStringList &required)
+{
+    if constexpr (QT_CONFIG(am_legacy_certificates)) {
+        if (sans.isEmpty())
+            return true;
+    }
+    const QStringList certValues = sanValues(sans, host);
+    for (const auto &value : required) {
+        bool found = false;
+        for (const auto &certValue : certValues) {
+            if (certValue.contains(u'*')) // wildcard match
+                found = QRegularExpression::fromWildcard(certValue).match(value).hasMatch();
+            else // exact match
+                found = (certValue == value);
+
+            if (found)
+                break;
+        }
+        if (!found)
+            return false;
+    }
+    return true;
+}
+
 /*! \qmlmethod list<string> Certificate::packageIds()
 
     This function returns the list of package-ids the certificate is bound to.
 */
 QStringList Certificate::packageIds() const
 {
-    QStringList result;
-    for (const auto &san : m_subjectAlternativeNames) {
-        auto sanUrl = QUrl(san);
-        if (!sanUrl.isValid() || (sanUrl.scheme() != u"qtam") || (sanUrl.host() != u"packageid"))
-            continue;
-        result << sanUrl.path().mid(1); // skip leading '/'
-    }
-    return result;
+    return sanValues(m_subjectAlternativeNames, u"packageid");
 }
 
 /*!
@@ -110,28 +139,78 @@ QStringList Certificate::packageIds() const
 
     Returns \c true if the given \a packageId matches any of the package-ids the certificate is
     bound to or \c false otherwise.
+
+    \note Package-id entries containing \c{*} are matched as shell-style wildcards.
 */
 bool Certificate::matchPackageId(const QString &packageId) const
 {
-    if constexpr (QT_CONFIG(am_legacy_certificates)) {
-        if (m_subjectAlternativeNames.isEmpty())
-            return true;
-    }
+    return sanValuesContainAll(m_subjectAlternativeNames, u"packageid", { packageId });
+}
 
-    bool foundMatch = false;
-    const auto certPackageIds = packageIds();
+/*! \qmlmethod list<string> Certificate::applicationIds()
 
-    for (const auto &certPackageId : certPackageIds) {
-        if (certPackageId.contains(u'*')) { // wildcard match
-            const auto re = QRegularExpression::fromWildcard(certPackageId);
-            foundMatch = re.match(packageId).hasMatch();
-        } else { // exact match
-            foundMatch = (certPackageId == packageId);
-        }
-        if (foundMatch)
-            break;
-    }
-    return foundMatch;
+    This function returns the list of application-ids the certificate is bound to.
+*/
+QStringList Certificate::applicationIds() const
+{
+    return sanValues(m_subjectAlternativeNames, u"applicationid");
+}
+
+/*!
+    \qmlmethod bool Certificate::matchApplicationIds(list<string> applicationIds)
+
+    Returns \c true if all the given \a applicationIds match the application-ids the certificate is
+    bound to or \c false otherwise.
+
+    \note Application-id entries containing \c{*} are matched as shell-style wildcards.
+*/
+bool Certificate::matchApplicationIds(const QStringList &applicationIds) const
+{
+    return sanValuesContainAll(m_subjectAlternativeNames, u"applicationid", applicationIds);
+}
+
+/*! \qmlmethod list<string> Certificate::capabilities()
+
+    This function returns the list of capabilities the certificate is bound to.
+*/
+QStringList Certificate::capabilities() const
+{
+    return sanValues(m_subjectAlternativeNames, u"capability");
+}
+
+/*!
+    \qmlmethod bool Certificate::matchCapabilities(list<string> capabilities)
+
+    Returns \c true if all the given \a capabilities match the capabilities the certificate is
+    bound to or \c false otherwise.
+
+    \note Capability entries containing \c{*} are matched as shell-style wildcards.
+*/
+bool Certificate::matchCapabilities(const QStringList &capabilities) const
+{
+    return sanValuesContainAll(m_subjectAlternativeNames, u"capability", capabilities);
+}
+
+/*! \qmlmethod list<string> Certificate::categories()
+
+    This function returns the list of categories the certificate is bound to.
+*/
+QStringList Certificate::categories() const
+{
+    return sanValues(m_subjectAlternativeNames, u"category");
+}
+
+/*!
+    \qmlmethod bool Certificate::matchCategories(list<string> categories)
+
+    Returns \c true if all the given \a categories match the categories the certificate is
+    bound to or \c false otherwise.
+
+    \note Category entries containing \c{*} are matched as shell-style wildcards.
+*/
+bool Certificate::matchCategories(const QStringList &categories) const
+{
+    return sanValuesContainAll(m_subjectAlternativeNames, u"category", categories);
 }
 
 QString Certificate::subjectAsString() const

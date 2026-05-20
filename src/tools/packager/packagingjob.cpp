@@ -307,6 +307,25 @@ void PackagingJob::execute() noexcept(false)
 
         InstallationReport report = extractor.installationReport();
 
+        // parse package metadata for cert validation
+        QStringList pkgApplicationIds;
+        QStringList pkgCapabilities;
+        QStringList pkgCategories;
+        {
+            std::unique_ptr<PackageInfo> pkg(PackageInfo::fromManifest(
+                QDir(tmp.path()).absoluteFilePath(u"info.yaml"_s)));
+            pkgCategories = pkg->categories();
+            for (const auto *app : pkg->applications()) {
+                pkgApplicationIds.append(app->id());
+                pkgCapabilities.append(app->capabilities());
+                pkgCategories.append(app->categories()); // effective (own or inherited)
+            }
+            pkgCapabilities.sort();
+            pkgCapabilities.removeDuplicates();
+            pkgCategories.sort();
+            pkgCategories.removeDuplicates();
+        }
+
         // check signatures
         if (m_mode == DeveloperVerify) {
             if (report.developerSignature().isEmpty()) {
@@ -317,6 +336,9 @@ void PackagingJob::execute() noexcept(false)
                     Signature sig(report.digest());
                     sig.requireKeyUsage(Certificate::KeyUsage::Developer);
                     sig.requirePackageId(report.packageId());
+                    sig.requireApplicationIds(pkgApplicationIds);
+                    sig.requireCapabilities(pkgCapabilities);
+                    sig.requireCategories(pkgCategories);
                     sig.requireRevocationCheck(crls);
                     auto result = sig.verify(report.developerSignature(), certificates);
                     m_output = u"valid developer signature\n\n"_s
@@ -371,6 +393,9 @@ void PackagingJob::execute() noexcept(false)
                 Signature sig(report.digest());
                 sig.requireKeyUsage(Certificate::KeyUsage::Developer);
                 sig.requirePackageId(report.packageId());
+                sig.requireApplicationIds(pkgApplicationIds);
+                sig.requireCapabilities(pkgCapabilities);
+                sig.requireCategories(pkgCategories);
                 QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8());
                 report.setDeveloperSignature(signature);
             } else if (m_mode == StoreSign) {

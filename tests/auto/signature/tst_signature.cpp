@@ -31,12 +31,15 @@ private Q_SLOTS:
     void createSignature();
     void verifySignature_data();
     void verifySignature();
+    void verifyCertBinding_data();
+    void verifyCertBinding();
 
 private:
     void parseInfo(const QByteArray &openSslInfo, QVariantMap &info);
 
     bool m_createNativeSignature = false;
     QByteArray m_signingP12;
+    QByteArray m_signingNarrowP12;
     QByteArray m_signingNoKeyP12;
     QByteArray m_signingPassword;
     QByteArrayList m_verifyingPEM;
@@ -81,6 +84,11 @@ void tst_Signature::initTestCase()
     QVERIFY(s.open(QIODevice::ReadOnly));
     m_signingP12 = s.readAll();
     QVERIFY(!m_signingP12.isEmpty());
+
+    QFile sn(u":/signing-narrow.p12"_s);
+    QVERIFY(sn.open(QIODevice::ReadOnly));
+    m_signingNarrowP12 = sn.readAll();
+    QVERIFY(!m_signingNarrowP12.isEmpty());
 
     QFile snk(u":/signing-no-key.p12"_s);
     QVERIFY(snk.open(QIODevice::ReadOnly));
@@ -279,7 +287,9 @@ void tst_Signature::certificateData()
                                      | Certificate::KeyUsage::KeyEncipherment
                                      | Certificate::KeyUsage::DecipherOnly);
     QCOMPARE(signer.serialNumber(), expectedSignerSerial);
-    QStringList ssans { u"qtam://packageid/other-*"_s, u"qtam://packageid/test-pkg"_s };
+    QStringList ssans { u"qtam://packageid/other-*"_s, u"qtam://packageid/test-pkg"_s,
+                        u"qtam://applicationid/*"_s, u"qtam://category/*"_s,
+                        u"qtam://capability/*"_s };
     QCOMPARE(signer.subjectAlternativeNames(), ssans);
     QCOMPARE(signer.validityNotBefore(), expectedSignerNotBefore);
     QCOMPARE(signer.validityNotAfter(), expectedSignerNotAfter);
@@ -312,7 +322,7 @@ void tst_Signature::verifySignature_data()
     QTest::newRow("wrong-keyusage") << 0x7 << u"test-pkg"_s
                                     << u"Key usage mismatch on certificate: expected 0x007, but got 0x107"_s;
     QTest::newRow("wrong-san") << 0x107 << u"test+pkg"_s
-                               << u"Package ID mismatch on certificate, expected one of"_s;
+                               << u"Package ID mismatch: the certificate only allows"_s;
 }
 
 void tst_Signature::verifySignature()
@@ -366,7 +376,7 @@ void tst_Signature::createSignature_data()
     QTest::newRow("wrong-keyusage") << 0x7 << u"test-pkg"_s
                                     << u"Key usage mismatch on certificate: expected 0x007, but got 0x107"_s;
     QTest::newRow("wrong-san") << 0x107 << u"test+pkg"_s
-                               << u"Package ID mismatch on certificate, expected one of"_s;
+                               << u"Package ID mismatch: the certificate only allows"_s;
 }
 
 void tst_Signature::createSignature()
@@ -381,7 +391,7 @@ void tst_Signature::createSignature()
 
     if (keyUsage)
         s.requireKeyUsage(Certificate::KeyUsages(keyUsage));
-    if (!subjectAlternativeName.isNull())
+    if (!subjectAlternativeName.isEmpty())
         s.requirePackageId(subjectAlternativeName);
 
     try {
@@ -395,6 +405,74 @@ void tst_Signature::createSignature()
         QVERIFY2(e.errorString().contains(errorString), qPrintable(e.errorString()));
     }
 
+}
+
+void tst_Signature::verifyCertBinding_data()
+{
+    // The "narrow" cert grants exactly:
+    //   applicationid/test-app, capability/cap-allowed, category/test-category
+    // The "permissive" cert (dev-1) grants:
+    //   applicationid/*, capability/*, category/*
+
+    QTest::addColumn<bool>("usePermissiveCert");
+    QTest::addColumn<QString>("kind"); // "applicationid" | "capability" | "category"
+    QTest::addColumn<QStringList>("required");
+    QTest::addColumn<QString>("errorString");
+
+    // applicationid
+    QTest::newRow("appid-exact-match")     << false << u"applicationid"_s << QStringList { u"test-app"_s }                << QString { };
+    QTest::newRow("appid-no-match")        << false << u"applicationid"_s << QStringList { u"rogue-app"_s }               << u"Application ID mismatch"_s;
+    QTest::newRow("appid-empty-bypass")    << false << u"applicationid"_s << QStringList { }                              << QString { };
+    QTest::newRow("appid-one-of-two-bad")  << false << u"applicationid"_s << QStringList { u"test-app"_s, u"rogue-app"_s } << u"Application ID mismatch"_s;
+    QTest::newRow("appid-wildcard")        << true  << u"applicationid"_s << QStringList { u"anything-goes"_s }           << QString { };
+
+    // capability
+    QTest::newRow("cap-exact-match")       << false << u"capability"_s    << QStringList { u"cap-allowed"_s }             << QString { };
+    QTest::newRow("cap-no-match")          << false << u"capability"_s    << QStringList { u"forbidden-cap"_s }           << u"Capabilities mismatch"_s;
+    QTest::newRow("cap-empty-bypass")      << false << u"capability"_s    << QStringList { }                              << QString { };
+    QTest::newRow("cap-one-of-two-bad")    << false << u"capability"_s    << QStringList { u"cap-allowed"_s, u"forbidden-cap"_s } << u"Capabilities mismatch"_s;
+    QTest::newRow("cap-wildcard")          << true  << u"capability"_s    << QStringList { u"fancy-cap"_s }               << QString { };
+
+    // category
+    QTest::newRow("cat-exact-match")       << false << u"category"_s      << QStringList { u"test-category"_s }           << QString { };
+    QTest::newRow("cat-no-match")          << false << u"category"_s      << QStringList { u"wrong-category"_s }          << u"Categories mismatch"_s;
+    QTest::newRow("cat-empty-bypass")      << false << u"category"_s      << QStringList { }                              << QString { };
+    QTest::newRow("cat-one-of-two-bad")    << false << u"category"_s      << QStringList { u"test-category"_s, u"wrong-category"_s } << u"Categories mismatch"_s;
+    QTest::newRow("cat-wildcard")          << true  << u"category"_s      << QStringList { u"fancy-category"_s }          << QString { };
+}
+
+void tst_Signature::verifyCertBinding()
+{
+    QFETCH(bool, usePermissiveCert);
+    QFETCH(QString, kind);
+    QFETCH(QStringList, required);
+    QFETCH(QString, errorString);
+
+    const QByteArray &signingP12 = usePermissiveCert ? m_signingP12 : m_signingNarrowP12;
+
+    QByteArray hash("foo");
+    Signature s(hash);
+    QByteArray signature;
+    QVERIFY_THROWS_NO_EXCEPTION(signature = s.create(signingP12, m_signingPassword));
+    QVERIFY(!signature.isEmpty());
+
+    if (kind == u"applicationid"_s)
+        s.requireApplicationIds(required);
+    else if (kind == u"capability"_s)
+        s.requireCapabilities(required);
+    else if (kind == u"category"_s)
+        s.requireCategories(required);
+    else
+        QFAIL("unknown kind");
+
+    try {
+        (void) s.verify(signature, m_verifyingPEM);
+        QVERIFY2(errorString.isEmpty(), "Verification should have failed");
+    } catch (const Exception &e) {
+        QVERIFY2(!errorString.isEmpty(), qPrintable(u"Verification should have succeeded, but failed with: %1"_s
+                                                        .arg(e.errorString())));
+        QVERIFY2(e.errorString().contains(errorString), qPrintable(e.errorString()));
+    }
 }
 
 QTEST_GUILESS_MAIN(tst_Signature)

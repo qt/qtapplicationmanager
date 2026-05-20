@@ -176,7 +176,19 @@ void InstallationTask::execute()
                     const auto cert = m_pm->developerCertificate();
                     if (!cert.matchPackageId(m_packageId)) {
                         throw Exception(Error::Package, "the package's id (%1) does not match the currently set developer certificate (%2)")
-                            .arg(m_packageId).arg(cert.subjectAlternativeNames());
+                            .arg(m_packageId).arg(cert.packageIds());
+                    }
+                    if (!cert.matchApplicationIds(m_applicationIds)) {
+                        throw Exception(Error::Package, "the package's application ids (%1) do not match the currently set developer certificate (%2)")
+                            .arg(m_applicationIds).arg(cert.applicationIds());
+                    }
+                    if (!cert.matchCapabilities(m_capabilities)) {
+                        throw Exception(Error::Package, "the package's capabilities (%1) do not match the currently set developer certificate (%2)")
+                            .arg(m_capabilities).arg(cert.capabilities());
+                    }
+                    if (!cert.matchCategories(m_categories)) {
+                        throw Exception(Error::Package, "the package's categories (%1) do not match the currently set developer certificate (%2)")
+                            .arg(m_categories).arg(cert.categories());
                     }
                 }
             }
@@ -237,7 +249,19 @@ void InstallationTask::execute()
                         const auto cert = m_pm->developerCertificate();
                         if (!cert.matchPackageId(m_packageId)) {
                             throw Exception(Error::Package, "the package's id (%1) does not match the currently set developer certificate (%2)")
-                                .arg(m_packageId).arg(cert.subjectAlternativeNames());
+                                .arg(m_packageId).arg(cert.packageIds());
+                        }
+                        if (!cert.matchApplicationIds(m_applicationIds)) {
+                            throw Exception(Error::Package, "the package's application ids (%1) do not match the currently set developer certificate (%2)")
+                                .arg(m_applicationIds).arg(cert.applicationIds());
+                        }
+                        if (!cert.matchCapabilities(m_capabilities)) {
+                            throw Exception(Error::Package, "the package's capabilities (%1) do not match the currently set developer certificate (%2)")
+                                .arg(m_capabilities).arg(cert.capabilities());
+                        }
+                        if (!cert.matchCategories(m_categories)) {
+                            throw Exception(Error::Package, "the package's categories (%1) do not match the currently set developer certificate (%2)")
+                                .arg(m_categories).arg(cert.categories());
                         }
                     }
                 }
@@ -246,6 +270,9 @@ void InstallationTask::execute()
                 devSig.requireRevocationCheck(m_pm->certificateRevocationLists());
                 devSig.requireKeyUsage(Certificate::KeyUsage::Developer);
                 devSig.requirePackageId(m_packageId);
+                devSig.requireApplicationIds(m_applicationIds);
+                devSig.requireCapabilities(m_capabilities);
+                devSig.requireCategories(m_categories);
                 devSig.requireCertificateRoles(m_pm->certificateRoles());
 
                 try {
@@ -347,6 +374,20 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
         else if (QFileInfo(m_iconFileName).path() != u'.')
             throw Exception(Error::Package, "the icon must be located in the package's root directory");
 
+        // copy all capabilites, app ids, and categories out from m_package, as we won't have
+        // access to it anymore after the m_package ownership transfer later on
+        m_categories.append(m_package->categories()); // package-level categories
+        const QVector<ApplicationInfo *> applicationInfos = m_package->applications();
+        for (const auto *applicationInfo : applicationInfos) {
+            m_applicationIds.append(applicationInfo->id());
+            m_capabilities.append(applicationInfo->capabilities());
+            m_categories.append(applicationInfo->categories()); // effective (own or inherited)
+        }
+        m_capabilities.sort();
+        m_capabilities.removeDuplicates();
+        m_categories.sort();
+        m_categories.removeDuplicates();
+
         m_mutex.lock();
         m_packageId = m_package->id();
         m_mutex.unlock();
@@ -404,17 +445,18 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
         // we need to call those ApplicationManager methods in the correct thread
         // this will also exclusively lock the application for us
         // m_package ownership is transferred to the ApplicationManager
-        QString packageId = m_package->id(); // m_package is gone after the invoke
         QPointer<Package> newPackage;
         QMetaObject::invokeMethod(PackageManager::instance(), [this, &newPackage]()
             { newPackage = PackageManager::instance()->startingPackageInstallation(m_package.release()); },
             Qt::BlockingQueuedConnection);
+        // m_package is gone now
         m_managerApproval = !newPackage.isNull();
 
         if (!m_managerApproval)
-            throw Exception("PackageManager declined the installation of %1").arg(packageId);
+            throw Exception("PackageManager declined the installation of %1").arg(m_packageId);
 
-        qCDebug(LogInstaller) << "emit taskRequestingInstallationAcknowledge" << id() << "for package" << packageId;
+        qCDebug(LogInstaller) << "emit taskRequestingInstallationAcknowledge" << id()
+                              << "for package" << m_packageId;
 
         // Create temporary objects for QML just for the signal emission.
         // The problem here is that the PackageInfo instance backing the Package object is also

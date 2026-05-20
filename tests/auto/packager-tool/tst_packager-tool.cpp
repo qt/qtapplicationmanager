@@ -39,6 +39,8 @@ private Q_SLOTS:
     void test();
     void revoked();
     void expired();
+    void developerSignCertBinding_data();
+    void developerSignCertBinding();
     void brokenMetadata_data();
     void brokenMetadata();
     void iconFileName();
@@ -62,6 +64,7 @@ private:
 
     QString m_devPassword;
     QString m_devCertificate;
+    QString m_devNarrowCertificate;
     QString m_devExpiredCertificate;
     QString m_devRevokedCertificate;
     QString m_storePassword;
@@ -119,6 +122,7 @@ void tst_PackagerTool::initTestCase()
     m_storePassword = u"password"_s;
 
     m_devCertificate        = AM_TESTDATA_DIR u"certificates/dev-certs/dev-1.p12"_s;
+    m_devNarrowCertificate  = AM_TESTDATA_DIR u"certificates/dev-certs/dev-narrow.p12"_s;
     m_devRevokedCertificate = AM_TESTDATA_DIR u"certificates/dev-certs/dev-revoked.p12"_s;
     m_devExpiredCertificate = AM_TESTDATA_DIR u"certificates/dev-certs/dev-expired.p12"_s;
     m_storeCertificate      = AM_TESTDATA_DIR u"certificates/store-certs/store.p12"_s;
@@ -403,6 +407,91 @@ void tst_PackagerTool::revoked()
     QVERIFY2(errorString.contains(u"revoked"), qPrintable(errorString));
 
     failToInstallPackage(pathTo("revoked.dev-signed.ampkg"), u"revoked"_s);
+}
+
+void tst_PackagerTool::developerSignCertBinding_data()
+{
+    // The "narrow" cert grants exactly:
+    //   packageid/test-pkg, applicationid/test-app,
+    //   capability/cap-allowed, category/test-category
+    //
+    // Each row manipulates info.yaml to either stay within those grants (success)
+    // or step outside one of them (error). This is a wiring test: each negative row
+    // confirms one info.yaml field flows into the matching require-list and surfaces
+    // the right error. The exhaustive matching matrix lives in tst_signature.
+
+    QTest::addColumn<QString>("pkgIdOverride");
+    QTest::addColumn<QString>("appIdOverride");
+    QTest::addColumn<QStringList>("capabilities");
+    QTest::addColumn<QStringList>("categories");
+    QTest::addColumn<QString>("errorString");
+
+    QTest::newRow("ok-baseline")
+        << QString { } << QString { } << QStringList { } << QStringList { } << QString { };
+    QTest::newRow("ok-cap-allowed")
+        << QString { } << QString { } << QStringList { u"cap-allowed"_s } << QStringList { } << QString { };
+    QTest::newRow("ok-category-allowed")
+        << QString { } << QString { } << QStringList { } << QStringList { u"test-category"_s } << QString { };
+    QTest::newRow("pkgid-mismatch")
+        << u"rogue-pkg"_s << QString { } << QStringList { } << QStringList { } << u"Package ID mismatch"_s;
+    QTest::newRow("appid-mismatch")
+        << QString { } << u"rogue-app"_s << QStringList { } << QStringList { } << u"Application ID mismatch"_s;
+    QTest::newRow("capability-mismatch")
+        << QString { } << QString { } << QStringList { u"forbidden-cap"_s } << QStringList { } << u"Capabilities mismatch"_s;
+    QTest::newRow("category-mismatch")
+        << QString { } << QString { } << QStringList { } << QStringList { u"wrong-category"_s } << u"Categories mismatch"_s;
+}
+
+void tst_PackagerTool::developerSignCertBinding()
+{
+    QFETCH(QString, pkgIdOverride);
+    QFETCH(QString, appIdOverride);
+    QFETCH(QStringList, capabilities);
+    QFETCH(QStringList, categories);
+    QFETCH(QString, errorString);
+
+    QTemporaryDir tmp;
+    QString error;
+
+    auto manipulate = [&](QVariantMap &m) {
+        if (!pkgIdOverride.isEmpty())
+            m[u"id"_s] = pkgIdOverride;
+        if (!categories.isEmpty())
+            m[u"categories"_s] = categories;
+        if (!appIdOverride.isEmpty() || !capabilities.isEmpty()) {
+            QVariantList apps = m[u"applications"_s].toList();
+            QVariantMap app = apps[0].toMap();
+            if (!appIdOverride.isEmpty())
+                app[u"id"_s] = appIdOverride;
+            if (!capabilities.isEmpty())
+                app[u"capabilities"_s] = capabilities;
+            apps[0] = app;
+            m[u"applications"_s] = apps;
+        }
+    };
+
+    createInfoYaml(tmp, manipulate);
+    createIconPng(tmp);
+    createIconPng(tmp, u"app-"_s);
+    createIconPng(tmp, u"intent-"_s);
+    createCode(tmp);
+
+    const QByteArray rowName = QTest::currentDataTag();
+    const QString unsignedPkg = pathTo(("cb-" + rowName + ".ampkg").constData());
+    const QString signedPkg = pathTo(("cb-" + rowName + ".dev-signed.ampkg").constData());
+
+    QVERIFY2(packagerCheck(PackagingJob::create(unsignedPkg, tmp.path()), error), qPrintable(error));
+
+    const bool ok = packagerCheck(PackagingJob::developerSign(
+                                      unsignedPkg, signedPkg,
+                                      m_devNarrowCertificate, m_devPassword), error);
+
+    if (errorString.isEmpty()) {
+        QVERIFY2(ok, qPrintable(error));
+    } else {
+        QVERIFY2(!ok, "Signing should have failed but succeeded");
+        QVERIFY2(error.contains(errorString), qPrintable(error));
+    }
 }
 
 void tst_PackagerTool::brokenMetadata_data()

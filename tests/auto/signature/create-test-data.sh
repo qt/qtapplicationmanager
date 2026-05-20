@@ -19,6 +19,7 @@ if [ ! -f $certdir/dev-certs/dev-1.p12 ]; then
 fi
 
 cp $certdir/dev-certs/dev-1.p12 signing.p12
+cp $certdir/dev-certs/dev-narrow.p12 signing-narrow.p12
 openssl pkcs12 -export -out signing-no-key.p12 -password pass:password \
                -inkey $certdir/dev-certs/dev-1-priv.key -certfile $certdir/root-ca/root-ca.crt \
                -in $certdir/dev-certs/dev-1.crt -name "Developer 1 Certificate (no key)" -nokeys

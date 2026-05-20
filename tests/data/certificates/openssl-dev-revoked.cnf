@@ -21,9 +21,12 @@ emailAddress = revoked@developer.com
 subjectKeyIdentifier= hash
 basicConstraints    = CA:FALSE
 keyUsage            = nonRepudiation, digitalSignature, keyEncipherment
-subjectAltName      = @dev_revoked_package_ids
+subjectAltName      = @dev_revoked_package_restrictions
 
 ####################################################################
-[ dev_revoked_package_ids ]
+[ dev_revoked_package_restrictions ]
 URI.1 = "qtam://packageid/other-*"
 URI.2 = "qtam://packageid/test-pkg"
+URI.3 = "qtam://applicationid/*"
+URI.4 = "qtam://category/*"
+URI.5 = "qtam://capability/*"

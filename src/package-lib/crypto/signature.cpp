@@ -39,6 +39,21 @@ void Signature::requirePackageId(const QString &packageId)
     d->requirePackageId = packageId;
 }
 
+void Signature::requireApplicationIds(const QStringList &applicationIds)
+{
+    d->requiredApplicationIds = applicationIds;
+}
+
+void Signature::requireCapabilities(const QStringList &capabilities)
+{
+    d->requiredCapabilities = capabilities;
+}
+
+void Signature::requireCategories(const QStringList &categories)
+{
+    d->requiredCategories = categories;
+}
+
 void Signature::requireCertificateRoles(const QHash<QByteArray, CertificateRole> &trustedCertDataToRole)
 {
     d->requiredRoles = trustedCertDataToRole;
@@ -84,9 +99,33 @@ void SignaturePrivate::checkSignerCertificate(const Certificate &signer)
 {
     if (!requirePackageId.isEmpty()) {
         if (!signer.matchPackageId(requirePackageId)) {
-            throw Exception("Package ID mismatch on certificate, expected one of '%1', but got '%2'")
+            throw Exception("Package ID mismatch: the certificate only allows '%1'; cannot sign '%2'")
                 .arg(signer.packageIds())
                 .arg(requirePackageId);
+        }
+    }
+
+    if (!requiredApplicationIds.isEmpty()) {
+        if (!signer.matchApplicationIds(requiredApplicationIds)) {
+            throw Exception("Application ID mismatch: the certificate only allows '%1'; cannot sign '%2'")
+                .arg(signer.applicationIds())
+                .arg(requiredApplicationIds);
+        }
+    }
+
+    if (!requiredCapabilities.isEmpty()) {
+        if (!signer.matchCapabilities(requiredCapabilities)) {
+            throw Exception("Capabilities mismatch: the certificate only allows '%1'; cannot sign '%2'")
+                .arg(signer.capabilities())
+                .arg(requiredCapabilities);
+        }
+    }
+
+    if (!requiredCategories.isEmpty()) {
+        if (!signer.matchCategories(requiredCategories)) {
+            throw Exception("Categories mismatch: the certificate only allows '%1'; cannot sign '%2'")
+                .arg(signer.categories())
+                .arg(requiredCategories);
         }
     }
 

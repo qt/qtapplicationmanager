@@ -20,6 +20,7 @@ qt_internal_add_test(tst_signature
         signature-legacy-sha1.p7
         signing-no-key.p12
         signing.p12
+        signing-narrow.p12
         verifying.crt
         root-ca.info
         dev-ca.info

@@ -25,12 +25,14 @@ set(TEST_DATA_FILES
     certificates/openssl-root-ca.cnf
     certificates/openssl-dev-1.cnf
     certificates/openssl-dev-2.cnf
+    certificates/openssl-dev-narrow.cnf
     certificates/openssl-dev-revoked.cnf
     certificates/openssl-dev-expired.cnf
     certificates/openssl-dev-ca.cnf
     certificates/openssl-store.cnf
     certificates/openssl-store-ca.cnf
     certificates/openssl-other-ca.cnf
+    certificates/openssl-other.cnf
     create-test-packages.sh
     icon.png
     info.yaml

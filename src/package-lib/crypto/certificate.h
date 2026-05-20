@@ -67,6 +67,16 @@ public:
 
     Q_INVOKABLE QStringList packageIds() const;
     Q_INVOKABLE bool matchPackageId(const QString &name) const;
+
+    Q_INVOKABLE QStringList applicationIds() const;
+    Q_INVOKABLE bool matchApplicationIds(const QStringList &applicationIds) const;
+
+    Q_INVOKABLE QStringList capabilities() const;
+    Q_INVOKABLE bool matchCapabilities(const QStringList &capabilities) const;
+
+    Q_INVOKABLE QStringList categories() const;
+    Q_INVOKABLE bool matchCategories(const QStringList &categories) const;
+
     Q_INVOKABLE QVariant toVariant() const;
 
 private:

@@ -20,6 +20,9 @@ public:
     QByteArray hash;
     Certificate::KeyUsages requiredKeyUsages;
     QString requirePackageId;
+    QStringList requiredApplicationIds;
+    QStringList requiredCapabilities;
+    QStringList requiredCategories;
     QHash<QByteArray, Signature::CertificateRole> requiredRoles;
     QByteArrayList requiredCRLs;
 

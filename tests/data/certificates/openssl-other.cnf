@@ -4,28 +4,28 @@ RANDFILE        = $ENV::HOME/.rnd
 ####################################################################
 [ req ]
 prompt              = no
-distinguished_name  = dev2_distinguished_name
-req_extensions      = dev2_req_extensions
+distinguished_name  = other_distinguished_name
+req_extensions      = other_req_extensions
 string_mask         = utf8only
 
 ####################################################################
-[ dev2_distinguished_name ]
+[ other_distinguished_name ]
 C = DE
-O = Developer 2 AG
-CN = Developer 2
-emailAddress = dev2@developer2.com
+ST = Foo
+L = Bar
+CN = www.other.com
 
 ####################################################################
-[ dev2_req_extensions ]
+[ other_req_extensions ]
 
 subjectKeyIdentifier= hash
 basicConstraints    = CA:FALSE
 keyUsage            = nonRepudiation, digitalSignature, keyEncipherment, decipherOnly
-subjectAltName      = @dev2_package_restrictions
+subjectAltName      = @other_package_restrictions
 
 ####################################################################
-[ dev2_package_restrictions ]
-URI.1 = "qtam://packageid/test-pkg"
+[ other_package_restrictions ]
+URI.1 = "qtam://packageid/*"
 URI.2 = "qtam://applicationid/*"
 URI.3 = "qtam://category/*"
 URI.4 = "qtam://capability/*"

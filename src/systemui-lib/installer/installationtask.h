@@ -58,6 +58,9 @@ private:
     QString m_iconFileName;
     uint m_extractedFileCount = 0;
     bool m_managerApproval = false;
+    QStringList m_applicationIds;
+    QStringList m_capabilities;
+    QStringList m_categories;
     std::unique_ptr<PackageInfo> m_package;
     std::unique_ptr<Package> m_tempPackageForAcknowledge;
     std::vector<std::unique_ptr<Application>> m_tempApplicationsForAcknowledge;

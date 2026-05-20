@@ -100,15 +100,14 @@ YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
 
 bool safeRemove(const QString &path, RecursiveOperationType type)
 {
-   static const QFileDevice::Permissions fullAccess =
+   static const QFileDevice::Permissions ownerAccess =
            QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner |
-           QFileDevice::ReadUser  | QFileDevice::WriteUser  | QFileDevice::ExeUser  |
-           QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup |
-           QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther;
+           QFileDevice::ReadUser  | QFileDevice::WriteUser  | QFileDevice::ExeUser;
 
    switch (type) {
    case RecursiveOperationType::EnterDirectory:
-       return QFile::setPermissions(path, fullAccess);
+       // make sure we can unlink the directory's contents
+       return QFile::setPermissions(path, ownerAccess);
 
    case RecursiveOperationType::LeaveDirectory: {
         // QDir cannot delete the directory it is pointing to
@@ -235,7 +234,8 @@ bool recursiveOperation(const QString &path, const std::function<bool (const QSt
 
     QFileInfo pathInfo(path);
 
-    if (pathInfo.isDir()) {
+    // isDir() follows symlinks, so guard against attacker-controlled symlink-to-dir redirection
+    if (pathInfo.isDir() && !pathInfo.isSymLink()) {
         if (!operation(path, RecursiveOperationType::EnterDirectory))
             return false;
 

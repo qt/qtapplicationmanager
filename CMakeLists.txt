@@ -4,9 +4,9 @@ cmake_minimum_required(VERSION 3.16)
 set(MIN_QT_VERSION 6.9.0)
 
 include(.cmake.conf)
-project(QtApplicationManager # special case
+project(QtApplicationManager
     VERSION "${QT_REPO_MODULE_VERSION}"
-    DESCRIPTION "QtAplicationManager Tools and Libraries" # special case
+    DESCRIPTION "QtApplicationManager Tools and Libraries"
     HOMEPAGE_URL "https://qt.io/"
     LANGUAGES CXX C
 )

@@ -250,7 +250,8 @@ void PressureStallInformationPrivate::finishReconfigure()
 
         QByteArray data = ((m_mode == PressureStallInformation::Mode::Some) ? "some " : "full ")
                           + QByteArray::number(1000 * m_stallTime.count()) + " "
-                          + QByteArray::number(1000 * m_timeWindow.count());
+                          + QByteArray::number(1000 * m_timeWindow.count())
+                          + '\n'; // needed, because the kernel will clobber the last character
 
         if (::write(m_eventFd, data.constData(), data.size()) != data.size()) {
             QByteArray extra;

@@ -25,9 +25,9 @@ TestCase {
     }
 
     SignalSpy {
-        id: runStateChangedSpy
-        signalName: "runStateChanged"
-    }
+        id: runStateChangedSpy
+        signalName: "runStateChanged"
+    }
 
     IntentServerHandler {
         intentIds: "quicklaunch-ready"

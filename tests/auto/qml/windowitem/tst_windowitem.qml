@@ -75,10 +75,10 @@ Item {
     }
 
     SignalSpy {
-        id: objectDestroyedSpy
-        target: AmTest
-        signalName: "objectDestroyed"
-    }
+        id: objectDestroyedSpy
+        target: AmTest
+        signalName: "objectDestroyed"
+    }
 
     TestCase {
         id: testCase

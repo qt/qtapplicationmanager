@@ -18,10 +18,10 @@ TestCase {
     property var app: ApplicationManager.application(appId);
 
     SignalSpy {
-        id: runStateChangedSpy
-        target: ApplicationManager
-        signalName: "applicationRunStateChanged"
-    }
+        id: runStateChangedSpy
+        target: ApplicationManager
+        signalName: "applicationRunStateChanged"
+    }
 
     function initTestCase() {
         compare(app.lastExitStatus, ApplicationObject.NormalExit)

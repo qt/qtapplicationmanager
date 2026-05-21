@@ -24,11 +24,11 @@ TestCase {
     }
 
 
-    SignalSpy {
-        id: runStateChangedSpy
-        target: ApplicationManager
-        signalName: "applicationRunStateChanged"
-    }
+    SignalSpy {
+        id: runStateChangedSpy
+        target: ApplicationManager
+        signalName: "applicationRunStateChanged"
+    }
 
     function test_launcher_qml_data() {
         return [ { tag: "small", appId: "test.processtitle.app" },

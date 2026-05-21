@@ -55,10 +55,10 @@ TestCase {
     }
 
     SignalSpy {
-        id: applicationChangedSpy
-        target: ApplicationManager
-        signalName: "applicationChanged"
-    }
+        id: applicationChangedSpy
+        target: ApplicationManager
+        signalName: "applicationChanged"
+    }
 
     SignalSpy {
         id: applicationRunStateChangedSpy

@@ -191,10 +191,10 @@ using namespace Qt::StringLiterals;
 */
 
 /*!
-    \qmlsignal WindowManager::windowAboutToBeRemoved(WindowObject window)
+    \qmlsignal WindowManager::windowAboutToBeRemoved(WindowObject window)
 
-    This signal is emitted before the \a window is removed from the model. This happens for
-    instance, when the window \c visible property is set to \c false on the application side.
+    This signal is emitted before the \a window is removed from the model. This happens for
+    instance, when the window \c visible property is set to \c false on the application side.
 */
 
 /*!

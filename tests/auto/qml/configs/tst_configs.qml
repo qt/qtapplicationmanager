@@ -57,11 +57,11 @@ TestCase {
         signalName: "windowPropertyChanged"
     }
 
-    SignalSpy {
-        id: runStateChangedSpy
-        target: ApplicationManager
-        signalName: "applicationRunStateChanged"
-    }
+    SignalSpy {
+        id: runStateChangedSpy
+        target: ApplicationManager
+        signalName: "applicationRunStateChanged"
+    }
 
 
     function cleanup() {

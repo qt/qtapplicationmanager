@@ -110,22 +110,22 @@ TestCase {
     }
 
     SignalSpy {
-        id: copyThatSpy
-        target: intentHandler
-        signalName: "requestReceived"
-    }
+        id: copyThatSpy
+        target: intentHandler
+        signalName: "requestReceived"
+    }
 
     SignalSpy {
-        id: keyEventLeftSpy
-        target: leftWin
-        signalName: "keyEvent"
-    }
+        id: keyEventLeftSpy
+        target: leftWin
+        signalName: "keyEvent"
+    }
 
     SignalSpy {
-        id: keyEventRightSpy
-        target: rightWin
-        signalName: "keyEvent"
-    }
+        id: keyEventRightSpy
+        target: rightWin
+        signalName: "keyEvent"
+    }
 
     function click(key) {
         keyPress(key);

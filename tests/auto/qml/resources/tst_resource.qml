@@ -17,10 +17,10 @@ TestCase {
     MagentaRect {}
 
     SignalSpy {
-        id: runStateChangedSpy
-        target: ApplicationManager
-        signalName: "applicationRunStateChanged"
-    }
+        id: runStateChangedSpy
+        target: ApplicationManager
+        signalName: "applicationRunStateChanged"
+    }
 
     SignalSpy {
         id: windowPropertyChangedSpy

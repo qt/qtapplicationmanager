@@ -72,7 +72,12 @@ public:
 [[maybe_unused]] void operator>>(const QDBusArgument &arg, DBusNull &)
 {
     std::tuple<std::tuple<uchar>, uchar> t; arg >> t;
-    Q_ASSERT((t == std::tuple<std::tuple<uchar>, uchar>{ 0x00, 0x00 }));
+
+    // This assert is a debug-only collision tripwire: D-Bus signatures encode structure
+    // but not type identity, so any third-party type marshalling to the same signature would also
+    // reach this demarshaller. Asserting the byte-value convention catches such collisions during
+    // development; in production they're benign (the wrong type just decodes as null/invalid).
+    Q_ASSERT((t == std::tuple<std::tuple<uchar>, uchar>{0x00, 0x00}));
 }
 
 class DBusInvalid
@@ -90,6 +95,8 @@ public:
 [[maybe_unused]] void operator>>(const QDBusArgument &arg, DBusInvalid &)
 {
     std::tuple<uchar, std::tuple<uchar>> t; arg >> t;
+
+    // see DBusNull's operator>> for the rationale behind this assert
     Q_ASSERT((t == std::tuple<uchar, std::tuple<uchar>>{ 0xff, 0xff }));
 }
 

@@ -11,36 +11,50 @@
 #include <private/qv4engine_p.h>
 #include <private/qqmlcontext_p.h>
 #include <private/qqmlcontextdata_p.h>
+#include "logging.h"
 #include "qml-utilities.h"
 
 using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-QVariant convertFromJSVariant(const QVariant &variant)
+// guard against attacker-shaped variants nested deeply enough to blow the stack
+static constexpr int MaxConversionDepth = 64;
+
+static QVariant sanitizeWindowPropertyValueImpl(const QVariant &variant, int depth)
 {
+    if (depth >= MaxConversionDepth) {
+        qCCritical(LogQml) << "sanitizeWindowPropertyValue: nesting level exceeds" << MaxConversionDepth
+                           << "- returning empty variant";
+        return { };
+    }
     int type = variant.userType();
 
     if (type == qMetaTypeId<QJSValue>()) {
-        return convertFromJSVariant(variant.value<QJSValue>().toVariant());
+        return sanitizeWindowPropertyValueImpl(variant.value<QJSValue>().toVariant(), depth + 1);
     } else if (type == QMetaType::QVariant) {
         // got a matryoshka variant
-        return convertFromJSVariant(variant.value<QVariant>());
+        return sanitizeWindowPropertyValueImpl(variant.value<QVariant>(), depth + 1);
     } else if (type == QMetaType::QVariantList) {
         QVariantList outList;
         const QVariantList inList = variant.toList();
         for (const auto &v : inList)
-            outList.append(convertFromJSVariant(v));
+            outList.append(sanitizeWindowPropertyValueImpl(v, depth + 1));
         return outList;
     } else if (type == QMetaType::QVariantMap) {
         QVariantMap outMap;
         const QVariantMap inMap = variant.toMap();
         for (const auto &[k, v] : inMap.asKeyValueRange())
-            outMap.insert(k, convertFromJSVariant(v));
+            outMap.insert(k, sanitizeWindowPropertyValueImpl(v, depth + 1));
         return outMap;
     } else {
         return variant;
     }
+}
+
+QVariant sanitizeWindowPropertyValue(const QVariant &variant)
+{
+    return sanitizeWindowPropertyValueImpl(variant, 0);
 }
 
 

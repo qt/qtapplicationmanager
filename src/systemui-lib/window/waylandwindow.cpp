@@ -62,7 +62,7 @@ WaylandWindow::WaylandWindow(Application *app, WindowSurface *surf)
 bool WaylandWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
     if (m_surface) {
-        const QVariant v = convertFromJSVariant(value);
+        const QVariant v = sanitizeWindowPropertyValue(value);
         m_surface->compositor()->amExtension()->setWindowProperty(m_surface, name, v);
     }
     return (m_surface);

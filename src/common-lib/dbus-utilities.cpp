@@ -130,11 +130,21 @@ Q_DECLARE_METATYPE(DBusUrl)
 
 QT_BEGIN_NAMESPACE_AM
 
-QVariant convertToDBusVariant(const QVariant &variant)
+// guard against attacker-shaped variants nested deeply enough to blow the stack
+static constexpr int MaxConversionDepth = 64;
+
+static QVariant convertToDBusVariantImpl(const QVariant &variant, int depth)
 {
 #if !defined(QT_DBUS_LIB)
+    Q_UNUSED(depth)
+    Q_UNUSED(MaxConversionDepth)
     return variant;
 #else
+    if (depth >= MaxConversionDepth) {
+        qCCritical(LogDBus) << "convertToDBusVariant: nesting level exceeds" << MaxConversionDepth
+                            << "- returning empty variant";
+        return { };
+    }
     int type = variant.userType();
 
     if (type == QMetaType::UnknownType) { // JS "undefined" / CPP Invalid
@@ -145,22 +155,22 @@ QVariant convertToDBusVariant(const QVariant &variant)
         return QVariant::fromValue(DBusUrl { variant.value<QUrl>() });
 #if defined(QT_QML_LIB)
     } else if (type == qMetaTypeId<QJSValue>()) {
-        return convertToDBusVariant(variant.value<QJSValue>().toVariant());
+        return convertToDBusVariantImpl(variant.value<QJSValue>().toVariant(), depth + 1);
 #endif
     } else if (type == QMetaType::QVariant) {
         // got a matryoshka variant
-        return convertToDBusVariant(variant.value<QVariant>());
+        return convertToDBusVariantImpl(variant.value<QVariant>(), depth + 1);
     } else if (type == QMetaType::QVariantList) {
         QVariantList outList;
         const QVariantList inList = variant.toList();
         for (const auto &v : inList)
-            outList.append(convertToDBusVariant(v));
+            outList.append(convertToDBusVariantImpl(v, depth + 1));
         return outList;
     } else if (type == QMetaType::QVariantMap) {
         QVariantMap outMap;
         const QVariantMap inMap = variant.toMap();
         for (const auto &[k, v] : inMap.asKeyValueRange())
-            outMap.insert(k, convertToDBusVariant(v));
+            outMap.insert(k, convertToDBusVariantImpl(v, depth + 1));
         return outMap;
     } else {
         return variant;
@@ -168,11 +178,23 @@ QVariant convertToDBusVariant(const QVariant &variant)
 #endif
 }
 
-QVariant convertFromDBusVariant(const QVariant &variant)
+QVariant convertToDBusVariant(const QVariant &variant)
+{
+    return convertToDBusVariantImpl(variant, 0);
+}
+
+static QVariant convertFromDBusVariantImpl(const QVariant &variant, int depth)
 {
 #if !defined(QT_DBUS_LIB)
+    Q_UNUSED(MaxConversionDepth)
+    Q_UNUSED(depth)
     return variant;
 #else
+    if (depth >= MaxConversionDepth) {
+        qCWarning(LogDBus) << "convertFromDBusVariant: nesting level exceeds" << MaxConversionDepth
+                           << "- returning empty variant";
+        return {};
+    }
     int type = variant.userType();
 
     if (type == qMetaTypeId<DBusInvalid>()) {
@@ -183,20 +205,20 @@ QVariant convertFromDBusVariant(const QVariant &variant)
         return QUrl(variant.value<DBusUrl>().m_url);
     } else if (type == qMetaTypeId<QDBusVariant>()) {
         const auto dbusVariant = variant.value<QDBusVariant>();
-        return convertFromDBusVariant(dbusVariant.variant()); // just to be on the safe side
+        return convertFromDBusVariantImpl(dbusVariant.variant(), depth + 1); // just to be on the safe side
     } else if (type == qMetaTypeId<QDBusArgument>()) {
         const auto dbusArg = variant.value<QDBusArgument>();
         switch (dbusArg.currentType()) {
         case QDBusArgument::BasicType:
         case QDBusArgument::VariantType:
-            return convertFromDBusVariant(dbusArg.asVariant());
+            return convertFromDBusVariantImpl(dbusArg.asVariant(), depth + 1);
         case QDBusArgument::ArrayType: {
             QVariantList vl;
             dbusArg.beginArray();
             while (!dbusArg.atEnd()) {
                 QDBusVariant elem;
                 dbusArg >> elem;
-                vl << convertFromDBusVariant(elem.variant());
+                vl << convertFromDBusVariantImpl(elem.variant(), depth + 1);
             }
             dbusArg.endArray();
             return vl;
@@ -211,7 +233,7 @@ QVariant convertFromDBusVariant(const QVariant &variant)
                 dbusArg >> key >> value;
                 dbusArg.endMapEntry();
 
-                vm.insert(key, convertFromDBusVariant(value.variant()));
+                vm.insert(key, convertFromDBusVariantImpl(value.variant(), depth + 1));
             }
             dbusArg.endMap();
             return vm;
@@ -231,7 +253,7 @@ QVariant convertFromDBusVariant(const QVariant &variant)
                 if (sig == metaSig) {
                     auto variant = QVariant::fromMetaType(QMetaType { meta });
                     if (QDBusMetaType::demarshall(dbusArg, QMetaType { meta }, variant.data()))
-                        return convertFromDBusVariant(variant);
+                        return convertFromDBusVariantImpl(variant, depth + 1);
                 }
             }
             Q_FALLTHROUGH();
@@ -243,18 +265,23 @@ QVariant convertFromDBusVariant(const QVariant &variant)
         QVariantList outList;
         const QVariantList inList = variant.toList();
         for (const auto &v : inList)
-            outList.append(convertFromDBusVariant(v));
+            outList.append(convertFromDBusVariantImpl(v, depth + 1));
         return outList;
     } else if (type == QMetaType::QVariantMap) {
         QVariantMap outMap;
         const QVariantMap inMap = variant.toMap();
         for (const auto &[k, v] : inMap.asKeyValueRange())
-            outMap.insert(k, convertFromDBusVariant(v));
+            outMap.insert(k, convertFromDBusVariantImpl(v, depth + 1));
         return outMap;
     } else {
         return variant;
     }
 #endif
+}
+
+QVariant convertFromDBusVariant(const QVariant &variant)
+{
+    return convertFromDBusVariantImpl(variant, 0);
 }
 
 void registerDBusTypes()

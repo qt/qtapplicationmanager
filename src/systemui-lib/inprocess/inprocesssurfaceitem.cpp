@@ -40,7 +40,7 @@ InProcessSurfaceItem::InProcessSurfaceItem(QQuickItem *parent)
 bool InProcessSurfaceItem::setWindowProperty(const QString &name, const QVariant &value)
 {
     const QByteArray key = nameToKey(name);
-    const QVariant v = convertFromJSVariant(value);
+    const QVariant v = sanitizeWindowPropertyValue(value);
     QVariant oldValue = m_windowProperties.property(key.constData());
     bool changed = !oldValue.isValid() || (oldValue != v);
 

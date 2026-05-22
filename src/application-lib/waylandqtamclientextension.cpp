@@ -12,6 +12,7 @@
 #include <qpa/qplatformnativeinterface.h>
 
 #include <QtAppManCommon/logging.h>
+#include <QtAppManCommon/qml-utilities.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -140,6 +141,9 @@ void WaylandQtAMClientExtension::qtam_extension_window_property_changed(wl_surfa
         ds.setVersion(QDataStream::Qt_6_7);
         QVariant variantValue;
         ds >> variantValue;
+
+        // Enforce a nesting-level limit on inbound variants
+        variantValue = sanitizeWindowPropertyValue(variantValue);
 
         qCDebug(LogWayland) << "window property: client receive" << window << name << variantValue;
         setWindowPropertyHelper(window, name, variantValue);

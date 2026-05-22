@@ -44,8 +44,7 @@ InProcessWindow::~InProcessWindow()
 
 bool InProcessWindow::setWindowProperty(const QString &name, const QVariant &value)
 {
-    const QVariant v = convertFromJSVariant(value);
-    return m_surfaceItem->setWindowProperty(name, v);
+    return m_surfaceItem->setWindowProperty(name, value);
 }
 
 QVariant InProcessWindow::windowProperty(const QString &name) const

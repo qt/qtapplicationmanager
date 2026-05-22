@@ -12,6 +12,7 @@
 #include <QtWaylandCompositor/QWaylandSurface>
 
 #include <QtAppManCommon/logging.h>
+#include <QtAppManCommon/qml-utilities.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -105,6 +106,9 @@ void WaylandQtAMServerExtension::qtam_extension_set_window_property(QtWaylandSer
         qCWarning(LogWayland) << "Unsupported qtam_extension version:" << resource->version();
         return;
     }
+    // Enforce a nesting-level limit on inbound variants
+    variantValue = sanitizeWindowPropertyValue(variantValue);
+
     qCDebug(LogWayland) << "window property: server receive" << surface << name << variantValue;
     setWindowPropertyHelper(surface, name, variantValue);
 }

@@ -172,8 +172,7 @@ IntentClientRequest *IntentClient::sendIntentRequest(const QString &intentId, co
     if (applicationId == u":broadcast:") // reserved
         return nullptr;
 
-    //TODO: check that parameters only contains basic datatypes. convertFromJSVariant() does most of
-    //      this already, but doesn't bail out on unconvertible types (yet)
+    //TODO: check that parameters only contains basic datatypes.
 
     auto icr = requestToSystem(m_systemInterface->currentApplicationId(this), intentId, applicationId, parameters);
     QQmlEngine::setObjectOwnership(icr, QQmlEngine::JavaScriptOwnership);
@@ -197,8 +196,7 @@ bool IntentClient::broadcastIntentRequest(const QString &intentId, const QVarian
     if (intentId.isEmpty())
         return false;
 
-    //TODO: check that parameters only contains basic datatypes. convertFromJSVariant() does most of
-    //      this already, but doesn't bail out on unconvertible types (yet)
+    //TODO: check that parameters only contains basic datatypes.
 
     requestToSystem(m_systemInterface->currentApplicationId(this), intentId, u":broadcast:"_s, parameters);
     return true;

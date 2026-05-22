@@ -225,8 +225,7 @@ QString IntentClientRequest::errorMessage() const
 */
 void IntentClientRequest::sendReply(const QVariantMap &result)
 {
-    //TODO: check that result only contains basic datatypes. convertFromJSVariant() does most of
-    //      this already, but doesn't bail out on unconvertible types (yet)
+    //TODO: check that result only contains basic datatypes.
 
     if (m_direction == Direction::ToSystem) {
         qmlWarning(this) << "Calling IntentRequest::sendReply on requests originating from this application is a no-op.";

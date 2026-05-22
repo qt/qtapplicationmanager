@@ -179,7 +179,7 @@ bool ApplicationMain::setWindowProperty(QWindow *window, const QString &name, co
 {
 #if defined(QT_WAYLANDCLIENT_LIB)
     if (m_waylandExtension && window) {
-        const QVariant v = convertFromJSVariant(value);
+        const QVariant v = sanitizeWindowPropertyValue(value);
         return m_waylandExtension->setWindowProperty(window, name, v);
     }
 #else

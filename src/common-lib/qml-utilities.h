@@ -21,8 +21,8 @@
 
 QT_BEGIN_NAMESPACE_AM
 
-// recursively resolve QJSValues
-Q_APPMANCOMMON_EXPORT QVariant convertFromJSVariant(const QVariant &variant);
+// recursively resolve QJSValues and limit nesting level
+Q_APPMANCOMMON_EXPORT QVariant sanitizeWindowPropertyValue(const QVariant &variant);
 
 Q_APPMANCOMMON_EXPORT bool tagQmlContext(QQmlContext *context, const QVariant &value);
 Q_APPMANCOMMON_EXPORT QVariant findTaggedQmlContext(QObject *object);

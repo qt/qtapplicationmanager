@@ -150,11 +150,10 @@ tst_PackageManager::tst_PackageManager(QObject *parent)
 
 tst_PackageManager::~tst_PackageManager()
 {
-    if (m_workDir.isValid()) {
-        if (m_sudo)
+    if (m_workDir.isValid() && m_sudo) {
+        try {
             m_sudo->removeRecursive(m_workDir.path());
-        else
-            recursiveOperation(m_workDir.path(), safeRemove);
+        } catch (...) { }
     }
 
     delete m_failedSpy;
@@ -775,6 +774,11 @@ QT_AM_VERBOSE_TEST_MAIN(tst_PackageManager, \
     } catch (const Exception &e) { \
         tst_PackageManager::sudoServerError = e.errorString(); \
     } \
-    QTEST_QAPP_SETUP(QCoreApplication))
+    QTEST_QAPP_SETUP(QCoreApplication) \
+    try { Sudo::startServer(); } \
+    catch (const Exception &e) { \
+        tst_PackageManager::startedSudoServer = false; \
+        tst_PackageManager::sudoServerError = e.errorString(); \
+    })
 
 #include "tst_packagemanager.moc"

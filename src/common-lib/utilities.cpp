@@ -451,6 +451,10 @@ void ensureSafePermissions(const QFileInfo &fi) noexcept(false)
 {
 #if defined(Q_OS_LINUX)
     if (fi.isNativePath()) {
+        // QFileInfo's other accessors follow symlinks, so reject the link itself first
+        if (fi.isSymLink())
+            throw Exception("%1 is a symbolic link").arg(fi.filePath());
+
         uid_t owner = fi.ownerId();
         gid_t group = fi.groupId();
         auto mode = fi.permissions();

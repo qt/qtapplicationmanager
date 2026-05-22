@@ -138,6 +138,10 @@ Main::Main(int &argc, char **argv, InitFlags initFlags)
     : MainBase(SharedMain::preConstructor(Main::preConstructor(argc, argv, initFlags)), argv)
     , SharedMain()
 {
+    // Now that QCoreApplication exists, finish setting up the sudo-helper
+    Sudo::startServer();
+    StartupTimer::instance()->checkpoint("after sudo server startup");
+
     static bool once = false;
     if (!once) {
         once = true;

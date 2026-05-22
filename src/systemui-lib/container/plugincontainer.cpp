@@ -8,6 +8,7 @@
 #include <application.h>
 #include "plugincontainer.h"
 #include "debugwrapper.h"
+#include "exception.h"
 #include "sudo.h"
 #include "unixsignalhandler.h"
 
@@ -193,11 +194,13 @@ void PluginContainerHelperFunctions::bindMountFileSystem(const QString &from, co
                                                          bool readOnly, quint64 namespacePid)
 {
     auto sudo = SudoClient::instance();
-    if (!sudo->isFallbackImplementation()) {
-        if (!sudo->bindMountFileSystem(from, to, readOnly, namespacePid))
-            throw std::runtime_error(qPrintable(sudo->lastError()));
-    } else {
+    if (sudo->isFallbackImplementation())
         throw std::runtime_error("Cannot call bindMountFileSystem without root privileges: make sure the sudo-helper is enabled.");
+
+    try {
+        sudo->bindMountFileSystem(from, to, readOnly, namespacePid);
+    } catch (const Exception &e) {
+        throw std::runtime_error(qPrintable(e.errorString()));
     }
 }
 

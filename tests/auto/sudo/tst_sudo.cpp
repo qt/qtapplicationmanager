@@ -85,6 +85,14 @@ int main(int argc, char **argv)
     }
 
     QCoreApplication a(argc, argv);
+
+    try {
+        Sudo::startServer();
+    } catch (const Exception &e) {
+        tst_Sudo::startedSudoServer = false;
+        tst_Sudo::sudoServerError = e.errorString();
+    }
+
     tstSudo = new tst_Sudo(&a);
 
 #ifdef Q_OS_LINUX
@@ -93,7 +101,8 @@ int main(int argc, char **argv)
         // we've crashed anyway at this point and the alternative is that we are
         // potentially leaking mounts.
 
-        tstSudo->~tst_Sudo();
+        if (tstSudo)
+            tstSudo->~tst_Sudo();
 
         if (sigNum != -1)
             exit(1);
@@ -104,7 +113,15 @@ int main(int argc, char **argv)
     signal(SIGINT, crashHandler);
 #endif // Q_OS_LINUX
 
-    return QTest::qExec(tstSudo, argc, argv);
+    int result = QTest::qExec(tstSudo, argc, argv);
+
+    // Tear down the test object while QCoreApplication is still alive: ~tst_Sudo calls IPC,
+    // and the global QThreadPool that QFuture::waitForFinished requires is deleted inside
+    // ~QCoreApplication before children get cleaned up.
+    delete tstSudo;
+    tstSudo = nullptr;
+
+    return result;
 }
 
 #include "tst_sudo.moc"

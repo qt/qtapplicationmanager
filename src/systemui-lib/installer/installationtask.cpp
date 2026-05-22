@@ -157,10 +157,12 @@ void InstallationTask::execute()
 
         m_extractor->setFileExtractedCallback([this](const QString &f) { checkExtractedFile(f); });
         m_extractor->setExtendedAttributeCallback([](const QString &f, QByteArrayView name, QByteArrayView value) {
-            if (!SudoClient::instance()->setExtendedAttribute(f, name.toByteArray(), value.toByteArray())) {
+            try {
+                SudoClient::instance()->setExtendedAttribute(f, name.toByteArray(), value.toByteArray());
+            } catch (const Exception &e) {
                 QByteArray who = SudoClient::instance()->isFallbackImplementation() ? "appman user" : "root";
                 throw Exception("could not set extended attribute '%1' on file '%2' as %3: %4")
-                        .arg(name).arg(f).arg(who).arg(SudoClient::instance()->lastError());
+                        .arg(name).arg(f).arg(who).arg(e.errorString());
             }
         });
 

@@ -883,8 +883,7 @@ QHash<QByteArray, Signature::CertificateRole> PackageManager::certificateRoles()
 void PackageManager::removeRecursive(const QString &path) noexcept(false)
 {
     if (d->useSudoForDirectoryRemoval) {
-        if (!SudoClient::instance()->removeRecursive(path))
-            throw Exception(SudoClient::instance()->lastError());
+        SudoClient::instance()->removeRecursive(path);
     } else {
         if (!recursiveOperation(path, safeRemove))
             throw Exception(errno, "could not recursively remove %1").arg(path);

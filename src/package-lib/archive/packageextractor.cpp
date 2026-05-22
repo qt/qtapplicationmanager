@@ -569,8 +569,6 @@ void PackageExtractorPrivate::download(const QUrl &url)
 
     connect(m_reply, &QNetworkReply::errorOccurred,
             this, &PackageExtractorPrivate::networkError);
-    connect(m_reply, &QNetworkReply::metaDataChanged,
-            this, &PackageExtractorPrivate::handleRedirect);
     connect(m_reply, &QNetworkReply::downloadProgress,
             this, &PackageExtractorPrivate::downloadProgressChanged);
 }
@@ -579,18 +577,6 @@ void PackageExtractorPrivate::networkError(QNetworkReply::NetworkError)
 {
     setError(Error::Network, qobject_cast<QNetworkReply *>(sender())->errorString());
     QMetaObject::invokeMethod(&m_loop, "quit", Qt::QueuedConnection);
-}
-
-void PackageExtractorPrivate::handleRedirect()
-{
-    int status = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if ((status >= 300) && (status < 400)) {
-        QUrl url = m_reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-        m_reply->disconnect();
-        m_reply->deleteLater();
-        QNetworkRequest request(url);
-        m_reply = m_nam->get(request);
-    }
 }
 
 void PackageExtractorPrivate::downloadProgressChanged(qint64 downloaded, qint64 total)

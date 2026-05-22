@@ -33,7 +33,6 @@ public:
 
 private Q_SLOTS:
     void networkError(QNetworkReply::NetworkError);
-    void handleRedirect();
     void downloadProgressChanged(qint64 downloaded, qint64 total);
 
 private:

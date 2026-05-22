@@ -138,12 +138,18 @@ struct OpenSslDeleter {
     { am_X509_STORE_free(x509Store); }
     inline void operator()(X509_STORE_CTX *x509StoreCtx)
     { am_X509_STORE_CTX_free(x509StoreCtx); }
-    inline void operator()(STACK_OF_GENERAL_NAME *stackOfGeneralName)
-    { am_OPENSSL_sk_pop_free(reinterpret_cast<OPENSSL_STACK *>(stackOfGeneralName),
-                               reinterpret_cast<void(*)(void *)>(am_GENERAL_NAME_free.functionPointer())); }
-    inline void operator()(STACK_OF_X509 *stackOfX509)
-    { am_OPENSSL_sk_pop_free(reinterpret_cast<OPENSSL_STACK *>(stackOfX509),
-                               reinterpret_cast<void(*)(void *)>(am_X509_free.functionPointer())); }
+    inline void operator()(STACK_OF_GENERAL_NAME *stackOfGeneralName) {
+         if (auto fp = am_GENERAL_NAME_free.functionPointer()) {
+             am_OPENSSL_sk_pop_free(reinterpret_cast<OPENSSL_STACK *>(stackOfGeneralName),
+                                    reinterpret_cast<void (*)(void *)>(fp));
+         }
+    }
+    inline void operator()(STACK_OF_X509 *stackOfX509) {
+        if (auto fp = am_X509_free.functionPointer()) {
+            am_OPENSSL_sk_pop_free(reinterpret_cast<OPENSSL_STACK *>(stackOfX509),
+                                   reinterpret_cast<void (*)(void *)>(fp));
+        }
+    }
     inline void operator()(char *memory)
     { am_CRYPTO_free(memory, __FILE__, __LINE__); }
     inline void operator()(unsigned char *memory)

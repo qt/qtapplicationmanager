@@ -109,17 +109,20 @@ QString Architecture::identify(const QString &fileName)
                                 const qint64 stringsOffset = elfValue(sectionHeaders, sectionSize * stringSectionIndex, 4, 0x10, 8, 0x18); // sh_offset
                                 const qint64 stringsSize   = elfValue(sectionHeaders, sectionSize * stringSectionIndex, 4, 0x14, 8, 0x20); // sh_size
 
-                                f.seek(stringsOffset);
-                                const QByteArray strings = f.read(stringsSize);
-                                if (strings.size() == stringsSize) {
-                                    for (int i = 0; i < sectionCount; ++i) {
-                                        const qint64 name = elfValue(sectionHeaders, i * sectionSize, 4, 0x00, 4, 0x00); // sh_name
-                                        const qint64 type = elfValue(sectionHeaders, i * sectionSize, 4, 0x04, 4, 0x04); // sh_type
+                                // shstrtab is normally a few KB; bound the read and reject negative values
+                                if ((stringsOffset >= 0) && (stringsSize >= 0) && (stringsSize <= 1024 * 1024)
+                                        && f.seek(stringsOffset)) {
+                                    const QByteArray strings = f.read(stringsSize);
+                                    if (strings.size() == stringsSize) {
+                                        for (int i = 0; i < sectionCount; ++i) {
+                                            const qint64 name = elfValue(sectionHeaders, i * sectionSize, 4, 0x00, 4, 0x00); // sh_name
+                                            const qint64 type = elfValue(sectionHeaders, i * sectionSize, 4, 0x04, 4, 0x04); // sh_type
 
-                                        if ((type == 0x07 /*SHT_NOTE*/) && (name < strings.size())
-                                                && QByteArray(strings.constData() + name).startsWith(".note.android")) {
-                                            os = u"android"_s;
-                                            break;
+                                            if ((type == 0x07 /*SHT_NOTE*/) && (name < strings.size())
+                                                    && QByteArray(strings.constData() + name).startsWith(".note.android")) {
+                                                os = u"android"_s;
+                                                break;
+                                            }
                                         }
                                     }
                                 }

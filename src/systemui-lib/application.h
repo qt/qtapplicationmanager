@@ -47,6 +47,7 @@ class Q_APPMANSYSTEMUI_EXPORT Application : public QObject
     Q_PROPERTY(QStringList supportedMimeTypes READ supportedMimeTypes CONSTANT FINAL)
     Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT FINAL)
     Q_PROPERTY(QtAM::AbstractRuntime *runtime READ currentRuntime NOTIFY runtimeChanged FINAL)
+    Q_PROPERTY(QString securityToken READ securityToken NOTIFY runtimeChanged FINAL)
     Q_PROPERTY(int lastExitCode READ lastExitCode NOTIFY lastExitCodeChanged FINAL)
     Q_PROPERTY(QtAM::Am::ExitStatus lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged FINAL)
     Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange FINAL)
@@ -111,6 +112,7 @@ public:
     // Properties present only in Application (not coming from ApplicationInfo)
 
     AbstractRuntime *currentRuntime() const { return m_runtime; }
+    QString securityToken() const;
     State state() const;
     qreal progress() const;
     Am::RunState runState() const { return m_runState; }

@@ -326,7 +326,8 @@ enum AMRoles
     ApplicationObject, // needed to keep the roles similar to PackageManager
 
     LastExitCode,
-    LastExitStatus
+    LastExitStatus,
+    SecurityToken
 };
 
 QT_BEGIN_NAMESPACE_AM
@@ -356,6 +357,7 @@ ApplicationManagerPrivate::ApplicationManagerPrivate()
     roleNames.insert(AMRoles::ApplicationObject, "applicationObject");
     roleNames.insert(AMRoles::LastExitCode, "lastExitCode");
     roleNames.insert(AMRoles::LastExitStatus, "lastExitStatus");
+    roleNames.insert(AMRoles::SecurityToken, "securityToken");
 }
 
 ApplicationManagerPrivate::~ApplicationManagerPrivate()
@@ -1342,6 +1344,8 @@ QVariant ApplicationManager::dataForRole(Application *app, int role) const
         return app->lastExitCode();
     case AMRoles::LastExitStatus:
         return app->lastExitStatus();
+    case AMRoles::SecurityToken:
+        return app->securityToken();
     }
     return { };
 }
@@ -1499,6 +1503,10 @@ void ApplicationManager::addApplication(ApplicationInfo *appInfo, Package *packa
         stopApplication(app->id(), forceKill);
     };
 
+    connect(app, &Application::runtimeChanged,
+            this, [this, app]() {
+        emitDataChanged(app, QVector<int> { AMRoles::SecurityToken });
+    });
     connect(app, &Application::blockedChanged,
             this, [this, app]() {
         emitDataChanged(app, QVector<int> { AMRoles::IsBlocked });

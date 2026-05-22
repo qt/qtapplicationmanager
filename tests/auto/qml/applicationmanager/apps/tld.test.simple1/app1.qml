@@ -96,7 +96,8 @@ ApplicationManagerWindow {
                 "applicationProperties": ApplicationInterface.applicationProperties,
                 "icon": ApplicationInterface.icon,
                 "systemProperties": ApplicationInterface.systemProperties,
-                "version": ApplicationInterface.version
+                "version": ApplicationInterface.version,
+                "securityToken": ApplicationInterface.securityToken
             }
             req.sendReply(reply)
         }

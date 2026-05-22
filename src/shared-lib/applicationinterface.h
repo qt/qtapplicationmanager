@@ -30,6 +30,7 @@ class Q_APPMANSHARED_EXPORT ApplicationInterface : public QObject
     Q_PROPERTY(QVariantMap systemProperties READ systemProperties CONSTANT SCRIPTABLE true FINAL)
     Q_PROPERTY(QVariantMap applicationProperties READ applicationProperties CONSTANT SCRIPTABLE true FINAL)
     Q_PROPERTY(QVariantMap extraDirs READ extraDirs CONSTANT FINAL)
+    Q_PROPERTY(QString securityToken READ securityToken CONSTANT FINAL)
     QML_ATTACHED(QtAM::ApplicationInterface)
 
 public:
@@ -46,6 +47,7 @@ public:
     QVariantMap systemProperties() const;
     QVariantMap applicationProperties() const;
     QVariantMap extraDirs() const;
+    QString securityToken() const;
 
     Q_INVOKABLE QtAM::Notification *createNotification();
     Q_INVOKABLE void acknowledgeQuit();

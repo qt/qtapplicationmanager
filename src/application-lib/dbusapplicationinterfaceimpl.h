@@ -30,6 +30,7 @@ public:
     QVariantMap systemProperties() const override;
     QVariantMap applicationProperties() const override;
     QVariantMap extraDirs() const override;
+    QString securityToken() const override;
     void acknowledgeQuit() override;
 
 private:

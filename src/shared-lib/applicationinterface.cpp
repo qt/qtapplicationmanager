@@ -120,6 +120,16 @@ QT_BEGIN_NAMESPACE_AM
 */
 
 /*!
+    \qmlproperty string ApplicationInterface::securityToken
+    \readonly
+
+    Returns the security token of the running application instance as a hex-encoded string.
+    This token is unique per application launch and can be used to identify this specific
+    instance. The system UI can look up an application by its token via
+    ApplicationManager::fromSecurityToken().
+*/
+
+/*!
     \qmlmethod Notification ApplicationInterface::createNotification()
 
     Calling this function lets you create a \l Notification object dynamically at runtime.
@@ -216,6 +226,11 @@ QVariantMap ApplicationInterface::applicationProperties() const
 QVariantMap ApplicationInterface::extraDirs() const
 {
     return m_impl ? m_impl->extraDirs() : QVariantMap { };
+}
+
+QString ApplicationInterface::securityToken() const
+{
+    return m_impl ? m_impl->securityToken() : QString { };
 }
 
 Notification *ApplicationInterface::createNotification()

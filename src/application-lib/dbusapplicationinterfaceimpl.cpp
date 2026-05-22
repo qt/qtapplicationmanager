@@ -83,4 +83,9 @@ QVariantMap DBusApplicationInterfaceImpl::extraDirs() const
     return m_applicationMain->applicationExtraDirs();
 }
 
+QString DBusApplicationInterfaceImpl::securityToken() const
+{
+    return QString::fromLatin1(m_applicationMain->securityToken().toHex());
+}
+
 QT_END_NAMESPACE_AM

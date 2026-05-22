@@ -282,6 +282,7 @@ void tst_ControllerTool::applications()
             { u"runtimeParameters"_s, QVariantMap { } },
             { u"updateProgress"_s, 0 },
             { u"version"_s, u"1.2.3"_s },
+            { u"securityToken"_s, u""_s },
         });
         QCOMPARE(vm, expected);
     }

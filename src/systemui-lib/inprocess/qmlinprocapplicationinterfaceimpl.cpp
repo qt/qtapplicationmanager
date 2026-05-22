@@ -92,6 +92,11 @@ QVariantMap QmlInProcApplicationInterfaceImpl::extraDirs() const
     return result;
 }
 
+QString QmlInProcApplicationInterfaceImpl::securityToken() const
+{
+    return m_runtime ? QString::fromLatin1(m_runtime->securityToken().toHex()) : QString { };
+}
+
 void QmlInProcApplicationInterfaceImpl::acknowledgeQuit()
 {
     if (m_runtime)

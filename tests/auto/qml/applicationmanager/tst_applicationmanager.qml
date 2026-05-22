@@ -130,6 +130,7 @@ TestCase {
         compare(simpleApplication.lastExitCode, 0)
         compare(simpleApplication.lastExitStatus, Am.NormalExit)
         compare(simpleApplication.version, "1.0")
+        compare(simpleApplication.securityToken, "")
 
         // Test the name getter and verify that it's returning the same object
         compare(simpleApplication, ApplicationManager.application(id))
@@ -182,6 +183,7 @@ TestCase {
         verify(listView.currentItem.modelData.codeFilePath.indexOf("apps/tld.test.simple1/app1.qml") !== -1)
         compare(listView.currentItem.modelData.capabilities, simpleApplication.capabilities)
         compare(listView.currentItem.modelData.version, "1.0")
+        compare(listView.currentItem.modelData.securityToken, "")
     }
 
     function test_applicationModel() {
@@ -479,6 +481,7 @@ TestCase {
         let req = IntentClient.sendIntentRequest("applicationInterfaceProperties", simpleApplication.id, { })
         verify(req)
         tryVerify(() => { return req.succeeded }, 5000 * AmTest.timeoutFactor)
+        verify(simpleApplication.securityToken !== "")
         const ai = {
             "applicationId": simpleApplication.id,
             "applicationProperties": {
@@ -501,7 +504,8 @@ TestCase {
                 "pubandpri": "pub3",
                 "pubandpro": "pro2"
             },
-            "version": simpleApplication.version
+            "version": simpleApplication.version,
+            "securityToken": simpleApplication.securityToken
         }
 
         compare(req.result, ai)

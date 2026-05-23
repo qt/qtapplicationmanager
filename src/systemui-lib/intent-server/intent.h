@@ -7,6 +7,8 @@
 #define INTENT_H
 
 #include <QtCore/QObject>
+#include <QtCore/QHash>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
 #include <QtCore/QStringList>
@@ -75,6 +77,8 @@ private:
     Visibility m_visibility = Public;
     QStringList m_requiredCapabilities;
     QVariantMap m_parameterMatch;
+    // Precompiled regexes for the QString-typed entries in m_parameterMatch
+    QHash<QString, QRegularExpression> m_parameterMatchRegexps;
 
     QString m_packageId;
     QString m_applicationId;

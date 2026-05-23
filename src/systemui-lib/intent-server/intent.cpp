@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include "intent.h"
+#include "logging.h"
 #include "utilities.h"
 
 #include <QRegularExpression>
@@ -75,7 +76,8 @@ QT_BEGIN_NAMESPACE_AM
     \list
     \li a field missing from \c parameterMatch is ignored.
     \li a field of type \c string specified in \c parameterMatch is matched as a regular
-        expressions against the corresponding parameter value.
+        expression against the corresponding parameter value. The pattern is implicitly
+        fully anchored - i.e. it must match the entire parameter value, not a substring.
     \li for fields of type \c list specified in \c parameterMatch, the corresponding parameter value
         has to match any of the values in the list (using QVariant compare).
     \li any other fields in \c parameterMatch are compared as QVariants to the corresponding
@@ -85,7 +87,13 @@ QT_BEGIN_NAMESPACE_AM
     One example would be an \c open-mime-type intent that is implemented by many applications: there
     would be a \c mimeType parameter and each application could limit the requests it wants to
     receive by setting a parameterMatch on this \c mimeType parameter, e.g.
-    \c{{ mimeType: "^image/.*\.png$" }}
+    \c{{ mimeType: "image/.*\\.png" }}
+
+    \note Since version 6.12, regex patterns in \c parameterMatch are implicitly fully anchored.
+          Before this change, a pattern like \c "image/.*" would also match strings containing the
+          pattern as a substring (e.g. \c "xyz-image/abc"). Existing patterns that already used
+          \c{^} and \c{$} continue to work unchanged. If your pattern relied on substring matching,
+          add explicit \c{.*} wildcards at the start and/or end.
 */
 /*!
     \qmlproperty url IntentObject::icon
@@ -173,6 +181,22 @@ Intent::Intent(const QString &id, const QString &packageId, const QString &appli
     , m_icon(icon)
     , m_handleOnlyWhenRunning(handleOnlyWhenRunning)
 {
+    // Precompile parameterMatch regexes once at construction. Wrap with \A...\z so each
+    // pattern is fully anchored.
+    // Invalid patterns are dropped from the cache with a warning; the corresponding
+    // parameter will then never match.
+    for (auto it = m_parameterMatch.cbegin(); it != m_parameterMatch.cend(); ++it) {
+        if (it.value().metaType().id() != QMetaType::QString)
+            continue;
+        QRegularExpression re(u"\\A(?:" + it.value().toString() + u")\\z");
+        if (!re.isValid()) {
+            qCWarning(LogIntentServer) << "Invalid parameterMatch regex for intent" << m_intentId
+                                       << "parameter" << it.key() << ":" << re.errorString();
+            continue;
+        }
+        re.optimize();
+        m_parameterMatchRegexps.insert(it.key(), std::move(re));
+    }
 }
 
 Intent *Intent::copy() const
@@ -225,9 +249,10 @@ bool Intent::checkParameterMatch(const QVariantMap &parameters) const
 
         switch (requiredValue.metaType().id()) {
         case QMetaType::QString: {
-            QRegularExpression regexp(requiredValue.toString());
-            auto match = regexp.match(actualValue.toString());
-            if (!match.hasMatch())
+            auto rxit = m_parameterMatchRegexps.constFind(paramName);
+            if (rxit == m_parameterMatchRegexps.cend())
+                return false;  // pattern was invalid at construction
+            if (!rxit.value().match(actualValue.toString()).hasMatch())
                 return false;
             break;
         }

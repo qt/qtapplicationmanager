@@ -18,7 +18,7 @@ class Q_APPMANSYSTEMUI_EXPORT ScopedDirectoryCreator
 {
 public:
     ScopedDirectoryCreator() = default;
-    bool create(const QString &path, bool removeExisting = true);
+    bool create(const QString &path);
     bool take();
     bool destroy();
     ~ScopedDirectoryCreator();

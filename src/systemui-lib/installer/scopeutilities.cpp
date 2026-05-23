@@ -12,23 +12,18 @@ using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-bool ScopedDirectoryCreator::create(const QString &path, bool removeExisting)
+bool ScopedDirectoryCreator::create(const QString &path)
 {
     m_path = path;
     QFileInfo fi(m_path);
 
     if (fi.exists() && fi.isDir()) {
-        if (!removeExisting) {
-            return m_created = true;
-        } else {
-            try {
-                PackageManager::instance()->removeRecursive(m_path);
-            } catch (...) {
-                return false;
-            }
+        try {
+            PackageManager::instance()->removeRecursive(m_path);
+        } catch (...) {
+            return false;
         }
     }
-    //qWarning() << "CREATE" << path << fi.absolutePath() << fi.fileName();
     return m_created = QDir::root().mkpath(path);
 }
 

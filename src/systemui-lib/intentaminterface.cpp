@@ -327,8 +327,9 @@ void IntentServerIpcConnection::setReady(Application *application)
         return;
     m_application = application;
     m_ready = true;
-    emit applicationIsReady((isInProcess() && !application) ? IntentClient::instance()->systemUiId()
-                                                            : application->id());
+
+    Q_ASSERT(application || isInProcess());
+    emit applicationIsReady(application ? application->id() : IntentClient::instance()->systemUiId());
 }
 
 IntentServerIpcConnection *IntentServerIpcConnection::find(const QString &appId)

@@ -1037,7 +1037,7 @@ bool ApplicationManager::openUrl(const QString &urlStr)
         QMetaObject::invokeMethod(this, [urlStr, this]() { openUrl(urlStr); }, Qt::QueuedConnection);
         return true; // this is not correct, but the best we can do in this situation
     }
-    recursionGuard = true;
+    QScopedValueRollback<bool> guard(recursionGuard, true);
 
     QUrl url(urlStr);
     QString mimeTypeName;
@@ -1081,7 +1081,6 @@ bool ApplicationManager::openUrl(const QString &urlStr)
         }
     }
 
-    recursionGuard = false;
     return !apps.isEmpty();
 }
 

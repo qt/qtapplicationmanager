@@ -139,6 +139,40 @@ Q_AUTOTEST_EXPORT void setTestRootPathPrefix(const QString &path);
 Q_APPMANCOMMON_EXPORT QString testRootPathPrefix();
 #endif
 
+class Q_APPMANCOMMON_EXPORT unique_fd
+{
+public:
+    unique_fd() = default;
+    unique_fd(int fd) : m_fd(fd) { }
+    unique_fd(const unique_fd &) = delete;
+    unique_fd(unique_fd &&mv) { reset(mv.release()); }
+    ~unique_fd() { reset(); }
+    int get() const { return m_fd; }
+    int release() { return m_fd.fetchAndStoreOrdered(-1); }
+    void reset(int newFd = -1)
+    {
+        int oldFd = m_fd.fetchAndStoreOrdered(newFd);
+        if ((oldFd >= 0) && (oldFd != newFd))
+            closeImpl(oldFd);
+    }
+
+    explicit operator bool() const { return m_fd != -1; }
+    explicit operator int() const { return m_fd; }
+    int operator *() const { return m_fd; }
+
+    unique_fd &operator=(const unique_fd &) = delete;
+    unique_fd &operator=(unique_fd &&mv)
+    {
+        reset(mv.release());
+        return *this;
+    }
+
+private:
+    QBasicAtomicInt m_fd = -1;
+
+    static void closeImpl(int fd);
+};
+
 QT_END_NAMESPACE_AM
 
 #endif // UTILITIES_H

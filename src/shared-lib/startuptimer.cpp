@@ -7,6 +7,7 @@
 #include "console.h"
 #include "colorprint.h"
 #include "logging.h"
+#include "utilities.h"
 
 #if defined(Q_OS_WIN)
 #  include <windows.h>
@@ -189,10 +190,10 @@ StartupTimer::StartupTimer()
         void *result = nullptr;
 
         QByteArray file = "/proc/self/task/" + QByteArray::number(static_cast<int>(syscall(SYS_gettid))) + "/stat";
-        int fd = QT_OPEN(file.constData(), O_RDONLY);
-        if (fd >= 0) {
+        unique_fd fd { QT_OPEN(file.constData(), O_RDONLY) };
+        if (fd) {
             std::array<char, 1024> buffer;
-            ssize_t bytesRead = QT_READ(fd, buffer.data(), buffer.size() - 1);
+            ssize_t bytesRead = QT_READ(fd.get(), buffer.data(), buffer.size() - 1);
             if (bytesRead > 0) {
                 buffer[bytesRead] = 0;
                 for (int field = 0, pos = 0; pos < bytesRead; ) {
@@ -207,7 +208,6 @@ StartupTimer::StartupTimer()
                     }
                 }
             }
-            QT_CLOSE(fd);
         }
         return result;
     };
@@ -239,17 +239,16 @@ StartupTimer::StartupTimer()
 
     // Checking the system up time
     if (m_initialized) {
-        int fd = QT_OPEN("/proc/uptime", O_RDONLY);
-        if (fd >= 0) {
+        unique_fd fd { QT_OPEN("/proc/uptime", O_RDONLY) };
+        if (fd) {
             std::array<char, 32> buffer;
-            ssize_t bytesRead = QT_READ(fd, buffer.data(), buffer.size() - 1);
+            ssize_t bytesRead = QT_READ(fd.get(), buffer.data(), buffer.size() - 1);
             if (bytesRead > 0) {
                 buffer[bytesRead] = 0;
                 const QByteArrayView fieldView { buffer.data(), bytesRead };
                 auto uptime = fieldView.mid(0, fieldView.indexOf(' ')).toDouble();
                 m_systemUpTime = quint64(uptime * 1000);
             }
-            QT_CLOSE(fd);
         }
     }
 

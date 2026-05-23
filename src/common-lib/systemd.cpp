@@ -44,10 +44,7 @@ Systemd *Systemd::instance()
 }
 
 Systemd::~Systemd()
-{
-    if (m_notifySocketFd != -1)
-        QT_CLOSE(m_notifySocketFd);
-}
+{ }
 
 Systemd::Systemd()
 {
@@ -89,7 +86,7 @@ bool Systemd::notify(const QString &state)
             throw Exception("empty notify messages are not allowed");
 
         // connect lazily, keep the connection open, but only try to connect once
-        if (m_notifySocketFd == -1) {
+        if (!m_notifySocketFd) {
             if (m_notifySocketTriedToConnect)
                 return false;
             m_notifySocketTriedToConnect = true;
@@ -122,13 +119,13 @@ bool Systemd::notify(const QString &state)
                 ::close(fd);
                 throw Exception(errno, "cannot connect to socket at %1").arg(socketPath);
             }
-            m_notifySocketFd = fd;
+            m_notifySocketFd.reset(fd);
 #else
             Q_ASSERT(false);
 #endif
         }
 
-        if (QT_WRITE(m_notifySocketFd, stateStr.constData(), stateStr.size()) != stateStr.size())
+        if (QT_WRITE(m_notifySocketFd.get(), stateStr.constData(), stateStr.size()) != stateStr.size())
             throw Exception(errno, "failed to send notify string");
 
         return true;

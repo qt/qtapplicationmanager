@@ -223,6 +223,14 @@ bool ProcessContainer::setControlGroup(const QString &groupName)
             if (s_hasCGroupV2 != (resource == u"v2"))
                 continue;
 
+            // cgroup-v2 nested groups use '/', but '..' or a leading '/' would escape /sys/fs/cgroup/
+            if (s_hasCGroupV2) {
+                if (userclass.startsWith(u'/') || userclass.split(u'/').contains(u".."_s)) {
+                    qCWarning(LogSystem) << "Refusing to set cgroup with invalid name:" << userclass;
+                    return false;
+                }
+            }
+
             //qWarning() << "Setting cgroup for" << m_program << ", pid" << m_process->processId() << ":" << resource << "->" << userclass;
 
             QString file = s_hasCGroupV1 ? u"/sys/fs/cgroup/%1/%2/cgroup.procs"_s.arg(resource, userclass)

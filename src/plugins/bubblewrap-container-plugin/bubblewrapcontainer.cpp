@@ -383,6 +383,12 @@ bool BubblewrapContainer::setControlGroup(const QString &groupName)
     if (groupName == m_currentControlGroup)
         return true;
 
+    // cgroup-v2 nested groups use '/', but '..' or a leading '/' would escape /sys/fs/cgroup/
+    if (groupName.startsWith(u'/') || groupName.split(u'/').contains(u".."_s)) {
+        qCWarning(lcBwrap) << "Refusing to set cgroup with invalid name:" << groupName;
+        return false;
+    }
+
     //qCWarning(lcBwrap) << "Setting cgroup for" << m_program << ", pid" << m_process->processId() << ":" << "->" << groupName;
 
     QString file = u"/sys/fs/cgroup/%1/cgroup.procs"_s.arg(groupName);
@@ -394,7 +400,8 @@ bool BubblewrapContainer::setControlGroup(const QString &groupName)
         ok = ok && (f.write(pidString) == pidString.size());
 
         if (!ok) {
-            qCWarning(lcBwrap) << "Failed setting cgroup for" << m_program << ", pid" << pid << "->" << groupName;
+            qCWarning(lcBwrap) << "Failed setting cgroup for" << m_program << ", pid"
+                               << pid << "to" << groupName;
             return false;
         }
         f.close();

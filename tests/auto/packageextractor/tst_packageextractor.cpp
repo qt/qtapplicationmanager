@@ -232,8 +232,8 @@ public:
     void run() override
     {
 #ifdef Q_OS_UNIX
-        int fifoFd = QT_OPEN(m_fifoPath.constData(), O_WRONLY);
-        QVERIFY2(fifoFd >= 0, ::strerror(errno));
+        unique_fd fifoFd { QT_OPEN(m_fifoPath.constData(), O_WRONLY) };
+        QVERIFY2(fifoFd, ::strerror(errno));
 
         QByteArray buffer;
         buffer.resize(1024 * 1024);
@@ -241,10 +241,9 @@ public:
         while (!m_file.atEnd()) {
             qint64 bytesRead = m_file.read(buffer.data(), buffer.size());
             QVERIFY(bytesRead >= 0);
-            qint64 bytesWritten = QT_WRITE(fifoFd, buffer.constData(), size_t(bytesRead));
+            qint64 bytesWritten = QT_WRITE(fifoFd.get(), buffer.constData(), size_t(bytesRead));
             QCOMPARE(bytesRead, bytesWritten);
         }
-        QT_CLOSE(fifoFd);
 #endif
     }
 

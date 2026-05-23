@@ -502,4 +502,9 @@ QString testRootPathPrefix()
 }
 #endif
 
+void unique_fd::closeImpl(int fd)
+{
+    QT_CLOSE(fd);
+}
+
 QT_END_NAMESPACE_AM

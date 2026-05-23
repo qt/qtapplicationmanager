@@ -11,6 +11,7 @@
 #include <QtCore/QMap>
 #include <QtCore/QReadWriteLock>
 #include <QtAppManCommon/qtappmancommonglobal.h>
+#include <QtAppManCommon/utilities.h>
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -51,7 +52,7 @@ private:
     QByteArray m_listenPid;
     QByteArray m_journalStream;
 
-    int m_notifySocketFd = -1;
+    unique_fd m_notifySocketFd;
     bool m_notifySocketTriedToConnect = false;
 
     QReadWriteLock m_extraJournalFieldsLock;

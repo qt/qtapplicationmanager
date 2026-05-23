@@ -9,6 +9,7 @@
 #  include <sys/statvfs.h>
 #  include <sys/mount.h>
 #elif defined(Q_OS_LINUX)
+#  include "utilities.h"
 #  include <mntent.h>
 #endif
 #include <qplatformdefs.h>
@@ -27,9 +28,9 @@ public:
         if (s_mountTabFile.isEmpty()) {
             s_mountTabFile = "/proc/self/mounts";
 
-            m_procMountsFd = QT_OPEN(s_mountTabFile.constData(), O_RDONLY);
-            if (m_procMountsFd >= 0) {
-                m_procMountsNotifier = new QSocketNotifier(m_procMountsFd, QSocketNotifier::Exception);
+            m_procMountsFd.reset(QT_OPEN(s_mountTabFile.constData(), O_RDONLY));
+            if (m_procMountsFd) {
+                m_procMountsNotifier = new QSocketNotifier(m_procMountsFd.get(), QSocketNotifier::Exception);
                 QObject::connect(m_procMountsNotifier, &QSocketNotifier::activated,
                                  m_procMountsNotifier, [this]() { mountsChanged(); });
             }
@@ -45,8 +46,6 @@ public:
     {
         delete m_autoTestMountTabWatcher;
         delete m_procMountsNotifier;
-        if (m_procMountsFd >= 0)
-            QT_CLOSE(m_procMountsFd);
     }
 
     bool add(FileSystemMountWatcher *watcher, const QString &mountPoint)
@@ -146,7 +145,9 @@ private:
 
     static QByteArray s_mountTabFile;
 
-    int m_procMountsFd = -1;
+#if defined(Q_OS_LINUX)
+    unique_fd m_procMountsFd;
+#endif
     QSocketNotifier *m_procMountsNotifier = nullptr;
     QFileSystemWatcher *m_autoTestMountTabWatcher = nullptr;
     QMultiMap<QString, FileSystemMountWatcher *> m_mountPoints;

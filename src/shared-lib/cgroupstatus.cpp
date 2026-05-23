@@ -215,6 +215,12 @@ void CGroupStatusPrivate::setControlGroup(const QString &path)
     if (path == m_path)
         return;
 
+    // cgroup-v2 nested groups use '/', but '..' or a leading '/' would escape /sys/fs/cgroup/
+    if (path.startsWith(u'/') || path.split(u'/').contains(u".."_s)) {
+        qCWarning(LogSystem) << "Refusing to set cgroup with invalid path:" << path;
+        return;
+    }
+
     m_memoryCurrentFile.close();
     m_cpuStatFile.close();
     m_lastCpuUsageUsec = 0u;

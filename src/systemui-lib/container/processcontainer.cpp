@@ -201,6 +201,12 @@ bool ProcessContainer::setControlGroup(const QString &groupName)
     if (groupName == m_currentControlGroup)
         return true;
 
+    // cgroup-v2 nested groups use '/', but '..' or a leading '/' would escape /sys/fs/cgroup/
+    if (groupName.startsWith(u'/') || groupName.split(u'/').contains(u".."_s)) {
+        qCWarning(LogSystem) << "Refusing to set cgroup with invalid name:" << groupName;
+        return false;
+    }
+
     const QByteArray pidString = QByteArray::number(m_process->processId()) + '\n';
 
     QString procsFile = u"/sys/fs/cgroup/%1/cgroup.procs"_s.arg(groupName);
@@ -209,8 +215,8 @@ bool ProcessContainer::setControlGroup(const QString &groupName)
     ok = ok && (f.write(pidString) == pidString.size());
 
     if (!ok) {
-        qWarning() << "Failed setting cgroup for" << m_program << ", pid" << m_process->processId()
-                   << "to" << groupName;
+        qCWarning(LogSystem) << "Failed setting cgroup for" << m_program << ", pid"
+                             << m_process->processId() << "to" << groupName;
         return false;
     }
 

@@ -1,7 +1,6 @@
 // Copyright (C) 2025 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include "dbuspolicy.h"
 #include "dbuscontextadaptor.h"
 #include "applicationmanager.h"
 #include "packagemanager.h"
@@ -15,6 +14,8 @@ namespace DBusAdaptorChecks {
 void checkDBusAccessPrivate(const QDBusAbstractAdaptor *a, const char *function,
                             bool certificateNeeded)
 {
+    Q_UNUSED(function)
+
     if (isDevelopmentModeBus(a)) {
         switch (PackageManager::instance()->developmentMode()) {
         default:
@@ -33,14 +34,9 @@ void checkDBusAccessPrivate(const QDBusAbstractAdaptor *a, const char *function,
             }
             break;
         }
-    } else {
-        try {
-            DBusPolicy::instance()->check(a, function);
-        } catch (const Exception &e) {
-            throw Exception("Function %1 is not accessible: %2")
-                .arg(QString::fromLatin1(function)).arg(e.errorString());
-        }
     }
+    // On the production session/system bus, access control is the dbus-daemon's job:
+    // configure <policy> directives in its config file.
 }
 
 void checkInstallerPrivate(const QDBusAbstractAdaptor *)

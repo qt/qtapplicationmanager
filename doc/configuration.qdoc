@@ -218,9 +218,9 @@ ui:
     \row
         \li [\c dbus]
         \li map<object>
-        \li Allows for more fine-grained control over D-Bus registrations and function call
-            policies. Every key in this map corresponds to the D-Bus interface name you want to
-            configure, while the value is \l{D-Bus specification} object.
+        \li Selects on which D-Bus an interface is registered. Every key in this map corresponds to
+            the D-Bus interface name you want to configure, while the value is a
+            \l{D-Bus specification} object.
     \row
         \li \b --fullscreen
             \br [\c ui/fullscreen]
@@ -563,8 +563,7 @@ ui:
 
 \section1 D-Bus Specification
 
-These YAML objects describe both, which D-Bus interfaces are registered on, as well as access
-policies.
+These YAML objects describe on which D-Bus an interface is registered.
 
 \table
 \header
@@ -576,33 +575,18 @@ policies.
     \li string
     \li Registers the interface on the specified D-Bus: can be either \c session, \c system,
         \c none, \c ~ (for no registration at all), or a full D-Bus bus specification string.
-\row
-    \li \c policy
-    \li map<object>
-    \li These optional access policies can be used instead of or in addition to the standard D-Bus
-        policy configuration. The keys into this map are the undecorated D-Bus function names, such
-        as \c startApplication. When a key is specified, the corresponding function's access policy
-        is \c deny, until you add \c allow criteria -- all of which are AND-ed together.
-        Due to the way D-Bus properties are implemented, these policy only apply to methods, but
-        not to property getters and setters.
 \endtable
 
-The code snippet below shows a simple example, that only allows applications with the \c appstore
-capability, running with user ID \c 1000 to call the installer's \c startPackageInstallation
-function, while preventing anyone to remotely call \c acknowledgePackageInstallation:
+\note Versions before 6.12 also supported a \c policy sub-key that allowed you to gate individual
+      method calls based on the caller's UID, executable path, or application capabilities. That
+      mechanism has been removed due to architectural security flaws.
 
-\badcode
-...
-dbus:
-  io.qt.PackageManager:
-    register: 'session'
-    policy:
-      startPackageInstallation:
-        uids: [ 1000 ]
-        capabilities: [ 'appstore' ]
-      acknowledgePackageInstallation: null
-...
-\endcode
+\list
+    \li For UID- and method-based access control, use standard \c{<policy>} directives in the
+        \l{dbus-daemon} configuration.
+    \li For exposing privileged application-manager operations to applications via a capability
+        check, see \l{Calling Privileged System Operations}.
+\endlist
 
 Only the public D-Bus interfaces of the application manager can be configured this way. The names
 of these available interfaces are as follows:

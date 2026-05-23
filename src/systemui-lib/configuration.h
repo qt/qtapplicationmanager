@@ -70,7 +70,6 @@ struct Q_APPMANSYSTEMUI_EXPORT ConfigurationData
     } installer;
 
     struct {
-        QVariantMap policies;
         QVariantMap registrations;
     } dbus;
 

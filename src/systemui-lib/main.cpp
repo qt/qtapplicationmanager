@@ -15,7 +15,6 @@
 #  include <QDBusConnection>
 #  include <QDBusAbstractAdaptor>
 #  include <QDBusServer>
-#  include "dbuspolicy.h"
 #  include "dbuscontextadaptor.h"
 #  include "applicationmanager_adaptor.h"
 #  include "packagemanager_adaptor.h"
@@ -184,9 +183,6 @@ Main::~Main()
     delete ContainerFactory::instance();
     delete StartupTimer::instance();
 
-#if defined(QT_DBUS_LIB)
-    delete DBusPolicy::instance();
-#endif
 }
 
 /*! \internal
@@ -934,10 +930,6 @@ void Main::showWindow()
 void Main::setupDBus(const Configuration *cfg)
 {
 #if defined(QT_DBUS_LIB)
-    // Initialize the policy checker
-    DBusPolicy::createInstance([](qint64 pid) { return ApplicationManager::instance()->identifyAllApplications(pid); },
-                               [](const QString &appId) { return ApplicationManager::instance()->capabilities(appId); });
-
     // Don't repeat yourself: we already have the interface name in the class infos
     static auto interfaceNameForAdaptor = [](const QMetaObject *mobj) -> QString {
         const int idx = mobj->indexOfClassInfo("D-Bus Interface");
@@ -1077,10 +1069,6 @@ void Main::setupDBus(const Configuration *cfg)
             }
 
             qCDebug(LogDBus).nospace().noquote() << " * " << serviceName << path << " [on bus: " << dbusName << "]";
-
-            auto policy = cfg->yaml.dbus.policies.value(interfaceName).toMap();
-            if (!DBusPolicy::instance()->add(generatedAdaptor, policy))
-                throw Exception(Error::DBus, "could not set D-Bus policy for %1").arg(interfaceName);
         }
     }
     if (first)

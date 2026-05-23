@@ -144,4 +144,39 @@ Load the module library file instead of the application's QML file in the info.y
 
 See the \l {Application Features Example} for a complete example of a builtin package and
 the \l {Package Installation Example} for a complete example of an installable package.
+
+\section1 Calling Privileged System Operations
+
+Some application-manager APIs - for example installing or removing packages via PackageManager -
+are reachable only from the System UI by design. If your application needs to invoke such an
+operation (a classic case is an app-store app that triggers package installations), the
+recommended pattern is to have the System UI expose an intent that wraps the operation, and have
+your application send an intent request:
+
+\badcode
+// in the System UI
+IntentServerHandler {
+    intentIds: [ "io.qt.appman.install-package" ]
+    requiredCapabilities: [ "install-packages" ]
+    visibility: IntentObject.Public
+    onRequestReceived: (req) => {
+        const taskId = PackageManager.startPackageInstallation(req.parameters.url)
+        req.sendReply({ taskId: taskId })
+    }
+}
+\endcode
+
+The calling application then sends an intent request rather than calling the API directly:
+
+\badcode
+IntentClient.sendIntentRequest("io.qt.appman.install-package", { url: packageUrl })
+\endcode
+
+The \c requiredCapabilities entry on the IntentServerHandler ensures only applications that
+declare the matching capability in their \l{Manifest definition}{info.yaml} can send the
+request.
+
+For dynamic installed applications, the available capabilities can also be restricted through a
+signing certificate.
+
 */

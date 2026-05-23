@@ -98,7 +98,6 @@ if(TARGET Qt::DBus)
             dbus/notificationmanageradaptor_dbus.cpp
             dbus/adaptorchecks_dbus.h dbus/adaptorchecks_dbus.cpp
             dbus/dbuscontextadaptor.cpp dbus/dbuscontextadaptor.h
-            dbus/dbuspolicy.cpp dbus/dbuspolicy.h
         PUBLIC_LIBRARIES
             Qt::DBus
     )

@@ -536,7 +536,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 27;
+    return 28;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -567,7 +567,6 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.installer.caCertificates
         & cd.installer.certificateRevocationLists
         & cd.installer.allowedURLs
-        & cd.dbus.policies
         & cd.dbus.registrations
         & cd.quicklaunch.idleLoad
         & cd.quicklaunch.runtimesPerContainer
@@ -649,7 +648,6 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(installer.caCertificates);
     MERGE_FIELD(installer.certificateRevocationLists);
     MERGE_FIELD(installer.allowedURLs);
-    MERGE_FIELD(dbus.policies);
     MERGE_FIELD(dbus.registrations);
     MERGE_FIELD(quicklaunch.idleLoad);
     MERGE_FIELD(quicklaunch.runtimesPerContainer);
@@ -1068,9 +1066,13 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                      if (rit != ifaceData.cend())
                          cd.dbus.registrations.insert(ifaceName, rit->toString());
 
-                     auto pit = ifaceData.constFind(u"policy"_s);
-                     if (pit != ifaceData.cend())
-                         cd.dbus.policies.insert(ifaceName, pit->toMap());
+                     if (ifaceData.contains(u"policy"_s)) {
+                         qCWarning(LogDeployment).noquote()
+                             << "ignoring 'dbus/" << ifaceName << "/policy': the AM-side policy mechanism has been removed. "
+                                "Use dbus-daemon <policy> directives for uid/method access control, "
+                                "and IntentServerHandler with requiredCapabilities to expose privileged "
+                                "operations to applications.";
+                     }
                  } } },
             { "watchdog", false, YamlParser::Map, [&]() {
                  cd.watchdog = WatchdogConfiguration::fromYaml(yp, WatchdogConfiguration::SystemUI); } },

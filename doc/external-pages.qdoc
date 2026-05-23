@@ -45,3 +45,8 @@
     \externalpage https://docs.kernel.org/accounting/psi.html
     \title Linux Pressure Stall Information
 */
+
+/*!
+    \externalpage https://dbus.freedesktop.org/doc/dbus-daemon.1.html
+    \title dbus-daemon
+*/

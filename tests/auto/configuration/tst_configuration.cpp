@@ -93,7 +93,6 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.yaml.runtimes.additionalLaunchers, QStringList {});
     QCOMPARE(c.yaml.runtimes.configurations, QVariantMap {});
 
-    QVERIFY(c.yaml.dbus.policies.isEmpty());
     QVERIFY(c.yaml.dbus.registrations.isEmpty());
 
     QCOMPARE(c.yaml.systemProperties, QVariantMap {});
@@ -338,7 +337,6 @@ void tst_Configuration::mergedConfig()
               }));
     QCOMPARE(c.yaml.runtimes.additionalLaunchers, QStringList({ u"a"_s, u"b"_s, u"c"_s }));
 
-    QVERIFY(c.yaml.dbus.policies.isEmpty());
     QCOMPARE(c.yaml.dbus.registrations, QVariantMap
              ({
                  { u"iface1"_s, u"foobus1"_s },
@@ -503,7 +501,6 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.yaml.runtimes.configurations, QVariantMap{});
     QCOMPARE(c.yaml.runtimes.additionalLaunchers, QStringList{});
 
-    QVERIFY(c.yaml.dbus.policies.isEmpty());
     QVERIFY(c.yaml.dbus.registrations.isEmpty());
 
     QCOMPARE(c.yaml.systemProperties, QVariantMap {});

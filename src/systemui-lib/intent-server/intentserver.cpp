@@ -251,9 +251,9 @@ IntentServer::IntentServer(IntentServerSystemInterface *systemInterface, QObject
 IntentServer::~IntentServer()
 {
     qDeleteAll(m_requestQueue);
-    qDeleteAll(m_disambiguationQueue);
-    qDeleteAll(m_startingAppQueue);
-    qDeleteAll(m_sentToAppQueue);
+    qDeleteAll(m_awaitingDisambiguation);
+    qDeleteAll(m_awaitingAppStart);
+    qDeleteAll(m_awaitingAppReply);
     qDeleteAll(m_intents);
     s_instance = nullptr;
 }
@@ -602,13 +602,13 @@ void IntentServer::processRequestQueue()
                 // If the System UI does not react to the signal, then just use the first match.
                 isr->setSelectedIntent(isr->potentialIntents().constFirst());
             } else {
-                m_disambiguationQueue.enqueue(isr);
+                m_awaitingDisambiguation.insert(isr->requestId(), isr);
                 isr->setState(IntentServerRequest::State::WaitingForDisambiguation);
                 qCDebug(LogIntentServer) << IntentDebug(isr) << "is now in state" << isr->state();
 
                 if (m_disambiguationTimeout > 0) {
-                    QTimer::singleShot(m_disambiguationTimeout, this, [this, pisr = QPointer(isr)]() {
-                        if (pisr && m_disambiguationQueue.removeOne(pisr)) {
+                    QTimer::singleShot(m_disambiguationTimeout, this, [this, requestId = isr->requestId()]() {
+                        if (auto *pisr = m_awaitingDisambiguation.take(requestId)) {
                             pisr->setRequestFailed(u"Disambiguation timed out after %1 ms"_s.arg(m_disambiguationTimeout));
                             enqueueRequest(pisr);
                         }
@@ -632,13 +632,13 @@ void IntentServer::processRequestQueue()
                 qCDebug(LogIntentServer) << IntentDebug(isr) << "would need to start the handling application, but it's 'handleOnlyWhenRunning'";
                 isr->setRequestFailed(u"Skipping delivery due to handleOnlyWhenRunning"_s);
             } else {
-                m_startingAppQueue.enqueue(isr);
+                m_awaitingAppStart.append(isr);
                 isr->setState(IntentServerRequest::State::WaitingForApplicationStart);
                 qCDebug(LogIntentServer) << IntentDebug(isr) << "is now in state" << isr->state();
 
                 if (m_startingAppTimeout > 0) {
                     QTimer::singleShot(m_startingAppTimeout, this, [this, pisr = QPointer(isr)]() {
-                        if (pisr && m_startingAppQueue.removeOne(pisr)) {
+                        if (pisr && m_awaitingAppStart.removeOne(pisr)) {
                             qCDebug(LogIntentServer) << IntentDebug(pisr.get()) << "starting handler application timed out";
                             pisr->setRequestFailed(u"Starting handler application timed out after %1 ms"_s.arg(m_startingAppTimeout));
                             enqueueRequest(pisr);
@@ -661,12 +661,12 @@ void IntentServer::processRequestQueue()
         } else {
             qCDebug(LogIntentServer) << IntentDebug(isr) << "sending intent request to handling application";
             if (!isr->isBroadcast()) {
-                m_sentToAppQueue.enqueue(isr);
+                m_awaitingAppReply.insert(isr->requestId(), isr);
                 isr->setState(IntentServerRequest::State::WaitingForReplyFromApplication);
                 if (m_sentToAppTimeout > 0) {
-                    QTimer::singleShot(m_sentToAppTimeout, this, [this, pisr = QPointer(isr)]() {
-                        if (pisr && m_sentToAppQueue.removeOne(pisr)) {
-                            qCDebug(LogIntentServer) << IntentDebug(pisr.get()) << "waiting for reply from handler application timed out";
+                    QTimer::singleShot(m_sentToAppTimeout, this, [this, requestId = isr->requestId()]() {
+                        if (auto *pisr = m_awaitingAppReply.take(requestId)) {
+                            qCDebug(LogIntentServer) << IntentDebug(pisr) << "waiting for reply from handler application timed out";
                             pisr->setRequestFailed(u"Waiting for reply from handler application timed out after %1 ms"_s.arg(m_sentToAppTimeout));
                             enqueueRequest(pisr);
                         }
@@ -757,13 +757,7 @@ void IntentServer::rejectDisambiguationRequest(const QString &requestId)
 
 void IntentServer::internalDisambiguateRequest(const QUuid &requestId, bool reject, Intent *selectedIntent)
 {
-    IntentServerRequest *isr = nullptr;
-    for (int i = 0; i < m_disambiguationQueue.size(); ++i) {
-        if (m_disambiguationQueue.at(i)->requestId() == requestId) {
-            isr = m_disambiguationQueue.takeAt(i);
-            break;
-        }
-    }
+    IntentServerRequest *isr = m_awaitingDisambiguation.take(requestId);
 
     if (!isr) {
         qmlWarning(this) << "Got a disambiguation acknowledge or reject for intent " << requestId
@@ -788,14 +782,14 @@ void IntentServer::applicationWasStarted(const QString &applicationId)
 {
     // check if any intent request is waiting for this app to start
     bool foundOne = false;
-    for (auto it = m_startingAppQueue.cbegin(); it != m_startingAppQueue.cend(); ) {
+    for (auto it = m_awaitingAppStart.cbegin(); it != m_awaitingAppStart.cend(); ) {
         auto isr = *it;
         if (isr->selectedIntent()->applicationId() == applicationId) {
             isr->setState(IntentServerRequest::State::StartedApplication);
             m_requestQueue << isr;
             foundOne = true;
 
-            it = m_startingAppQueue.erase(it); // clazy:exclude=strict-iterators
+            it = m_awaitingAppStart.erase(it); // clazy:exclude=strict-iterators
         } else {
             ++it;
         }
@@ -807,13 +801,7 @@ void IntentServer::applicationWasStarted(const QString &applicationId)
 void IntentServer::replyFromApplication(const QString &replyingApplicationId, const QUuid &requestId,
                                         bool error, const QVariantMap &result)
 {
-    IntentServerRequest *isr = nullptr;
-    for (int i = 0; i < m_sentToAppQueue.size(); ++i) {
-        if (m_sentToAppQueue.at(i)->requestId() == requestId) {
-            isr = m_sentToAppQueue.takeAt(i);
-            break;
-        }
-    }
+    IntentServerRequest *isr = m_awaitingAppReply.take(requestId);
 
     if (!isr) {
         qCWarning(LogIntentServer).nospace().noquote()

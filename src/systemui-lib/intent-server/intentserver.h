@@ -10,6 +10,7 @@
 #include <QtCore/QVariantMap>
 #include <QtCore/QVector>
 #include <QtCore/QUuid>
+#include <QtCore/QHash>
 #include <QtCore/QQueue>
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
 #include <QtAppManSystemUI/intent.h>
@@ -117,9 +118,10 @@ private:
 
     QQueue<IntentServerRequest *> m_requestQueue;
 
-    QQueue<IntentServerRequest *> m_disambiguationQueue;
-    QQueue<IntentServerRequest *> m_startingAppQueue;
-    QQueue<IntentServerRequest *> m_sentToAppQueue;
+    // requests waiting for external events
+    QHash<QUuid, IntentServerRequest *> m_awaitingDisambiguation;
+    QList<IntentServerRequest *> m_awaitingAppStart;
+    QHash<QUuid, IntentServerRequest *> m_awaitingAppReply;
 
     // no timeouts by default -- these have to be set at runtime
     int m_disambiguationTimeout = 0;

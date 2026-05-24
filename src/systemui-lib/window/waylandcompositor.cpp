@@ -386,6 +386,8 @@ WaylandQtAMServerExtension *WaylandCompositor::amExtension()
 
 void WaylandCompositor::doCreateSurface(QWaylandClient *client, uint id, int version)
 {
+    // ownership transfers to Qt's Wayland resource lifecycle: the surface is destroyed
+    // when the underlying wl_resource is destroyed
     (void) new WindowSurface(this, client, id, version);
 }
 

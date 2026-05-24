@@ -103,7 +103,7 @@ TestCase {
             compare(n.showActionsAsIcons, false)
             compare(n.dismissOnAction, true)
             compare(n.isAcknowledgeable, true)
-            compare(n.isSytemNotification, false)
+            compare(n.isSystemNotification, false)
             compare(n.isShowingProgress, true)
             compare(n.progress, 0.5)
             compare(n.isSticky, true)

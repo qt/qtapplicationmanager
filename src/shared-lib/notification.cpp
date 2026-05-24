@@ -27,6 +27,9 @@ using namespace Qt::StringLiterals;
           link to the documentation of a specific property.
 
     The server/System UI side of the notification infrastructure is implemented by NotificationManager.
+
+    \note The notification manager enforces \l {NotificationManager Limits} {per-application
+    and global caps} on the number of simultaneously active notifications.
 */
 
 
@@ -303,6 +306,8 @@ bool Notification::showActionsAsIcons() const
 
     \note This property is just a hint to the notification manager; how and
     when a notification actually appears on the screen is up to the server-side implementation.
+    In particular, the request can be silently rejected if the per-application or
+    global notification cap is reached - see NotificationManager.
 
     The default value is \c false.
 

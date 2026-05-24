@@ -34,7 +34,34 @@ using namespace Qt::StringLiterals;
 
     Each item in this model corresponds to an active notification.
 
-    \target NotificationManager Roles
+    Applications create individual notifications via the \l Notification type;
+    NotificationManager is the System-UI-side aggregator and model for all of
+    them.
+
+    \section2 NotificationManager Limits
+
+    To protect the System UI from flooding (whether accidental - an app stuck in a
+    notification loop - or adversarial), the NotificationManager enforces two caps
+    on the number of simultaneously active notifications:
+
+    \list
+    \li \b{Per-application cap}: at most 50 notifications per application id. Once
+        this is reached, further notification requests from that application are
+        rejected with a warning in the log.
+    \li \b{Global cap}: at most 500 active notifications across all sources. When
+        the global cap is reached and a new notification is requested, the
+        \e{oldest non-sticky} notification is evicted to make room. Sticky
+        notifications (those with \c timeout set to \c 0) are protected
+        from eviction. If the global cap is reached and \e{all} active
+        notifications are sticky, the new request is rejected.
+    \endlist
+
+    The per-application cap is tied to the \c applicationId. Notifications from
+    different sources therefore cannot crowd each other out.
+
+    These limits match the behavior of major mobile platforms.
+
+    \section2 NotificationManager Roles
 
     The following roles are available in this model - also take a look at the
     \l {org.freedesktop.Notifications} {freedesktop.org specification} for an
@@ -58,6 +85,9 @@ using namespace Qt::StringLiterals;
                   guaranteed to be valid. A single application can have multiple active
                   notifications, and on the other hand, system-notifications have no
                   application context at all.
+            \note Notifications coming in via the external \c org.freedesktop.Notifications
+                  D-Bus interface carry an \c applicationId that is prefixed with \c{:ext:}.
+                  It is supplied by the client itself and as such cannot be trusted.
     \row
         \li \c priority
         \li int
@@ -108,10 +138,11 @@ using namespace Qt::StringLiterals;
         \li See the client side documentation of Notification::acknowledgeable
             For backwards compatibility, \c isClickable can also be used to refer to this role.
     \row
-        \li \c isSytemNotification
+        \li \c isSystemNotification
         \li bool
-        \li Holds \c true for notifications originating not from an application, but some system
-            service. Always holds \c false for notifications coming from UI applications.
+        \li Holds \c true for notifications coming in via the external
+            \c org.freedesktop.Notifications D-Bus interface and \c false for notifications coming
+            from integrated applications or the System UI.
     \row
         \li \c isShowingProgress
         \li bool
@@ -149,6 +180,8 @@ using namespace Qt::StringLiterals;
 
     For testing purposes, the \e notify-send tool from the \e libnotify package can be used to create
     notifications.
+
+    \sa Notification
 */
 /*!
     \qmlsignal NotificationManager::notificationAdded(uint id)
@@ -229,7 +262,8 @@ enum NMRoles
 struct NotificationData
 {
     uint id = 0;
-    Application *application = nullptr;
+    Application *application = nullptr;   // resolved AM app, nullptr for :ext: and System UI
+    QString applicationId;                // appId string as supplied (used for display + per-source counting)
     uint priority = 0;
     QString summary;
     QString body;
@@ -240,7 +274,6 @@ struct NotificationData
     QVariantList actions; // list of single element maps: <id (as string) --> text (as string)>
     bool dismissOnAction = false;
     bool isSticky = false;
-    bool isSystemNotification = false;
     bool isShowingProgress = false;
     qreal progress = 0.0;
     int timeout = 0;
@@ -262,6 +295,10 @@ enum CloseReason
 class NotificationManagerPrivate
 {
 public:
+    // DoS protection: Android has 50, iOS has 64 per app
+    static constexpr int MaxNotificationsPerAppId = 50;
+    static constexpr int MaxNotificationsTotal    = 500;
+
     ~NotificationManagerPrivate()
     {
         qDeleteAll(notifications);
@@ -331,7 +368,7 @@ NotificationManager::NotificationManager(QObject *parent)
     d->roleNames.insert(NMRoles::DismissOnAction, "dismissOnAction");
     d->roleNames.insert(NMRoles::IsAcknowledgeable, "isAcknowledgeable");
     d->roleNames.insert(NMRoles::IsClickable, "isClickable");
-    d->roleNames.insert(NMRoles::IsSystemNotification, "isSytemNotification");
+    d->roleNames.insert(NMRoles::IsSystemNotification, "isSystemNotification");
     d->roleNames.insert(NMRoles::IsShowingProgress, "isShowingProgress");
     d->roleNames.insert(NMRoles::Progress, "progress");
     d->roleNames.insert(NMRoles::IsSticky, "isSticky");
@@ -365,7 +402,7 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
     case NMRoles::Id:
         return n->id;
     case NMRoles::ApplicationId:
-        return n->application ? n->application->id() : QString();
+        return n->applicationId;
     case NMRoles::Priority:
         return n->priority;
     case NMRoles::Summary:
@@ -404,7 +441,7 @@ QVariant NotificationManager::data(const QModelIndex &index, int role) const
     case NMRoles::IsAcknowledgeable:
         return n->actions.contains(QVariantMap { { u"default"_s, QString() } });
     case NMRoles::IsSystemNotification:
-        return n->isSystemNotification;
+        return n->applicationId.startsWith(u":ext:");
     case NMRoles::IsShowingProgress:
         return n->isShowingProgress;
     case NMRoles::Progress:
@@ -577,7 +614,7 @@ uint NotificationManager::showNotification(const QString &app_name, uint replace
         }
         n = d->notifications.at(i);
 
-        if (app != n->application) {
+        if (app_name != n->applicationId) {
             qCDebug(LogNotifications) << "  -> failed to update notification, due to hijacking attempt";
             return 0;
         }
@@ -586,8 +623,47 @@ uint NotificationManager::showNotification(const QString &app_name, uint replace
 
         qCDebug(LogNotifications) << "  -> updating existing notification";
     } else {
+        // Per-appId cap: applies uniformly to any source.
+        int existing = 0;
+        for (const NotificationData *e : std::as_const(d->notifications)) {
+            if (e->applicationId == app_name)
+                ++existing;
+        }
+        if (existing >= NotificationManagerPrivate::MaxNotificationsPerAppId) {
+            qCWarning(LogNotifications) << "Rejecting notification, because the cap for"
+                                        << app_name << "of"
+                                        << NotificationManagerPrivate::MaxNotificationsPerAppId
+                                        << "was reached.";
+            return 0;
+        }
+
+        // Global cap: when at capacity, evict the oldest non-sticky notification to make room.
+        // Sticky notifications (timeout == 0) represent ongoing state and are protected.
+        if (d->notifications.count() >= NotificationManagerPrivate::MaxNotificationsTotal) {
+            int oldestIdx = -1;
+            QDateTime oldestTime;
+            for (int i = 0; i < d->notifications.count(); ++i) {
+                const NotificationData *e = d->notifications.at(i);
+                if (e->timeout > 0) {
+                    if ((oldestIdx < 0) || (e->created < oldestTime)) {
+                        oldestIdx = i;
+                        oldestTime = e->created;
+                    }
+                }
+            }
+            if (oldestIdx < 0) {
+                qCWarning(LogNotifications) << "Rejecting notification, because the global cap of"
+                                            << NotificationManagerPrivate::MaxNotificationsTotal
+                                            << "was reached.";
+                return 0;
+            }
+            d->closeNotification(d->notifications.at(oldestIdx)->id,
+                                 CloseReason::CloseNotificationCalled);
+        }
+
         n = new NotificationData;
         n->id = ++idCounter;
+        n->applicationId = app_name;
         n->created = now;
         n->updated = now;
 
@@ -613,7 +689,6 @@ uint NotificationManager::showNotification(const QString &app_name, uint replace
         n->actions.append(QVariantMap { { actions.at(ai), actions.at(ai + 1) } });
     n->dismissOnAction = !hints.value(u"resident"_s).toBool();
 
-    n->isSystemNotification = hints.value(u"x-pelagicore-system-notification"_s).toBool();
     n->isShowingProgress = hints.value(u"x-pelagicore-show-progress"_s).toBool();
     n->progress = hints.value(u"x-pelagicore-progress"_s).toReal();
     n->timeout = qMax(0, timeout);

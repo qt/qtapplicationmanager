@@ -57,10 +57,14 @@ package installations.
         \c{--extra-signed-metadata-file} or \c{-S}: Add the given YAML file to the
             packages's \c extra meta-data (see also PackageManager::taskRequestingInstallationAcknowledge)
 
-        \c{--pre-package-command} or \c{-p}: Use the given script to prepare the files that are copied
-            into the package. The script will be called with the path to each file in the source
-            directory, and it should return a non-zero exit code. The script can be used to setup
-            the correct file permissions or add IMA file signatures.
+        \c{--pre-package-command} or \c{-p}: Use the given command to prepare the files that are
+            copied into the package. The command will be called with the path to each file in the
+            source directory, and it should return a zero exit code on success. The given command is
+            split on whitespace before being executed, with no shell-style quoting -- if you need a
+            non-trivial command line (quoted arguments, paths containing spaces, environment
+            setup, shell features), wrap it in a script and pass the script's path instead.
+            This option can for example be used to setup the correct file permissions or add IMA
+            file signatures.
 
         All of the extra-meta-data options are merged together, so all options can be used together
         and each option can also be given multiple times. The signed fields are added to the

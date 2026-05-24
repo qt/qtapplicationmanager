@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
             clp.addOption({{ u"extra-signed-metadata"_s,      u"s"_s }, u"Add extra, digitally signed, meta-data to the package, supplied on the command line."_s, u"yaml-snippet"_s });
             clp.addOption({{ u"extra-signed-metadata-file"_s, u"S"_s }, u"Add extra, digitally signed, meta-data to the package, read from file."_s, u"yaml-file"_s });
             clp.addOption({{ u"include-extended-attributes"_s, u"x"_s }, u"Include xattrs on files and directories, if available."_s });
-            clp.addOption({{ u"pre-package-command"_s, u"p"_s }, u"Calls this command on each packaged file, before it gets packaged"_s , u"command"_s });
+            clp.addOption({{ u"pre-package-command"_s, u"p"_s }, u"Calls this command on each packaged file, before it gets packaged (split on whitespace, no shell-style quoting)."_s , u"command"_s });
             clp.addPositionalArgument(u"package"_s,          u"The file name of the created package."_s);
             clp.addPositionalArgument(u"source-directory"_s, u"The package's content root directory."_s);
             clp.process(tool);

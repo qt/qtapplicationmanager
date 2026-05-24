@@ -163,6 +163,11 @@ qint64 PluginContainerProcess::processId() const
     return m_container->m_interface->processId();
 }
 
+int PluginContainerProcess::processFd() const
+{
+    return m_container->m_interface->processFd();
+}
+
 Am::RunState PluginContainerProcess::state() const
 {
     return static_cast<Am::RunState>(m_container->m_interface->state());

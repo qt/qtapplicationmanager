@@ -22,6 +22,9 @@
 #  include <unistd.h>
 #  include <fcntl.h>
 #endif
+#if defined(Q_OS_LINUX)
+#  include <sys/syscall.h>
+#endif
 
 using namespace Qt::StringLiterals;
 
@@ -65,8 +68,12 @@ HostProcess::~HostProcess()
 void HostProcess::start(const QString &program, const QStringList &arguments)
 {
     connect(m_process, &QProcess::started, this, [this]() {
-         // we to cache the pid in order to have it available after the process crashed
+         // we need to cache the pid in order to have it available after the process crashed
         m_pid = m_process->processId();
+#if defined(Q_OS_LINUX)
+        // open a pidfd in the parent so we can reliably identify the child later
+        m_pidFd.reset(int(::syscall(SYS_pidfd_open, m_pid, 0)));
+#endif
         emit started();
     });
     connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
@@ -132,6 +139,11 @@ void HostProcess::stop(Am::ExitStatus exitStatus)
 qint64 HostProcess::processId() const
 {
     return m_pid;
+}
+
+int HostProcess::processFd() const
+{
+    return m_pidFd.get();
 }
 
 Am::RunState HostProcess::state() const

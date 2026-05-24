@@ -42,7 +42,7 @@ public:
     QVariantMap configuration() const;
     void setConfiguration(const QVariantMap &configuration);
 
-    static QList<QtAM::AbstractRuntime *> fromProcessId(qint64 pid);
+    static QList<QtAM::AbstractRuntime *> fromProcessId(qint64 pid, int pidfd = -1);
 
 private:
     QString m_id;

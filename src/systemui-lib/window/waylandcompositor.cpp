@@ -13,6 +13,12 @@
 
 #include <wayland-server.h>
 
+#include <QWaylandClient>
+
+#if defined(Q_OS_LINUX)
+#  include <sys/socket.h>
+#endif
+
 #include "logging.h"
 #include "application.h"
 #include "applicationmanager.h"
@@ -198,7 +204,8 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     auto wmext = new QWaylandQtWindowManager(this);
     wmext->setParent(this);
     connect(wmext, &QWaylandQtWindowManager::openUrl, this, [](QWaylandClient *client, const QUrl &url) {
-        if (!ApplicationManager::instance()->fromProcessId(client->processId()).isEmpty())
+        unique_fd pidfd = WaylandCompositor::clientProcessFd(client);
+        if (!ApplicationManager::instance()->fromProcessId(client->processId(), pidfd.get()).isEmpty())
             ApplicationManager::instance()->openUrl(url.toString());
     });
 
@@ -213,6 +220,29 @@ WaylandCompositor::~WaylandCompositor()
     // QWayland leaks like sieve everywhere, but we need this explicit delete to be able
     // to suppress the rest via LSAN leak suppression files
     delete defaultSeat();
+}
+
+unique_fd WaylandCompositor::clientProcessFd(QWaylandClient *client)
+{
+    // Returns a pidfd for the Wayland client's connected socket, via SO_PEERPIDFD. Empty on
+    // non-Linux, pre-6.9 kernels, or if the syscall fails. The kernel pins the pidfd to the
+    // peer at connect time, so a subsequent inode comparison is race-free.
+
+#if defined(Q_OS_LINUX) && defined(SO_PEERPIDFD)
+    if (!client || !isPidFileSystemSupported())
+        return { };
+    int sockFd = ::wl_client_get_fd(client->client());
+    if (sockFd < 0)
+        return { };
+    int pidfd = -1;
+    socklen_t len = sizeof(pidfd);
+    if (::getsockopt(sockFd, SOL_SOCKET, SO_PEERPIDFD, &pidfd, &len) != 0)
+        return { };
+    return unique_fd(pidfd);
+#else
+    Q_UNUSED(client)
+    return { };
+#endif
 }
 
 void WaylandCompositor::setupLogging()
@@ -245,7 +275,8 @@ void WaylandCompositor::setupLogging()
 
         QByteArray clientId;
         if (auto *client = QWaylandClient::fromWlClient(static_cast<WaylandCompositor *>(user_data), message->resource->client)) {
-            const auto apps = ApplicationManager::instance()->fromProcessId(client->processId());
+            unique_fd pidfd = WaylandCompositor::clientProcessFd(client);
+            const auto apps = ApplicationManager::instance()->fromProcessId(client->processId(), pidfd.get());
             for (const auto *app : apps) {
                 if (!clientId.isEmpty())
                     clientId += '/';

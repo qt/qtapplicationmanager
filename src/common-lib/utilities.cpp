@@ -22,6 +22,10 @@
 #  include <unistd.h>
 #  include <QtCore/private/qcore_unix_p.h>
 #endif
+#if defined(Q_OS_LINUX)
+#  include <sys/syscall.h>
+#  include <sys/statfs.h>
+#endif
 #if defined(Q_OS_WIN)
 #  include <windows.h>
 #  include <tlhelp32.h>
@@ -119,6 +123,24 @@ bool safeRemove(const QString &path, RecursiveOperationType type)
        return QFile::remove(path);
    }
    return false;
+}
+
+bool isPidFileSystemSupported() noexcept
+{
+#if defined(Q_OS_LINUX)
+    static const bool result = []() {
+        int self = int(::syscall(SYS_pidfd_open, ::getpid(), 0));
+        if (self < 0)
+            return false;
+        struct ::statfs sf { };
+        const bool isPidFs = (::fstatfs(self, &sf) == 0) && (sf.f_type == 0x50494446 /*PID_FS_MAGIC*/);
+        ::close(self);
+        return isPidFs;
+    }();
+    return result;
+#else
+    return false;
+#endif
 }
 
 qint64 getParentPid(qint64 pid)

@@ -819,8 +819,9 @@ void WindowManager::waylandSurfaceCreated(QWaylandSurface *surface)
 
 void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
 {
-    qint64 processId = surface->processId();
-    const auto apps = ApplicationManager::instance()->fromProcessId(processId);
+    QWaylandClient *client = surface->surface()->client();
+    unique_fd pidfd = WaylandCompositor::clientProcessFd(client);
+    const auto apps = ApplicationManager::instance()->fromProcessId(client->processId(), pidfd.get());
     Application *app = nullptr;
 
     if (apps.size() == 1) {
@@ -839,7 +840,7 @@ void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
     }
 
     if (!app && !d->allowUnknownUiClients) {
-        qCCritical(LogGraphics) << "SECURITY ALERT: an unknown application with pid" << processId
+        qCCritical(LogGraphics) << "SECURITY ALERT: an unknown application with pid" << client->processId()
                                 << "tried to map a Wayland surface!"
                                 << "\n  You can disable this check by using the commandline option "
                                    "'--no-security' or by adding 'flags/noSecurity: yes' to the "

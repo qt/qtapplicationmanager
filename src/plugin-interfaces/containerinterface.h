@@ -68,6 +68,7 @@ public:
                        const QVariantMap &amConfig) = 0;
 
     virtual qint64 processId() const = 0;
+    virtual int processFd() const = 0; // pidfd or -1 if not supported, added in 6.12
     virtual RunState state() const = 0;
 
 #ifdef Q_QDOC
@@ -130,7 +131,7 @@ public:
                                        const QStringList &debugWrapperCommand) = 0;
 };
 
-#define AM_ContainerManagerInterface_iid "io.qt.ApplicationManager.ContainerManagerInterface2"
+#define AM_ContainerManagerInterface_iid "io.qt.ApplicationManager.ContainerManagerInterface3"
 
 QT_BEGIN_NAMESPACE
 Q_DECLARE_INTERFACE(ContainerManagerInterface, AM_ContainerManagerInterface_iid)

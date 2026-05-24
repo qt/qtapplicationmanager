@@ -34,6 +34,8 @@ private Q_SLOTS:
     void noSystemd();
     void simulatedSystemd_data();
     void simulatedSystemd();
+    void parseEnvironmentFile_data();
+    void parseEnvironmentFile();
 
 private:
     Systemd *m_sd = nullptr;
@@ -172,6 +174,165 @@ void tst_Systemd::simulatedSystemd()
     QCOMPARE(lfds.size(), 1);
     lfds = m_sd->listenFds(QRegularExpression(u"^nope\\."_s), true);
     QCOMPARE(lfds.size(), 0);
+}
+
+using StringMap = QMap<QString, QString>;
+Q_DECLARE_METATYPE(StringMap)
+
+void tst_Systemd::parseEnvironmentFile_data()
+{
+    QTest::addColumn<QString>("contents");
+    QTest::addColumn<StringMap>("expected");
+
+    auto map = [](std::initializer_list<std::pair<QString, QString>> items) {
+        StringMap m;
+        for (const auto &p : items)
+            m.insert(p.first, p.second);
+        return m;
+    };
+
+    QTest::newRow("empty")
+        << QString()
+        << StringMap { };
+
+    QTest::newRow("empty-key")
+        << u"=bar\n"_s
+        << StringMap{};
+
+    QTest::newRow("simple")
+        << u"FOO=bar\n"_s
+        << map({{ u"FOO"_s, u"bar"_s }});
+
+    QTest::newRow("no-trailing-newline")
+        << u"FOO=bar"_s
+        << map({{ u"FOO"_s, u"bar"_s }});
+
+    QTest::newRow("multiple-lines")
+        << u"A=1\nB=2\nC=3\n"_s
+        << map({{ u"A"_s, u"1"_s }, { u"B"_s, u"2"_s }, { u"C"_s, u"3"_s }});
+
+    QTest::newRow("blank-and-comment-lines")
+        << u"# header\n\nA=1\n; semi-comment\nB=2\n"_s
+        << map({{ u"A"_s, u"1"_s }, { u"B"_s, u"2"_s }});
+
+    QTest::newRow("hash-after-equals-is-not-comment")
+        << u"URL=http://example.com/#frag\n"_s
+        << map({{ u"URL"_s, u"http://example.com/#frag"_s }});
+
+    QTest::newRow("value-with-equals")
+        << u"TOKEN=eyJhbGciOiJIUzI1NiJ9.eyJpc3M=\n"_s
+        << map({{ u"TOKEN"_s, u"eyJhbGciOiJIUzI1NiJ9.eyJpc3M="_s }});
+
+    QTest::newRow("trailing-whitespace-on-key")
+        << u"KEY   =val\n"_s
+        << map({{ u"KEY"_s, u"val"_s }});
+
+    QTest::newRow("leading-whitespace-on-value")
+        << u"K=   val\n"_s
+        << map({{ u"K"_s, u"val"_s }});
+
+    QTest::newRow("trailing-whitespace-on-unquoted-value")
+        << u"K=val   \n"_s
+        << map({{ u"K"_s, u"val"_s }});
+
+    QTest::newRow("interior-whitespace-preserved")
+        << u"K=a  b  c\n"_s
+        << map({{ u"K"_s, u"a  b  c"_s }});
+
+    QTest::newRow("empty-value")
+        << u"K=\n"_s
+        << map({{ u"K"_s, QString() }});
+
+    QTest::newRow("empty-double-quoted")
+        << u"K=\"\"\n"_s
+        << map({{ u"K"_s, QString() }});
+
+    QTest::newRow("empty-single-quoted")
+        << u"K=''\n"_s
+        << map({{ u"K"_s, QString() }});
+
+    QTest::newRow("double-quoted")
+        << u"K=\"hello world\"\n"_s
+        << map({{ u"K"_s, u"hello world"_s }});
+
+    QTest::newRow("single-quoted-verbatim")
+        << u"K='hello \"$dollar\" `tick` \\backslash'\n"_s
+        << map({{ u"K"_s, u"hello \"$dollar\" `tick` \\backslash"_s }});
+
+    QTest::newRow("double-quoted-shell-escapes")
+        << u"K=\"a \\\"q\\\" b \\\\ \\$ \\`\"\n"_s
+        << map({{ u"K"_s, u"a \"q\" b \\ $ `"_s }});
+
+    QTest::newRow("double-quoted-preserves-unknown-backslash")
+        << u"K=\"a\\nb\"\n"_s
+        // '\n' (escape + n) inside double quotes is not in SHELL_NEED_ESCAPE,
+        // so systemd preserves BOTH the backslash and the 'n' verbatim.
+        << map({{ u"K"_s, u"a\\nb"_s }});
+
+    QTest::newRow("unquoted-backslash-drops-backslash")
+        << u"K=foo\\nbar\n"_s
+        << map({{ u"K"_s, u"foonbar"_s }});
+
+    QTest::newRow("unquoted-escaped-space")
+        << u"K=foo\\ bar\n"_s
+        << map({{ u"K"_s, u"foo bar"_s }});
+
+    QTest::newRow("line-continuation-unquoted")
+        << u"K=foo\\\nbar\n"_s
+        << map({{ u"K"_s, u"foobar"_s }});
+
+    QTest::newRow("line-continuation-double-quoted")
+        << u"K=\"foo\\\nbar\"\n"_s
+        << map({{ u"K"_s, u"foobar"_s }});
+
+    QTest::newRow("multi-line-single-quoted")
+        << u"K='hello\nworld'\n"_s
+        << map({{ u"K"_s, u"hello\nworld"_s }});
+
+    QTest::newRow("multi-line-double-quoted")
+        << u"K=\"hello\nworld\"\n"_s
+        << map({{ u"K"_s, u"hello\nworld"_s }});
+
+    QTest::newRow("mixed-quoted-and-unquoted-concat")
+        << u"K=\"hello\" world\n"_s
+        // After closing quote, PRE_VALUE skips whitespace, then 'w' enters
+        // VALUE state and accumulates onto the same value.
+        << map({{ u"K"_s, u"helloworld"_s }});
+
+    QTest::newRow("last-key-wins-on-duplicate")
+        << u"K=a\nK=b\n"_s
+        << map({{ u"K"_s, u"b"_s }});
+
+    QTest::newRow("unterminated-double-quote-at-eof")
+        << u"K=\"abc"_s
+        << map({{ u"K"_s, u"abc"_s }});
+
+    QTest::newRow("unterminated-single-quote-at-eof")
+        << u"K='abc"_s
+        << map({{ u"K"_s, u"abc"_s }});
+
+    QTest::newRow("crlf-line-endings")
+        << u"A=1\r\nB=2\r\n"_s
+        << map({{ u"A"_s, u"1"_s }, { u"B"_s, u"2"_s }});
+
+    QTest::newRow("malformed-line-without-equals")
+        << u"GARBAGE\nA=1\n"_s
+        << map({{ u"A"_s, u"1"_s }});
+
+    QTest::newRow("backslash-in-comment-does-not-continue")
+        // systemd v254+: '\<newline>' inside a comment does NOT continue the
+        // comment to the next line — the next line parses as KEY=VALUE.
+        << u"# foo \\\nA=1\n"_s
+        << map({{ u"A"_s, u"1"_s }});
+}
+
+void tst_Systemd::parseEnvironmentFile()
+{
+    QFETCH(QString, contents);
+    QFETCH(StringMap, expected);
+
+    const auto actual = Systemd::parseEnvironmentFile(contents);
+    QCOMPARE(actual, expected);
 }
 
 QTEST_APPLESS_MAIN(tst_Systemd)

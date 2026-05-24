@@ -9,5 +9,6 @@ qt_internal_add_plugin(BubblewrapContainerPlugin
         Qt::Core
         Qt::CorePrivate
         Qt::DBus
+        Qt::AppManCommonPrivate
         Qt::AppManPluginInterfacesPrivate
 )

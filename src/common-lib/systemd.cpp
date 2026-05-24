@@ -5,6 +5,7 @@
 #include <QRegularExpression>
 #include <QtEndian>
 #include <qplatformdefs.h>
+#include <sys/types.h>
 #include "systemd.h"
 #include "exception.h"
 #include "logging.h"
@@ -466,6 +467,169 @@ void Systemd::setExtraJournalFields(const QMap<QByteArray, QByteArray> &fields)
     m_extraJournalFieldsBuffer = buffer;
     m_extraJournalFields = fields;
     m_extraJournalFieldsHasSyslogIdentifier = hasSyslogIdentifier;
+}
+
+QMap<QString, QString> Systemd::parseEnvironmentFile(const QString &contents)
+{
+    // Faithful Qt port of systemd's parse_env_file_internal (src/basic/env-file.c).
+
+    enum class State : quint8 {
+        PreKey,
+        Key,
+        PreValue,
+        Value,
+        ValueEscape,
+        SingleQuoteValue,
+        DoubleQuoteValue,
+        DoubleQuoteValueEscape,
+        Comment,
+    };
+
+    State state = State::PreKey;
+    QString key;
+    QString value;
+    qsizetype lastKeyWs = -1;    // first index of trailing whitespace run in key
+    qsizetype lastValueWs = -1;  // same, for value (tracked only in Value state)
+
+    auto isNewline = [](QChar c) { return (c == u'\n') || (c == u'\r'); };
+    auto isWs      = [&](QChar c) { return (c == u' ') || (c == u'\t') || isNewline(c); };
+    auto isComment = [](QChar c) { return (c == u'#') || (c == u';'); };
+    auto needsEsc  = [](QChar c) { return (c == u'"') || (c == u'\\') || (c == u'`') || (c == u'$'); };
+
+    QMap<QString, QString> out;
+
+    auto commit = [&]() {
+        if (lastKeyWs >= 0)
+            key.truncate(lastKeyWs);
+        if ((state == State::Value) && (lastValueWs >= 0))
+            value.truncate(lastValueWs);
+        if (!key.isEmpty())
+            out.insert(key, value);
+        key.clear();
+        value.clear();
+        lastKeyWs = -1;
+        lastValueWs = -1;
+    };
+
+    for (QChar c : contents) {
+        switch (state) {
+        case State::PreKey:
+            if (isComment(c)) {
+                state = State::Comment;
+            } else if (!isWs(c)) {
+                state = State::Key;
+                key += c;
+            }
+            break;
+
+        case State::Key:
+            if (isNewline(c)) {
+                state = State::PreKey;
+                key.clear();
+                lastKeyWs = -1;
+            } else if (c == u'=') {
+                state = State::PreValue;
+            } else {
+                if (!isWs(c))
+                    lastKeyWs = -1;
+                else if (lastKeyWs < 0)
+                    lastKeyWs = key.size();
+                key += c;
+            }
+            break;
+
+        case State::PreValue:
+            if (isNewline(c)) {
+                commit();
+                state = State::PreKey;
+            } else if (c == u'\'') {
+                state = State::SingleQuoteValue;
+            } else if (c == u'"') {
+                state = State::DoubleQuoteValue;
+            } else if (c == u'\\') {
+                state = State::ValueEscape;
+            } else if (!isWs(c)) {
+                state = State::Value;
+                value += c;
+            }
+            break;
+
+        case State::Value:
+            if (isNewline(c)) {
+                commit();
+                state = State::PreKey;
+            } else if (c == u'\\') {
+                state = State::ValueEscape;
+                lastValueWs = -1;
+            } else {
+                if (!isWs(c))
+                    lastValueWs = -1;
+                else if (lastValueWs < 0)
+                    lastValueWs = value.size();
+                value += c;
+            }
+            break;
+
+        case State::ValueEscape:
+            state = State::Value;
+            // Escaped newlines are line continuations: drop both.
+            if (!isNewline(c))
+                value += c;
+            break;
+
+        case State::SingleQuoteValue:
+            if (c == u'\'')
+                state = State::PreValue;
+            else
+                value += c;
+            break;
+
+        case State::DoubleQuoteValue:
+            if (c == u'"')
+                state = State::PreValue;
+            else if (c == u'\\')
+                state = State::DoubleQuoteValueEscape;
+            else
+                value += c;
+            break;
+
+        case State::DoubleQuoteValueEscape:
+            state = State::DoubleQuoteValue;
+            if (needsEsc(c))
+                value += c;                  // unescape: drop backslash, keep char
+            else if (!isNewline(c))
+                value += u'\\', value += c;  // keep backslash + char verbatim
+            // escaped newline inside double quotes: drop both (continuation)
+            break;
+
+        case State::Comment:
+            // Comments are entirely discarded, so '\' has no special meaning
+            // here (unlike inside values where it can continue the line).
+            // Only a newline ends the comment. This matches systemd v254+
+            // behavior where '\<newline>' inside a comment does NOT continue
+            // the comment — the next line is parsed as a real KEY=VALUE.
+            if (isNewline(c))
+                state = State::PreKey;
+            break;
+        }
+    }
+
+    // Commit any pending value at EOF (matches systemd's terminal-state branch,
+    // including unterminated quoted values for files without trailing newline).
+    switch (state) {
+    case State::PreValue:
+    case State::Value:
+    case State::ValueEscape:
+    case State::SingleQuoteValue:
+    case State::DoubleQuoteValue:
+    case State::DoubleQuoteValueEscape:
+        commit();
+        break;
+    default:
+        break;
+    }
+
+    return out;
 }
 
 QT_END_NAMESPACE_AM

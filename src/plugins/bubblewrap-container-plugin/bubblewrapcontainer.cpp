@@ -15,18 +15,13 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "bubblewrapcontainer.h"
+#include "systemd.h"
+#include "utilities.h"
 
 using namespace Qt::StringLiterals;
+QT_USE_NAMESPACE_AM
 
 Q_LOGGING_CATEGORY(lcBwrap, "am.container.bubblewrap");
-
-// This could be moved into a helper class
-// copy from utilities.h
-inline QStringList variantToStringList(const QVariant &v)
-{
-    return (v.metaType() == QMetaType::fromType<QString>()) ? QStringList(v.toString())
-                                                            : v.toStringList();
-}
 
 BubblewrapContainerManager::BubblewrapContainerManager()
 {
@@ -173,10 +168,19 @@ void BubblewrapContainerManager::setConfiguration(const QVariantMap &configurati
     }
 
     const QStringList envFiles = variantToStringList(m_configuration.value(u"environmentFiles"_s));
-    for (const auto &env: envFiles) {
-        const auto envList = parseEnvFile(env);
-        for (auto it = envList.constBegin(); it != envList.constEnd(); ++it )
-            m_bwrapArguments += { u"--setenv"_s, it.key(), it.value() };
+    for (const auto &envFile : envFiles) {
+        QFile f(envFile);
+        if (f.size() > 1024*1024) { // 1MiB
+            qCWarning(lcBwrap) << "Environment file" << envFile << "is too large (> 1MiB), ignoring.";
+            continue;
+        }
+        if (!f.open(QIODevice::ReadOnly)) {
+            qCCritical(lcBwrap) << "Couldn't open environmentFile" << envFile << ":" << f.errorString();
+            continue;
+        }
+        const auto envMap = Systemd::parseEnvironmentFile(QString::fromLocal8Bit(f.readAll()));
+        for (const auto &[key, value] : envMap.asKeyValueRange())
+            m_bwrapArguments += { u"--setenv"_s, key, value };
     }
 
     QVariant config = m_configuration.value(u"configuration"_s);
@@ -264,47 +268,6 @@ QStringList BubblewrapContainerManager::bwrapArguments() const
 QString BubblewrapContainerManager::networkSetupScript() const
 {
     return m_networkSetupScript;
-}
-
-QMap<QString, QString> BubblewrapContainerManager::parseEnvFile(const QString &envFile)
-{
-    QMap<QString, QString> envVariables;
-
-    QFile file(envFile);
-    if (!file.open(QIODevice::ReadOnly)) {
-        qCCritical(lcBwrap) << "Couldn't open environmentFile" << envFile << ":" << file.errorString();
-        return envVariables;
-    }
-
-    QTextStream in(&file);
-    QString line;
-
-    int lineCount = 0;
-    while (in.readLineInto(&line)) {
-        lineCount++;
-        line = line.trimmed();
-        if (line.isEmpty() || line.startsWith(u'#'))
-            continue;
-
-        const auto splitted = line.split(u'=');
-        if (splitted.count() != 2) {
-            qCCritical(lcBwrap).nospace() << "Couldn't parse environment variable in " << envFile << ":" << lineCount;
-            continue;
-        }
-
-        QString value = splitted[1];
-        if (value.isEmpty()) {
-            qCCritical(lcBwrap).nospace() << "Environment variable doesn't have a value in " << envFile << ":" << lineCount;
-            continue;
-        }
-
-        if (value.startsWith(u'"') && value.endsWith(u'"'))
-            value = value.mid(1, value.length() - 2);
-
-        envVariables.insert(splitted[0], value);
-    }
-
-    return envVariables;
 }
 
 

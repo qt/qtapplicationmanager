@@ -35,6 +35,9 @@ public:
     QMap<QByteArray, QByteArray> extraJournalFields();
     void setExtraJournalFields(const QMap<QByteArray, QByteArray> &fields) noexcept(false);
 
+    // Parse the contents of a systemd-style EnvironmentFile (see systemd.exec(5))
+    static QMap<QString, QString> parseEnvironmentFile(const QString &contents);
+
 private:
     Systemd();
 

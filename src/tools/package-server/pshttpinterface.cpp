@@ -91,7 +91,7 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
         const auto spList = packages->byArchitecture(architecture);
 
         for (const PSPackage *sp : spList) {
-            if (!category.isEmpty() && sp->packageInfo->categories().contains(category))
+            if (!category.isEmpty() && !sp->packageInfo->categories().contains(category))
                 continue;
             if (!filter.isEmpty()) {
                 bool match = false;
@@ -102,7 +102,7 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
                         break;
                     }
                 }
-                if (match)
+                if (!match)
                     continue;
             }
 

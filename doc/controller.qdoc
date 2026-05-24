@@ -181,6 +181,9 @@ The following commands are available:
                 better security.
         \endlist
 
+        \note The PKCS#12 password is transmitted in clear to the application manager over a
+              private socket connection. Only use this command on a trusted development device.
+
         Clearing the currently set developer certificate can be done by not specifying any
         certificate, but just using the option \c{--clear}.
 

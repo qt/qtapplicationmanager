@@ -48,7 +48,7 @@ QT_END_NAMESPACE_AM
 #  include <csignal>
 QT_BEGIN_NAMESPACE_AM
 
-static qint64 getDBusPeerPid(const QDBusConnection &conn)
+static std::pair<qint64, unique_fd> getDBusPeerPidAndFd(const QDBusConnection &conn)
 {
     using am_dbus_connection_get_socket_t = bool (*)(void *, int *);
     static am_dbus_connection_get_socket_t am_dbus_connection_get_socket = nullptr;
@@ -63,12 +63,21 @@ static qint64 getDBusPeerPid(const QDBusConnection &conn)
 
     int socketFd = -1;
     if (am_dbus_connection_get_socket(conn.internalPointer(), &socketFd)) {
-        struct ucred ucred;
-        socklen_t ucredSize = sizeof(struct ucred);
-        if (getsockopt(socketFd, SOL_SOCKET, SO_PEERCRED, &ucred, &ucredSize) == 0)
-            return ucred.pid;
+        struct ::ucred ucred;
+        socklen_t ucredSize = sizeof(struct ::ucred);
+        if (::getsockopt(socketFd, SOL_SOCKET, SO_PEERCRED, &ucred, &ucredSize) == 0) {
+            int pidfd = -1;
+
+#if defined(SO_PEERPIDFD)
+            if (isPidFileSystemSupported()) {
+                socklen_t pidfdSize = sizeof(pidfd);
+                ::getsockopt(socketFd, SOL_SOCKET, SO_PEERPIDFD, &pidfd, &pidfdSize);
+            }
+#endif
+            return { ucred.pid, unique_fd(pidfd) };
+        }
     }
-    return 0;
+    return { 0, unique_fd() };
 }
 
 #endif
@@ -95,35 +104,23 @@ NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, Nat
 
     connect(m_applicationInterfaceServer, &QDBusServer::newConnection,
             this, [this](const QDBusConnection &connection) {
+
 #if QT_CONFIG(am_multi_process) && defined(Q_OS_LINUX)
-        qint64 pid = getDBusPeerPid(connection);
-        if (pid <= 0) {
+        auto [pid, pidfd] = getDBusPeerPidAndFd(connection);
+
+        if ((pid <= 0) || (isPidFileSystemSupported() && !pidfd)) {
             QDBusConnection::disconnectFromPeer(connection.name());
             qCWarning(LogSystem) << "Could not retrieve peer pid on D-Bus connection attempt.";
             return;
         }
 
-        // try direct PID mapping first, then check for sub-processes ... this happens when
-        // for example running the app via gdbserver
-        qint64 appmanPid = QCoreApplication::applicationPid();
-
-        int level = 0;
-        while ((pid > 1) && (pid != appmanPid) && (level < 5)) {
-            if (applicationProcessId() == pid) {
-                onDBusPeerConnection(connection);
-                return;
-            }
-            pid = getParentPid(pid);
-            ++level;
+        if (!AbstractRuntimeManager::fromProcessId(pid, pidfd.get()).contains(this)) {
+            QDBusConnection::disconnectFromPeer(connection.name());
+            qCWarning(LogSystem) << "Connection attempt on peer D-Bus from unknown pid:" << pid;
+            return;
         }
-
-        QDBusConnection::disconnectFromPeer(connection.name());
-        qCWarning(LogSystem) << "Connection attempt on peer D-Bus from unknown pid:" << pid;
-#else
-        // getting the pid is not supported on e.g. macOS. Accepting everything is not secure
-        // but it at least works
-        onDBusPeerConnection(connection);
 #endif
+        onDBusPeerConnection(connection);
     });
 }
 

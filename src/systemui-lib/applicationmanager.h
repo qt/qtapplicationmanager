@@ -67,7 +67,7 @@ public:
     QVector<Application *> applications() const;
 
     Application *fromId(const QString &id) const;
-    QVector<Application *> fromProcessId(qint64 pid) const;
+    QVector<Application *> fromProcessId(qint64 pid, int pidfd = -1) const;
     Application *fromSecurityToken(const QByteArray &securityToken) const;
     QVector<Application *> schemeHandlers(const QString &scheme) const;
     QVector<Application *> mimeTypeHandlers(const QString &mimeType) const;

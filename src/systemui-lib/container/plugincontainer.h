@@ -62,6 +62,7 @@ public:
     PluginContainerProcess(PluginContainer *container);
 
     qint64 processId() const override;
+    int processFd() const override;
     Am::RunState state() const override;
 
 public Q_SLOTS:

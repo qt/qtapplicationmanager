@@ -48,6 +48,7 @@ class Q_APPMANSYSTEMUI_EXPORT AbstractContainerProcess : public QObject
 
 public:
     virtual qint64 processId() const = 0;
+    virtual int processFd() const = 0; // pidfd or -1 if not supported
     virtual Am::RunState state() const = 0;
 
 public Q_SLOTS:

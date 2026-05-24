@@ -12,6 +12,10 @@
 #include <QDir>
 #include <QtCore/private/qcore_unix_p.h> // qt_safe_read
 
+#if defined(Q_OS_LINUX)
+#  include <sys/syscall.h>
+#endif
+
 #include <unistd.h>
 #include <sys/stat.h>
 #include "bubblewrapcontainer.h"
@@ -290,6 +294,8 @@ BubblewrapContainer::~BubblewrapContainer()
         QT_CLOSE(m_statusPipeFd[0]);
     if (m_statusPipeFd[1] >= 0)
         QT_CLOSE(m_statusPipeFd[1]);
+    if (m_pidfd >= 0)
+        QT_CLOSE(m_pidfd);
 
     manager()->helpers()->closeAndClearFileDescriptors(m_stdioRedirections);
 }
@@ -536,7 +542,10 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
         m_statusPipeFd[1] = -1;
 
         m_pid = m_process->processId();
-
+#if defined(Q_OS_LINUX)
+        // open a pidfd in the parent so we can reliably identify the child later
+        m_pidfd = int(::syscall(SYS_pidfd_open, m_pid, 0));
+#endif
         emit started();
     });
     connect(m_process, &QProcess::finished, this, &BubblewrapContainer::containerExited);
@@ -775,6 +784,11 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
 qint64 BubblewrapContainer::processId() const
 {
     return m_pid;
+}
+
+int BubblewrapContainer::processFd() const
+{
+    return m_pidfd;
 }
 
 void BubblewrapContainer::stop(ExitStatus exitStatus)

@@ -19,6 +19,9 @@
 #include <QtCore/QMap>
 #include <QtCore/QPointer>
 
+#include <QtAppManCommon/utilities.h>
+
+QT_FORWARD_DECLARE_CLASS(QWaylandClient)
 QT_FORWARD_DECLARE_CLASS(QWaylandResource)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShell)
 QT_FORWARD_DECLARE_CLASS(QWaylandWlShellSurface)
@@ -101,6 +104,8 @@ public:
                              std::chrono::milliseconds killTimeout);
 
     WaylandQtAMServerExtension *amExtension();
+
+    static unique_fd clientProcessFd(QWaylandClient *client);
 
 Q_SIGNALS:
     void surfaceMapped(QtAM::WindowSurface *surface);

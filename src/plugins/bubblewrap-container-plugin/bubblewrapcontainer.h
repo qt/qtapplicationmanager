@@ -44,6 +44,7 @@ public:
                const QVariantMap &amConfig) override;
 
     qint64 processId() const override;
+    int processFd() const override;
     RunState state() const override;
 
     void stop(ContainerInterface::ExitStatus exitStatus) override;
@@ -65,6 +66,7 @@ private:
     QString m_baseDir;
     bool m_ready = false;
     qint64 m_pid = 0;
+    int m_pidfd = -1;
     quint64 m_namespacePid = 0;
     RunState m_state = NotRunning;
     QVariantMap m_application;

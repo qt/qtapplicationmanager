@@ -12,6 +12,7 @@
 #include "logging.h"
 #include "unixsignalhandler.h"
 #include "utilities.h"
+#include "waylandcompositor.h"
 #include "waylandxdgwatchdog.h"
 
 using namespace Qt::StringLiterals;
@@ -99,7 +100,8 @@ void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
     // apps.
 
     auto updateClientData = [](ClientData *cd) {
-        cd->m_runtimes = AbstractRuntimeManager::fromProcessId(cd->m_pid);
+        unique_fd pidfd = WaylandCompositor::clientProcessFd(cd->m_client);
+        cd->m_runtimes = AbstractRuntimeManager::fromProcessId(cd->m_pid, pidfd.get());
         cd->m_hasDebugWrapper = false;
 
         QString desc = u"Wayland client "_s;

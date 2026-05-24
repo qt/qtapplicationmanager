@@ -139,6 +139,11 @@ Q_AUTOTEST_EXPORT void setTestRootPathPrefix(const QString &path);
 Q_APPMANCOMMON_EXPORT QString testRootPathPrefix();
 #endif
 
+// Detects whether the running Linux kernel exposes pidfs (introduced in 6.9), which makes
+// pidfds compare-by-inode and gives race-free per-process-instance identity. Returns false
+// on non-Linux platforms or older kernels. Cached after the first call.
+Q_APPMANCOMMON_EXPORT bool isPidFileSystemSupported() noexcept;
+
 class Q_APPMANCOMMON_EXPORT unique_fd
 {
 public:

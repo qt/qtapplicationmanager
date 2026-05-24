@@ -512,23 +512,15 @@ Application *ApplicationManager::fromId(const QString &id) const
     return nullptr;
 }
 
-QVector<Application *> ApplicationManager::fromProcessId(qint64 pid) const
+QVector<Application *> ApplicationManager::fromProcessId(qint64 pid, int pidfd) const
 {
     QVector<Application *> apps;
-
-    // pid could be an indirect child (e.g. when started via gdbserver)
-    qint64 appmanPid = QCoreApplication::applicationPid();
-
-    int level = 0;
-    while ((pid > 1) && (pid != appmanPid) && (level < 5)) {
-        for (Application *app : std::as_const(d->apps)) {
-            if (apps.contains(app))
-                continue;
-            if (app->currentRuntime() && (app->currentRuntime()->applicationProcessId() == pid))
+    const auto runtimes = AbstractRuntimeManager::fromProcessId(pid, pidfd);
+    for (AbstractRuntime *runtime : runtimes) {
+        if (Application *app = runtime->application()) {
+            if (!apps.contains(app))
                 apps.append(app);
         }
-        pid = getParentPid(pid);
-        ++level;
     }
     return apps;
 }

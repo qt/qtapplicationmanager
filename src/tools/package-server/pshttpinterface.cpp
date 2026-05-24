@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include <QHttpServer>
+#include <QHttpServerConfiguration>
 #include <QTcpServer>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -38,6 +39,11 @@ PSHttpInterface::PSHttpInterface(PSConfiguration *cfg, QObject *parent)
 {
     d->cfg = cfg;
     d->server = new QHttpServer(this);
+
+    // Be explicit about the upload size cap so a Qt-default change can't silently widen it.
+    QHttpServerConfiguration httpCfg = d->server->configuration();
+    httpCfg.setMaximumBodySize(256 * 1024 * 1024); // 256MiB
+    d->server->setConfiguration(httpCfg);
 }
 
 void PSHttpInterface::listen()
@@ -58,7 +64,13 @@ void PSHttpInterface::listen()
         throw Exception("failed to listen on %1:%2").arg(host.toString()).arg(port);
 
     d->listenAddress = host.toString() + u':' + QString::number(tcp->serverPort());
-    tcp.release();
+    (void) tcp.release();
+
+    if (!d->cfg->storeSignCertificate.isEmpty() && !host.isLoopback()) {
+        colorOut() << ColorPrint::yellow << "WARNING" << ColorPrint::reset << ": "
+                 << "Be aware that on-demand store-signing is enabled and the server is reachable "
+                    "via a non-loopback address.";
+    }
 }
 
 QString PSHttpInterface::listenAddress() const
@@ -186,6 +198,7 @@ void PSHttpInterface::setupRouting(PSPackages *packages)
 
             colorOut() << "> Upload via HTTP:";
 
+            // upload() is responsible for removing the temporary file
             auto [result, sp] = packages->upload(pkgFileName);
 
             QString resultStr;

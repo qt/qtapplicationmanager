@@ -290,6 +290,10 @@ QString ApplicationManagerAdaptor::sendIntentRequestAs(const QString &requesting
                                                        const QString &jsonParameters)
 {
     try {
+        //TODO: move these functions into a separate interface that's only available on the dev bus
+        if (!isDevelopmentModeBus(this))
+            throw Exception("This method is only accessible on the development-mode bus");
+
         checkDBusAccess();
 
         if (requestingApplicationId.isEmpty())
@@ -351,6 +355,10 @@ void ApplicationManagerAdaptor::broadcastIntentRequestAs(const QString &requesti
                                                          const QString &jsonParameters)
 {
     try {
+        //TODO: move these functions into a separate interface that's only available on the dev bus
+        if (!isDevelopmentModeBus(this))
+            throw Exception("This method is only accessible on the development-mode bus");
+
         checkDBusAccess();
 
         if (requestingApplicationId.isEmpty())

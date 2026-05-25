@@ -154,10 +154,24 @@ void AbstractConfigCache::parse()
                       << "/ write cache:" << ((d->options & NoCache) ? "no" : "yes");
     qCDebug(LogCache) << d->cacheBaseName << "reading:" << qPrintable(rawFilePaths.join(u", "_s));
 
+    constexpr auto ShaType = QCryptographicHash::Sha256;
+    static const int ShaSize = QCryptographicHash::hashLength(ShaType);
+
     if (!d->options.testFlag(NoCache) && !d->options.testFlag(ClearCache)) {
         if (cacheFile.open(QFile::ReadOnly)) {
             try {
-                QDataStream ds(&cacheFile);
+                if (cacheFile.size() > (10 * 1024*1024))
+                    throw Exception("cache '%1' is too big (> 10 MiB)").arg(cacheFile.fileName());
+
+                const QByteArray fileBytes = cacheFile.readAll();
+                if (fileBytes.size() < ShaSize)
+                    throw Exception("cache is too small to even contain a checksum hash");
+
+                QByteArray bytes = fileBytes.first(fileBytes.size() - ShaSize);
+                if (QCryptographicHash::hash(bytes, ShaType) != fileBytes.last(ShaSize))
+                    throw Exception("cache checksum hash mismatch");
+
+                QDataStream ds(bytes);
                 ds.setVersion(QDataStream::Qt_6_7);
                 CacheHeader cacheHeader;
                 ds >> cacheHeader;
@@ -346,7 +360,8 @@ void AbstractConfigCache::parse()
                 if (!newCacheFile.open(QFile::WriteOnly | QFile::Truncate))
                     throw Exception(cacheFile, "failed to open file for writing");
 
-                QDataStream ds(&newCacheFile);
+                QByteArray bytes;
+                QDataStream ds(&bytes, QIODevice::WriteOnly);
                 ds.setVersion(QDataStream::Qt_6_7);
                 CacheHeader cacheHeader;
                 cacheHeader.m_baseName = d->cacheBaseName;
@@ -370,6 +385,10 @@ void AbstractConfigCache::parse()
 
                 if (ds.status() != QDataStream::Ok)
                     throw Exception("error writing content");
+
+                const QByteArray sha = QCryptographicHash::hash(bytes, ShaType);
+                if (newCacheFile.write(bytes) != bytes.size() || newCacheFile.write(sha) != sha.size())
+                    throw Exception(newCacheFile, "failed to write cache");
 
                 d->cacheWasWritten = true;
             } catch (const Exception &e) {

@@ -366,11 +366,19 @@ void BubblewrapContainer::setupCustomBindMounts(bool ignoreCapabilities)
     QStringList capabilities = m_application.value(u"capabilities"_s).toStringList();
 
     auto addToMountList = [appId, this](const QString &hostPath, const QString &containerPath, bool readOnly) {
+        // validateIdForFilesystemUsage() should prevent this, but just to be on the safe side
+        if (appId.contains(u'/') || appId.contains(u".."_s)) {
+            qCCritical(lcBwrap) << "Invalid application id for filesystem usage:" << appId;
+            return;
+        }
+
         QString newPath = hostPath;
         newPath = newPath.replace(u"%APPLICATION_ID%"_s, appId);
 
-        if (containerPath.contains(u"%APPLICATION_ID%"_s))
+        if (containerPath.contains(u"%APPLICATION_ID%"_s)) {
             qCCritical(lcBwrap) << "Can't substitute %APPLICATION_ID% for mount destination paths:" << containerPath;
+            return;
+        }
 
         if (readOnly)
             m_roBindMounts.insert(newPath, containerPath);
@@ -442,6 +450,8 @@ bool BubblewrapContainer::setControlGroup(const QString &groupName)
 
     QString file = u"/sys/fs/cgroup/%1/cgroup.procs"_s.arg(groupName);
     QFile f(file);
+
+    // A bit awkward, but cgroupfs accepts only one pid per write
     for (quint64 pid : { quint64(m_process->processId()), m_namespacePid }) {
         bool ok = f.open(QFile::WriteOnly);
         QByteArray pidString = QByteArray::number(pid);

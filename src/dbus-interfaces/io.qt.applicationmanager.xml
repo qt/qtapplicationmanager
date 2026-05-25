@@ -107,6 +107,8 @@
       <arg type="u" direction="out"/>
       <arg name="id" type="s" direction="in"/>
     </method>
+    <!-- the following two methods are only accessible on the development-mode bus and will
+         be moved from this interface into a specialized debug interface in the future -->
     <method name="sendIntentRequestAs">
       <arg type="s" direction="out"/>
       <arg name="requestingApplicationId" type="s" direction="in"/>

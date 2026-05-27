@@ -123,7 +123,7 @@ QT_BEGIN_NAMESPACE_AM
     \qmlproperty string ApplicationInterface::securityToken
     \readonly
 
-    Returns the security token of the running application instance as a hex-encoded string.
+    Returns the security token of the running application instance as a string.
     This token is unique per application launch and can be used to identify this specific
     instance. The system UI can look up an application by its token via
     ApplicationManager::fromSecurityToken().

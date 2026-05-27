@@ -83,7 +83,7 @@ public:
 
     Am::RunState state() const;
 
-    enum { SecurityTokenSize = 16 };
+    enum { SecurityTokenSize = 32 };
     QByteArray securityToken() const;
 
     virtual void openDocument(const QString &document, const QString &mimeType);

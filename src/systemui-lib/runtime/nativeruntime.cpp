@@ -319,7 +319,7 @@ bool NativeRuntime::start()
         { u"logging"_s, loggingConfig },
         { u"baseDir"_s, QDir::currentPath() },
         { u"runtimeConfiguration"_s, configuration() },
-        { u"securityToken"_s, QString::fromLatin1(securityToken().toHex()) },
+        { u"securityToken"_s, QString::fromLatin1(securityToken()) },
         { u"dbus"_s, dbusConfig }
     };
 

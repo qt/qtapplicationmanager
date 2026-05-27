@@ -274,7 +274,7 @@ void ApplicationMain::loadConfiguration(const QByteArray &configYaml) noexcept(f
 
     m_baseDir = m_configuration.value(u"baseDir"_s).toString() + u'/';
     m_runtimeConfiguration = m_configuration.value(u"runtimeConfiguration"_s).toMap();
-    m_securityToken = QByteArray::fromHex(m_configuration.value(u"securityToken"_s).toString().toLatin1());
+    m_securityToken = m_configuration.value(u"securityToken"_s).toString().toLatin1();
     m_systemProperties = m_configuration.value(u"systemProperties"_s).toMap();
 
     QVariantMap loggingConfig = m_configuration.value(u"logging"_s).toMap();

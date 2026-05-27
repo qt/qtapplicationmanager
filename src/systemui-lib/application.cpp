@@ -91,7 +91,7 @@
     \qmlproperty string ApplicationObject::securityToken
     \readonly
 
-    Returns the security token of the running application instance as a hex-encoded string.
+    Returns the security token of the running application instance as a string.
     The token is unique per application launch and changes whenever the application is
     restarted. Returns an empty string when the application is not running.
 */
@@ -477,7 +477,7 @@ QString Application::version() const
 
 QString Application::securityToken() const
 {
-    return m_runtime ? QString::fromLatin1(m_runtime->securityToken().toHex()) : QString { };
+    return m_runtime ? QString::fromLatin1(m_runtime->securityToken()) : QString { };
 }
 
 Application::State Application::state() const

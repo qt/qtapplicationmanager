@@ -38,8 +38,9 @@ AbstractRuntime::AbstractRuntime(AbstractContainer *container, Application *app,
     , m_app(app)
     , m_manager(manager)
 {
-    Q_STATIC_ASSERT(SecurityTokenSize == sizeof(QUuid));
-    m_securityToken = QUuid::createUuid().toRfc4122();
+    m_securityToken = QUuid::createUuid().toRfc4122().toHex();
+    Q_STATIC_ASSERT(SecurityTokenSize == 2 * sizeof(QUuid)); // hex encoding doubles the size
+    Q_ASSERT(m_securityToken.size() == SecurityTokenSize);
 
     AbstractRuntimeManager::s_allRuntimes.append(this);
 }

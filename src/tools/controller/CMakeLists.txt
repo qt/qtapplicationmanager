@@ -3,7 +3,6 @@ qt_internal_add_app(appman-controller
     EXCEPTIONS
     SOURCES
         controller.cpp
-        interrupthandler.cpp interrupthandler.h
     LIBRARIES
         Qt::DBus
         Qt::Network

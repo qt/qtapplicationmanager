@@ -604,7 +604,7 @@ QMap<QString, QString> Systemd::parseEnvironmentFile(const QString &contents)
             // here (unlike inside values where it can continue the line).
             // Only a newline ends the comment. This matches systemd v254+
             // behavior where '\<newline>' inside a comment does NOT continue
-            // the comment — the next line is parsed as a real KEY=VALUE.
+            // the comment - the next line is parsed as a real KEY=VALUE.
             if (isNewline(c))
                 state = State::PreKey;
             break;

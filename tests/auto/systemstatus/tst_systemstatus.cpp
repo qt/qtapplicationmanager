@@ -168,7 +168,7 @@ void tst_SystemStatus::cgroupStatus()
 
 void tst_SystemStatus::systemStatus()
 {
-    // Reparse the same fixtures used by cpuStatus() and memoryStatus() — SystemStatus
+    // Reparse the same fixtures used by cpuStatus() and memoryStatus() - SystemStatus
     // composes CpuStatus and MemoryStatus internally, so it must agree with them.
     QFile cpuFile(u":/root/proc/stat"_s);
     QVERIFY(cpuFile.open(QIODevice::ReadOnly));
@@ -209,7 +209,7 @@ void tst_SystemStatus::systemStatus()
     QCOMPARE(sys.ioPSI()->mode(), PressureStallInformation::Mode::Off);
 
     // update() re-reads the same static files: memoryUsed is stable, cpuLoad drops to 0
-    // (CpuStatus returns 0 when total is unchanged between reads — see cpuStatus()).
+    // (CpuStatus returns 0 when total is unchanged between reads - see cpuStatus()).
     sys.update();
     QCOMPARE(sys.memoryUsed(), sys.memoryMax() - 1024ULL * memAvailableKiB);
     QCOMPARE(sys.cpuLoad(), 0);

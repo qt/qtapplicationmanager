@@ -321,7 +321,7 @@ void tst_Systemd::parseEnvironmentFile_data()
 
     QTest::newRow("backslash-in-comment-does-not-continue")
         // systemd v254+: '\<newline>' inside a comment does NOT continue the
-        // comment to the next line — the next line parses as KEY=VALUE.
+        // comment to the next line - the next line parses as KEY=VALUE.
         << u"# foo \\\nA=1\n"_s
         << map({{ u"A"_s, u"1"_s }});
 }

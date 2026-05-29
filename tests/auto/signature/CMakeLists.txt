@@ -21,6 +21,7 @@ qt_internal_add_test(tst_signature
         signing-no-key.p12
         signing.p12
         signing-narrow.p12
+        signing-huge.p12
         verifying.crt
         root-ca.info
         dev-ca.info

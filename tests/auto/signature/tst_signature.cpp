@@ -33,6 +33,7 @@ private Q_SLOTS:
     void verifySignature();
     void verifyCertBinding_data();
     void verifyCertBinding();
+    void verifyCertHuge();
 
 private:
     void parseInfo(const QByteArray &openSslInfo, QVariantMap &info);
@@ -40,6 +41,7 @@ private:
     bool m_createNativeSignature = false;
     QByteArray m_signingP12;
     QByteArray m_signingNarrowP12;
+    QByteArray m_signingHugeP12;
     QByteArray m_signingNoKeyP12;
     QByteArray m_signingPassword;
     QByteArrayList m_verifyingPEM;
@@ -89,6 +91,11 @@ void tst_Signature::initTestCase()
     QVERIFY(sn.open(QIODevice::ReadOnly));
     m_signingNarrowP12 = sn.readAll();
     QVERIFY(!m_signingNarrowP12.isEmpty());
+
+    QFile sh(u":/signing-huge.p12"_s);
+    QVERIFY(sh.open(QIODevice::ReadOnly));
+    m_signingHugeP12 = sh.readAll();
+    QVERIFY(!m_signingHugeP12.isEmpty());
 
     QFile snk(u":/signing-no-key.p12"_s);
     QVERIFY(snk.open(QIODevice::ReadOnly));
@@ -472,6 +479,101 @@ void tst_Signature::verifyCertBinding()
         QVERIFY2(!errorString.isEmpty(), qPrintable(u"Verification should have succeeded, but failed with: %1"_s
                                                         .arg(e.errorString())));
         QVERIFY2(e.errorString().contains(errorString), qPrintable(e.errorString()));
+    }
+}
+
+void tst_Signature::verifyCertHuge()
+{
+#if defined(Q_OS_MACOS)
+    // libressl limits SAN entries to 256
+    QSKIP("libressl cannot load the huge test certificate");
+#endif
+
+    // The "huge" cert grants exactly:
+    //   100 package-ids   : pkg-huge-001 .. pkg-huge-100
+    //   100 app-ids       : app-huge-001 .. app-huge-100
+    //   1000 capabilities : cap-huge-0001 .. cap-huge-1000
+    //   200 categories    : cat-huge-001 .. cat-huge-200
+    // The cert is used to confirm that there are no length limits anywhere in the
+    // signing/verification chain.
+
+    QStringList allPackageIds;
+    for (int i = 1; i <= 100; ++i)
+        allPackageIds << u"pkg-huge-%1"_s.arg(i, 3, 10, u'0');
+    QStringList allApplicationIds;
+    for (int i = 1; i <= 100; ++i)
+        allApplicationIds << u"app-huge-%1"_s.arg(i, 3, 10, u'0');
+    QStringList allCapabilities;
+    for (int i = 1; i <= 1000; ++i)
+        allCapabilities << u"cap-huge-%1"_s.arg(i, 4, 10, u'0');
+    QStringList allCategories;
+    for (int i = 1; i <= 200; ++i)
+        allCategories << u"cat-huge-%1"_s.arg(i, 3, 10, u'0');
+
+    QByteArray hash("foo");
+    Signature s(hash);
+    QByteArray signature;
+    QVERIFY_THROWS_NO_EXCEPTION(signature = s.create(m_signingHugeP12, m_signingPassword));
+    QVERIFY(!signature.isEmpty());
+
+    // 1) the cert really exposes all 1400 binding entries
+    Signature inspect(hash);
+    Signature::VerificationResult plain;
+    QVERIFY_THROWS_NO_EXCEPTION(plain = inspect.verify(signature, m_verifyingPEM));
+    QCOMPARE(plain.signer().packageIds().size(), allPackageIds.size());
+    QCOMPARE(plain.signer().applicationIds().size(), allApplicationIds.size());
+    QCOMPARE(plain.signer().capabilities().size(), allCapabilities.size());
+    QCOMPARE(plain.signer().categories().size(), allCategories.size());
+    QCOMPARE(plain.signer().packageIds(), allPackageIds);
+    QCOMPARE(plain.signer().applicationIds(), allApplicationIds);
+    QCOMPARE(plain.signer().capabilities(), allCapabilities);
+    QCOMPARE(plain.signer().categories(), allCategories);
+
+    // 2) requiring all 1400 entries at once must verify without truncation
+    s.requireApplicationIds(allApplicationIds);
+    s.requireCapabilities(allCapabilities);
+    s.requireCategories(allCategories);
+    Signature::VerificationResult result;
+    QVERIFY_THROWS_NO_EXCEPTION(result = s.verify(signature, m_verifyingPEM));
+    QVERIFY(result.isValid());
+
+    // packageId is a single value: check the first, last and one in between
+    for (const QString &pkg : { u"pkg-huge-001"_s, u"pkg-huge-050"_s, u"pkg-huge-100"_s }) {
+        Signature sp(hash);
+        QByteArray sigp;
+        QVERIFY_THROWS_NO_EXCEPTION(sigp = sp.create(m_signingHugeP12, m_signingPassword));
+        sp.requirePackageId(pkg);
+        QVERIFY_THROWS_NO_EXCEPTION(sp.verify(sigp, m_verifyingPEM));
+    }
+
+    // 3) an entry just outside each range must still be rejected
+    {
+        Signature sn(hash);
+        QByteArray sign;
+        QVERIFY_THROWS_NO_EXCEPTION(sign = sn.create(m_signingHugeP12, m_signingPassword));
+        sn.requirePackageId(u"pkg-huge-101"_s);
+        AM_VERIFY_THROWS_EXCEPTION(u"Package ID mismatch", sn.verify(sign, m_verifyingPEM));
+    }
+    {
+        Signature sn(hash);
+        QByteArray sign;
+        QVERIFY_THROWS_NO_EXCEPTION(sign = sn.create(m_signingHugeP12, m_signingPassword));
+        sn.requireApplicationIds(allApplicationIds + QStringList { u"app-huge-101"_s });
+        AM_VERIFY_THROWS_EXCEPTION(u"Application ID mismatch", sn.verify(sign, m_verifyingPEM));
+    }
+    {
+        Signature sn(hash);
+        QByteArray sign;
+        QVERIFY_THROWS_NO_EXCEPTION(sign = sn.create(m_signingHugeP12, m_signingPassword));
+        sn.requireCapabilities(allCapabilities + QStringList { u"cap-huge-1001"_s });
+        AM_VERIFY_THROWS_EXCEPTION(u"Capabilities mismatch", sn.verify(sign, m_verifyingPEM));
+    }
+    {
+        Signature sn(hash);
+        QByteArray sign;
+        QVERIFY_THROWS_NO_EXCEPTION(sign = sn.create(m_signingHugeP12, m_signingPassword));
+        sn.requireCategories(allCategories + QStringList { u"cat-huge-201"_s });
+        AM_VERIFY_THROWS_EXCEPTION(u"Categories mismatch", sn.verify(sign, m_verifyingPEM));
     }
 }
 

@@ -95,6 +95,11 @@ runSSL req -config openssl-dev-narrow.cnf -newkey rsa:2048 -nodes -keyout dev-ce
 runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-narrow.crt -infiles dev-certs/dev-narrow.csr
 runSSL pkcs12 -export -out dev-certs/dev-narrow.p12 -password pass:password -inkey dev-certs/dev-narrow-priv.key -nodes -in dev-certs/dev-narrow.crt -name "Narrow Developer Certificate"
 
+info "Generating, signing and exporting the \"huge\" developer certificate"
+runSSL req -config openssl-dev-huge.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-huge-priv.key -out dev-certs/dev-huge.csr
+runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-huge.crt -infiles dev-certs/dev-huge.csr
+runSSL pkcs12 -export -out dev-certs/dev-huge.p12 -password pass:password -inkey dev-certs/dev-huge-priv.key -nodes -in dev-certs/dev-huge.crt -name "Huge Developer Certificate"
+
 info "Generating, signing and exporting the \"revoked\" developer certificate"
 runSSL req -config openssl-dev-revoked.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-revoked-priv.key -out dev-certs/dev-revoked.csr
 runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-revoked.crt -infiles dev-certs/dev-revoked.csr

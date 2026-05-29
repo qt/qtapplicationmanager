@@ -219,6 +219,82 @@ TestCase {
         requestSpy.clear()
     }
 
+    function test_intentRequestFilterFunction() {
+        // sanity check: no filter set -> request passes
+        compare(IntentServer.intentRequestFilterFunction, undefined)
+        var req = IntentClient.sendIntentRequest("only1", "intents1", stdParams)
+        verify(req)
+        requestSpy.target = req
+        tryCompare(requestSpy, "count", 1, spyTimeout)
+        verify(req.succeeded)
+        requestSpy.clear()
+        requestSpy.target = null
+
+        // filter that captures its arguments and returns true -> request passes
+        var capturedIntents = null
+        var capturedRequestingApp = null
+        IntentServer.intentRequestFilterFunction = function(intents, requestingApplicationId) {
+            capturedIntents = intents
+            capturedRequestingApp = requestingApplicationId
+            return true
+        }
+
+        req = IntentClient.sendIntentRequest("only1", "intents1", stdParams)
+        verify(req)
+        requestSpy.target = req
+        tryCompare(requestSpy, "count", 1, spyTimeout)
+        verify(req.succeeded)
+        // the filter must have been invoked with exactly one candidate (only1@intents1)
+        verify(capturedIntents)
+        compare(capturedIntents.length, 1)
+        compare(capturedIntents[0].intentId, "only1")
+        compare(capturedIntents[0].applicationId, "intents1")
+        compare(capturedRequestingApp, ":sysui:")
+        requestSpy.clear()
+        requestSpy.target = null
+
+        // filter that returns false -> request fails
+        IntentServer.intentRequestFilterFunction = function(intents, requestingApplicationId) {
+            return false
+        }
+        ignoreWarning(/.* \[only1\] \{:sysui: -> intents1\} was rejected by the intentRequestFilterFunction/)
+
+        req = IntentClient.sendIntentRequest("only1", "intents1", stdParams)
+        verify(req)
+        requestSpy.target = req
+        tryCompare(requestSpy, "count", 1, spyTimeout)
+        verify(!req.succeeded)
+        compare(req.errorMessage, "No matching intent handler registered.")
+        requestSpy.clear()
+        requestSpy.target = null
+
+        // ambiguous request: filter sees both candidates
+        capturedIntents = null
+        IntentServer.intentRequestFilterFunction = function(intents, requestingApplicationId) {
+            capturedIntents = intents
+            return true
+        }
+        disambiguateSpy.signalName = "disambiguationRequest"
+
+        req = IntentClient.sendIntentRequest("both", stdParams)
+        verify(req)
+        requestSpy.target = req
+        tryCompare(disambiguateSpy, "count", 1, spyTimeout)
+        verify(capturedIntents)
+        compare(capturedIntents.length, 2)
+        // accept any candidate to let the request finish
+        IntentServer.acknowledgeDisambiguationRequest(disambiguateSpy.signalArguments[0][0],
+                                                     disambiguateSpy.signalArguments[0][1][0])
+        tryCompare(requestSpy, "count", 1, spyTimeout)
+        verify(req.succeeded)
+        disambiguateSpy.clear()
+        requestSpy.clear()
+        requestSpy.target = null
+
+        // clean up
+        IntentServer.intentRequestFilterFunction = undefined
+    }
+
     IntentServerHandler {
         id: broadcastReceiver
         intentIds: [ "broadcast/pong" ]

@@ -24,6 +24,8 @@
 
 #include <QQmlEngine>
 #include <QQmlInfo>
+#include <QJSEngine>
+#include <QJSValueList>
 
 #include <memory>
 
@@ -386,10 +388,32 @@ QVector<Intent *> IntentServer::filterByRequestingApplicationId(const QVector<In
                                          << "not considered, due to missing capabilities of requesting application";
                 return false;
             }
+
         }
         return true;
     });
     return result;
+}
+
+QVector<Intent *> IntentServer::filterByJSFunction(const QVector<Intent *> &intents,
+                                                   const QString &requestingApplicationId) const
+{
+    if (!m_intentRequestFilterFunction.isCallable())
+        return intents;
+
+    if (!m_engine)
+        m_engine = qjsEngine(this);
+    if (!m_engine) {
+        qCWarning(LogIntentServer) << "intentRequestFilterFunction is set, but no JavaScript engine is available";
+        return intents;
+    }
+
+    QJSValue intentsArray = m_engine->newArray(quint32(intents.size()));
+    for (qsizetype i = 0; i < intents.size(); ++i)
+        intentsArray.setProperty(quint32(i), m_engine->newQObject(intents.at(i)));
+
+    QJSValueList args = { intentsArray, QJSValue(requestingApplicationId) };
+    return m_intentRequestFilterFunction.call(args).toBool() ? intents : QVector<Intent *>{};
 }
 
 int IntentServer::rowCount(const QModelIndex &parent) const
@@ -436,6 +460,37 @@ QHash<int, QByteArray> IntentServer::roleNames() const
 int IntentServer::count() const
 {
     return rowCount();
+}
+
+/*!
+    \qmlproperty var IntentServer::intentRequestFilterFunction
+
+    A JavaScript function callback that, if set, is invoked once per intent request after the
+    static visibility and capability filters have been applied. The callback receives two
+    arguments:
+    \list
+        \li the list of remaining candidate \l{IntentObject}{IntentObjects}, and
+        \li the id of the requesting application as a string.
+    \endlist
+
+    The callback must return a Boolean: \c true to let the request proceed with the supplied
+    candidates, \c false to reject the request entirely. A rejected request fails the same way
+    as if no handler had been registered.
+
+    If no callback is set (the default), the request proceeds with the produced candidates
+    unchanged.
+*/
+QJSValue IntentServer::intentRequestFilterFunction() const
+{
+    return m_intentRequestFilterFunction;
+}
+
+void IntentServer::setIntentRequestFilterFunction(const QJSValue &callback)
+{
+    if (!callback.equals(m_intentRequestFilterFunction)) {
+        m_intentRequestFilterFunction = callback;
+        emit intentRequestFilterFunctionChanged();
+    }
 }
 
 /*!
@@ -858,6 +913,13 @@ IntentServerRequest *IntentServer::requestToSystem(const QString &requestingAppl
 
     if (intents.isEmpty()) {
         printWarning("is not accessible for the requesting application");
+        return nullptr;
+    }
+
+    intents = filterByJSFunction(intents, requestingApplicationId);
+
+    if (intents.isEmpty()) {
+        printWarning("was rejected by the intentRequestFilterFunction");
         return nullptr;
     }
 

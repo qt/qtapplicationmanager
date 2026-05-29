@@ -12,9 +12,11 @@
 #include <QtCore/QUuid>
 #include <QtCore/QHash>
 #include <QtCore/QQueue>
+#include <QtQml/QJSValue>
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
 #include <QtAppManSystemUI/intent.h>
 
+QT_FORWARD_DECLARE_CLASS(QJSEngine)
 
 QT_BEGIN_NAMESPACE_AM
 
@@ -27,6 +29,7 @@ class Q_APPMANSYSTEMUI_EXPORT IntentServer : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
+    Q_PROPERTY(QJSValue intentRequestFilterFunction READ intentRequestFilterFunction WRITE setIntentRequestFilterFunction NOTIFY intentRequestFilterFunctionChanged FINAL)
 
 public:
     ~IntentServer() override;
@@ -55,6 +58,8 @@ public:
                                        const QVariantMap &parameters = QVariantMap{}) const;
     QVector<Intent *> filterByRequestingApplicationId(const QVector<Intent *> &intents,
                                                       const QString &requestingApplicationId) const;
+    QVector<Intent *> filterByJSFunction(const QVector<Intent *> &intents,
+                                         const QString &requestingApplicationId) const;
 
     // the item model part
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -64,6 +69,9 @@ public:
     // vvv QML API vvv
 
     int count() const;
+
+    QJSValue intentRequestFilterFunction() const;
+    void setIntentRequestFilterFunction(const QJSValue &callback);
 
     Q_INVOKABLE QVariantMap get(int index) const;
     Q_INVOKABLE QtAM::Intent *intent(int index) const;
@@ -91,6 +99,8 @@ Q_SIGNALS:
     void disambiguationRequest(const QString &requestId,
                                const QList<QtAM::Intent *> &potentialIntents,
                                const QVariantMap &parameters);
+
+    void intentRequestFilterFunctionChanged();
     /// ^^^ QML API ^^^
 
 private:
@@ -130,6 +140,9 @@ private:
 
     QVector<Intent *> m_intents;
     bool m_aboutToBeRemoved = false;
+
+    mutable QJSEngine *m_engine = nullptr;
+    QJSValue m_intentRequestFilterFunction;
 
     IntentServerSystemInterface *m_systemInterface;
     friend class IntentServerSystemInterface;

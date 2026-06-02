@@ -654,8 +654,9 @@ void IntentServer::processRequestQueue()
             // not disambiguated yet
 
             if (!isSignalConnected(QMetaMethod::fromSignal(&IntentServer::disambiguationRequest))) {
-                // If the System UI does not react to the signal, then just use the first match.
-                isr->setSelectedIntent(isr->potentialIntents().constFirst());
+                qCWarning(LogIntentServer) << IntentDebug(isr)
+                                           << "requires disambiguation, but no receiver is connected to the disambiguationRequest signal";
+                isr->setRequestFailed(u"Disambiguation required, but the System UI does not handle disambiguationRequest"_s);
             } else {
                 m_awaitingDisambiguation.insert(isr->requestId(), isr);
                 isr->setState(IntentServerRequest::State::WaitingForDisambiguation);
@@ -770,9 +771,12 @@ QString IntentServer::packageIdForApplicationId(const QString &applicationId) co
     This signal is emitted when the IntentServer receives an intent request that could potentially
     be handled by more than one application.
 
-    \note This signal is only emitted, if there is a receiver connected at all. If the signal is not
-          connected, an arbitrary application from the list of potential matches will be chosen to
-          handle this request.
+    \note If no receiver is connected to this signal, the IntentServer will refuse any request that
+          would require disambiguation and fail it with an error message. Before 6.12, an arbitrary
+          candidate would be chosen to handle this request, which could lead to unexpected behavior
+          and security issues, as this would allow an application to "steal" intents from other
+          applications by registering the same intent id and relying on the requester to omit the
+          target applicationId.
 
     The receiver of this signal gets the requested \a requestId and its \a parameters. It can
     then either call acknowledgeDisambiguationRequest() to choose from one of the supplied \a

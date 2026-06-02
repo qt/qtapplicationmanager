@@ -150,7 +150,9 @@ TestCase {
 
     function test_disambiguate_data() {
         return [
-                    {tag: "no-signal", action: "none", succeeding: true },
+                    {tag: "no-signal", action: "none", succeeding: false,
+                        errorMessage: "Disambiguation required, but the System UI does not handle disambiguationRequest",
+                        ignoreWarning: /.* \[both\] \{:sysui: -> \?\} requires disambiguation, but no receiver is connected to the disambiguationRequest signal/ },
                     {tag: "reject", action: "reject", succeeding: false,
                         errorMessage: "Disambiguation was rejected" },
                     {tag: "timeout", action: "timeout", succeeding: false,

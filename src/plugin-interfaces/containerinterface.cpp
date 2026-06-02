@@ -487,7 +487,7 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
     Please see the \l{System Integration} page for more information.
 */
 
-/*! \fn void ContainerHelperFunctions::bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid)
+/*! \fn void ContainerHelperFunctions::bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid, quint64 namespacePidInode)
 
     This function bind mounts the file system at \a from to the mountpoint \a to.
     If \a readOnly is \c true, the bind mount will be read-only.
@@ -497,6 +497,15 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
     already started containers in case of quick-launching.
     If \a namespacePid is zero, the bind mount will be done in the application manager's mount
     namespace.
+
+    \a namespacePidInode is the \c st_ino value the caller captured by calling \c fstat() on the
+    \c pidfd_open() handle for \a namespacePid at the time the pid was first observed. The
+    sudo helper re-opens its own pidfd for \a namespacePid and rejects the call if the
+    inode does not match, which closes the pid-recycle race window between the caller and
+    the helper. The check requires the pidfs file system that was introduced in Linux 6.9;
+    on older kernels there is no stable per-process pidfd inode and \a namespacePidInode
+    must be passed as \c 0 (the helper will then reject any non-zero value as a
+    caller/helper kernel-feature mismatch). This parameter was added in version 6.12.
 
     \note This function needs root privileges.
     \note This functions will throw a \c std::exception on error and will simply return on

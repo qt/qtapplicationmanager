@@ -653,16 +653,17 @@ void SudoClient::removeRecursive(const QString &fileOrDir)
 #endif
 }
 
-void SudoClient::bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid)
+void SudoClient::bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
+                                     quint64 namespacePid, quint64 namespacePidInode)
 {
     if (m_fallback) {
-        m_fallback->bindMountFileSystem(from, to, readOnly, namespacePid);
+        m_fallback->bindMountFileSystem(from, to, readOnly, namespacePid, namespacePidInode);
         return;
     }
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     if (!m_ipc)
         throw Exception("Sudo IPC connection is no longer available");
-    m_ipc->invokeMethod<void>(this, __func__, from, to, readOnly, namespacePid);
+    m_ipc->invokeMethod<void>(this, __func__, from, to, readOnly, namespacePid, namespacePidInode);
 #else
     throw Exception("Sudo IPC is only available on Linux");
 #endif
@@ -694,7 +695,8 @@ void SudoServer::removeRecursive(const QString &fileOrDir)
         throw Exception(errno, "could not recursively remove %1").arg(fileOrDir);
 }
 
-void SudoServer::bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid)
+void SudoServer::bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
+                                     quint64 namespacePid, quint64 namespacePidInode)
 {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     int oldNsFd = -1;
@@ -722,10 +724,32 @@ void SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
         if (oldNsFd < 0)
             throw Exception(errno, "could not open our own mount namespace");
 
-        int pidFd = int(::syscall(SYS_pidfd_open, pid_t(namespacePid), 0));
-        if (pidFd < 0)
+        unique_fd pidFd { int(::syscall(SYS_pidfd_open, pid_t(namespacePid), 0)) };
+        if (!pidFd)
             throw Exception(errno, "process %1 is not available").arg(namespacePid);
-        if (::setns(pidFd, CLONE_NEWNS) < 0)
+
+        if (isPidFileSystemSupported()) {
+            // pidfs (Linux 6.9+) available: verify the pid still refers to the caller-captured
+            // generation by comparing the pidfs inode.
+            struct ::stat st;
+            if (::fstat(pidFd.get(), &st) != 0)
+                throw Exception(errno, "could not fstat the pidfd for process %1").arg(namespacePid);
+            if (quint64(st.st_ino) != namespacePidInode) {
+                throw Exception("process %1 generation mismatch (expected pidfd inode %2, got %3) "
+                                "- pid recycle detected")
+                    .arg(namespacePid).arg(namespacePidInode).arg(quint64(st.st_ino));
+            }
+        } else {
+            // Legacy kernel: pidfds have no stable inode, so no recycle protection is possible.
+            // The caller should have left the inode at 0 in this case.
+            if (namespacePidInode != 0) {
+                throw Exception("pidfs is not supported on this kernel but caller supplied a "
+                                "non-zero pidfd inode (%1) - caller/helper mismatch")
+                    .arg(namespacePidInode);
+            }
+        }
+
+        if (::setns(pidFd.get(), CLONE_NEWNS) < 0)
             throw Exception(errno, "could not enter the mount namespace of process %1").arg(namespacePid);
     }
 
@@ -737,6 +761,7 @@ void SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
     Q_UNUSED(to)
     Q_UNUSED(readOnly)
     Q_UNUSED(namespacePid)
+    Q_UNUSED(namespacePidInode)
     throw Exception("bindMountFileSystem is only available on Linux");
 #endif // Q_OS_LINUX && !Q_OS_ANDROID
 }

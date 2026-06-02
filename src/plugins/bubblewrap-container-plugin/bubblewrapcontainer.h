@@ -68,6 +68,7 @@ private:
     qint64 m_pid = 0;
     int m_pidfd = -1;
     quint64 m_namespacePid = 0;
+    quint64 m_namespacePidInode = 0;  // pidfs inode of m_namespacePid, captured at child-pid receipt
     RunState m_state = NotRunning;
     QVariantMap m_application;
     QString m_appRelativeCodePath;

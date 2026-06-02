@@ -43,7 +43,8 @@ class Q_APPMANSYSTEMUI_EXPORT SudoInterface : public QObject
 public:
     Q_INVOKABLE virtual void removeRecursive(const QString &fileOrDir) = 0;
     Q_INVOKABLE virtual void bindMountFileSystem(const QString &from, const QString &to,
-                                                 bool readOnly, quint64 namespacePid) = 0;
+                                                 bool readOnly, quint64 namespacePid,
+                                                 quint64 namespacePidInode) = 0;
     Q_INVOKABLE virtual void setExtendedAttribute(const QString &file, const QByteArray &attrName,
                                                   const QByteArray &attrValue) = 0;
 
@@ -69,7 +70,7 @@ public:
 
     void removeRecursive(const QString &fileOrDir) override;
     void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
-                             quint64 namespacePid) override;
+                             quint64 namespacePid, quint64 namespacePidInode) override;
     void setExtendedAttribute(const QString &file, const QByteArray &attrName,
                               const QByteArray &attrValue) override;
 
@@ -95,7 +96,7 @@ public:
 
     void removeRecursive(const QString &fileOrDir) override;
     void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
-                             quint64 namespacePid) override;
+                             quint64 namespacePid, quint64 namespacePidInode) override;
     void setExtendedAttribute(const QString &file, const QByteArray &attrName,
                               const QByteArray &attrValue) override;
 };

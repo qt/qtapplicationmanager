@@ -21,7 +21,7 @@ public:
     bool hasRootPrivileges() override;
 
     void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
-                             quint64 namespacePid) override;
+                             quint64 namespacePid, quint64 namespacePidInode) override;
 
     int watchdogSignal() override;
 

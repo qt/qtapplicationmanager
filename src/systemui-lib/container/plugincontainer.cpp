@@ -196,14 +196,15 @@ bool PluginContainerHelperFunctions::hasRootPrivileges()
 }
 
 void PluginContainerHelperFunctions::bindMountFileSystem(const QString &from, const QString &to,
-                                                         bool readOnly, quint64 namespacePid)
+                                                         bool readOnly, quint64 namespacePid,
+                                                         quint64 namespacePidInode)
 {
     auto sudo = SudoClient::instance();
     if (sudo->isFallbackImplementation())
         throw std::runtime_error("Cannot call bindMountFileSystem without root privileges: make sure the sudo-helper is enabled.");
 
     try {
-        sudo->bindMountFileSystem(from, to, readOnly, namespacePid);
+        sudo->bindMountFileSystem(from, to, readOnly, namespacePid, namespacePidInode);
     } catch (const Exception &e) {
         throw std::runtime_error(qPrintable(e.errorString()));
     }

@@ -100,14 +100,17 @@ public:
                                           const QString &program, const QStringList &arguments) = 0;
     virtual bool hasRootPrivileges() = 0;
 
-    // this function needs root privileges and throws std::execptions on error:
+    // changed in 6.12:
+    // this function needs root privileges and throws std::exception on error.
+    // namespacePidInode is the st_ino of a pidfd captured by the caller for namespacePid:
+    // requires pidfs (Linux 6.9+); on pre-pidfs kernels you need to pass 0.
     virtual void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
-                                     quint64 namespacePid) = 0;
+                                     quint64 namespacePid, quint64 namespacePidInode) = 0;
 
     // added in 6.10:
     virtual int watchdogSignal() = 0;
 
-    // these two will throw std::exceptions on error:
+    // these two will throw std::exception on error:
     virtual QString checkDBusSocketPath(const QString &dbusAddress, const QByteArray &typeHint) = 0;
     virtual QString checkWaylandSocketPath(const QString &xdgRuntimeDir, const QString &waylandDisplay) = 0;
 };

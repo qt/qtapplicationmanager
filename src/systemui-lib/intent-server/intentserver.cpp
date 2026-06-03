@@ -168,13 +168,13 @@ public:
 QDebug operator<<(QDebug ds, const IntentDebug &id)
 {
     QDebugStateSaver save(ds);
+    const QString reqId = id.m_requestId.isNull() ? u"-----------no-request-id------------"_s
+                                                  : id.m_requestId.toString(QUuid::WithoutBraces);
+
     ds.nospace().noquote()
-        << id.m_requestId.toString(QUuid::WithoutBraces) << " ["
-        << id.m_intentId << "] {"
-        << (id.m_requestingApplicationId.isEmpty() ? u"?"_s : id.m_requestingApplicationId)
-        << " -> "
-        << (id.m_handlingApplicationId.isEmpty() ? u"?"_s : id.m_handlingApplicationId)
-        << "}";
+        << reqId << " [" << id.m_intentId << "] {"
+        << (id.m_requestingApplicationId.isEmpty() ? u"?"_s : id.m_requestingApplicationId) << " -> "
+        << (id.m_handlingApplicationId.isEmpty() ? u"?"_s : id.m_handlingApplicationId) << "}";
     return ds;
 }
 

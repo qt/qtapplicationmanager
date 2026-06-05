@@ -200,7 +200,7 @@ void InstallationReport::deserialize(QIODevice *from)
         QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(u"hmac"_s).toString().toLatin1());
         QByteArrayView hmacKey { privateHmacKeyData.data(), privateHmacKeyData.size() };
 
-        QByteArray out = YamlEmitter::fromVariantDocuments({ docs[0], docs[1] }, YamlEmitter::Style::Block);
+        QByteArray out = YamlEmitter::fromVariantDocuments({ docs[0], docs[1] }, YamlVersion::V1_1, YamlEmitter::Style::Block);
         QByteArray hmacCalc= QMessageAuthenticationCode::hash(out, hmacKey, QCryptographicHash::Sha256);
 
         if (hmacFile != hmacCalc) {
@@ -249,7 +249,7 @@ bool InstallationReport::serialize(QIODevice *to) const
 
     // generate hmac to prevent tampering
     QByteArrayView hmacKey { privateHmacKeyData.data(), privateHmacKeyData.size() };
-    QByteArray out = YamlEmitter::fromVariantDocuments({ docs[0], docs[1] }, YamlEmitter::Style::Block);
+    QByteArray out = YamlEmitter::fromVariantDocuments({ docs[0], docs[1] }, YamlVersion::V1_1, YamlEmitter::Style::Block);
     QByteArray hmacCalc= QMessageAuthenticationCode::hash(out, hmacKey, QCryptographicHash::Sha256);
 
     // add another YAML document with a single key/value (way faster than using QtYaml)

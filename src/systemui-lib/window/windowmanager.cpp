@@ -28,6 +28,7 @@
 #include "abstractruntime.h"
 #include "runtimefactory.h"
 #include "utilities.h"
+#include "unix-utilities.h"
 #include "window.h"
 #include "windowitem.h"
 #include "windowmanager.h"
@@ -820,7 +821,7 @@ void WindowManager::waylandSurfaceCreated(QWaylandSurface *surface)
 void WindowManager::waylandSurfaceMapped(WindowSurface *surface)
 {
     QWaylandClient *client = surface->surface()->client();
-    unique_fd pidfd = WaylandCompositor::clientProcessFd(client);
+    Unix::Fd pidfd = WaylandCompositor::clientProcessFd(client);
     const auto apps = ApplicationManager::instance()->fromProcessId(client->processId(), pidfd.get());
     Application *app = nullptr;
 

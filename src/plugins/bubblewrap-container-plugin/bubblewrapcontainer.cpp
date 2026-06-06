@@ -21,6 +21,7 @@
 #include "bubblewrapcontainer.h"
 #include "systemd.h"
 #include "utilities.h"
+#include "unix-utilities.h"
 
 using namespace Qt::StringLiterals;
 QT_USE_NAMESPACE_AM
@@ -640,7 +641,7 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
                 // verify that the pid still refers to this same process when it is asked to
                 // setns() into the namespace.
                 if (isPidFileSystemSupported()) {
-                    unique_fd nsPidFd { int(::syscall(SYS_pidfd_open, pid_t(m_namespacePid), 0)) };
+                    Unix::Fd nsPidFd { int(::syscall(SYS_pidfd_open, pid_t(m_namespacePid), 0)) };
                     if (nsPidFd) {
                         struct ::stat st;
                         if (::fstat(nsPidFd.get(), &st) == 0) {

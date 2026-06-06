@@ -6,7 +6,7 @@
 #ifndef PROCESSCONTAINER_H
 #define PROCESSCONTAINER_H
 
-#include <QtAppManCommon/utilities.h>
+#include <QtAppManCommon/unix-utilities.h>
 #include <QtAppManSystemUI/abstractcontainer.h>
 #include <QtAppManSystemUI/amnamespace.h>
 
@@ -58,7 +58,7 @@ public Q_SLOTS:
 private:
     QProcess *m_process;
     qint64 m_pid = 0;
-    unique_fd m_pidFd;
+    Unix::Fd m_pidFd;
     bool m_stopBeforeExec = false;
     QVector<int> m_stdioRedirections;
 };

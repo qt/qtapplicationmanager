@@ -100,7 +100,7 @@ void WaylandXdgWatchdog::watchClient(QWaylandClient *client)
     // apps.
 
     auto updateClientData = [](ClientData *cd) {
-        unique_fd pidfd = WaylandCompositor::clientProcessFd(cd->m_client);
+        Unix::Fd pidfd = WaylandCompositor::clientProcessFd(cd->m_client);
         cd->m_runtimes = AbstractRuntimeManager::fromProcessId(cd->m_pid, pidfd.get());
         cd->m_hasDebugWrapper = false;
 

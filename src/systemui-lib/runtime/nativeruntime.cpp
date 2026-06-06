@@ -26,6 +26,7 @@
 #include "utilities.h"
 #include "unixsignalhandler.h"
 #include "dbus-utilities.h"
+#include "unix-utilities.h"
 #include "systemd.h"
 
 #include "runtimeinterface_adaptor.h"
@@ -48,7 +49,7 @@ QT_END_NAMESPACE_AM
 #  include <csignal>
 QT_BEGIN_NAMESPACE_AM
 
-static std::pair<qint64, unique_fd> getDBusPeerPidAndFd(const QDBusConnection &conn)
+static std::pair<qint64, Unix::Fd> getDBusPeerPidAndFd(const QDBusConnection &conn)
 {
     using am_dbus_connection_get_socket_t = bool (*)(void *, int *);
     static am_dbus_connection_get_socket_t am_dbus_connection_get_socket = nullptr;
@@ -74,10 +75,10 @@ static std::pair<qint64, unique_fd> getDBusPeerPidAndFd(const QDBusConnection &c
                 ::getsockopt(socketFd, SOL_SOCKET, SO_PEERPIDFD, &pidfd, &pidfdSize);
             }
 #endif
-            return { ucred.pid, unique_fd(pidfd) };
+            return { ucred.pid, Unix::Fd(pidfd) };
         }
     }
-    return { 0, unique_fd() };
+    return { 0, Unix::Fd() };
 }
 
 #endif

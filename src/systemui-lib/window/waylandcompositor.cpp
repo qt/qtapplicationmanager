@@ -24,6 +24,8 @@
 #include "applicationmanager.h"
 #include "waylandcompositor.h"
 #include "waylandxdgwatchdog.h"
+#include "utilities.h"
+#include "unix-utilities.h"
 
 #include <QWaylandWlShell>
 #include <QWaylandXdgShell>
@@ -204,7 +206,7 @@ WaylandCompositor::WaylandCompositor(QQuickWindow *window, const QString &waylan
     auto wmext = new QWaylandQtWindowManager(this);
     wmext->setParent(this);
     connect(wmext, &QWaylandQtWindowManager::openUrl, this, [](QWaylandClient *client, const QUrl &url) {
-        unique_fd pidfd = WaylandCompositor::clientProcessFd(client);
+        Unix::Fd pidfd = WaylandCompositor::clientProcessFd(client);
         if (!ApplicationManager::instance()->fromProcessId(client->processId(), pidfd.get()).isEmpty())
             ApplicationManager::instance()->openUrl(url.toString());
     });
@@ -222,7 +224,7 @@ WaylandCompositor::~WaylandCompositor()
     delete defaultSeat();
 }
 
-unique_fd WaylandCompositor::clientProcessFd(QWaylandClient *client)
+Unix::Fd WaylandCompositor::clientProcessFd(QWaylandClient *client)
 {
     // Returns a pidfd for the Wayland client's connected socket, via SO_PEERPIDFD. Empty on
     // non-Linux, pre-6.9 kernels, or if the syscall fails. The kernel pins the pidfd to the
@@ -238,7 +240,7 @@ unique_fd WaylandCompositor::clientProcessFd(QWaylandClient *client)
     socklen_t len = sizeof(pidfd);
     if (::getsockopt(sockFd, SOL_SOCKET, SO_PEERPIDFD, &pidfd, &len) != 0)
         return { };
-    return unique_fd(pidfd);
+    return Unix::Fd(pidfd);
 #else
     Q_UNUSED(client)
     return { };
@@ -275,7 +277,7 @@ void WaylandCompositor::setupLogging()
 
         QByteArray clientId;
         if (auto *client = QWaylandClient::fromWlClient(static_cast<WaylandCompositor *>(user_data), message->resource->client)) {
-            unique_fd pidfd = WaylandCompositor::clientProcessFd(client);
+            Unix::Fd pidfd = WaylandCompositor::clientProcessFd(client);
             const auto apps = ApplicationManager::instance()->fromProcessId(client->processId(), pidfd.get());
             for (const auto *app : apps) {
                 if (!clientId.isEmpty())

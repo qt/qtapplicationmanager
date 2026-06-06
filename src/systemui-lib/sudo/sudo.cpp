@@ -14,6 +14,7 @@
 #include "logging.h"
 #include "sudo.h"
 #include "utilities.h"
+#include "unix-utilities.h"
 #include "exception.h"
 
 #include <cerrno>
@@ -38,35 +39,6 @@ using namespace Qt::StringLiterals;
 #  include <sys/xattr.h>
 #  include <sched.h>
 #  include <thread>
-#  include <linux/capability.h>
-
-// These two functions are implemented in glibc, but the header file is
-// in the separate libcap-dev package. Since we want to avoid unnecessary
-// dependencies, we just declare them here
-extern "C" int capset(cap_user_header_t header, cap_user_data_t data);
-extern "C" int capget(cap_user_header_t header, const cap_user_data_t data);
-
-// Support for old/broken C libraries
-#  if defined(_LINUX_CAPABILITY_VERSION) && !defined(_LINUX_CAPABILITY_VERSION_1)
-#    define _LINUX_CAPABILITY_VERSION_1 _LINUX_CAPABILITY_VERSION
-#    define _LINUX_CAPABILITY_U32S_1    1
-#    if !defined(CAP_TO_INDEX)
-#      define CAP_TO_INDEX(x) ((x) >> 5)
-#    endif
-#    if !defined(CAP_TO_MASK)
-#      define CAP_TO_MASK(x)  (1 << ((x) & 31))
-#    endif
-#  endif
-#  if defined(_LINUX_CAPABILITY_VERSION_3) // use 64-bit support, if available
-#    define AM_CAP_VERSION _LINUX_CAPABILITY_VERSION_3
-#    define AM_CAP_SIZE    _LINUX_CAPABILITY_U32S_3
-#  else // fallback to 32-bit support
-#    define AM_CAP_VERSION _LINUX_CAPABILITY_VERSION_1
-#    define AM_CAP_SIZE    _LINUX_CAPABILITY_U32S_1
-#  endif
-
-// Convenient way to ignore EINTR on any system call
-#  define EINTR_LOOP(cmd) __extension__ ({__typeof__(cmd) res = 0; do { res = cmd; } while (res == -1 && errno == EINTR); res; })
 
 
 // Declared as weak symbol here, so we can check at runtime if we were compiled against libgcov
@@ -76,56 +48,42 @@ extern "C" void __gcov_init() __attribute__((weak)); // NOLINT(reserved-identifi
 #ifndef OPEN_TREE_CLONE
 #  define OPEN_TREE_CLONE 1
 #endif
-
 #ifndef OPEN_TREE_CLOEXEC
 #  define OPEN_TREE_CLOEXEC O_CLOEXEC
 #endif
-
 #ifndef SYS_open_tree
 #  define SYS_open_tree 428
 #endif
-
 #ifndef MOVE_MOUNT_F_EMPTY_PATH
 #  define MOVE_MOUNT_F_EMPTY_PATH 0x00000004
 #endif
-
 #ifndef SYS_move_mount
 #  define SYS_move_mount 429
 #endif
-
 #ifndef MOUNT_ATTR_RDONLY
 #  define MOUNT_ATTR_RDONLY 0x00000001
 #endif
-
 #ifndef SYS_mount_setattr
 #  define SYS_mount_setattr 442
+#endif
+#ifndef AT_RECURSIVE
+#  define AT_RECURSIVE 0x8000
+#endif
+#ifndef AT_EMPTY_PATH
+#  define AT_EMPTY_PATH 0x1000
+#endif
+#ifndef SYS_pidfd_open
+#  define SYS_pidfd_open 434
 #endif
 
 #ifndef MOUNT_ATTR_SIZE_VER0
 #  define MOUNT_ATTR_SIZE_VER0 32
-
 struct mount_attr {
     __u64 attr_set;
     __u64 attr_clr;
     __u64 propagation;
     __u64 userns_fd;
 };
-#endif
-
-#ifndef AT_RECURSIVE
-#  define AT_RECURSIVE 0x8000
-#endif
-
-#ifndef AT_EMPTY_PATH
-#  define AT_EMPTY_PATH 0x1000
-#endif
-
-#ifndef SYS_mount_setattr
-#  define SYS_mount_setattr 442
-#endif
-
-#ifndef SYS_pidfd_open
-#  define SYS_pidfd_open 434
 #endif
 
 QT_BEGIN_NAMESPACE_AM
@@ -149,177 +107,6 @@ static void checkSetuidArg(int argc, char *argv[], char *envp[])
 // register a .init function that is automatically run before main()
 decltype(checkSetuidArg) *init_checkSetuidArg
     __attribute__((section(".init_array"), used)) = checkSetuidArg;
-
-class Group;
-
-class User
-{
-public:
-    User() : User(nullptr) { }
-    User(const User &other)
-        : m_valid(other.m_valid)
-        , m_name(other.m_name)
-        , m_uid(other.m_uid)
-        , m_gid(other.m_gid)
-        , m_dir(other.m_dir)
-        , m_shell(other.m_shell)
-    {
-        ++s_count;
-    }
-
-    ~User()
-    {
-        if (--s_count == 0)
-            ::endpwent();
-    }
-
-    User &operator=(const User &) = default;
-
-    bool isValid() const { return m_valid; }
-    uid_t uid() const { return m_uid; }
-    gid_t gid() const { return m_gid; }
-    const char *name() const { return m_name.constData(); }
-    const char *dir() const { return m_dir.constData(); }
-    const char *shell() const { return m_shell.constData(); }
-
-    QSet<gid_t> supplementaryGroupIds(const Group &group);
-
-    void setCurrent(bool permanently = true)
-    {
-        if (::setresuid(uid(), uid(), permanently ? uid() : 0) < 0) {
-            throw Exception(errno, "Could not %1set the user to %2")
-                .arg(permanently ? "permanently " : "").arg(name());
-        }
-    }
-
-    static void setCurrentSupplementaryGroupIds(const QSet<gid_t> setSupGids)
-    {
-        if (::setgroups(setSupGids.size(), QVector<gid_t>(setSupGids.cbegin(), setSupGids.cend()).constData()) < 0)
-            throw Exception(errno, "Could not set supplementary groups (%2)").arg(setSupGids);
-    }
-
-    // The result is always valid
-    static User parse(const QByteArray &user)
-    {
-        bool ok;
-        if (uid_t uid = user.toUInt(&ok); ok) {
-            if (struct ::passwd *pw = ::getpwuid(uid))
-                return User(pw);
-        }
-        if (struct ::passwd *pw = ::getpwnam(user.constData()))
-            return User(pw);
-
-        throw Exception("unknown user '%1'").arg(user);
-    }
-
-private:
-    explicit User(const struct ::passwd *pw)
-        : m_valid(pw)
-        , m_name(pw ? pw->pw_name : "")
-        , m_uid(pw ? pw->pw_uid : static_cast<uid_t>(-1))
-        , m_gid(pw ? pw->pw_gid : static_cast<gid_t>(-1))
-        , m_dir(pw ? pw->pw_dir : "")
-        , m_shell(pw ? pw->pw_shell : "")
-    {
-        ++s_count;
-    }
-
-    bool m_valid;
-    QByteArray m_name;
-    uid_t m_uid = static_cast<uid_t>(-1);
-    gid_t m_gid = static_cast<gid_t>(-1);
-    QByteArray m_dir;
-    QByteArray m_shell;
-    static quint64 s_count;
-};
-
-quint64 User::s_count = 0;
-
-class Group
-{
-public:
-    Group() : Group(nullptr) { }
-    Group(const Group &other)
-        : m_valid(other.m_valid)
-        , m_name(other.m_name)
-        , m_gid(other.m_gid)
-    {
-        ++s_count;
-    }
-
-    ~Group()
-    {
-        if (--s_count == 0)
-            ::endgrent();
-    }
-
-    Group &operator=(const Group &) = default;
-
-    bool isValid() const { return m_valid; }
-    gid_t gid() const { return m_gid; }
-    const char *name() const { return m_name.constData(); }
-
-    void setCurrent(bool permanently = true)
-    {
-        if (::setresgid(gid(), gid(), permanently ? gid() : 0) < 0) {
-            throw Exception(errno, "Could not %1set the group to %2")
-                .arg(permanently ? "permanently ": "").arg(name());
-        }
-    }
-
-    // The result is always valid
-    static Group parse(const QByteArray &group)
-    {
-        bool ok;
-        if (gid_t gid = group.toUInt(&ok); ok) {
-            if (struct ::group *gr = ::getgrgid(gid))
-                return Group(gr);
-        }
-        if (struct ::group *gr = ::getgrnam(group.constData()))
-            return Group(gr);
-        throw Exception("unknown user '%1'").arg(group);
-    }
-
-    // The result is always valid
-    static Group fromUser(const User &user)
-    {
-        if (user.isValid()) {
-            if (struct ::group *gr = ::getgrgid(user.gid()))
-                return Group(gr);
-        }
-        throw Exception("cannot determine group of user '%1'").arg(user.isValid() ? user.name() : "<unknown>");
-    }
-
-    static constexpr int MaxSupplementary = NGROUPS_MAX;
-
-private:
-    explicit Group(const struct ::group *gr)
-        : m_valid(gr)
-        , m_name(gr ? gr->gr_name : "")
-        , m_gid(gr ? gr->gr_gid : static_cast<gid_t>(-1))
-    {
-        ++s_count;
-    }
-
-    bool m_valid;
-    QByteArray m_name;
-    gid_t m_gid;
-    static quint64 s_count;
-};
-
-quint64 Group::s_count = 0;
-
-QSet<gid_t> User::supplementaryGroupIds(const Group &mainGroup)
-{
-    gid_t supGids[NGROUPS_MAX + 1];
-    int supGidsLen = NGROUPS_MAX + 1;
-    gid_t mainGid = mainGroup.isValid() ? mainGroup.gid() : gid();
-    if (::getgrouplist(name(), mainGid, supGids, &supGidsLen) < 0)
-        throw Exception("Could not get supplementary groups for user %1").arg(name());
-    QSet<gid_t> result { supGids, supGids + supGidsLen };
-    result.remove(mainGid);
-    return result;
-}
 
 QT_END_NAMESPACE_AM
 
@@ -358,8 +145,8 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
     }
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    uid_t realUid = ::getuid();
-    uid_t effectiveUid = ::geteuid();
+    uid_t realUid = Unix::User::currentId();
+    uid_t effectiveUid = Unix::User::currentEffectiveId();
 
     if (realUid != effectiveUid)
         throw Exception("Running as suid executable is not supported anymore");
@@ -373,8 +160,8 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
     if ((realUid != 0) && setuidArg)
         throw Exception("Cannot use the --setuid argument or $AM_SETUID when not running as root");
 
-    User setUser;
-    Group setGroup;
+    Unix::User setUser;
+    Unix::Group setGroup;
     QSet<gid_t> setSupGids;
 
     // setuidArg is initialized in checkSetuidArg, before main()
@@ -385,8 +172,8 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         const QByteArray sudoGid = ::getenv("SUDO_GID");
         if (!sudoUid.isEmpty() && !sudoGid.isEmpty()) {
             try {
-                setUser = User::parse(sudoUid);
-                setGroup = Group::parse(sudoGid);
+                setUser = Unix::User::parse(sudoUid);
+                setGroup = Unix::Group::parse(sudoGid);
 
                 if ((setUser.uid() == 0) || (setGroup.gid() == 0)) {
                     throw Exception("the user and group invoking sudo needs to be unprivileged (got: %1:%2)")
@@ -407,15 +194,15 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         try {
             const auto list = QByteArray(setuidArg).trimmed().split(':');
 
-            setUser = User::parse(list.at(0));
-            setGroup = (list.size() >= 2) ? Group::parse(list.at(1))
-                                          : Group::fromUser(setUser);
+            setUser = Unix::User::parse(list.at(0));
+            setGroup = (list.size() >= 2) ? Unix::Group::parse(list.at(1))
+                                          : Unix::Group::fromUser(setUser);
             const auto supGroups = list.mid(2);
             for (const auto &supGroup : supGroups)
-                setSupGids << Group::parse(supGroup).gid();
+                setSupGids << Unix::Group::parse(supGroup).gid();
 
-            if (setSupGids.size() > Group::MaxSupplementary)
-                throw Exception("too many supplementary groups, the maximum is %1").arg(Group::MaxSupplementary);
+            if (setSupGids.size() > Unix::Group::MaxSupplementary)
+                throw Exception("too many supplementary groups, the maximum is %1").arg(Unix::Group::MaxSupplementary);
 
             if ((setUser.uid() == 0) || (setGroup.gid() == 0) || setSupGids.contains(0)) {
                 throw Exception("user and group(s) need to be unprivileged (got: %1:%2, supplementary: %3)")
@@ -456,45 +243,24 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         ::prctl(PR_SET_PDEATHSIG, SIGHUP);
         ::signal(SIGHUP, [](int sig) { if (sig == SIGHUP) ::_exit(0); });
 
-        // Drop as many capabilities as possible, just to be on the safe side
-        static const quint32 neededCapabilities[] = {
-            CAP_SYS_ADMIN,
-            CAP_SYS_CHROOT,
-            CAP_SYS_PTRACE,
-            CAP_CHOWN,
-            CAP_FOWNER,
-            CAP_DAC_OVERRIDE
-        };
-
-        bool capSetOk = false;
-        __user_cap_header_struct capHeader { AM_CAP_VERSION, ::getpid() };
-        __user_cap_data_struct capData[AM_CAP_SIZE];
-        if (::capget(&capHeader, capData) == 0) {
-            quint32 capNeeded[AM_CAP_SIZE];
-            ::memset(&capNeeded, 0, sizeof(capNeeded));
-            for (quint32 cap : neededCapabilities) {
-                int idx = CAP_TO_INDEX(cap);
-                Q_ASSERT(idx < AM_CAP_SIZE);
-                capNeeded[idx] |= CAP_TO_MASK(cap);
-            }
-            for (int i = 0; i < AM_CAP_SIZE; ++i)
-                capData[i].effective = capData[i].permitted = capData[i].inheritable = capNeeded[i];
-            if (::capset(&capHeader, capData) == 0)
-                capSetOk = true;
-        }
-        if (!capSetOk)
-            qCCritical(LogSystem) << "could not drop privileges in the SudoServer process -- continuing with full root privileges";
-
-        // Ipc needs an event loop, so we need at least a QCoreApplication
-
-        static char dummyArgv0[] = "sudo-helper";
-        static char *dummyArgv[] = { dummyArgv0, nullptr };
-        int dummyArgc = 1;
-        qInstallMessageHandler(nullptr);
-        QCoreApplication app(dummyArgc, dummyArgv);
-        ProcessTitle::setTitle("sudo helper");
-
         try {
+            // Drop as many capabilities as possible, just to be on the safe side
+            using Cap = Unix::Capability::Cap;
+            Unix::Capability::reduceTo({Cap::SysAdmin,
+                                        Cap::SysChroot,
+                                        Cap::SysPtrace,
+                                        Cap::Chown,
+                                        Cap::Fowner,
+                                        Cap::DacOverride});
+
+            // Ipc needs an event loop, so we need at least a QCoreApplication
+            static char dummyArgv0[] = "sudo-helper";
+            static char *dummyArgv[] = {dummyArgv0, nullptr};
+            int dummyArgc = 1;
+            qInstallMessageHandler(nullptr);
+            QCoreApplication app(dummyArgc, dummyArgv);
+            ProcessTitle::setTitle("sudo helper");
+
             SocketIpc server(std::move(ipcConfig), SocketIpc::Role::Server);
             server.registerSingleton(std::make_unique<SudoServer>());
             server.start();
@@ -517,12 +283,12 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
             auto supGids = setUser.supplementaryGroupIds(setGroup);
             setSupGids.unite(supGids);
             setSupGids.remove(setGroup.gid());
-            if (setSupGids.size() > Group::MaxSupplementary) {
+            if (setSupGids.size() > Unix::Group::MaxSupplementary) {
                 throw Exception("Too many supplementary groups when combining the groups of user "
                                 "%1 with the ones specified for --setuid / $AM_SETUID")
                     .arg(setUser.name());
             }
-            User::setCurrentSupplementaryGroupIds(setSupGids);
+            Unix::User::setCurrentSupplementaryGroupIds(setSupGids);
 
             // drop all root privileges
             const bool dropPermanently = (dropPrivileges == DropPrivilegesPermanently);
@@ -724,7 +490,7 @@ void SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
         if (oldNsFd < 0)
             throw Exception(errno, "could not open our own mount namespace");
 
-        unique_fd pidFd { int(::syscall(SYS_pidfd_open, pid_t(namespacePid), 0)) };
+        Unix::Fd pidFd { int(::syscall(SYS_pidfd_open, pid_t(namespacePid), 0)) };
         if (!pidFd)
             throw Exception(errno, "process %1 is not available").arg(namespacePid);
 

@@ -19,7 +19,7 @@
 #include <QtCore/QMap>
 #include <QtCore/QPointer>
 
-#include <QtAppManCommon/utilities.h>
+#include <QtAppManCommon/unix-utilities.h>
 
 QT_FORWARD_DECLARE_CLASS(QWaylandClient)
 QT_FORWARD_DECLARE_CLASS(QWaylandResource)
@@ -105,7 +105,7 @@ public:
 
     WaylandQtAMServerExtension *amExtension();
 
-    static unique_fd clientProcessFd(QWaylandClient *client);
+    static Unix::Fd clientProcessFd(QWaylandClient *client);
 
 Q_SIGNALS:
     void surfaceMapped(QtAM::WindowSurface *surface);

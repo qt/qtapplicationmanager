@@ -13,7 +13,6 @@
 #include <QSet>
 #include <QQmlContext>
 #include <QQmlEngine>
-#include <qplatformdefs.h>
 
 #include "utilities.h"
 #include "exception.h"
@@ -523,10 +522,5 @@ QString testRootPathPrefix()
     return s_testRootPathPrefix;
 }
 #endif
-
-void unique_fd::closeImpl(int fd)
-{
-    QT_CLOSE(fd);
-}
 
 QT_END_NAMESPACE_AM

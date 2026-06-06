@@ -21,6 +21,7 @@
 #include "installationreport.h"
 #include "packageutilities.h"
 #include "utilities.h"
+#include "unix-utilities.h"
 
 #include "../error-checking.h"
 
@@ -232,7 +233,7 @@ public:
     void run() override
     {
 #ifdef Q_OS_UNIX
-        unique_fd fifoFd { QT_OPEN(m_fifoPath.constData(), O_WRONLY) };
+        Unix::Fd fifoFd { QT_OPEN(m_fifoPath.constData(), O_WRONLY) };
         QVERIFY2(fifoFd, ::strerror(errno));
 
         QByteArray buffer;

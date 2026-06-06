@@ -8,6 +8,7 @@
 #include "colorprint.h"
 #include "logging.h"
 #include "utilities.h"
+#include "unix-utilities.h"
 
 #if defined(Q_OS_WIN)
 #  include <windows.h>
@@ -190,7 +191,7 @@ StartupTimer::StartupTimer()
         void *result = nullptr;
 
         QByteArray file = "/proc/self/task/" + QByteArray::number(static_cast<int>(syscall(SYS_gettid))) + "/stat";
-        unique_fd fd { QT_OPEN(file.constData(), O_RDONLY) };
+        Unix::Fd fd { QT_OPEN(file.constData(), O_RDONLY | O_CLOEXEC) };
         if (fd) {
             std::array<char, 1024> buffer;
             ssize_t bytesRead = QT_READ(fd.get(), buffer.data(), buffer.size() - 1);
@@ -239,7 +240,7 @@ StartupTimer::StartupTimer()
 
     // Checking the system up time
     if (m_initialized) {
-        unique_fd fd { QT_OPEN("/proc/uptime", O_RDONLY) };
+        Unix::Fd fd { QT_OPEN("/proc/uptime", O_RDONLY | O_CLOEXEC) };
         if (fd) {
             std::array<char, 32> buffer;
             ssize_t bytesRead = QT_READ(fd.get(), buffer.data(), buffer.size() - 1);

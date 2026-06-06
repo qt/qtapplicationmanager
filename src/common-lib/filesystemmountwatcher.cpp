@@ -9,7 +9,7 @@
 #  include <sys/statvfs.h>
 #  include <sys/mount.h>
 #elif defined(Q_OS_LINUX)
-#  include "utilities.h"
+#  include "unix-utilities.h"
 #  include <mntent.h>
 #endif
 #include <qplatformdefs.h>
@@ -146,7 +146,7 @@ private:
     static QByteArray s_mountTabFile;
 
 #if defined(Q_OS_LINUX)
-    unique_fd m_procMountsFd;
+    Unix::Fd m_procMountsFd;
 #endif
     QSocketNotifier *m_procMountsNotifier = nullptr;
     QFileSystemWatcher *m_autoTestMountTabWatcher = nullptr;

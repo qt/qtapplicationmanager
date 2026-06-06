@@ -20,6 +20,7 @@
 #include "globalruntimeconfiguration.h"
 #include "exception.h"
 #include "utilities.h"
+#include "unix-utilities.h"
 
 /*!
     \qmltype Runtime
@@ -231,7 +232,7 @@ QList<AbstractRuntime *> AbstractRuntimeManager::fromProcessId(qint64 pid, int p
             return (::fstat(fd, &st) == 0) ? quint64(st.st_ino) : 0;
         };
 
-        unique_fd ownedPidfd;
+        Unix::Fd ownedPidfd;
         if (pidfd < 0) {
             ownedPidfd.reset(int(::syscall(SYS_pidfd_open, pid, 0)));
             pidfd = ownedPidfd.get();

@@ -21,7 +21,8 @@ qt_internal_add_module(AppManSystemUIPrivate
         packagemanager.cpp packagemanager.h packagemanager_p.h
         processstatus.cpp processstatus.h
         quicklauncher.cpp quicklauncher.h
-        sudo.cpp sudo.h
+
+        sudo/sudo.cpp sudo/sudo.h
 
         container/abstractcontainer.cpp container/abstractcontainer.h
         container/containerfactory.cpp container/containerfactory.h

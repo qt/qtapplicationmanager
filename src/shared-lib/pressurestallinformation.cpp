@@ -9,8 +9,10 @@
 #include <private/qobject_p.h>
 
 #if defined(Q_OS_LINUX)
+#  include <QtCore/private/qcore_unix_p.h>
 #  include <fcntl.h>
 #  include <unistd.h>
+#  include "unix-utilities.h"
 #endif
 
 #include "exception.h"
@@ -25,13 +27,7 @@ class PressureStallInformationPrivate : public QObjectPrivate
 {
 public:
 #if defined(Q_OS_LINUX)
-    ~PressureStallInformationPrivate()
-    {
-        if (m_eventFd != -1)
-            ::close(m_eventFd);
-    }
-
-    int m_eventFd = -1;
+    Unix::Fd m_eventFd;
 #endif
 
     void startReconfigure();
@@ -209,11 +205,8 @@ void PressureStallInformation::setPressureFile(const QString &path)
 void PressureStallInformationPrivate::startReconfigure()
 {
 #if defined(Q_OS_LINUX)
-    if (m_eventFd != -1) {
-        ::close(m_eventFd);
-        m_eventFd = -1;
-        m_notifier.setSocket(-1);
-    }
+    m_eventFd.reset();
+    m_notifier.setSocket(-1);
 
     // make sure to reconfigure only once, even if multiple parameters are changed at once
     m_reconfigureTimer.start();
@@ -224,7 +217,7 @@ void PressureStallInformationPrivate::finishReconfigure()
 {
 #if defined(Q_OS_LINUX)
     // reconfigure the PSI monitoring with the new parameters
-    Q_ASSERT(m_eventFd == -1);
+    Q_ASSERT(!m_eventFd);
 
     if (m_mode == PressureStallInformation::Mode::Off)
         return;
@@ -241,9 +234,9 @@ void PressureStallInformationPrivate::finishReconfigure()
     }();
 
     try {
-        m_eventFd = ::open(m_pressureFile.toLocal8Bit().constData(), O_RDWR | O_CLOEXEC);
+        m_eventFd.reset(qt_safe_open(m_pressureFile.toLocal8Bit().constData(), O_RDWR | O_CLOEXEC));
 
-        if (m_eventFd == -1) {
+        if (!m_eventFd) {
             throw Exception(errno, "Failed to open PSI fd for %1 pressure monitoring at %2")
                 .arg(typeString).arg(m_pressureFile);
         }
@@ -253,7 +246,7 @@ void PressureStallInformationPrivate::finishReconfigure()
                           + QByteArray::number(1000 * m_timeWindow.count())
                           + '\n'; // needed, because the kernel will clobber the last character
 
-        if (::write(m_eventFd, data.constData(), data.size()) != data.size()) {
+        if (qt_safe_write(m_eventFd.get(), data.constData(), data.size()) != data.size()) {
             QByteArray extra;
             if ((errno == EINVAL) && m_stallTime.count() && m_timeWindow.count()
                     && (m_timeWindow.count() % 2000) && (::geteuid() != 0)) {
@@ -264,15 +257,12 @@ void PressureStallInformationPrivate::finishReconfigure()
                 .arg(typeString).arg(m_pressureFile).arg(data).arg(extra);
         }
 
-        m_notifier.setSocket(m_eventFd);
+        m_notifier.setSocket(m_eventFd.get());
         m_notifier.setEnabled(true);
 
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();
-        if (m_eventFd != -1) {
-            ::close(m_eventFd);
-            m_eventFd = -1;
-        }
+        m_eventFd.reset();
     }
 #endif
 }

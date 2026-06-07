@@ -9,6 +9,7 @@
 #  include <sys/statvfs.h>
 #  include <sys/mount.h>
 #elif defined(Q_OS_LINUX)
+#  include <QtCore/private/qcore_unix_p.h>
 #  include "unix-utilities.h"
 #  include <mntent.h>
 #endif
@@ -28,7 +29,7 @@ public:
         if (s_mountTabFile.isEmpty()) {
             s_mountTabFile = "/proc/self/mounts";
 
-            m_procMountsFd.reset(QT_OPEN(s_mountTabFile.constData(), O_RDONLY));
+            m_procMountsFd.reset(qt_safe_open(s_mountTabFile.constData(), O_RDONLY));
             if (m_procMountsFd) {
                 m_procMountsNotifier = new QSocketNotifier(m_procMountsFd.get(), QSocketNotifier::Exception);
                 QObject::connect(m_procMountsNotifier, &QSocketNotifier::activated,

@@ -16,6 +16,12 @@
 #  error "This test is Linux specific!"
 #endif
 
+#if defined(QT_AM_COVERAGE)
+extern "C" {
+#  include <gcov.h>
+}
+#endif
+
 #include "exception.h"
 #include "socketipc.h"
 #include "private/socketipc_p.h"
@@ -266,7 +272,11 @@ void tst_SocketIpc::runIpcTest(ServerSetup &&serverSetup, ClientBody &&clientBod
 
         // The child inherits QtTest's crash handlers; restore default disposition so SIGTERM
         // from cleanup() just kills the process instead of dumping a stack trace.
+#if defined(QT_AM_COVERAGE)
+        ::signal(SIGTERM, [](int) { __gcov_dump(); ::_exit(0); });
+#else
         ::signal(SIGTERM, SIG_DFL);
+#endif
         ::signal(SIGABRT, SIG_DFL);
         ::signal(SIGSEGV, SIG_DFL);
         ::signal(SIGBUS, SIG_DFL);
@@ -751,7 +761,11 @@ void tst_SocketIpc::requestTimeoutFiresPromise()
         ::prctl(PR_SET_PDEATHSIG, SIGTERM);
         if (::getppid() == 1)
             ::_exit(0);
+#if defined(QT_AM_COVERAGE)
+        ::signal(SIGTERM, [](int) { __gcov_dump(); ::_exit(0); });
+#else
         ::signal(SIGTERM, SIG_DFL);
+#endif
         ::signal(SIGABRT, SIG_DFL);
         ::signal(SIGSEGV, SIG_DFL);
         ::signal(SIGBUS, SIG_DFL);
@@ -804,7 +818,11 @@ void tst_SocketIpc::consecutiveTimeoutsKillClient()
         ::prctl(PR_SET_PDEATHSIG, SIGTERM);
         if (::getppid() == 1)
             ::_exit(0);
+#if defined(QT_AM_COVERAGE)
+        ::signal(SIGTERM, [](int) { __gcov_dump(); ::_exit(0); });
+#else
         ::signal(SIGTERM, SIG_DFL);
+#endif
         ::signal(SIGABRT, SIG_DFL);
         ::signal(SIGSEGV, SIG_DFL);
         ::signal(SIGBUS, SIG_DFL);

@@ -14,6 +14,7 @@
 #  ifndef _GNU_SOURCE
 #    define _GNU_SOURCE // for program_invocation_short_name
 #  endif
+#  include <QtNetwork/private/qnet_unix_p.h>
 #  include <charconv>
 #  include <cerrno>
 #  include <sys/mman.h>
@@ -111,12 +112,12 @@ bool Systemd::notify(const QString &state)
             if (socketPath.at(0) == u'@') // abstract socket
                 socketAddr.sun.sun_path[0] = 0;
 
-            int fd = ::socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+            int fd = qt_safe_socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
             if (fd < 0)
                 throw Exception(errno, "cannot create DGRAM socket");
 
             if (::connect(fd, &socketAddr.sa, offsetof(struct sockaddr_un, sun_path) + socketPath.size()) != 0) {
-                ::close(fd);
+                qt_safe_close(fd);
                 throw Exception(errno, "cannot connect to socket at %1").arg(socketPath);
             }
             m_notifySocketFd.reset(fd);
@@ -125,7 +126,7 @@ bool Systemd::notify(const QString &state)
 #endif
         }
 
-        if (QT_WRITE(m_notifySocketFd.get(), stateStr.constData(), stateStr.size()) != stateStr.size())
+        if (qt_safe_write(m_notifySocketFd.get(), stateStr.constData(), stateStr.size()) != stateStr.size())
             throw Exception(errno, "failed to send notify string");
 
         return true;
@@ -335,7 +336,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
 
     static const int journalSocket = []() {
         // this part is a reimplementation of libsystemd code
-        int s = ::socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+        int s = qt_safe_socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
         if (s >= 0) {
             int bufSize = 8 * 1024 * 1024; // 8MB
             int value;
@@ -354,7 +355,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
     if (Q_UNLIKELY(journalSocket < 0)) // Only possible, if the kernel is out of socket handles
         return false;
 
-    ssize_t result = ::sendmsg(journalSocket, &mh, MSG_NOSIGNAL);
+    ssize_t result = qt_safe_sendmsg(journalSocket, &mh, MSG_NOSIGNAL);
 
     if (result >= 0)
         return true;
@@ -381,7 +382,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
     int memFd = memfd_create_wrapper("journal-data", MFD_CLOEXEC | MFD_NOEXEC_SEAL | MFD_ALLOW_SEALING);
     if (memFd < 0)
         return false;
-    auto cleanup = qScopeGuard([=]() { ::close(memFd); });
+    auto cleanup = qScopeGuard([=]() { qt_safe_close(memFd); });
 
     if (::writev(memFd, iov.data(), iovLen) < 0)
         return false;

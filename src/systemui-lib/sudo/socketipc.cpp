@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
+#include <QtCore/private/qcore_unix_p.h>
 #include <QCoreApplication>
 #include <QEventLoop>
 #include <QLoggingCategory>
@@ -92,13 +93,6 @@
     calls or, worse, crashes if the same type id gets reused for different classes on the two
     sides.
 */
-
-// Convenient way to ignore EINTR on any system call
-#define EINTR_LOOP(cmd) __extension__ ({ \
-    __typeof__(cmd) res = 0; \
-    do { res = cmd; } while (res == -1 && errno == EINTR); \
-    res; \
-})
 
 using namespace Qt::StringLiterals;
 
@@ -714,7 +708,9 @@ void SocketIpcPrivate::send(std::unique_ptr<SocketIpcMessage> msg)
     qCDebug(LogSIpc) << "Send" << roleName(m_role) << callName(msg->m_call) << msg->m_counter
                      << msg->m_className << msg->m_instanceId << msg->m_function << msg->m_arguments;
 
-    int r = EINTR_LOOP(::send(m_socket, packet.constData(), packet.size(), MSG_NOSIGNAL));
+    int r = 0;
+    QT_EINTR_LOOP(r, ::send(m_socket, packet.constData(), packet.size(), MSG_NOSIGNAL));
+
     if (r != packet.size()) {
         if ((r == -1) && ((errno == EPIPE) || (errno == ECONNRESET))) {
             // Peer closed the socket. For InvokeMethod, finish the caller's promise inline so
@@ -783,7 +779,8 @@ void SocketIpcPrivate::receive()
         buffer.resize(16384);
 
         // MSG_DONTWAIT returns immediately with EWOULDBLOCK if there's no data to read
-        auto r = EINTR_LOOP(::recv(m_socket, buffer.data(), buffer.size(), MSG_TRUNC | MSG_DONTWAIT));
+        int r = 0;
+        QT_EINTR_LOOP(r, ::recv(m_socket, buffer.data(), buffer.size(), MSG_TRUNC | MSG_DONTWAIT));
 
         if (r < 0) {
             if ((errno == EAGAIN) || (errno == EWOULDBLOCK))

@@ -31,6 +31,7 @@ qt_internal_add_module(AppManCommonPrivate
         watchdogconfiguration.h watchdogconfiguration.cpp
     LIBRARIES
         Qt::CorePrivate
+        Qt::NetworkPrivate
         Qt::QmlPrivate
     PUBLIC_LIBRARIES
         Qt::Concurrent

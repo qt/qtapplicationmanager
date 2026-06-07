@@ -23,6 +23,8 @@
 using namespace Qt::StringLiterals;
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#  include <QtCore/private/qcore_unix_p.h>
+
 #  include "processtitle.h"
 #  include "sudo/socketipc.h"
 
@@ -229,7 +231,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         throw Exception(errno, "Could not fork process");
     } else if (pid == 0) {
         // child process, this is now the sudo-helper
-        ::close(0);
+        qt_safe_close(0);
         ::setsid();
 
         // reset umask
@@ -337,7 +339,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
     // The other way around is handled by PR_SET_PDEATHSIG above.
     std::thread watcher([pid]() {
         int status = 0;
-        if (::waitpid(pid, &status, 0) > 0) {  // blocks until child exits
+        if (qt_safe_waitpid(pid, &status, 0) > 0) {  // blocks until child exits
             qCCritical(LogSystem, "The sudo-helper process died with %s %d, so the main process needs to follow suit",
                 WIFSIGNALED(status) ? "signal" : "exit code",
                 WIFSIGNALED(status) ? WTERMSIG(status) : WEXITSTATUS(status));

@@ -132,8 +132,10 @@ bool isPidFileSystemSupported() noexcept
         if (self < 0)
             return false;
         struct ::statfs sf { };
-        const bool isPidFs = (::fstatfs(self, &sf) == 0) && (sf.f_type == 0x50494446 /*PID_FS_MAGIC*/);
-        ::close(self);
+        int r = 0;
+        QT_EINTR_LOOP(r, ::fstatfs(self, &sf));
+        const bool isPidFs = (r == 0) && (sf.f_type == 0x50494446 /*PID_FS_MAGIC*/);
+        qt_safe_close(self);
         return isPidFs;
     }();
     return result;
@@ -202,9 +204,9 @@ size_t getProcessName(qint64 pid, char *buffer, size_t bufferSize)
 
         // Plan B: pid most likely belongs to another user, so we cannot access it.
         ::snprintf(procPath.data(), procPath.size(), "/proc/%lld/comm", static_cast<long long>(pid));
-        if (int fd = ::open(procPath.data(), O_RDONLY | O_CLOEXEC); fd >= 0) {
-            QT_EINTR_LOOP(len, ::read(fd, buffer, bufferSize - 1));
-            ::close(fd);
+        if (int fd = qt_safe_open(procPath.data(), O_RDONLY | O_CLOEXEC); fd >= 0) {
+            len = qt_safe_read(fd, buffer, bufferSize - 1);
+            qt_safe_close(fd);
             if ((len > 0) && (buffer[len - 1] == '\n'))
                 --len; // remove trailing newline from comm
             if (len < 0)
@@ -385,10 +387,12 @@ void loadResource(const QString &resource) noexcept(false)
 
 void closeAndClearFileDescriptors(QVector<int> &fdList)
 {
+#if defined(Q_OS_UNIX)
     for (int fd : std::as_const(fdList)) {
         if (fd >= 0)
-            QT_CLOSE(fd);
+            qt_safe_close(fd);
     }
+#endif
     fdList.clear();
 }
 

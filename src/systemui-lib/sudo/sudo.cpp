@@ -471,31 +471,18 @@ void SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
                                      quint64 namespacePid, quint64 namespacePidInode)
 {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    int oldNsFd = -1;
-    auto nsRestore = qScopeGuard([&] {
-        if ((oldNsFd >= 0) && namespacePid) {
-            if (::setns(oldNsFd, CLONE_NEWNS) < 0)
-                qFatal() << "SudoHelper process is halted: could not reset the mount namespace:" << strerror(errno);
-        }
-    });
-
     // Create a detached mount point for our source location
-    int fromFd = int(::syscall(SYS_open_tree, -EBADF, qPrintable(from), OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE));
-    if (fromFd < 0)
+    Unix::Fd fromFd { int(::syscall(SYS_open_tree, -EBADF, qPrintable(from), OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE)) };
+    if (!fromFd)
         throw Exception(errno, "could not create a detached mount point for %1").arg(from);
 
     if (readOnly) {
         ::mount_attr mountAttr { MOUNT_ATTR_RDONLY, 0, 0, 0 };
-        if (::syscall(SYS_mount_setattr, fromFd, "", AT_EMPTY_PATH | AT_RECURSIVE, &mountAttr, sizeof(mountAttr)) < 0)
+        if (::syscall(SYS_mount_setattr, fromFd.get(), "", AT_EMPTY_PATH | AT_RECURSIVE, &mountAttr, sizeof(mountAttr)) < 0)
             throw Exception(errno, "could not set the detached mount point for %1 to read-only").arg(from);
     }
 
     if (namespacePid) {
-        // Save our current mount namespace to be able to restore it later
-        oldNsFd = open("/proc/self/ns/mnt", O_RDONLY);
-        if (oldNsFd < 0)
-            throw Exception(errno, "could not open our own mount namespace");
-
         Unix::Fd pidFd { int(::syscall(SYS_pidfd_open, pid_t(namespacePid), 0)) };
         if (!pidFd)
             throw Exception(errno, "process %1 is not available").arg(namespacePid);
@@ -521,13 +508,86 @@ void SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
             }
         }
 
-        if (::setns(pidFd.get(), CLONE_NEWNS) < 0)
-            throw Exception(errno, "could not enter the mount namespace of process %1").arg(namespacePid);
-    }
+        // The problem here is that we need to enter the mount namespace of pidFd to do the actual
+        // mount, but this is risky because we could fail to reset back to our original namespace
+        // and then we'd have no other option than killing ourselves.
+        // To make matters worse, setns() fails on multi-threaded processes and we are definitely
+        // multi-threaded now since we switched to SocketIpc (it has a "receiver" thread).
+        // The solution: fork() a throw-away process that does the setns() and the mount, and then
+        // immediately exits. The only complication is communicating back error conditions.
 
-    // Mount the detached mount point to the final location within the mount namespace
-    if (::syscall(SYS_move_mount, fromFd, "", -EBADF, qPrintable(to), MOVE_MOUNT_F_EMPTY_PATH) < 0)
-        throw Exception(errno, "could not move the detached mount point to %1").arg(to);
+        const QByteArray toLocal = to.toLocal8Bit();
+
+        int pipeFd[2] = { -1, -1 };
+        if (qt_safe_pipe(pipeFd) < 0)
+            throw Exception(errno, "could not create pipe for helper process of bindMountFileSystem");
+
+        pid_t pid = ::fork();
+        if (pid < 0) {
+            qt_safe_close(pipeFd[0]);
+            qt_safe_close(pipeFd[1]);
+            throw Exception(errno, "could not fork helper process for bindMountFileSystem");
+        } else if (pid == 0) {
+            // child process, throw-away setns+mount
+            qt_safe_close(pipeFd[0]);
+
+            //NB: we just forked from a multi-threaded process, which means we need to be extra
+            //    careful to not do anything that could cause deadlocks due to locks held by
+            //    other threads at fork() time: throwing exceptions and QString operations are
+            //    not possible.
+            //    For the most part, we need to act like a signal handler here, but we could
+            //    allocate memory if needed.
+
+            // Enter the mount namespace of the target process
+            if (::setns(pidFd.get(), CLONE_NEWNS) < 0) {
+                int e = errno;
+                qt_safe_write(pipeFd[1], &e, sizeof(e));
+                ::_exit(1);
+            }
+            // Mount the detached mount point to the final location within the mount namespace
+            if (::syscall(SYS_move_mount, fromFd.get(), "", -EBADF, toLocal.constData(), MOVE_MOUNT_F_EMPTY_PATH) < 0) {
+                int e = errno;
+                qt_safe_write(pipeFd[1], &e, sizeof(e));
+                ::_exit(2);
+            }
+            ::_exit(0);
+        } else {
+            // parent process, sudo-helper
+
+            qt_safe_close(pipeFd[1]);
+            Unix::Fd readPipeFd { pipeFd[0] }; // make sure to close the pipe on throw
+
+            int status = 0;
+            if (qt_safe_waitpid(pid, &status, 0) < 0)
+                throw Exception(errno, "error waiting for helper process of bindMountFileSystem");
+
+            if (!WIFEXITED(status)) {
+                throw Exception("helper process of bindMountFileSystem failed with signal %1")
+                    .arg(WTERMSIG(status));
+            }
+            int exitStatus = WEXITSTATUS(status);
+            if (exitStatus != 0) {
+                int e = 0;
+                if (qt_safe_read(readPipeFd.get(), &e, sizeof(e)) == sizeof(e)) {
+                    switch (exitStatus) {
+                    case 1:
+                        throw Exception(e, "could not enter the mount namespace of process %1").arg(namespacePid);
+                    case 2:
+                        throw Exception(e, "could not move the detached mount point to %1").arg(to);
+                    default:
+                        break;
+                    }
+                }
+                throw Exception("helper process of bindMountFileSystem failed with unknown error");
+            }
+        }
+        return;
+
+    } else { // no namespacePid
+        // Mount the detached mount point to the final location within the mount namespace
+        if (::syscall(SYS_move_mount, fromFd.get(), "", -EBADF, qPrintable(to), MOVE_MOUNT_F_EMPTY_PATH) < 0)
+            throw Exception(errno, "could not move the detached mount point to %1").arg(to);
+    }
 #else
     Q_UNUSED(from)
     Q_UNUSED(to)

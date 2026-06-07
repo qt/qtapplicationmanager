@@ -313,6 +313,10 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
                 xdgRTD.chop(1);
                 xdgRTD.append(QByteArray::number(setUser.uid()));
                 ::setenv("XDG_RUNTIME_DIR", xdgRTD.constData(), 1);
+            } else if (xdgRTD.isEmpty()) {
+                // XDG_RUNTIME_DIR is not set, but Wayland requires it, so set it to a sane default
+                xdgRTD = "/run/user/" + QByteArray::number(setUser.uid());
+                ::setenv("XDG_RUNTIME_DIR", xdgRTD.constData(), 1);
             }
             // We are NOT changing to the user's home dir on purpose to avoid overriding a systemd setting
 

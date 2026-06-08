@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'test.watchdog.renderblock'
+name:
+  en: 'Quick-window watchdog - render-blocking client'
+applications:
+- id:      'test.watchdog.renderblock'
+  code:    'renderblock.qml'
+  runtime: 'qml'

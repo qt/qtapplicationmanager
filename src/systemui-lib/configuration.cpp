@@ -1105,12 +1105,7 @@ void Configuration::setForceVerbose(bool forceVerbose)
 
 bool Configuration::isWatchdogDisabled() const
 {
-    return d->clp.isSet(u"disable-watchdog"_s) || d->forceDisableWatchdog;
-}
-
-void Configuration::setForceDisableWatchdog(bool forceDisableWatchdog)
-{
-    d->forceDisableWatchdog = forceDisableWatchdog;
+    return d->clp.isSet(u"disable-watchdog"_s);
 }
 
 bool Configuration::slowAnimations() const

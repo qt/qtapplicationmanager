@@ -1,0 +1,26 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_DIR}/apps"
+
+watchdog:
+  quickwindow:
+    checkInterval: 300ms
+    warnTimeout: 1000ms
+    killTimeout: 2500ms
+
+runtimes:
+  qml:
+    # The crash handler only terminates the process after printing a backtrace, which is very
+    # slow for a stuck thread. Skip it so the watchdog kill becomes observable quickly.
+    crashAction:
+      printBacktrace: false
+      printQmlStack: false
+      dumpCore: false
+    environmentVariables:
+      # Use the basic (GUI-thread) render loop so an app can block its own render thread from
+      # QML (see test.watchdog.renderblock); with the threaded loop that needs native code.
+      # Note: deliberately NOT using QT_QUICK_BACKEND=software here - the watchdog mis-detects
+      # the software render loop as threaded and its changeState() assert would abort the app.
+      QSG_RENDER_LOOP: "basic"

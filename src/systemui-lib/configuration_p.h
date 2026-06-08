@@ -38,7 +38,6 @@ public:
     ConfigurationData data;
     bool onlyOnePositionalArgument = false;
     bool forceVerbose = false;
-    bool forceDisableWatchdog = false;
 };
 
 QT_END_NAMESPACE_AM

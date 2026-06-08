@@ -155,7 +155,6 @@ public:
     bool verbose() const;
     void setForceVerbose(bool forceVerbose);
     bool isWatchdogDisabled() const;
-    void setForceDisableWatchdog(bool forceDisableWatchdog);
     bool slowAnimations() const;
     bool noDltLogging() const;
     bool qmlDebugging() const;

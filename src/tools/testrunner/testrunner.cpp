@@ -39,7 +39,6 @@ void TestRunner::setup(Configuration *cfg)
     const QString sourceFile = cfg->testRunnerSourceFile();
     const QStringList testRunnerArguments = cfg->testRunnerArguments();
     cfg->setForceVerbose(qEnvironmentVariableIsSet("AM_VERBOSE_TEST"));
-    cfg->setForceDisableWatchdog(true); // this messes up test results on slow CI systems otherwise
 
     Q_ASSERT(!testRunnerArguments.isEmpty());
 

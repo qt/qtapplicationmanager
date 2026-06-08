@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'test.watchdog.animated'
+name:
+  en: 'Quick-window watchdog - rendering client'
+applications:
+- id:      'test.watchdog.animated'
+  code:    'animated.qml'
+  runtime: 'qml'

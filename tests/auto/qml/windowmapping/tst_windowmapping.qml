@@ -77,14 +77,7 @@ TestCase {
         signalName: "windowPropertyChanged"
     }
 
-    SignalSpy {
-        id: runStateChangedSpy
-        target: ApplicationManager
-        signalName: "applicationRunStateChanged"
-    }
-
     function cleanup() {
-        runStateChangedSpy.clear();
         ApplicationManager.stopAllApplications();
 
         while (true) {
@@ -260,25 +253,6 @@ TestCase {
 
         app.stop();
         tryCompare(WindowManager, "count", 0, spyTimeout);
-    }
-
-    function test_wayland_ping_pong() {
-        var app = ApplicationManager.application("test.winmap.ping");
-
-        if (ApplicationManager.singleProcess)
-            skip("Wayland ping-pong is only supported in multi-process mode");
-        else
-            skip("Wayland ping-pong is disabled in the testrunner due to interferences with other tests");
-
-        AmTest.ignoreMessage(AmTest.CriticalMsg, /Stopping application.*because we did not receive a Wayland-Pong/);
-        app.start();
-        tryCompare(app, "runState", Am.Running, spyTimeout);
-        runStateChangedSpy.clear();
-        wait(2200 * AmTest.timeoutFactor);
-        runStateChangedSpy.wait(spyTimeout);
-        compare(runStateChangedSpy.signalArguments[0][1], Am.ShuttingDown);
-        runStateChangedSpy.wait(spyTimeout);
-        compare(runStateChangedSpy.signalArguments[1][1], Am.NotRunning);
     }
 
     function test_window_properties() {

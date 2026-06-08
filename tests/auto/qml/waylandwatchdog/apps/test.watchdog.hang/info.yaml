@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'test.watchdog.hang'
+name:
+  en: 'Wayland watchdog - hanging client'
+applications:
+- id:      'test.watchdog.hang'
+  code:    'hang.qml'
+  runtime: 'qml'

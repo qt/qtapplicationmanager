@@ -1,0 +1,20 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_DIR}/apps"
+
+watchdog:
+  wayland:
+    checkInterval: 300ms
+    warnTimeout: 1000ms
+    killTimeout: 2500ms
+
+runtimes:
+  qml:
+    # The crash handler only terminates the process after printing a backtrace, which is very
+    # slow for a stuck thread. Skip it so the watchdog kill becomes observable quickly.
+    crashAction:
+      printBacktrace: false
+      printQmlStack: false
+      dumpCore: false

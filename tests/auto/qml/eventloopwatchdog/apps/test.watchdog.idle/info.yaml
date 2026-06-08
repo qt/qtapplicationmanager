@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'test.watchdog.idle'
+name:
+  en: 'Event-loop watchdog - responsive client'
+applications:
+- id:      'test.watchdog.idle'
+  code:    'idle.qml'
+  runtime: 'qml'

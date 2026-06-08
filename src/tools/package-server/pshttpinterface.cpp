@@ -64,7 +64,7 @@ void PSHttpInterface::listen()
         throw Exception("failed to listen on %1:%2").arg(host.toString()).arg(port);
 
     d->listenAddress = host.toString() + u':' + QString::number(tcp->serverPort());
-    (void) tcp.release();
+    (void) tcp.release(); // NOLINT(bugprone-unused-return-value)
 
     if (!d->cfg->storeSignCertificate.isEmpty() && !host.isLoopback()) {
         colorOut() << ColorPrint::yellow << "WARNING" << ColorPrint::reset << ": "

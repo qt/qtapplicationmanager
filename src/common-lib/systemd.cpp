@@ -3,12 +3,14 @@
 
 #include <QCoreApplication>
 #include <QRegularExpression>
+#include <QtCore/QReadWriteLock>
 #include <QtEndian>
 #include <qplatformdefs.h>
 #include <sys/types.h>
 #include "systemd.h"
 #include "exception.h"
 #include "logging.h"
+#include "unix-utilities.h"
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #  ifndef _GNU_SOURCE
@@ -38,6 +40,28 @@ using namespace std::chrono_literals;
 
 QT_BEGIN_NAMESPACE_AM
 
+class SystemdPrivate
+{
+public:
+    QByteArray notifySocket;
+    QByteArray watchdogUsec;
+    QByteArray watchdogPid;
+    QByteArray listenFds;
+    QByteArray listenFdNames;
+    QByteArray listenPid;
+    QByteArray journalStream;
+
+#if defined(Q_OS_UNIX)
+    Unix::Fd notifySocketFd;
+#endif
+    bool notifySocketTriedToConnect = false;
+
+    QReadWriteLock extraJournalFieldsLock;
+    QMap<QByteArray, QByteArray> extraJournalFields;
+    QByteArray extraJournalFieldsBuffer;
+    bool extraJournalFieldsHasSyslogIdentifier = false;
+};
+
 Systemd *Systemd::instance()
 {
     static Systemd instance;
@@ -48,6 +72,7 @@ Systemd::~Systemd()
 { }
 
 Systemd::Systemd()
+    : d(std::make_unique<SystemdPrivate>())
 {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     auto getAndUnset = [](const char *name) {
@@ -56,17 +81,17 @@ Systemd::Systemd()
         return var;
     };
 
-    m_notifySocket  = getAndUnset("NOTIFY_SOCKET");
-    m_watchdogUsec  = getAndUnset("WATCHDOG_USEC");
-    m_watchdogPid   = getAndUnset("WATCHDOG_PID");
-    m_listenFds     = getAndUnset("LISTEN_FDS");
-    m_listenFdNames = getAndUnset("LISTEN_FDNAMES");
-    m_listenPid     = getAndUnset("LISTEN_PID");
-    m_journalStream = qgetenv("JOURNAL_STREAM");
+    d->notifySocket  = getAndUnset("NOTIFY_SOCKET");
+    d->watchdogUsec  = getAndUnset("WATCHDOG_USEC");
+    d->watchdogPid   = getAndUnset("WATCHDOG_PID");
+    d->listenFds     = getAndUnset("LISTEN_FDS");
+    d->listenFdNames = getAndUnset("LISTEN_FDNAMES");
+    d->listenPid     = getAndUnset("LISTEN_PID");
+    d->journalStream = qgetenv("JOURNAL_STREAM");
 #endif
 }
 
-bool Systemd::checkPid(const QByteArray &pidVar)
+static bool checkPid(const QByteArray &pidVar)
 {
     if (!pidVar.isEmpty()) {
         qint64 pid = pidVar.toLongLong();
@@ -78,7 +103,7 @@ bool Systemd::checkPid(const QByteArray &pidVar)
 
 bool Systemd::notify(const QString &state)
 {
-    if (m_notifySocket.isEmpty())
+    if (d->notifySocket.isEmpty())
         return false;
 
     try {
@@ -86,18 +111,18 @@ bool Systemd::notify(const QString &state)
         if (stateStr.isEmpty())
             throw Exception("empty notify messages are not allowed");
 
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
         // connect lazily, keep the connection open, but only try to connect once
-        if (!m_notifySocketFd) {
-            if (m_notifySocketTriedToConnect)
+        if (!d->notifySocketFd) {
+            if (d->notifySocketTriedToConnect)
                 return false;
-            m_notifySocketTriedToConnect = true;
+            d->notifySocketTriedToConnect = true;
 
-            auto socketPath = m_notifySocket;
+            auto socketPath = d->notifySocket;
 
             if ((socketPath.at(0) != '@') && (socketPath.at(0) != '/'))
                 throw Exception("invalid socket address: %1").arg(socketPath);
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
             // QLocalSocket cannot send datagrams and systemd does not allow streams...
             union {
                 struct ::sockaddr sa;
@@ -120,15 +145,14 @@ bool Systemd::notify(const QString &state)
                 qt_safe_close(fd);
                 throw Exception(errno, "cannot connect to socket at %1").arg(socketPath);
             }
-            m_notifySocketFd.reset(fd);
-#else
-            Q_ASSERT(false);
-#endif
+            d->notifySocketFd.reset(fd);
         }
 
-        if (qt_safe_write(m_notifySocketFd.get(), stateStr.constData(), stateStr.size()) != stateStr.size())
+        if (qt_safe_write(d->notifySocketFd.get(), stateStr.constData(), stateStr.size()) != stateStr.size())
             throw Exception(errno, "failed to send notify string");
-
+#else
+        Q_ASSERT(false);
+#endif
         return true;
     } catch (const Exception &e) {
         qCWarning(LogSystem).noquote() << "Systemd notify:" << e.errorString();
@@ -138,13 +162,13 @@ bool Systemd::notify(const QString &state)
 
 std::optional<std::chrono::milliseconds> Systemd::watchdogTimeout(bool ignorePid)
 {
-    if (m_watchdogUsec.isEmpty())
+    if (d->watchdogUsec.isEmpty())
         return { };
 
-    if (!ignorePid && !checkPid(m_watchdogPid))
+    if (!ignorePid && !checkPid(d->watchdogPid))
         return { };
 
-    auto msecs = std::chrono::milliseconds(m_watchdogUsec.toULongLong() / 1000);
+    auto msecs = std::chrono::milliseconds(d->watchdogUsec.toULongLong() / 1000);
     if (msecs <= 1ms) // this needs to be > 0, when divided by 2
         return { };
     return msecs;
@@ -152,17 +176,17 @@ std::optional<std::chrono::milliseconds> Systemd::watchdogTimeout(bool ignorePid
 
 QMap<int, QString> Systemd::listenFds(const QRegularExpression &nameRx, bool ignorePid)
 {
-    if (m_listenFds.isEmpty())
+    if (d->listenFds.isEmpty())
         return { };
 
-    if (!ignorePid && !checkPid(m_listenPid))
+    if (!ignorePid && !checkPid(d->listenPid))
         return { };
 
-    int fdCount = m_listenFds.toInt();
+    int fdCount = d->listenFds.toInt();
     if (fdCount <= 0)
         return { };
 
-    const auto names = QString::fromLocal8Bit(m_listenFdNames).split(u':');
+    const auto names = QString::fromLocal8Bit(d->listenFdNames).split(u':');
 
     if (names.size() != fdCount) {
         qCWarning(LogSystem).noquote() << "Systemd listen FDs count does not match names count";
@@ -181,7 +205,7 @@ bool Systemd::canLogToJournal() const
 {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     static const bool result = [this] {
-        QByteArrayView js(m_journalStream);
+        QByteArrayView js(d->journalStream);
         if (qsizetype pos = js.indexOf(':'); pos > 0) {
             bool devOk, inoOk;
             dev_t dev = static_cast<dev_t>(js.left(pos).toULongLong(&devOk));
@@ -261,16 +285,16 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
     }
 
     bool hasSyslogIdentifier = false;
-    if (m_extraJournalFieldsLock.tryLockForRead()) {
+    if (d->extraJournalFieldsLock.tryLockForRead()) {
         // It's better to skip the extra fields than to block logging. This can only happen if
         // someone is calling setExtraJournalFields() from a different thread, but you should do
         // this only once in the startup phase anyway.
-        if (!m_extraJournalFieldsBuffer.isEmpty()) {
-            iov.at(iovLen++) = { (void *) m_extraJournalFieldsBuffer.constData(),
-                                (size_t) m_extraJournalFieldsBuffer.size() };
-            hasSyslogIdentifier = m_extraJournalFieldsHasSyslogIdentifier;
+        if (!d->extraJournalFieldsBuffer.isEmpty()) {
+            iov.at(iovLen++) = { (void *) d->extraJournalFieldsBuffer.constData(),
+                                (size_t) d->extraJournalFieldsBuffer.size() };
+            hasSyslogIdentifier = d->extraJournalFieldsHasSyslogIdentifier;
         }
-        m_extraJournalFieldsLock.unlock();
+        d->extraJournalFieldsLock.unlock();
     }
 
     if (!hasSyslogIdentifier) {
@@ -420,8 +444,8 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
 
 QMap<QByteArray, QByteArray> Systemd::extraJournalFields()
 {
-    QReadLocker locker(&m_extraJournalFieldsLock);
-    return m_extraJournalFields;
+    QReadLocker locker(&d->extraJournalFieldsLock);
+    return d->extraJournalFields;
 }
 
 void Systemd::setExtraJournalFields(const QMap<QByteArray, QByteArray> &fields)
@@ -461,10 +485,10 @@ void Systemd::setExtraJournalFields(const QMap<QByteArray, QByteArray> &fields)
             hasSyslogIdentifier = true;
     }
 
-    QWriteLocker locker(&m_extraJournalFieldsLock);
-    m_extraJournalFieldsBuffer = buffer;
-    m_extraJournalFields = fields;
-    m_extraJournalFieldsHasSyslogIdentifier = hasSyslogIdentifier;
+    QWriteLocker locker(&d->extraJournalFieldsLock);
+    d->extraJournalFieldsBuffer = buffer;
+    d->extraJournalFields = fields;
+    d->extraJournalFieldsHasSyslogIdentifier = hasSyslogIdentifier;
 }
 
 QMap<QString, QString> Systemd::parseEnvironmentFile(const QString &contents)

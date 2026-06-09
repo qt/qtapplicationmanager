@@ -5,15 +5,16 @@
 #define SYSTEMD_H
 
 #include <chrono>
+#include <memory>
 #include <optional>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QMap>
-#include <QtCore/QReadWriteLock>
 #include <QtAppManCommon/qtappmancommonglobal.h>
-#include <QtAppManCommon/unix-utilities.h>
 
 QT_BEGIN_NAMESPACE_AM
+
+class SystemdPrivate;
 
 class Q_APPMANCOMMON_EXPORT Systemd
 {
@@ -42,23 +43,7 @@ public:
 private:
     Systemd();
 
-    bool checkPid(const QByteArray &pidVar);
-
-    QByteArray m_notifySocket;
-    QByteArray m_watchdogUsec;
-    QByteArray m_watchdogPid;
-    QByteArray m_listenFds;
-    QByteArray m_listenFdNames;
-    QByteArray m_listenPid;
-    QByteArray m_journalStream;
-
-    Unix::Fd m_notifySocketFd;
-    bool m_notifySocketTriedToConnect = false;
-
-    QReadWriteLock m_extraJournalFieldsLock;
-    QMap<QByteArray, QByteArray> m_extraJournalFields;
-    QByteArray m_extraJournalFieldsBuffer;
-    bool m_extraJournalFieldsHasSyslogIdentifier = false;
+    std::unique_ptr<SystemdPrivate> d;
 
     friend class SystemdTest;
 };

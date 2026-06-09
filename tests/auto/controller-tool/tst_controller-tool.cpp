@@ -209,6 +209,11 @@ void tst_ControllerTool::initTestCase()
         m_mainSetupDone = true;
         m_main->loadQml();
         m_main->showWindow();
+        if (qEnvironmentVariableIsSet("AM_BACKGROUND_TEST") && !qApp->topLevelWindows().isEmpty()) {
+            QWindow *w = qApp->topLevelWindows().first();
+            w->setFlag(Qt::WindowStaysOnBottomHint);
+            w->setFlag(Qt::WindowDoesNotAcceptFocus);
+        }
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
     }

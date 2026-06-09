@@ -15,8 +15,6 @@ QT_FORWARD_DECLARE_CLASS(QProcessEnvironment)
 
 QT_BEGIN_NAMESPACE_AM
 
-class MemoryWatcher;
-
 class Q_APPMANSYSTEMUI_EXPORT ProcessContainerManager : public AbstractContainerManager
 {
     Q_OBJECT
@@ -89,8 +87,6 @@ private:
     QVector<int> m_stdioRedirections;
     QMap<QString, QString> m_debugWrapperEnvironment;
     QStringList m_debugWrapperCommand;
-    MemoryWatcher *m_memWatcher = nullptr;
-    static bool s_hasCGroupV1;
     static bool s_hasCGroupV2;
 };
 

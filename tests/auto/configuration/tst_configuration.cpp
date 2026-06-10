@@ -6,6 +6,7 @@
 #include <QtCore/QtCore>
 
 #include <QtAppManSystemUI/configuration.h>
+#include <QtAppManSystemUI/sudo.h>
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/global.h>
 
@@ -24,6 +25,7 @@ public:
     tst_Configuration();
 
 private Q_SLOTS:
+    void initTestCase();
     void defaultConfig();
     void simpleConfig();
     void mergedConfig();
@@ -36,6 +38,13 @@ private:
 
 tst_Configuration::tst_Configuration()
 { }
+
+void tst_Configuration::initTestCase()
+{
+    // Configuration::parseWithArguments calls SudoClient::instance()->setInstanceId() to fix the
+    // per-instance trusted-file base dir before the config cache loads. The helper must be up.
+    Sudo::fallbackServer();
+}
 
 void tst_Configuration::defaultConfig()
 {
@@ -125,14 +134,14 @@ void tst_Configuration::defaultConfig()
     QCOMPARE(c.yaml.watchdog.wayland.warnTimeout, -1ms);
     QCOMPARE(c.yaml.watchdog.wayland.killTimeout, -1ms);
 
-    QCOMPARE(c.yaml.instanceId, u""_s);
+    QCOMPARE(c.yaml.instanceId, u"appman"_s);
     QCOMPARE(c.yaml.shutdownTimeout, 5s);
 }
 
 void tst_Configuration::simpleConfig()
 {
     Configuration c({ u":/data/config1.yaml"_s }, u":/build-config.yaml"_s);
-    QVERIFY_THROWS_NO_EXCEPTION(c.parseWithArguments({ u"test"_s, u"--no-cache"_s }));
+    QVERIFY_THROWS_NO_EXCEPTION(c.parseWithArguments({ u"test"_s, u"--no-cache"_s, u"--instance-id=i1"_s }));
 
     QVERIFY(c.noCache());
 
@@ -257,7 +266,7 @@ void tst_Configuration::simpleConfig()
 void tst_Configuration::mergedConfig()
 {
     Configuration c({ u":/data/"_s }, u":/build-config.yaml"_s);
-    c.parseWithArguments({ u"test"_s, u"--no-cache"_s });
+    c.parseWithArguments({ u"test"_s, u"--no-cache"_s, u"--instance-id=i2"_s });
 
     QVERIFY(c.noCache());
 
@@ -523,7 +532,7 @@ void tst_Configuration::commandLineConfig()
     QCOMPARE(c.yaml.plugins.container, {});
     QCOMPARE(c.yaml.plugins.startup, {});
 
-    QCOMPARE(c.yaml.instanceId, u""_s);
+    QCOMPARE(c.yaml.instanceId, u"appman"_s);
     QCOMPARE(c.yaml.shutdownTimeout.count(), 5000);
 }
 

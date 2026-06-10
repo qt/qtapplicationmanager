@@ -29,6 +29,7 @@
 #include "configcache.h"
 #include "utilities.h"
 #include "exception.h"
+#include "sudo.h"
 #include "utilities.h"
 #include "cacertificate.h"
 #include "configuration.h"
@@ -259,6 +260,8 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
         "\n"
         " AM_SETUID               Fallback to use if --setuid is not set.\n"
         "\n"
+        " AM_INSTANCE_ID          Fallback to use if --instance-id is not set.\n"
+        "\n"
         " AM_TAGGED_WAYLAND_DEBUG If set to '1', all server-side 'WAYLAND_DEBUG' messages\n"
         "                         are tagged with an '<app-id>'.\n";
 
@@ -388,6 +391,30 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     timer.start();
 #endif
 
+    // We need the instance-id now to determine the cache location, so we cannot read it from the
+    // YAML config as we did before 6.12.
+    QString instanceId = d->clp.value(u"instance-id"_s);
+    if (instanceId.isEmpty())
+        instanceId = qEnvironmentVariable("AM_INSTANCE_ID");
+    if (instanceId.isEmpty())
+        instanceId = u"appman"_s;
+
+    if (!instanceId.isEmpty()) {
+        try {
+            validateIdForFilesystemUsage(instanceId);
+        } catch (const Exception &e) {
+            throw Exception("Invalid instance-id (%1): %2").arg(instanceId, e.errorString());
+        }
+
+        // Set the sudo-helper's per-instance base dir before any trusted-file operation.
+        // The helper must already be running by this point (Sudo::forkServer or fallbackServer)
+        if (!SudoClient::instance()) {
+            throw Exception("The sudo-helper must be started before "
+                            "Configuration::parseWithArguments() is called");
+        }
+        //TODO: activate in follow up commit: SudoClient::instance()->setInstanceId(instanceId);
+    }
+
     const QStringList rawConfigFilePaths = d->clp.values(u"config-file"_s);
     QStringList configFilePaths;
     configFilePaths.reserve(rawConfigFilePaths.size());
@@ -455,6 +482,15 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     if (d->onlyOnePositionalArgument && (d->clp.positionalArguments().size() > 1))
         throw Exception("Only one main qml file can be specified.");
 
+    // instanceId in YAML is deprecated
+    if (!d->data.instanceId.isEmpty() && (d->data.instanceId != instanceId)) {
+        throw Exception("instanceId conflict: --instance-id / $AM_INSTANCE_ID is '%1', but"
+                        " 'instanceId' in am-config.yaml is '%2'. The YAML setting is"
+                        " deprecated; remove it or align the values.")
+            .arg(instanceId, d->data.instanceId);
+    }
+    d->data.instanceId = instanceId;
+
     // merge in the command-line options that map to YAML fields
     {
         ConfigurationData clcd;
@@ -472,7 +508,6 @@ void Configuration::parseWithArguments(const QStringList &arguments)
             }
         };
 
-        configIfSet(u"instance-id"_s,          clcd.instanceId);
         configIfSet(u"fullscreen"_s,           clcd.ui.fullscreen);
         configIfSet(u"I"_s,                    clcd.ui.importPaths);
         configIfSet(u"builtin-apps-manifest-dir"_s, clcd.applications.builtinAppsManifestDir);
@@ -503,14 +538,6 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         QStringList importPaths = d->data.ui.importPaths;
         for (auto &ip : d->data.ui.importPaths)
             ip = toAbsoluteFilePath(ip);
-    }
-
-    if (!d->data.instanceId.isEmpty()) {
-        try {
-            validateIdForFilesystemUsage(d->data.instanceId);
-        } catch (const Exception &e) {
-            throw Exception("Invalid instance-id (%1): %2\n").arg(d->data.instanceId, e.errorString());
-        }
     }
 
 #if QT_CONFIG(am_installer)
@@ -750,7 +777,8 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
 
         yp.parseFields({
             { "instanceId", false, YamlParser::Scalar, [&]() {
-                 cd.instanceId = yp.parseString(); } },
+                 qCDebug(LogDeployment) << "ignoring 'instanceId'";
+                 cd.instanceId = yp.parseString(); } }, // still stored for now to check for conflicts later
             { "shutdownTimeout", false, YamlParser::Scalar, [&]() {
                  cd.shutdownTimeout = yp.parseDurationAsMSec(); } },
             { "runtimes", false, YamlParser::Map, [&]() {

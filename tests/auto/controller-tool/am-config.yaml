@@ -8,4 +8,3 @@ applications:
 
 ui:
   mainQml: "${CONFIG_DIR}/system-ui.qml"
-instanceId: controller-test-id

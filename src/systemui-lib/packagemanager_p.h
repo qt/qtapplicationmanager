@@ -12,7 +12,7 @@
 #include <QThread>
 
 #include <QtAppManSystemUI/packagemanager.h>
-#include <QtAppManPackage/packagedatabase.h>
+#include <QtAppManSystemUI/packagedatabase.h>
 #include <QtAppManSystemUI/asynchronoustask.h>
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
 #include <QtAppManPackage/signature.h>

@@ -10,7 +10,7 @@ qt_internal_add_test(tst_yaml
         QTEST_THROW_ON_SKIP
     LIBRARIES
         Qt::Network
-        Qt::AppManCommonPrivate
+        Qt::AppManSystemUIPrivate
     BUILTIN_TESTDATA
     TESTDATA
         data/cache1.yaml

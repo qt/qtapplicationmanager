@@ -12,7 +12,6 @@ qt_internal_add_module(AppManCommonPrivate
         qtappmancommonglobal.h
         architecture.cpp architecture.h
         colorprint.h colorprint.cpp
-        configcache.cpp configcache.h configcache_p.h
         console.h console.cpp
         dbus-utilities.cpp dbus-utilities.h
         error.h

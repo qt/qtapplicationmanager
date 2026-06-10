@@ -6,3 +6,12 @@ applications:
 
 flags:
   noUiWatchdog: true
+
+runtimes:
+  qml:
+    # The crash handler only terminates the process after printing a backtrace, which is very
+    # slow for a stuck thread. Skip it so the watchdog kill becomes observable quickly.
+    crashAction:
+      printBacktrace: false
+      printQmlStack: false
+      dumpCore: false

@@ -5,6 +5,8 @@
 #ifndef CONFIGCACHE_P_H
 #define CONFIGCACHE_P_H
 
+#include <QMap>
+
 #include "configcache.h"
 
 QT_BEGIN_NAMESPACE_AM
@@ -33,7 +35,7 @@ struct CacheHeader
     bool isValid(const QString &baseName, quint32 typeId = 0, quint32 typeVersion = 0) const;
 };
 
-class Q_APPMANCOMMON_EXPORT ConfigCachePrivate
+class Q_APPMANSYSTEMUI_EXPORT ConfigCachePrivate
 {
 public:
     AbstractConfigCache::Options options;

@@ -18,9 +18,12 @@ qt_internal_add_module(AppManSystemUIPrivate
         main.cpp main.h
         mainmacro.h
         package.cpp package.h
+        packagedatabase.cpp packagedatabase.h
         packagemanager.cpp packagemanager.h packagemanager_p.h
         processstatus.cpp processstatus.h
         quicklauncher.cpp quicklauncher.h
+
+        cache/configcache.cpp cache/configcache.h cache/configcache_p.h
 
         sudo/sudo.cpp sudo/sudo.h sudo/sudo_p.h
 

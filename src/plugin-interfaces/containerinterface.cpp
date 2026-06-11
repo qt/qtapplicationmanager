@@ -487,25 +487,20 @@ bool ContainerManagerInterface::initialize(ContainerHelperFunctions *) { return 
     Please see the \l{System Integration} page for more information.
 */
 
-/*! \fn void ContainerHelperFunctions::bindMountFileSystem(const QString &from, const QString &to, bool readOnly, quint64 namespacePid, quint64 namespacePidInode)
+/*! \fn void ContainerHelperFunctions::bindMountFileSystem(const QString &from, const QString &to, bool readOnly, int namespacePidFd)
 
     This function bind mounts the file system at \a from to the mountpoint \a to.
     If \a readOnly is \c true, the bind mount will be read-only.
 
-    If \a namespacePid is non-zero, the bind mount will be done in the kernel mount namespace of
-    the process with the given PID. This is useful to bind-mount the application directory into
-    already started containers in case of quick-launching.
-    If \a namespacePid is zero, the bind mount will be done in the application manager's mount
-    namespace.
-
-    \a namespacePidInode is the \c st_ino value the caller captured by calling \c fstat() on the
-    \c pidfd_open() handle for \a namespacePid at the time the pid was first observed. The
-    sudo helper re-opens its own pidfd for \a namespacePid and rejects the call if the
-    inode does not match, which closes the pid-recycle race window between the caller and
-    the helper. The check requires the pidfs file system that was introduced in Linux 6.9;
-    on older kernels there is no stable per-process pidfd inode and \a namespacePidInode
-    must be passed as \c 0 (the helper will then reject any non-zero value as a
-    caller/helper kernel-feature mismatch). This parameter was added in version 6.12.
+    \a namespacePidFd is a \c pidfd_open() handle, opened by the caller and kept open for the
+    duration of the call. It identifies the process in whose kernel mount namespace the bind mount
+    should be performed.
+    This is useful to bind-mount the application directory into already started containers in case
+    of quick-launching. The sudo helper enters that exact process's mount namespace via this descriptor
+    directly, so there is no window in which the pid could be recycled between the caller and the helper
+    (and no pidfs inode comparison is needed). Pass \c -1 to do the bind mount in the application
+    manager's own mount namespace instead. This parameter was added in version 6.12 and replaces the
+    former \c namespacePid parameter.
 
     \note This function needs root privileges.
     \note This functions will throw a \c std::exception on error and will simply return on

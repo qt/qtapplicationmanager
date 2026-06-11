@@ -297,6 +297,8 @@ BubblewrapContainer::~BubblewrapContainer()
         QT_CLOSE(m_statusPipeFd[1]);
     if (m_pidfd >= 0)
         QT_CLOSE(m_pidfd);
+    if (m_namespacePidFd >= 0)
+        QT_CLOSE(m_namespacePidFd);
 
     manager()->helpers()->closeAndClearFileDescriptors(m_stdioRedirections);
 }
@@ -323,13 +325,13 @@ bool BubblewrapContainer::attachApplication(const QVariantMap &application)
     Q_ASSERT(!m_application.value(u"id"_s).toString().isEmpty());
     setupCustomBindMounts();
 
-    if (m_state == Running && m_namespacePid != 0) {
+    if (m_state == Running && m_namespacePidFd >= 0) {
         // attaching to an existing quick-launcher instance
 
         for (const auto &[hostPath, containerPath] : m_roBindMounts.asKeyValueRange()) {
             try {
                 qCDebug(lcBwrap) << "Mounting app specific mount path from" << hostPath << "to"<< containerPath;
-                m_manager->helpers()->bindMountFileSystem(hostPath, containerPath, true, m_namespacePid, m_namespacePidInode);
+                m_manager->helpers()->bindMountFileSystem(hostPath, containerPath, true, m_namespacePidFd);
             } catch (const std::exception &e) {
                 qCWarning(lcBwrap) << "Mounting the app specific mount path from" << hostPath
                                    << "to" << containerPath << "failed:" << e.what();
@@ -340,7 +342,7 @@ bool BubblewrapContainer::attachApplication(const QVariantMap &application)
         for (const auto &[hostPath, containerPath] : m_rwBindMounts.asKeyValueRange()) {
             try {
                 qCDebug(lcBwrap) << "Mounting app specific mount path from" << hostPath << "to" << containerPath;
-                m_manager->helpers()->bindMountFileSystem(hostPath, containerPath, false, m_namespacePid, m_namespacePidInode);
+                m_manager->helpers()->bindMountFileSystem(hostPath, containerPath, false, m_namespacePidFd);
             } catch (const std::exception &e) {
                 qCWarning(lcBwrap) << "Mounting the app specific mount path from" << hostPath
                                    << "to" << containerPath << "failed:" << e.what();
@@ -637,23 +639,13 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
                 qCDebug(lcBwrap) << "Namespace pid for app" << m_application.value(u"id"_s).toString()
                                  << "=" << m_namespacePid;
 
-                // Capture the pidfs inode of the namespace pid so the sudo helper can later
-                // verify that the pid still refers to this same process when it is asked to
-                // setns() into the namespace.
-                if (isPidFileSystemSupported()) {
-                    Unix::Fd nsPidFd { int(::syscall(SYS_pidfd_open, pid_t(m_namespacePid), 0)) };
-                    if (nsPidFd) {
-                        struct ::stat st;
-                        if (::fstat(nsPidFd.get(), &st) == 0) {
-                            m_namespacePidInode = quint64(st.st_ino);
-                        } else {
-                            qCWarning(lcBwrap) << "Cannot fstat() pidfd for namespace pid" << m_namespacePid
-                                               << ":" << ::strerror(errno);
-                        }
-                    } else {
-                        qCWarning(lcBwrap) << "Cannot open pidfd for namespace pid" << m_namespacePid
-                                           << ":" << ::strerror(errno);
-                    }
+                // Open a pidfd for the namespace pid right now and keep it open. It is handed to the
+                // sudo helper later, which enters the namespace via this exact fd - so the pid can
+                // never be recycled out from under us, no inode comparison needed.
+                m_namespacePidFd = int(::syscall(SYS_pidfd_open, pid_t(m_namespacePid), 0));
+                if (m_namespacePidFd < 0) {
+                    qCWarning(lcBwrap) << "Cannot open pidfd for namespace pid" << m_namespacePid
+                                       << ":" << ::strerror(errno);
                 }
 
                 bool success = false;

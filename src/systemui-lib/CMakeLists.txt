@@ -22,7 +22,7 @@ qt_internal_add_module(AppManSystemUIPrivate
         processstatus.cpp processstatus.h
         quicklauncher.cpp quicklauncher.h
 
-        sudo/sudo.cpp sudo/sudo.h
+        sudo/sudo.cpp sudo/sudo.h sudo/sudo_p.h
 
         container/abstractcontainer.cpp container/abstractcontainer.h
         container/containerfactory.cpp container/containerfactory.h
@@ -86,8 +86,8 @@ if(TARGET Qt::DBus)
             ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.packagemanager.xml
             ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.windowmanager.xml
             ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/org.freedesktop.notifications.xml
-            DBUS_ADAPTOR_FLAGS
-                -i dbus-utilities.h
+        DBUS_ADAPTOR_FLAGS
+            -i dbus-utilities.h
     )
 
     qt_internal_extend_target(AppManSystemUIPrivate
@@ -122,8 +122,10 @@ if(QT_FEATURE_am_multi_process)
             dbus/applicationinterfaceadaptor_dbus.cpp
             dbus/runtimeinterfaceadaptor_dbus.cpp
             dbus/notificationinterfaceadaptor_dbus.cpp
-        PUBLIC_LIBRARIES
-            dl
+        DBUS_INTERFACE_SOURCES
+            ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.sudo.xml
+        DBUS_ADAPTOR_SOURCES
+            ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.sudo.xml
     )
 
     if(NOT TARGET Wayland::Server)

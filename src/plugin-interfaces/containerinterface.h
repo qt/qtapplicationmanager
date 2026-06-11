@@ -102,10 +102,12 @@ public:
 
     // changed in 6.12:
     // this function needs root privileges and throws std::exception on error.
-    // namespacePidInode is the st_ino of a pidfd captured by the caller for namespacePid:
-    // requires pidfs (Linux 6.9+); on pre-pidfs kernels you need to pass 0.
+    // namespacePidFd is a pidfd that the caller has opened (and keeps open for the duration of the
+    // call) for the process whose mount namespace to enter; the helper enters that exact process's
+    // namespace via this fd, which makes the operation immune to pid recycling. Pass -1 to mount in
+    // the application manager's own mount namespace instead.
     virtual void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
-                                     quint64 namespacePid, quint64 namespacePidInode) = 0;
+                                     int namespacePidFd) = 0;
 
     // added in 6.10:
     virtual int watchdogSignal() = 0;

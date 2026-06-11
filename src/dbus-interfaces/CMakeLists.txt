@@ -4,6 +4,7 @@ add_custom_target("DBus-Interface-XMLs" SOURCES
     io.qt.applicationmanager.applicationinterface.xml
     io.qt.applicationmanager.runtimeinterface.xml
     io.qt.applicationmanager.intentinterface.xml
+    io.qt.applicationmanager.sudo.xml
     io.qt.applicationmanager.xml
     io.qt.windowmanager.xml
     org.freedesktop.notifications.xml

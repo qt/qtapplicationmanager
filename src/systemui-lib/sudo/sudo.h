@@ -7,17 +7,17 @@
 #define SUDO_H
 
 #include <QtCore/QObject>
-#include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QByteArray>
 #include <qplatformdefs.h>
+
+#include <memory>
 
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
 
-class SocketIpc;
-class SudoServer;
+class SudoClientPrivate;
 
 class Q_APPMANSYSTEMUI_EXPORT Sudo
 {
@@ -27,78 +27,34 @@ public:
         DropPrivilegesRegainable, // only use this for auto-tests
     };
 
-    // Must be called before QCoreApplication is constructed.
     static void forkServer(DropPrivileges dropPrivileges) noexcept(false);
-    // Must be called after QCoreApplication is constructed.
     static void startServer() noexcept(false);
     static void fallbackServer() noexcept(false);
 };
 
 
-class Q_APPMANSYSTEMUI_EXPORT SudoInterface : public QObject
-{
-    Q_OBJECT
-    Q_CLASSINFO("SocketIpcClassName", "SudoInterface")
-
-public:
-    Q_INVOKABLE virtual void removeRecursive(const QString &fileOrDir) = 0;
-    Q_INVOKABLE virtual void bindMountFileSystem(const QString &from, const QString &to,
-                                                 bool readOnly, quint64 namespacePid,
-                                                 quint64 namespacePidInode) = 0;
-    Q_INVOKABLE virtual void setExtendedAttribute(const QString &file, const QByteArray &attrName,
-                                                  const QByteArray &attrValue) = 0;
-
-protected:
-    explicit SudoInterface(QObject *parent = nullptr);
-
-private:
-    Q_DISABLE_COPY_MOVE(SudoInterface)
-};
-
-
-class Q_APPMANSYSTEMUI_EXPORT SudoClient : public SudoInterface
+class Q_APPMANSYSTEMUI_EXPORT SudoClient : public QObject
 {
     Q_OBJECT
 public:
-    // Constructed by SocketIpc::bindSingleton<SudoClient>() - passes itself as the only arg.
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    explicit SudoClient(SocketIpc *ipc);
-#endif
     static SudoClient *instance();
 
     bool isFallbackImplementation() const;
 
-    void removeRecursive(const QString &fileOrDir) override;
+    void removeRecursive(const QString &fileOrDir);
     void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
-                             quint64 namespacePid, quint64 namespacePidInode) override;
+                             int namespacePidFd);
     void setExtendedAttribute(const QString &file, const QByteArray &attrName,
-                              const QByteArray &attrValue) override;
+                              const QByteArray &attrValue);
 
 private:
-    // Constructed by Sudo::fallbackServer() - bypasses IPC and calls a local SudoServer directly.
-    explicit SudoClient(SudoServer *fallback);
+    explicit SudoClient(SudoClientPrivate *dd);
+    ~SudoClient() override;
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    QPointer<SocketIpc> m_ipc;
-#endif
-    QPointer<SudoServer> m_fallback;
+    std::unique_ptr<SudoClientPrivate> d;
 
     friend class Sudo;
     static SudoClient *s_instance;
-};
-
-
-class Q_APPMANSYSTEMUI_EXPORT SudoServer : public SudoInterface
-{
-    Q_OBJECT
-public:
-    explicit SudoServer(QObject *parent = nullptr);
-
-    void removeRecursive(const QString &fileOrDir) override;
-    void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
-                             quint64 namespacePid, quint64 namespacePidInode) override;
-    void setExtendedAttribute(const QString &file, const QByteArray &attrName,
-                              const QByteArray &attrValue) override;
 };
 
 QT_END_NAMESPACE_AM

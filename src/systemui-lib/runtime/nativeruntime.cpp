@@ -42,47 +42,6 @@ QT_BEGIN_NAMESPACE_AM
 
 // #define EXPORT_P2PBUS_OBJECTS_TO_SESSION_BUS 1
 
-#if QT_CONFIG(am_multi_process) && defined(Q_OS_LINUX)
-QT_END_NAMESPACE_AM
-#  include <dlfcn.h>
-#  include <sys/socket.h>
-#  include <csignal>
-QT_BEGIN_NAMESPACE_AM
-
-static std::pair<qint64, Unix::Fd> getDBusPeerPidAndFd(const QDBusConnection &conn)
-{
-    using am_dbus_connection_get_socket_t = bool (*)(void *, int *);
-    static am_dbus_connection_get_socket_t am_dbus_connection_get_socket = nullptr;
-
-    if (!am_dbus_connection_get_socket) {
-        am_dbus_connection_get_socket = reinterpret_cast<am_dbus_connection_get_socket_t>(
-            dlsym(RTLD_DEFAULT, "dbus_connection_get_socket"));
-    }
-
-    if (!am_dbus_connection_get_socket)
-        qFatal("ERROR: could not resolve 'dbus_connection_get_socket' from libdbus-1");
-
-    int socketFd = -1;
-    if (am_dbus_connection_get_socket(conn.internalPointer(), &socketFd)) {
-        struct ::ucred ucred;
-        socklen_t ucredSize = sizeof(struct ::ucred);
-        if (::getsockopt(socketFd, SOL_SOCKET, SO_PEERCRED, &ucred, &ucredSize) == 0) {
-            int pidfd = -1;
-
-#if defined(SO_PEERPIDFD)
-            if (isPidFileSystemSupported()) {
-                socklen_t pidfdSize = sizeof(pidfd);
-                ::getsockopt(socketFd, SOL_SOCKET, SO_PEERPIDFD, &pidfd, &pidfdSize);
-            }
-#endif
-            return { ucred.pid, Unix::Fd(pidfd) };
-        }
-    }
-    return { 0, Unix::Fd() };
-}
-
-#endif
-
 NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, NativeRuntimeManager *manager)
     : AbstractRuntime(container, app, manager)
     , m_isQuickLauncher(app == nullptr)

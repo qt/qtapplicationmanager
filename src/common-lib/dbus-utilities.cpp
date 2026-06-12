@@ -12,6 +12,7 @@
 #  include <QDBusArgument>
 #  include <QDBusMetaType>
 #  include <QDBusUnixFileDescriptor>
+#  include <QDBusConnection>
 #  include <QLibrary>
 #  include <QLibraryInfo>
 #  include <QDir>
@@ -21,6 +22,11 @@
 #  ifdef interface
 #    undef interface
 #  endif
+#endif
+#if defined(Q_OS_LINUX)
+#  include <dlfcn.h>
+#  include <sys/socket.h>
+#  include "utilities.h"
 #endif
 #include "logging.h"
 #include "dbus-utilities.h"
@@ -366,5 +372,41 @@ QString escapeDBusAddressName(const QString &name)
     }
     return QString::fromLatin1(escaped);
 }
+
+#if defined(Q_OS_LINUX) && defined(QT_DBUS_LIB)
+
+std::pair<qint64, Unix::Fd> getDBusPeerPidAndFd(const QDBusConnection &conn)
+{
+    using am_dbus_connection_get_socket_t = bool (*)(void *, int *);
+    static am_dbus_connection_get_socket_t am_dbus_connection_get_socket = nullptr;
+
+    if (!am_dbus_connection_get_socket) {
+        am_dbus_connection_get_socket = reinterpret_cast<am_dbus_connection_get_socket_t>(
+            dlsym(RTLD_DEFAULT, "dbus_connection_get_socket"));
+    }
+
+    if (!am_dbus_connection_get_socket)
+        qFatal("ERROR: could not resolve 'dbus_connection_get_socket' from libdbus-1");
+
+    int socketFd = -1;
+    if (am_dbus_connection_get_socket(conn.internalPointer(), &socketFd)) {
+        struct ::ucred ucred;
+        socklen_t ucredSize = sizeof(struct ::ucred);
+        if (::getsockopt(socketFd, SOL_SOCKET, SO_PEERCRED, &ucred, &ucredSize) == 0) {
+            int pidfd = -1;
+
+#if defined(SO_PEERPIDFD)
+            if (isPidFileSystemSupported()) {
+                socklen_t pidfdSize = sizeof(pidfd);
+                ::getsockopt(socketFd, SOL_SOCKET, SO_PEERPIDFD, &pidfd, &pidfdSize);
+            }
+#endif
+            return { ucred.pid, Unix::Fd(pidfd) };
+        }
+    }
+    return { 0, Unix::Fd() };
+}
+
+#endif
 
 QT_END_NAMESPACE_AM

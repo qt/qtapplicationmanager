@@ -9,6 +9,11 @@
 #include <QtAppManCommon/qtappmancommonglobal.h>
 #include <QtCore/QVariant>
 
+#if defined(Q_OS_LINUX) && defined(QT_DBUS_LIB)
+#  include "unix-utilities.h"
+QT_FORWARD_DECLARE_CLASS(QDBusConnection)
+#endif
+
 QT_BEGIN_NAMESPACE_AM
 
 Q_APPMANCOMMON_EXPORT QVariant convertToDBusVariant(const QVariant &variant);
@@ -20,6 +25,10 @@ Q_APPMANCOMMON_EXPORT void registerDBusTypes();
 Q_APPMANCOMMON_EXPORT void ensureLibDBusIsAvailable();
 
 Q_APPMANCOMMON_EXPORT QString escapeDBusAddressName(const QString &name);
+
+#if defined(Q_OS_LINUX) && defined(QT_DBUS_LIB)
+Q_APPMANCOMMON_EXPORT std::pair<qint64, Unix::Fd> getDBusPeerPidAndFd(const QDBusConnection &conn);
+#endif
 
 QT_END_NAMESPACE_AM
 

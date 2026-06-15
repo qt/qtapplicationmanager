@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <QStandardPaths>
+
 #include "logging.h"
 #include "packagemanager.h"
 #include "sudo.h"
@@ -111,6 +113,14 @@ void DeinstallationTask::execute()
                                              << ':' << e.errorString();
                 }
             }
+        }
+
+        try {
+            SudoClient::instance()->removeTrustedFile(QStandardPaths::StateLocation,
+                                                      u"installation-reports/"_s + packageId() + u".yaml"_s);
+        } catch (const Exception &e) {
+            qCCritical(LogInstaller) << "ERROR: could not remove installation-report for"
+                                     << packageId() << ':' << e.errorString();
         }
 
         // we need to call those PackageManager methods in the correct thread

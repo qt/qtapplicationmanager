@@ -78,6 +78,9 @@ private:
 
 void tst_PackagerTool::initTestCase()
 {
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#endif
     if (!QDir(QString::fromLatin1(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
@@ -88,6 +91,13 @@ void tst_PackagerTool::initTestCase()
     QVERIFY(m_workDir.isValid());
     QVERIFY(QDir::root().mkpath(pathTo("internal-0")));
     QVERIFY(QDir::root().mkpath(pathTo("documents-0")));
+
+    // Route the sudo helper's trusted-file tree (installation-reports/) into the temp dir so
+    // installs and removes don't leak files into the user's XDG state location.
+#if defined(QT_BUILD_INTERNAL)
+    SudoClient::instance()->setTestRootPathPrefix(m_workDir.path() + u'/');
+#endif
+    SudoClient::instance()->setInstanceId(QString());
 
     m_hardwareId = u"foobar"_s;
 

@@ -524,15 +524,13 @@ void InstallationTask::finishInstallation() noexcept(false)
     if (m_applicationDir.exists())
         mode = Update;
 
-    // create the installation report
+    // create the installation report - staged in the sudo helper's anonymous fd; only materialized
+    // by commit() further down once the application-directory rename is past the can-fail boundary
     InstallationReport report = m_extractor->installationReport();
-
-    QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-    QString instReport = dataDir.absoluteFilePath(u"installation-reports/"_s + m_packageId + u".yaml"_s);
-    QFile reportFile(instReport + u'+');
-    if (!reportFile.open(QFile::WriteOnly) || !report.serialize(&reportFile))
-        throw Exception(reportFile, "could not write the installation report");
-    reportFile.close();
+    auto reportFile = SudoClient::instance()->openTrustedSaveFile(QStandardPaths::StateLocation,
+                                                                  u"installation-reports/"_s + m_packageId + u".yaml"_s);
+    if (!report.serialize(reportFile.get()))
+        throw Exception(*reportFile, "could not write the installation report");
 
     // create the document directories when installing (not needed on updates)
     if ((mode == Installation) && !m_documentPath.isEmpty()) {
@@ -542,12 +540,6 @@ void InstallationTask::finishInstallation() noexcept(false)
                 throw Exception(Error::IO, "could not create the document directory %1").arg(documentDirectory.filePath(m_packageId));
         }
     }
-
-    // final rename
-
-    ScopedRenamer renameReport;
-    if (!renameReport.rename(instReport, ScopedRenamer::NamePlusToName))
-        throw Exception(Error::IO, "could not rename installation-report %1+ to %1 (including a backup to %1-)").arg(m_applicationDir);
 
     // POSIX cannot atomically rename directories, if the destination directory exists
     // and is non-empty. We need to do a double-rename in this case, which might fail!
@@ -562,13 +554,15 @@ void InstallationTask::finishInstallation() noexcept(false)
             throw Exception(Error::IO, "could not rename application directory %1+ to %1").arg(m_applicationDir);
     }
 
+    // materialize the report atomically; if this throws, ~ScopedRenamer reverts the app-dir rename
+    // and ~TrustedSaveFile discards the staged content
+    reportFile->commit();
 
     // from this point onwards, we are not allowed to throw anymore, since the installation is "done"
 
     setState(CleaningUp);
 
     renameApplication.take();
-    renameReport.take();
     documentDirCreator.take();
 
     m_installationDirCreator.take();

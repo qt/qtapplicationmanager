@@ -16,5 +16,38 @@
       <arg name="attrName" type="ay" direction="in"/>
       <arg name="attrValue" type="ay" direction="in"/>
     </method>
+
+    <method name="setInstanceId">
+      <arg name="instanceId" type="s" direction="in"/>
+    </method>
+
+    <!-- only supported in developer builds -->
+    <method name="setTestRootPathPrefix">
+      <arg name="prefix" type="s" direction="in"/>
+    </method>
+
+    <!-- location is QStandardPaths::StandardLocation, relPath is relative to that
+         only CacheLocation (/var/cache) and StateLocation (/var/lib) are currently supported
+    -->
+    <method name="openTrustedFile">
+      <arg name="location" type="i" direction="in"/>
+      <arg name="relPath" type="s" direction="in"/>
+      <arg name="fd" type="h" direction="out"/>
+    </method>
+    <method name="openTrustedSaveFile">
+      <arg name="location" type="i" direction="in"/>
+      <arg name="relPath" type="s" direction="in"/>
+      <arg name="fd" type="h" direction="out"/>
+    </method>
+    <method name="commitTrustedSaveFile">
+      <arg name="saveFd" type="h" direction="in"/>
+    </method>
+    <method name="cancelTrustedSaveFile">
+      <arg name="saveFd" type="h" direction="in"/>
+    </method>
+    <method name="removeTrustedFile">
+      <arg name="location" type="i" direction="in"/>
+      <arg name="relPath" type="s" direction="in"/>
+    </method>
   </interface>
 </node>

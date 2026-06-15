@@ -7,9 +7,11 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QScopeGuard>
 #include <QSet>
 #include <QSocketNotifier>
+#include <QStandardPaths>
 #include <QUuid>
 #include <qplatformdefs.h>
 
@@ -471,8 +473,7 @@ void Sudo::startServer()
         int n = qt_safe_read(s_sudoAddressPipe.get(), address.data(), address.size());
         if (n < 0)
             throw Exception(errno, "failed to read the sudo-helper D-Bus address");
-        else if (n >= 0)
-            address.resize(n);
+        address.resize(n);
 
         s_sudoAddressPipe.reset();
 
@@ -636,6 +637,325 @@ void SudoClient::setExtendedAttribute(const QString &file, const QByteArray &att
 }
 
 
+///////////////////////////////////////////////////////////////////////
+// Trusted files
+///////////////////////////////////////////////////////////////////////
+
+// Resolve relPath to an absolute path under <baseDir>[/<instanceId>]/, with lexical + symlink
+// containment. The privileged helper (System) and the non-root in-process fallback (User) share
+// everything except the base dir: System uses the FHS /var trees, User the per-user writable
+// location.
+enum class TrustedRoot { System, User };
+
+static QString trustedPath(TrustedRoot root, QStandardPaths::StandardLocation location,
+                           const QString &relPath, const std::optional<QString> &testPrefix,
+                           const std::optional<QString> &instanceId)
+{
+    QString baseDir;
+    switch (location) {
+    case QStandardPaths::StateLocation:
+        baseDir = (root == TrustedRoot::System) ? u"/var/lib/qtapplicationmanager/"_s
+                                                : QStandardPaths::writableLocation(location);
+        break;
+    case QStandardPaths::CacheLocation:
+        baseDir = (root == TrustedRoot::System) ? u"/var/cache/qtapplicationmanager/"_s
+                                                : QStandardPaths::writableLocation(location);
+        break;
+    default:
+        throw Exception("unsupported trusted-file location: %1").arg(int(location));
+    }
+
+    if (relPath.isEmpty())
+        throw Exception("trusted-file relPath must not be empty");
+    if (relPath.startsWith(u'/'))
+        throw Exception("trusted-file relPath must be relative, not absolute: %1").arg(relPath);
+#if !defined(QT_BUILD_INTERNAL)
+    if (testPrefix)
+        throw Exception("a test prefix is not supported in production builds");
+#endif
+    // When a testPrefix is set, baseDir nests under it. POSIX leading slashes get folded
+    // implicitly by QDir::cleanPath, but on Windows "C:/..." in the middle of a concatenated
+    // path stays as-is and breaks mkpath - strip the drive letter explicitly.
+    QString nestedBaseDir = baseDir;
+#if defined(Q_OS_WINDOWS)
+    if (testPrefix && (nestedBaseDir.size() >= 3) && (nestedBaseDir[1] == u':')
+        && ((nestedBaseDir[2] == u'/') || (nestedBaseDir[2] == u'\\'))) {
+        nestedBaseDir.remove(0, 3);
+    }
+#endif
+    const QString anchor = QDir::cleanPath(testPrefix.value_or(QString()) + nestedBaseDir
+                                           + u'/' + instanceId.value_or(QString())) + u'/';
+    const QString fullPath = QDir::cleanPath(anchor + relPath);
+    if (!QString(fullPath + u'/').startsWith(anchor))
+        throw Exception("trusted-file relPath escapes the anchor: %1 -> %2").arg(relPath, fullPath);
+
+    // For the symlink-escape check, canonicalize both sides so any OS-level symlinks above the
+    // anchor (e.g. /var -> /private/var on macOS test temp dirs) resolve consistently. If either
+    // path doesn't exist yet, skip - first access creates it and the next call re-checks.
+    const QString canonicalParent = QFileInfo(fullPath).dir().canonicalPath();
+    const QString canonicalAnchor = QFileInfo(anchor).canonicalFilePath();
+    if (!canonicalParent.isEmpty() && !canonicalAnchor.isEmpty()
+        && !QString(canonicalParent + u'/').startsWith(canonicalAnchor + u'/')) {
+        throw Exception("trusted-file relPath escapes the anchor via symlink: %1 -> %2")
+            .arg(relPath, canonicalParent);
+    }
+    return fullPath;
+}
+
+/*! \internal
+    Trusted (root-owned 0400) files are partitioned per instance under the id set here. Reads return a
+    ready-to-read TrustedFile; writes return a TrustedSaveFile (write + commit()); removes are direct.
+*/
+void SudoClient::setInstanceId(const QString &instanceId)
+{
+    if (d->instanceId && (*d->instanceId != instanceId))
+        throw Exception("setInstanceId was already called with a different value");
+    d->instanceId = instanceId;
+#if QT_CONFIG(am_multi_process)
+    if (!d->isFallback && d->iface)
+        checkDBusReply<void>(d->iface->setInstanceId(instanceId), __func__);
+#endif
+}
+
+#if defined(QT_BUILD_INTERNAL)
+void SudoClient::setTestRootPathPrefix(const QString &prefix)
+{
+    d->testPrefix = prefix;
+#if QT_CONFIG(am_multi_process)
+    if (!d->isFallback && d->iface)
+        checkDBusReply<void>(d->iface->setTestRootPathPrefix(prefix), __func__);
+#  endif
+}
+
+/*! \internal
+    Test-only seam: commit an arbitrary fd to exercise the helper's staging-session validation
+    (foreign fd / one-shot). Not compiled into production builds.
+*/
+void SudoClient::commitRawFdForTest(int fd)
+{
+    d->commitTrusted(fd);
+}
+
+/*! \internal
+    Test-only: clear the previously-set instance-id so a single test process can exercise
+    parseWithArguments() with multiple --instance-id values across test methods. The
+    "throws on different value" check in setInstanceId() is correct for production (one
+    Configuration per process); in tests we just need to roll back between scenarios.
+    Fallback-mode only: there is no helper process whose state would also need to be cleared.
+    Not compiled into production builds.
+*/
+void SudoClient::resetInstanceIdForTest()
+{
+    d->instanceId.reset();
+}
+#endif // QT_BUILD_INTERNAL
+
+
+/*! \internal
+    The only \a location values implemented are CacheLocation (/var/cache) and StateLocation (/var/lib).
+*/
+std::unique_ptr<TrustedFile> SudoClient::openTrustedFile(QStandardPaths::StandardLocation location, const QString &relPath)
+{
+    if (d->isFallback) {
+        const QString fullPath = trustedPath(TrustedRoot::User, location, relPath,
+                                             d->testPrefix, d->instanceId);
+        auto tf = std::make_unique<TrustedFile>();
+        tf->setFileName(fullPath);
+        if (!tf->open(QIODevice::ReadOnly))
+            throw Exception("could not open trusted file %1: %2").arg(fullPath, tf->errorString());
+        return tf;
+    }
+#if QT_CONFIG(am_multi_process)
+    if (d->iface) {
+        auto fdw = checkDBusReply<QDBusUnixFileDescriptor>(d->iface->openTrustedFile(int(location),
+                                                                                     relPath),
+                                                           __func__);
+        Unix::Fd fd = qt_safe_dup(fdw.fileDescriptor()); // own a copy past the reply's lifetime
+        if (!fd)
+            throw Exception(errno, "could not dup the trusted-file descriptor");
+        auto tf = std::make_unique<TrustedFile>();
+        if (!tf->open(fd.get(), QIODevice::ReadOnly, QFileDevice::AutoCloseHandle))
+            throw Exception("could not open the trusted file: %1").arg(tf->errorString());
+        (void) fd.release(); // NOLINT(bugprone-unused-return-value)
+        return tf;
+    }
+#endif // QT_CONFIG(am_multi_process)
+    throw Exception("The sudo-helper process is not available.");
+}
+
+std::unique_ptr<TrustedSaveFile> SudoClient::openTrustedSaveFile(QStandardPaths::StandardLocation location, const QString &relPath)
+{
+    if (d->isFallback) {
+        const QString fullPath = trustedPath(TrustedRoot::User, location, relPath,
+                                             d->testPrefix, d->instanceId);
+        const QString parentDir = QFileInfo(fullPath).absolutePath();
+        if (!QDir().mkpath(parentDir))
+            throw Exception("could not create trusted directory %1").arg(parentDir);
+        // Stage into a temp file in the same dir; commit() renames it atomically over the target.
+        const QString tempPath = fullPath + u".commit-"_s + QUuid::createUuid().toString(QUuid::Id128);
+        auto tf = std::make_unique<TrustedSaveFile>();
+        tf->setFileName(tempPath);
+        if (!tf->open(QIODevice::WriteOnly | QIODevice::Truncate))
+            throw Exception("could not open trusted file %1 for writing: %2").arg(fullPath, tf->errorString());
+        tf->d->client = this;
+        tf->d->relPath = relPath;
+        tf->d->isFallback = true;
+        tf->d->fallbackFinalPath = fullPath;
+        return tf;
+    }
+#if QT_CONFIG(am_multi_process)
+    if (d->iface) {
+        auto fdw = checkDBusReply<QDBusUnixFileDescriptor>(d->iface->openTrustedSaveFile(int(location),
+                                                                                         relPath),
+                                                           __func__);
+        Unix::Fd fd = qt_safe_dup(fdw.fileDescriptor());  // own a copy past the reply's lifetime
+        if (!fd)
+            throw Exception(errno, "could not dup the trusted-file descriptor");
+        auto tf = std::make_unique<TrustedSaveFile>();
+        if (!tf->open(fd.get(), QIODevice::WriteOnly, QFileDevice::AutoCloseHandle))
+            throw Exception("could not open the trusted file for writing: %1").arg(tf->errorString());
+        (void) fd.release(); // NOLINT(bugprone-unused-return-value)
+
+        tf->d->client = this;
+        tf->d->relPath = relPath;
+        return tf;
+    }
+#endif // QT_CONFIG(am_multi_process)
+    throw Exception("The sudo-helper process is not available.");
+}
+
+void SudoClient::removeTrustedFile(QStandardPaths::StandardLocation location, const QString &relPath)
+{
+    if (d->isFallback) {
+        const QString fullPath = trustedPath(TrustedRoot::User, location, relPath,
+                                             d->testPrefix, d->instanceId);
+        QFile f(fullPath);
+        if (f.exists() && !f.remove())
+            throw Exception(f, "could not remove trusted file");
+        return;
+    }
+#if QT_CONFIG(am_multi_process)
+    if (d->iface) {
+        checkDBusReply<void>(d->iface->removeTrustedFile(int(location), relPath), __func__);
+        return;
+    }
+#endif
+    throw Exception("The sudo-helper process is not available.");
+}
+
+void SudoClientPrivate::commitTrusted(int writtenFd)
+{
+    // Helper case only (fallback commits locally in TrustedSaveFile::commit()). The helper recovers
+    // the target path from the staging session, so the fd is all we pass.
+#if QT_CONFIG(am_multi_process)
+    if (iface) {
+        checkDBusReply<void>(iface->commitTrustedSaveFile(QDBusUnixFileDescriptor(writtenFd)),
+                             __func__);
+        return;
+    }
+#else
+    Q_UNUSED(writtenFd)
+#endif
+    throw Exception("The sudo-helper process is not available.");
+}
+
+void SudoClientPrivate::cancelTrusted(int stagingFd) noexcept
+{
+    // Fire-and-forget (called from ~TrustedSaveFile): never throw, never wait on a reply. A lost
+    // cancel is harmless. If the helper is already gone there is no session left to drop.
+#if QT_CONFIG(am_multi_process)
+    if (iface)
+        iface->cancelTrustedSaveFile(QDBusUnixFileDescriptor(stagingFd));
+#else
+    Q_UNUSED(stagingFd)
+#endif
+}
+
+
+/*!
+    \class TrustedFile
+    \internal
+    A QFile opened (for reading) on a descriptor the sudo-helper handed us for a root-owned 0400
+    trusted file. Plain read; closing it closes the descriptor.
+*/
+TrustedFile::TrustedFile(QObject *parent)
+    : QFile(parent)
+{ }
+
+
+/*!
+    \class TrustedSaveFile
+    \internal
+    A QFile opened (for writing) on the helper's anonymous staging descriptor. Mirrors QSaveFile
+    semantics: write, then commit() to atomically materialize the file as root-owned 0400. Without an
+    explicit commit() the content is discarded on destruction.
+*/
+TrustedSaveFile::TrustedSaveFile(QObject *parent)
+    : QFile(parent)
+    , d(new TrustedSaveFilePrivate)
+{ }
+
+TrustedSaveFile::~TrustedSaveFile()
+{
+    if (!d->committed && !d->cancelled)
+        cancel();
+}
+
+void TrustedSaveFile::commit()
+{
+    if (d->committed)
+        return;
+    if (d->cancelled)
+        throw Exception("cannot commit a trusted file that was already cancelled");
+
+    if (d->isFallback) {
+        // No helper: replace the target ourselves. QFile::rename() won't overwrite, so drop any
+        // existing target first. Not atomic - but the fallback has no privilege separation anyway;
+        // the privileged helper path is the atomic one.
+        flush();
+        const QString tempPath = fileName();
+        close();
+        QFile::remove(d->fallbackFinalPath);
+        if (!QFile::rename(tempPath, d->fallbackFinalPath)) {
+            QFile::remove(tempPath);
+            throw Exception("could not commit trusted file %1").arg(d->fallbackFinalPath);
+        }
+        d->committed = true;
+        return;
+    }
+
+    if (!d->client)
+        throw Exception("the sudo-helper connection for this trusted file is no longer available");
+    flush();
+    d->client->d->commitTrusted(handle());
+    d->committed = true;
+}
+
+/*! \internal
+    Discard the staging file (mirrors QSaveFile::cancelWriting()).
+*/
+void TrustedSaveFile::cancel()
+{
+    if (d->committed || d->cancelled)
+        return;
+    d->cancelled = true;
+
+    if (d->isFallback) {
+        // Drop the local staging temp; closing happens here so QFile::remove() can unlink it.
+        const QString tempPath = fileName();
+        if (isOpen())
+            close();
+        if (!tempPath.isEmpty())
+            QFile::remove(tempPath);
+        return;
+    }
+
+    if (d->client && isOpen()) // important: book keeping for the sudo-helper side
+        d->client->d->cancelTrusted(handle());
+    close();
+}
+
+
 /////////////////////////////////////////////////////////////////////
 // SudoServer
 /////////////////////////////////////////////////////////////////////
@@ -651,6 +971,27 @@ void SudoClient::setExtendedAttribute(const QString &file, const QByteArray &att
 SudoServer::SudoServer(QObject *parent)
     : QObject(parent)
 {
+    auto *sessionExpire = new QTimer(this);
+    sessionExpire->setInterval(MaxSaveSessionDuration * 2);
+    connect(sessionExpire, &QTimer::timeout, this, [this]() {
+        const auto now = std::chrono::steady_clock::now();
+        for (auto it = m_saveSessions.begin(); it != m_saveSessions.end(); ) {
+            if ((now - it->second.issuedAt) > MaxSaveSessionDuration)
+                it = m_saveSessions.erase(it);
+            else
+                ++it;
+        }
+    });
+    sessionExpire->start();
+}
+
+std::pair<quint64, quint64> SudoServer::saveSessionKey(int fd)
+{
+    struct ::stat st
+    {};
+    if (::fstat(fd, &st) != 0)
+        throw Exception(errno, "could not fstat the trusted staging descriptor");
+    return {quint64(st.st_dev), quint64(st.st_ino)};
 }
 
 void SudoServer::removeRecursive(const QString &fileOrDir)
@@ -770,6 +1111,123 @@ void SudoServer::setExtendedAttribute(const QString &file, const QByteArray &att
     try {
         if (::setxattr(qPrintable(file), attrName.constData(), attrValue.constData(), attrValue.size(), 0) != 0)
             throw Exception(errno, "could not set extended attribute '%1' on file '%2'").arg(attrName).arg(file);
+    } catchExceptionAsDBusError()
+}
+
+void SudoServer::setInstanceId(const QString &instanceId)
+{
+    try {
+        if (m_instanceId && (*m_instanceId != instanceId))
+            throw Exception("setInstanceId was already called with a different value");
+        m_instanceId = instanceId;
+    } catchExceptionAsDBusError()
+}
+
+void SudoServer::setTestRootPathPrefix(const QString &prefix)
+{
+#if defined(QT_BUILD_INTERNAL)
+    m_testPrefix = prefix;
+#else
+    Q_UNUSED(prefix)
+    sendErrorReply(QDBusError::Failed, u"setting a test prefix is not supported in production builds"_s);
+#endif
+}
+
+QDBusUnixFileDescriptor SudoServer::openTrustedFile(int location, const QString &relPath)
+{
+    try {
+        QString absPath = trustedPath(TrustedRoot::System, QStandardPaths::StandardLocation(location),
+                                      relPath, m_testPrefix, m_instanceId);
+        Unix::Fd fd { qt_safe_open(absPath.toLocal8Bit().constData(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC) };
+        if (!fd)
+            throw Exception(errno, "could not open trusted file %1 for reading").arg(absPath);
+        struct ::stat st { };
+        if ((::fstat(fd.get(), &st) != 0) || !S_ISREG(st.st_mode))
+            throw Exception("trusted file %1 is not a regular file").arg(absPath);
+
+        return QDBusUnixFileDescriptor(fd.get()); // dups; Unix::Fd closes the original
+    } catchExceptionAsDBusError({})
+}
+
+QDBusUnixFileDescriptor SudoServer::openTrustedSaveFile(int location, const QString &relPath)
+{
+    try {
+        QString absPath = trustedPath(TrustedRoot::System, QStandardPaths::StandardLocation(location),
+                                      relPath, m_testPrefix, m_instanceId);
+        const QByteArray parentDir = QFileInfo(absPath).absolutePath().toLocal8Bit();
+        if (!QDir().mkpath(QString::fromLocal8Bit(parentDir)))
+            throw Exception("could not create trusted directory %1").arg(parentDir);
+
+        if ((::chown(parentDir.constData(), 0, 0) != 0)
+            || (::chmod(parentDir.constData(), 0700) != 0)) {
+            throw Exception(errno, "could not lock down trusted directory %1").arg(parentDir);
+        }
+
+        // Anonymous, root-owned 0400 staging inode on the same filesystem as the final path.
+        Unix::Fd fd { qt_safe_open(parentDir.constData(), O_TMPFILE | O_WRONLY | O_CLOEXEC, 0400) };
+        if (!fd)
+            throw Exception(errno, "could not create a trusted staging file in %1").arg(parentDir);
+
+        if (::fchown(fd.get(), 0, 0) != 0)
+            throw Exception(errno, "could not chown the trusted staging file to root:root");
+
+        if (m_saveSessions.size() >= MaxSaveSessions)
+            throw Exception("too many outstanding trusted save sessions");
+
+        // Keep our fd open so the inode (the lookup key) stays valid until commit/cancel.
+        const auto key = saveSessionKey(fd.get());
+        QDBusUnixFileDescriptor wire(fd.get()); // dups onto the wire; our Unix::Fd stays in the map
+        m_saveSessions.insert_or_assign(key, SaveSession {
+            std::move(fd), absPath, std::chrono::steady_clock::now() });
+        return wire;
+
+    } catchExceptionAsDBusError({})
+}
+
+void SudoServer::commitTrustedSaveFile(const QDBusUnixFileDescriptor &saveFd)
+{
+    try {
+        // Look up by the fd's inode: a fd we never issued isn't here, and the target path was fixed
+        // at open time, so the client can't redirect the commit.
+        const auto it = m_saveSessions.find(saveSessionKey(saveFd.fileDescriptor()));
+        if (it == m_saveSessions.end())
+            throw Exception("unknown or expired trusted save session");
+
+        const QString absPath = it->second.absPath;
+        const QString parentDir = QFileInfo(absPath).absolutePath();
+        if (!QDir().mkpath(parentDir))
+            throw Exception("could not create trusted directory %1").arg(parentDir);
+
+        // Materialize *our* retained inode under a random name, then atomically rename over the target.
+        const QByteArray tempPath = (parentDir.toLocal8Bit() + "/.commit-"
+                                     + QUuid::createUuid().toByteArray(QUuid::Id128));
+        const QByteArray procPath = "/proc/self/fd/" + QByteArray::number(it->second.fd.get());
+        if (::linkat(AT_FDCWD, procPath.constData(),
+                     AT_FDCWD, tempPath.constData(), AT_SYMLINK_FOLLOW) != 0) {
+            throw Exception(errno, "could not link the trusted staging file into place");
+        }
+        if (::rename(tempPath.constData(), absPath.toLocal8Bit().constData()) != 0) {
+            ::unlink(tempPath.constData());
+            throw Exception(errno, "could not rename the trusted staging file to %1").arg(absPath);
+        }
+        m_saveSessions.erase(it); // one-shot; closes our retained fd
+    } catchExceptionAsDBusError()
+}
+
+void SudoServer::cancelTrustedSaveFile(const QDBusUnixFileDescriptor &saveFd)
+{
+    try {
+        m_saveSessions.erase(saveSessionKey(saveFd.fileDescriptor()));
+    } catchExceptionAsDBusError()
+}
+
+void SudoServer::removeTrustedFile(int location, const QString &relPath)
+{
+    try {
+        QString absPath = trustedPath(TrustedRoot::System, QStandardPaths::StandardLocation(location),
+                                      relPath, m_testPrefix, m_instanceId);
+        if ((::unlink(absPath.toLocal8Bit().constData()) != 0) && (errno != ENOENT))
+            throw Exception(errno, "could not remove trusted file %1").arg(absPath);
     } catchExceptionAsDBusError()
 }
 

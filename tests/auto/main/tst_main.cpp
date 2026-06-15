@@ -271,8 +271,6 @@ void tst_Main::installAndRemoveUpdateForBuiltIn()
  */
 void tst_Main::updateForBuiltInAlreadyInstalled()
 {
-    QSKIP("Installation report migration not yet implemented");
-
     copyRecursively(QFINDTESTDATA("dir-with-update-already-installed"), m_tempDirPath);
     // The pre-baked .installation-report.yaml in the package dir gets picked up by
     // parseInstalled()'s legacy fallback, which migrates it to the sudo-routed location.

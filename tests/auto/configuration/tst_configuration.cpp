@@ -26,6 +26,7 @@ public:
 
 private Q_SLOTS:
     void initTestCase();
+    void cleanup();
     void defaultConfig();
     void simpleConfig();
     void mergedConfig();
@@ -41,9 +42,23 @@ tst_Configuration::tst_Configuration()
 
 void tst_Configuration::initTestCase()
 {
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#endif
     // Configuration::parseWithArguments calls SudoClient::instance()->setInstanceId() to fix the
     // per-instance trusted-file base dir before the config cache loads. The helper must be up.
     Sudo::fallbackServer();
+}
+
+void tst_Configuration::cleanup()
+{
+    // Each test method drives parseWithArguments with a different --instance-id (defaultConfig
+    // and commandLineConfig get the "appman" default; simpleConfig/mergedConfig pass i1/i2).
+    // SudoClient::setInstanceId() throws if called with a different value than before, so we
+    // clear the previously-set id between methods.
+#if defined(QT_BUILD_INTERNAL)
+    SudoClient::instance()->resetInstanceIdForTest();
+#endif
 }
 
 void tst_Configuration::defaultConfig()

@@ -9,6 +9,9 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QByteArray>
+#include <QtCore/QFile>
+#include <QtCore/QPointer>
+#include <QtCore/QStandardPaths>
 #include <qplatformdefs.h>
 
 #include <memory>
@@ -17,7 +20,31 @@
 
 QT_BEGIN_NAMESPACE_AM
 
+class SudoClient;
 class SudoClientPrivate;
+class TrustedSaveFilePrivate;
+
+class Q_APPMANSYSTEMUI_EXPORT TrustedFile : public QFile
+{
+public:
+    explicit TrustedFile(QObject *parent = nullptr);
+};
+
+class Q_APPMANSYSTEMUI_EXPORT TrustedSaveFile : public QFile
+{
+public:
+    explicit TrustedSaveFile(QObject *parent = nullptr);
+    ~TrustedSaveFile() override;
+
+    void commit();
+    void cancel();
+
+private:
+    std::unique_ptr<TrustedSaveFilePrivate> d;
+
+    friend class SudoClient;
+    Q_DISABLE_COPY_MOVE(TrustedSaveFile)
+};
 
 class Q_APPMANSYSTEMUI_EXPORT Sudo
 {
@@ -47,6 +74,18 @@ public:
     void setExtendedAttribute(const QString &file, const QByteArray &attrName,
                               const QByteArray &attrValue);
 
+    void setInstanceId(const QString &instanceId);
+
+    std::unique_ptr<TrustedFile> openTrustedFile(QStandardPaths::StandardLocation location, const QString &relPath);
+    std::unique_ptr<TrustedSaveFile> openTrustedSaveFile(QStandardPaths::StandardLocation location, const QString &relPath);
+    void removeTrustedFile(QStandardPaths::StandardLocation location, const QString &relPath);
+
+#if defined(QT_BUILD_INTERNAL)
+    void setTestRootPathPrefix(const QString &prefix);
+    void commitRawFdForTest(int fd);
+    void resetInstanceIdForTest();
+#endif
+
 private:
     explicit SudoClient(SudoClientPrivate *dd);
     ~SudoClient() override;
@@ -54,6 +93,7 @@ private:
     std::unique_ptr<SudoClientPrivate> d;
 
     friend class Sudo;
+    friend class TrustedSaveFile;
     static SudoClient *s_instance;
 };
 

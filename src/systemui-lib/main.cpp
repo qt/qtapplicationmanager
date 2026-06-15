@@ -193,6 +193,9 @@ void Main::setup(const Configuration *cfg) noexcept(false)
 {
     StartupTimer::instance()->checkpoint("after configuration parsing");
 
+    // Set the sudo-helper's per-instance base dir before any trusted-file operation.
+    SudoClient::instance()->setInstanceId(cfg->yaml.instanceId);
+
     static bool once = false;
     if (!once) {
         once = true;

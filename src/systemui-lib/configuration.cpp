@@ -412,7 +412,7 @@ void Configuration::parseWithArguments(const QStringList &arguments)
             throw Exception("The sudo-helper must be started before "
                             "Configuration::parseWithArguments() is called");
         }
-        //TODO: activate in follow up commit: SudoClient::instance()->setInstanceId(instanceId);
+        SudoClient::instance()->setInstanceId(instanceId);
     }
 
     const QStringList rawConfigFilePaths = d->clp.values(u"config-file"_s);

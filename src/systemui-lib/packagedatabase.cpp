@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:data-parser
 
+#include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
 #include <QDataStream>
@@ -242,6 +243,8 @@ void PackageDatabase::parseInstalled()
     QStringList manifestFiles = findManifestsInDir(m_installedPackagesDir, false);
 
     // Pre-pass: load every installation-report, then hand the expected digests to the ConfigCache
+    // old v3 reports (both 6.11 and pre-6.11) are migrated on the fly here by hashing the on-disk
+    // info.yaml and persisting a new v4 report through the sudo helper
     QStringList validManifests;
     QHash<QString, QByteArray> expectedDigests;
     std::vector<std::unique_ptr<InstallationReport>> validReports;
@@ -250,15 +253,75 @@ void PackageDatabase::parseInstalled()
         const QDir pkgDir = QFileInfo(manifestFile).dir();
         const QString pkgId = pkgDir.dirName();
         const QString reportRelPath = u"installation-reports/"_s + pkgId + u".yaml"_s;
+        const QString reportPath611 = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + u'/' + reportRelPath;
+        const QString reportPath610 = pkgDir.absoluteFilePath(u".installation-report.yaml"_s);
 
         auto report = std::make_unique<InstallationReport>(pkgId);
+        bool isV3 = false;
+
+        auto deserializeFrom = [&](QIODevice *dev, const char *kind) -> bool {
+            try {
+                report->deserialize(dev);
+                return true;
+            } catch (const Exception &e) {
+                qCWarning(LogInstaller) << "Ignoring package at" << pkgDir.absolutePath()
+                                        << ":" << kind << "installation report invalid:" << e.what();
+                return false;
+            }
+        };
+
         try {
             auto rf = SudoClient::instance()->openTrustedFile(QStandardPaths::StateLocation, reportRelPath);
-            report->deserialize(rf.get());
-        } catch (const Exception &e) {
-            qCWarning(LogInstaller) << "Ignoring package at" << pkgDir.absolutePath()
-                                    << ": invalid installation report:" << e.what();
+            if (!deserializeFrom(rf.get(), "6.12+"))
+                continue;
+        } catch (const Exception &) {
+            if (QFile f(reportPath611); f.open(QFile::ReadOnly)) {
+                if (!deserializeFrom(&f, "6.11"))
+                    continue;
+                isV3 = true;
+            } else if (QFile f(reportPath610); f.open(QFile::ReadOnly)) {
+                if (!deserializeFrom(&f, "pre-6.11"))
+                    continue;
+                isV3 = true;
+            } else {
+                qCWarning(LogInstaller) << "Ignoring package at" << pkgDir.absolutePath()
+                                        << ": cannot open installation report";
+                continue;
+            }
+        }
+
+        if (report->manifestDigest().isEmpty() && !isV3) {
+            qCCritical(LogInstaller) << "Refusing package at" << pkgDir.absolutePath()
+                                     << ": installation report lacks manifestDigest";
             continue;
+        }
+
+        if (isV3) {
+            // Hash on-disk info.yaml to bootstrap the v4 digest.
+            QFile mf(manifestFile);
+            if (!mf.open(QFile::ReadOnly)) {
+                qCWarning(LogInstaller) << "Ignoring package at" << pkgDir.absolutePath()
+                                        << ": cannot read info.yaml for v4 migration";
+                continue;
+            }
+            report->setManifestDigest(QCryptographicHash::hash(mf.readAll(), QCryptographicHash::Sha256));
+
+            try {
+                auto out = SudoClient::instance()->openTrustedSaveFile(QStandardPaths::StateLocation,
+                                                                       reportRelPath);
+                if (!report->serialize(out.get()))
+                    throw Exception("serialize failed");
+                out->commit();
+
+                qCInfo(LogInstaller) << "Migrated v3 installation-report to v4 for" << pkgId;
+
+                // best effort cleanup of legacy files
+                QFile::remove(reportPath610);
+                QFile::remove(reportPath611);
+            } catch (const Exception &e) {
+                qCWarning(LogInstaller) << "Failed to persist migrated report for" << pkgId
+                                        << "-" << e.errorString() << "- will retry on next start";
+            }
         }
 
         validManifests << manifestFile;

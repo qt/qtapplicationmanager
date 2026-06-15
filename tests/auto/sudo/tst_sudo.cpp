@@ -95,12 +95,18 @@ tst_Sudo::~tst_Sudo()
 
 void tst_Sudo::initTestCase()
 {
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#endif
+
     QVERIFY2(startedSudoServer, qPrintable(sudoServerError));
     m_sudo = SudoClient::instance();
     QVERIFY(m_sudo);
     QVERIFY(m_testRoot.isValid());
 
+#if defined(QT_BUILD_INTERNAL)
     m_sudo->setTestRootPathPrefix(m_testRoot.path() + u'/');
+#endif
     m_sudo->setInstanceId(QString());
 }
 

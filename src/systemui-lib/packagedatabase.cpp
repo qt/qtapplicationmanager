@@ -16,6 +16,7 @@
 #include "logging.h"
 #include "configcache.h"
 #include "filesystemmountwatcher.h"
+#include "sudo.h"
 
 #include <memory>
 #include <cstdlib>
@@ -125,13 +126,6 @@ QStringList PackageDatabase::findManifestsInDir(const QDir &manifestDir, bool sc
 
             if (!pkgDir.exists(u"info.yaml"_s))
                 throw Exception("couldn't find an info.yaml manifest");
-            if (!scanningBuiltInApps) {
-                QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-                QString instReport = dataDir.absoluteFilePath(u"installation-reports/"_s + pkgDirName + u".yaml"_s);
-                if (!QFile::exists(instReport))
-                    throw Exception("found a non-built-in package without an installation report");
-            }
-
             QString manifestPath = pkgDir.absoluteFilePath(u"info.yaml"_s);
             files << manifestPath;
 
@@ -247,18 +241,44 @@ void PackageDatabase::parseInstalled()
 
     QStringList manifestFiles = findManifestsInDir(m_installedPackagesDir, false);
 
+    // Pre-pass: load every installation-report, then hand the expected digests to the ConfigCache
+    QStringList validManifests;
+    QHash<QString, QByteArray> expectedDigests;
+    std::vector<std::unique_ptr<InstallationReport>> validReports;
+
+    for (const QString &manifestFile : std::as_const(manifestFiles)) {
+        const QDir pkgDir = QFileInfo(manifestFile).dir();
+        const QString pkgId = pkgDir.dirName();
+        const QString reportRelPath = u"installation-reports/"_s + pkgId + u".yaml"_s;
+
+        auto report = std::make_unique<InstallationReport>(pkgId);
+        try {
+            auto rf = SudoClient::instance()->openTrustedFile(QStandardPaths::StateLocation, reportRelPath);
+            report->deserialize(rf.get());
+        } catch (const Exception &e) {
+            qCWarning(LogInstaller) << "Ignoring package at" << pkgDir.absolutePath()
+                                    << ": invalid installation report:" << e.what();
+            continue;
+        }
+
+        validManifests << manifestFile;
+        expectedDigests.insert(manifestFile, report->manifestDigest());
+        validReports.push_back(std::move(report));
+    }
+
     AbstractConfigCache::Options cacheOptions = AbstractConfigCache::IgnoreBroken;
     if (!m_loadFromCache)
         cacheOptions |= AbstractConfigCache::ClearCache;
     if (!m_loadFromCache && !m_saveToCache)
         cacheOptions |= AbstractConfigCache::NoCache;
 
-    ConfigCache<PackageInfo> cache(manifestFiles, u"appdb-installed"_s, { 'P','K','G','I' },
+    ConfigCache<PackageInfo> cache(validManifests, u"appdb-installed"_s, { 'P','K','G','I' },
                                    PackageInfo::dataStreamVersion(), cacheOptions);
+    cache.setExpectedSourceDigests(expectedDigests);
     cache.parse();
 
-    for (int i = 0; i < manifestFiles.size(); ++i) {
-        QString manifestFile = manifestFiles.at(i);
+    for (int i = 0; i < validManifests.size(); ++i) {
+        QString manifestFile = validManifests.at(i);
         QDir pkgDir = QFileInfo(manifestFile).dir();
 
         try {
@@ -276,22 +296,7 @@ void PackageDatabase::parseInstalled()
                     .arg(pkg->id(), pkgDir.path());
             }
 
-            QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-            QString instReport = dataDir.absoluteFilePath(u"installation-reports/"_s + pkg->id() + u".yaml"_s);
-
-            QFile f(instReport);
-            if (!f.open(QFile::ReadOnly))
-                throw Exception(f, "failed to open the installation report");
-
-            auto report = std::make_unique<InstallationReport>(pkg->id());
-            try {
-                report->deserialize(&f);
-            } catch (const Exception &e) {
-                throw Exception("Failed to deserialize the installation report %1: %2")
-                        .arg(f.fileName()).arg(e.errorString());
-            }
-
-            pkg->setInstallationReport(report.release());
+            pkg->setInstallationReport(validReports.at(i).release());
             pkg->setBaseDir(pkgDir.path());
             m_installedPackages.append(pkg.release());
 

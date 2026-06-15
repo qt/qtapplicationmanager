@@ -318,12 +318,10 @@ void PackageManager::enableInstaller()
     d->enableInstaller = QT_CONFIG(am_installer);
 
     if (d->enableInstaller) {
-        QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-        if (!dataDir.mkpath(u"installation-reports"_s))
-            throw Exception("could not create directory for installation-reports: \'%1\'").arg(dataDir.absoluteFilePath(u"installation-reports"_s));
-
         if (d->developmentMode == DevelopmentMode::Application) {
+            const QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
             const QString iniFile = dataDir.absoluteFilePath(u"development-mode.ini"_s);
+
             if (QFile::exists(iniFile)) {
                 try {
                     ensureSafePermissions(iniFile);
@@ -1098,14 +1096,12 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
     //    -> if not, remove from app-db
 
     // key: baseDirPath, value: subDirName/ or fileName
+    // The installation reports are root-owned 0700, so they are not part of this check
     QMultiMap<QString, QString> validPaths;
     if (!d->documentPath.isEmpty())
         validPaths.insert(d->documentPath, QString());
     if (!d->installationPath.isEmpty())
         validPaths.insert(d->installationPath, QString());
-    QString reportPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)
-                         + u"/installation-reports"_s;
-    validPaths.insert(reportPath, QString());
 
     auto packages = d->packages;
     packages.detach();  // we need to detach here, as the loop below might modify the list
@@ -1117,10 +1113,8 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
             QString pkgDir = d->installationPath + QDir::separator() + pkg->id();
             QStringList checkDirs;
             QStringList checkFiles;
-            QString instReportName = pkg->id() + u".yaml"_s;
 
             checkFiles << pkgDir + u"/info.yaml"_s;
-            checkFiles << reportPath + u'/' + instReportName;
             checkDirs << pkgDir;
 
             for (const QString &checkFile : std::as_const(checkFiles)) {
@@ -1144,7 +1138,6 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
                 validPaths.insert(d->installationPath, pkg->id() + QDir::separator());
                 if (!d->documentPath.isEmpty())
                     validPaths.insert(d->documentPath, pkg->id() + QDir::separator());
-                validPaths.insert(reportPath, instReportName);
             } else {
                 if (startingPackageRemoval(pkg->id())) {
                     if (finishedPackageInstall(pkg->id()))
@@ -1716,20 +1709,15 @@ bool PackageManager::finishedPackageInstall(const QString &id)
 
         // attach the installation report (unless we're just downgrading a built-in)
         if (!isDowngrade) {
-            // the rename from '+' has already happened at this point
-            QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-            QString instReport = dataDir.absoluteFilePath(u"installation-reports/"_s + newPackageInfo->id() + u".yaml"_s);
-
-            QFile irfile(instReport);
+            // installationtask.cpp has already committed the report to its final root-owned location
             auto ir = std::make_unique<InstallationReport>(package->id());
             try {
-                if (Q_UNLIKELY(!irfile.open(QFile::ReadOnly)))
-                    throw Exception(irfile.errorString());
-                ir->deserialize(&irfile);
+                auto irfile = SudoClient::instance()->openTrustedFile(QStandardPaths::StateLocation,
+                                                                      u"installation-reports/"_s + newPackageInfo->id() + u".yaml"_s);
+                ir->deserialize(irfile.get());
             } catch (const Exception &e) {
                 qCCritical(LogInstaller) << "Could not read the new installation-report for package"
-                                         << package->id() << "at" << irfile.fileName() << ":"
-                                         << e.errorString();
+                                         << package->id() << ":" << e.errorString();
                 return false;
             }
             newPackageInfo->setInstallationReport(ir.release());

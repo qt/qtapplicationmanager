@@ -168,6 +168,9 @@ tst_PackageManager::~tst_PackageManager()
 
 void tst_PackageManager::initTestCase()
 {
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#endif
     if (!QDir(QString::fromLatin1(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
@@ -183,6 +186,14 @@ void tst_PackageManager::initTestCase()
 
     // create a temporary dir (plus sub-dirs) for everything created by this test run
     QVERIFY(m_workDir.isValid());
+
+    // Route the sudo helper's trusted-file tree (installation-reports/) into the temp dir so
+    // installs and removes don't leak files into the user's real state location (non-root mode)
+    // or /var/lib (root mode).
+#if defined(QT_BUILD_INTERNAL)
+    m_sudo->setTestRootPathPrefix(m_workDir.path() + u'/');
+#endif
+    m_sudo->setInstanceId(QString());
 
     // make sure we have a valid hardware-id
     m_hardwareId = u"foobar"_s;
@@ -390,9 +401,6 @@ void tst_PackageManager::packageInstallation()
                                 : PackageManager::DevelopmentMode::System,
                     !storeSigned && !devSigned);
 
-    QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-    QString instReport = dataDir.absoluteFilePath(u"installation-reports/test-pkg.yaml"_s);
-
     int lastPass = (updatePackageName.isEmpty() ? 1 : 2);
     // pass 1 is the installation / pass 2 is the update (if needed)
     for (int pass = 1; pass <= lastPass; ++pass) {
@@ -433,7 +441,6 @@ void tst_PackageManager::packageInstallation()
             //QDirIterator it(m_workDir.path(), QDirIterator::Subdirectories);
             //while (it.hasNext()) { qDebug() << it.next(); }
 
-            QVERIFY(QFile::exists(instReport));
             QVERIFY(QDir(documentDir + u"/test-pkg"_s).exists());
 
             QString fileCheckPath = installationDir + u"/test-pkg"_s;

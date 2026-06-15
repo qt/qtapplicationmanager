@@ -50,7 +50,6 @@ using namespace Qt::StringLiterals;
 #  include <sys/errno.h>
 #  include <sys/ioctl.h>
 #  include <sys/stat.h>
-#  include <sys/prctl.h>
 #  include <sys/mount.h>
 #  include <sys/syscall.h>
 #  include <sys/wait.h>
@@ -276,20 +275,6 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
         ::umask(realUmask);  // reset umask, see above for explanation
 #  endif
 
-        // This call is Linux only, but it makes it so easy to detect a dying parent process.
-        // We would have a big problem otherwise, since the main process drops its privileges,
-        // which prevents it from sending SIGHUP to the child process, which still runs with
-        // root privileges.
-        ::prctl(PR_SET_PDEATHSIG, SIGHUP);
-        ::signal(SIGHUP, [](int sig) {
-            if (sig == SIGHUP) {
-#  if defined(QT_AM_COVERAGE)
-                __gcov_dump();
-#  endif
-                ::_exit(0);
-            }
-        });
-
         try {
             // Drop as many capabilities as possible, just to be on the safe side
             using Cap = Unix::Capability::Cap;
@@ -307,6 +292,18 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
             qInstallMessageHandler(nullptr);
             QCoreApplication app(dummyArgc, dummyArgv);
             ProcessTitle::setTitle("sudo helper");
+
+            // We need to die, when the main process dies: pidfds are designed to become readable
+            // when the process they refer to dies.
+            if (mainPidFd) {
+                auto *mainDead = new QSocketNotifier(mainPidFd.get(), QSocketNotifier::Read, &app);
+                QObject::connect(mainDead, &QSocketNotifier::activated, &app, [] {
+#  if defined(QT_AM_COVERAGE)
+                    __gcov_dump();
+#  endif
+                    ::_exit(0);
+                });
+            }
 
             auto sudoServer = new SudoServer(&app);
             SudoAdaptor *sudoAdaptor = nullptr;

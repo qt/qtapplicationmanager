@@ -7,11 +7,13 @@
 #include <QtTest>
 #include <QThreadPool>
 #include <QtLogging>
+#include <QTemporaryDir>
 
 #include "qtyaml.h"
 #include "configcache.h"
 #include "exception.h"
 #include "global.h"
+#include "sudo.h"
 
 using namespace Qt::StringLiterals;
 
@@ -25,6 +27,7 @@ public:
     tst_Yaml();
 
 private Q_SLOTS:
+    void initTestCase();
     void tests_data();
     void tests();
     void parser_data();
@@ -43,6 +46,7 @@ private:
     static constexpr int V11 = 1;
     static constexpr int V12 = 2;
 
+    QTemporaryDir m_testRoot;
 };
 
 static QVariant vnull = QVariant::fromValue(nullptr);
@@ -57,6 +61,18 @@ tst_Yaml::tst_Yaml()
     // remove this line to see all the YAML 1.1 deprecation warnings
     YamlParser::disableDeprecationWarnings();
 #endif
+}
+
+void tst_Yaml::initTestCase()
+{
+    // ConfigCache now routes through SudoClient unconditionally. Use the fallback (in-process)
+    // implementation and redirect its file storage into a per-run temp dir.
+    Sudo::fallbackServer();
+    QVERIFY(m_testRoot.isValid());
+#if defined(QT_BUILD_INTERNAL)
+    SudoClient::instance()->setTestRootPathPrefix(m_testRoot.path() + u'/');
+#endif
+    SudoClient::instance()->setInstanceId(QString());
 }
 
 void tst_Yaml::parser_data()
@@ -362,6 +378,9 @@ public:
 
 void tst_Yaml::cache()
 {
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#endif
     QStringList files = { u":/data/cache1.yaml"_s, u":/data/cache2.yaml"_s };
 
     for (int step = 0; step < 2; ++step) {
@@ -413,6 +432,9 @@ void tst_Yaml::cache()
 
 void tst_Yaml::mergedCache()
 {
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#endif
     // we need cache2 modifieable, so we copy it to a temp file
     QTemporaryFile cache2File(u"cache2"_s);
     QVERIFY(cache2File.open());

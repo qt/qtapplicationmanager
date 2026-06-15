@@ -17,6 +17,7 @@
 #include "configcache_p.h"
 #include "exception.h"
 #include "logging.h"
+#include "sudo/sudo.h"
 
 using namespace Qt::StringLiterals;
 
@@ -150,15 +151,12 @@ void AbstractConfigCache::parse()
             expectedByCanonical.insert(path, *it);
     }
 
-    QFile cacheFile(cacheFilePath());
-
     QAtomicInt cacheIsValid = false;
     QAtomicInt cacheIsComplete = false;
 
     QVector<ConfigCacheEntry> cache;
     void *mergedContent = nullptr;
 
-    qCDebug(LogCache) << d->cacheBaseName << "cache file:" << cacheFile.fileName();
     qCDebug(LogCache) << d->cacheBaseName << "read cache:" << ((d->options & (ClearCache | NoCache)) ? "no" : "yes")
                       << "/ write cache:" << ((d->options & NoCache) ? "no" : "yes");
     qCDebug(LogCache) << d->cacheBaseName << "reading:" << qPrintable(rawFilePaths.join(u", "_s));
@@ -167,12 +165,19 @@ void AbstractConfigCache::parse()
     static const int ShaSize = QCryptographicHash::hashLength(ShaType);
 
     if (!d->options.testFlag(NoCache) && !d->options.testFlag(ClearCache)) {
-        if (cacheFile.open(QFile::ReadOnly)) {
+        std::unique_ptr<TrustedFile> cacheDevice;
+        try {
+            cacheDevice = SudoClient::instance()->openTrustedFile(QStandardPaths::CacheLocation,
+                                                                  d->cacheBaseName + u".cache"_s);
+        } catch (const Exception &) {
+            // cache miss is the normal case; silent
+        }
+        if (cacheDevice) {
             try {
-                if (cacheFile.size() > (10 * 1024*1024))
-                    throw Exception("cache '%1' is too big (> 10 MiB)").arg(cacheFile.fileName());
+                if (cacheDevice->size() > (10 * 1024*1024))
+                    throw Exception("cache is too big (> 10 MiB)");
 
-                const QByteArray fileBytes = cacheFile.readAll();
+                const QByteArray fileBytes = cacheDevice->readAll();
                 if (fileBytes.size() < ShaSize)
                     throw Exception("cache is too small to even contain a checksum hash");
 
@@ -231,10 +236,14 @@ void AbstractConfigCache::parse()
             } catch (const Exception &e) {
                 qWarning(LogCache) << "Failed to read cache:" << e.what();
             }
-            cacheFile.close();
         }
     } else if (d->options.testFlag(ClearCache)) {
-        cacheFile.remove();
+        try {
+            SudoClient::instance()->removeTrustedFile(QStandardPaths::CacheLocation,
+                                                      d->cacheBaseName + u".cache"_s);
+        } catch (const Exception &) {
+            // best effort
+        }
     }
 
     qCDebug(LogCache) << d->cacheBaseName << "valid:" << (cacheIsValid ? "yes" : "no")
@@ -381,9 +390,8 @@ void AbstractConfigCache::parse()
             // everything is parsed now, so we can write a new cache file
 
             try {
-                QFile newCacheFile(cacheFile.fileName());
-                if (!newCacheFile.open(QFile::WriteOnly | QFile::Truncate))
-                    throw Exception(cacheFile, "failed to open file for writing");
+                auto writer = SudoClient::instance()->openTrustedSaveFile(QStandardPaths::CacheLocation,
+                                                                          d->cacheBaseName + u".cache"_s);
 
                 QByteArray bytes;
                 QDataStream ds(&bytes, QIODevice::WriteOnly);
@@ -412,8 +420,9 @@ void AbstractConfigCache::parse()
                     throw Exception("error writing content");
 
                 const QByteArray sha = QCryptographicHash::hash(bytes, ShaType);
-                if (newCacheFile.write(bytes) != bytes.size() || newCacheFile.write(sha) != sha.size())
-                    throw Exception(newCacheFile, "failed to write cache");
+                if (writer->write(bytes) != bytes.size() || writer->write(sha) != sha.size())
+                    throw Exception("failed to write cache");
+                writer->commit();
 
                 d->cacheWasWritten = true;
             } catch (const Exception &e) {
@@ -452,15 +461,6 @@ bool AbstractConfigCache::parseReadFromCache() const
 bool AbstractConfigCache::parseWroteToCache() const
 {
     return d->cacheWasWritten;
-}
-
-QString AbstractConfigCache::cacheFilePath() const
-{
-    // find the correct cache location and make sure it exists
-    static const QDir dir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
-    if (!dir.exists())
-        dir.mkpath(u"."_s);
-    return dir.absoluteFilePath(u"appman-%1.cache"_s.arg(d->cacheBaseName));
 }
 
 QT_END_NAMESPACE_AM

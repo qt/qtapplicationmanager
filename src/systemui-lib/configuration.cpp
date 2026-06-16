@@ -421,7 +421,9 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 
     auto checkConfigFile = [&](const QFileInfo &cf) {
         try {
-            ensureSafePermissions(cf);
+            // ConfigCache reopens by path, so this perm-check is TOCTOU-racy. But winning needs
+            // write access to the config dir and that comes from the trusted configuration anyway.
+            (void) openWithSafePermissions(cf.filePath());
             configFilePaths << cf.filePath();
         } catch (const Exception &e) {
             qCWarning(LogDeployment) << "Ignoring configuration file:" << e.errorString();

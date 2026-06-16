@@ -7,6 +7,7 @@
 #define UTILITIES_H
 
 #include <functional>
+#include <memory>
 #include <utility>
 
 #include <QtCore/QVector>
@@ -15,6 +16,7 @@
 #include <QtCore/QString>
 #include <QtCore/QUrl>
 #include <QtCore/QDir>
+#include <QtCore/QFile>
 #include <QtCore/QResource>
 #include <QtCore/QLibrary>
 
@@ -129,9 +131,9 @@ Q_APPMANCOMMON_EXPORT void validateIdForFilesystemUsage(const QString &id) noexc
 // returns true if the specified process is being debugged (pid == 0 denotes the current process)
 Q_APPMANCOMMON_EXPORT bool isDebuggerAttached(qint64 pid = 0);
 
-// return if the file or directory is - at max - writable by the current user or root
-Q_APPMANCOMMON_EXPORT void ensureSafePermissions(const QString &path) noexcept(false);
-Q_APPMANCOMMON_EXPORT void ensureSafePermissions(const QFileInfo &fi) noexcept(false);
+// Open for reading and check ownership/permissions on the resulting fd to avoid races.
+// Returns a valid QFile, if the file is - at max - writable by the current user or root.
+Q_APPMANCOMMON_EXPORT std::unique_ptr<QFile> openWithSafePermissions(const QString &path) noexcept(false);
 
 #if defined(Q_OS_LINUX)
 // test mode support for Linux monitoring classes: redirect access to /sys or /proc

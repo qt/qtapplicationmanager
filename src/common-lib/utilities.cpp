@@ -15,6 +15,7 @@
 #include <QQmlEngine>
 
 #include "utilities.h"
+#include "unix-utilities.h"
 #include "exception.h"
 
 #if defined(Q_OS_UNIX)
@@ -467,50 +468,56 @@ bool isDebuggerAttached(qint64 pid)
     return debuggerAttached;
 }
 
-void ensureSafePermissions(const QString &path) noexcept(false)
+std::unique_ptr<QFile> openWithSafePermissions(const QString &path) noexcept(false)
 {
-    ensureSafePermissions(QFileInfo(path));
-}
-
-void ensureSafePermissions(const QFileInfo &fi) noexcept(false)
-{
+    auto f = std::make_unique<QFile>(path);
 #if defined(Q_OS_LINUX)
-    if (fi.isNativePath()) {
-        // QFileInfo's other accessors follow symlinks, so reject the link itself first
-        if (fi.isSymLink())
-            throw Exception("%1 is a symbolic link").arg(fi.filePath());
-
-        uid_t owner = fi.ownerId();
-        gid_t group = fi.groupId();
-        auto mode = fi.permissions();
-        static uid_t currentUser = ::getuid();
-        static gid_t currentGroup = ::getgid();
-
-        if (mode & QFileDevice::WriteOther)
-            throw Exception("%1 is world-writable").arg(fi.filePath());
-
-        if ((mode & QFileDevice::WriteGroup) && !((group == 0) || (group == currentGroup))) {
-            static QSet<gid_t> currentGroups = []() {
-                std::array<gid_t, NGROUPS_MAX> groupsArray;
-                int groupsArraySize = ::getgroups(NGROUPS_MAX, groupsArray.data());
-                if (groupsArraySize < 0)
-                    throw Exception("could not get the supplementary groups of the current user");
-                return QSet<gid_t> { groupsArray.cbegin(), groupsArray.cbegin() + groupsArraySize };
-            }();
-
-            if (!currentGroups.contains(group)) {
-                throw Exception("%1 is group-writable by the unrelated group %2")
-                    .arg(fi.filePath()).arg(fi.group());
-            }
-        }
-        if ((mode & QFileDevice::WriteOwner) && !((owner == 0) || (owner == currentUser))) {
-            throw Exception("%1 is user-writable by the unrelated user %2")
-                .arg(fi.filePath()).arg(fi.owner());
-        }
+    if (path.startsWith(u":/")) {  // QResource paths are implicitly trusted
+        if (!f->open(QFile::ReadOnly))
+            throw Exception(*f, "could not open resource %1").arg(path);
+        return f;
     }
+
+    Unix::Fd fd { qt_safe_open(path.toLocal8Bit().constData(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC) };
+    if (!fd)
+        throw Exception(errno, "could not open %1").arg(path);
+
+    struct ::stat st { };
+    if (::fstat(fd.get(), &st) != 0)
+        throw Exception(errno, "could not stat %1").arg(path);
+    if (!S_ISREG(st.st_mode))
+        throw Exception("%1 is not a regular file").arg(path);
+
+    // permission checks operate on the fstat() result rather than on the path - the inode the
+    // returned QFile reads from is the same one we checked here
+    static const uid_t currentUser = ::getuid();
+    static const gid_t currentGroup = ::getgid();
+
+    if (st.st_mode & S_IWOTH)
+        throw Exception("%1 is world-writable").arg(path);
+
+    if ((st.st_mode & S_IWGRP) && !((st.st_gid == 0) || (st.st_gid == currentGroup))) {
+        static const QSet<gid_t> currentGroups = []() {
+            std::array<gid_t, NGROUPS_MAX> groupsArray;
+            int groupsArraySize = ::getgroups(NGROUPS_MAX, groupsArray.data());
+            if (groupsArraySize < 0)
+                throw Exception("could not get the supplementary groups of the current user");
+            return QSet<gid_t> { groupsArray.cbegin(), groupsArray.cbegin() + groupsArraySize };
+        }();
+        if (!currentGroups.contains(st.st_gid))
+            throw Exception("%1 is group-writable by the unrelated group gid=%2").arg(path).arg(st.st_gid);
+    }
+    if ((st.st_mode & S_IWUSR) && !((st.st_uid == 0) || (st.st_uid == currentUser)))
+        throw Exception("%1 is user-writable by the unrelated user uid=%2").arg(path).arg(st.st_uid);
+
+    if (!f->open(fd.get(), QFile::ReadOnly, QFileDevice::AutoCloseHandle))
+        throw Exception(*f, "could not adopt fd for %1").arg(path);
+    (void) fd.release(); // NOLINT(bugprone-unused-return-value)
 #else
-    Q_UNUSED(fi);
+    if (!f->open(QFile::ReadOnly))
+        throw Exception(*f, "could not open %1").arg(path);
 #endif
+    return f;
 }
 
 #if defined(Q_OS_LINUX)

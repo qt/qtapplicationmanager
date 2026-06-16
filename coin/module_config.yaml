@@ -98,4 +98,4 @@ instructions:
         conditions:
           - condition: property
             property: target.os
-            in_values: ["IOS", "Android", "WebAssembly", "QNX"]
+            in_values: ["IOS", "Android", "WebAssembly"]

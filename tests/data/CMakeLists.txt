@@ -10,8 +10,14 @@ if (DEFINED ENV{QT_AM_DISABLE_PACKAGE_GENERATION}) # for Coin
     message(WARNING "Test package generation is disabled via $QT_AM_DISABLE_PACKAGE_GENERATION")
     return()
 endif()
-if (QNX OR ANDROID OR IOS)
-    message(WARNING "Test package generation is not supported on QNX, Android and iOS")
+
+if(QNX AND NOT TEST_qnx_version_8)
+    message(WARNING "Test package generation is not supported on QNX < 8.0")
+    return()
+endif()
+
+if (ANDROID OR IOS)
+    message(WARNING "Test package generation is not supported on Android and iOS")
     return()
 endif()
 

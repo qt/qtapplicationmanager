@@ -324,9 +324,15 @@ void PackageManager::enableInstaller()
 
             if (QFile::exists(iniFile)) {
                 try {
-                    ensureSafePermissions(iniFile);
-
-                    QSettings devMode(iniFile, QSettings::IniFormat);
+                    // Unfortunately, there is no QSettings constructor that takes an already open
+                    // fd. We need to work around that to avoid a TOCTOU race here.
+                    auto iniHandle = openWithSafePermissions(iniFile);
+#if defined(Q_OS_LINUX)
+                    const QString iniPath = u"/proc/self/fd/%1"_s.arg(iniHandle->handle());
+#else
+                    const QString iniPath = iniFile;
+#endif
+                    QSettings devMode(iniPath, QSettings::IniFormat);
                     d->developerSignature = devMode.value(u"developerSignature"_s).toByteArray();
 
                     Signature s("developmentMode");
@@ -898,14 +904,10 @@ void PackageManager::loadCertificates(const QList<CaCertificate> &caCertificates
         if (certFile.isEmpty() || !QFile::exists(certFile))
             throw Exception("%1 file does not exist: %1").arg(type).arg(certFile);
 
-        ensureSafePermissions(certFile);
-
-        QFile f(certFile);
-        if (Q_UNLIKELY(!f.open(QFile::ReadOnly)))
-            throw Exception(f, "could not open %1 file").arg(type);
-        QByteArray data = f.readAll();
+        auto f = openWithSafePermissions(certFile);
+        QByteArray data = f->readAll();
         if (Q_UNLIKELY(data.isEmpty()))
-            throw Exception(f, "%1 file is empty").arg(type);
+            throw Exception(*f, "%1 file is empty").arg(type);
 
         return data;
     };

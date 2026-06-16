@@ -32,6 +32,9 @@ public:
     QByteArray digest() const;
     void setDigest(const QByteArray &sha1);
 
+    QByteArray manifestDigest() const;
+    void setManifestDigest(const QByteArray &manifestDigest);
+
     quint64 diskSpaceUsed() const;
     void setDiskSpaceUsed(quint64 diskSpaceUsed);
 
@@ -56,6 +59,7 @@ public:
 private:
     QString m_packageId;
     QByteArray m_digest;
+    QByteArray m_manifestDigest;
     quint64 m_diskSpaceUsed = 0;
     QStringList m_files;
     QByteArray m_developerSignature;

@@ -5,11 +5,13 @@ qt_internal_add_test(tst_installationreport
         ../error-checking.h
         tst_installationreport.cpp
     DEFINES
-        AM_TESTDATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../../data/"
         QTEST_THROW_ON_FAIL
         QTEST_THROW_ON_SKIP
     LIBRARIES
         Qt::Network
         Qt::AppManCommonPrivate
         Qt::AppManPackagePrivate
+    BUILTIN_TESTDATA
+    TESTDATA
+        legacy-installation-report-v3.yaml
 )

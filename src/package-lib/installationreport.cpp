@@ -76,6 +76,16 @@ void InstallationReport::setDigest(const QByteArray &digest)
     m_digest = digest;
 }
 
+QByteArray InstallationReport::manifestDigest() const
+{
+    return m_manifestDigest;
+}
+
+void InstallationReport::setManifestDigest(const QByteArray &manifestDigest)
+{
+    m_manifestDigest = manifestDigest;
+}
+
 quint64 InstallationReport::diskSpaceUsed() const
 {
     return m_diskSpaceUsed;
@@ -142,10 +152,20 @@ void InstallationReport::deserialize(QIODevice *from)
         throw Exception("Installation report is invalid");
 
     m_digest.clear();
+    m_manifestDigest.clear();
     m_files.clear();
 
     auto docs = YamlParser::parseAllDocuments(from->readAll());
-    checkYamlFormat(docs, 3 /*number of expected docs*/, { { u"am-installation-report"_s, 3 } });
+    const int formatVersion = checkYamlFormat(docs, -2 /*at least 2 docs*/,
+                                              { { u"am-installation-report"_s, 4 },
+                                                { u"am-installation-report"_s, 3 } }).second;
+
+    // v3 trails the two content docs with an HMAC doc; v4 has none.
+    const int expectedDocs = (formatVersion == 3) ? 3 : 2;
+    if (docs.size() != expectedDocs) {
+        throw Exception("installation report v%1 must have %2 YAML documents, got %3")
+            .arg(formatVersion).arg(expectedDocs).arg(docs.size());
+    }
 
     const QVariantMap &root = docs.at(1).toMap();
 
@@ -163,6 +183,12 @@ void InstallationReport::deserialize(QIODevice *from)
         m_digest = QByteArray::fromHex(root[u"digest"_s].toString().toLatin1());
         if (m_digest.isEmpty())
             throw Exception("digest is empty");
+
+        if (formatVersion == 4) {
+            m_manifestDigest = QByteArray::fromHex(root[u"manifestDigest"_s].toString().toLatin1());
+            if (m_manifestDigest.size() != QCryptographicHash::hashLength(QCryptographicHash::Sha256))
+                throw Exception("manifestDigest is missing or has wrong size");
+        }
 
         auto devSig = root.find(u"developerSignature"_s);
         if (devSig != root.end()) {
@@ -196,19 +222,22 @@ void InstallationReport::deserialize(QIODevice *from)
         if (m_files.isEmpty())
             throw Exception("No files");
 
-        // see if the file has been tampered with by checking the hmac
-        QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(u"hmac"_s).toString().toLatin1());
-        QByteArrayView hmacKey { privateHmacKeyData.data(), privateHmacKeyData.size() };
+        if (formatVersion == 3) {
+            // Pre-v4 reports carry an HMAC trailer; verify it as a corruption check during migration.
+            QByteArray hmacFile = QByteArray::fromHex(docs[2].toMap().value(u"hmac"_s).toString().toLatin1());
+            QByteArrayView hmacKey { privateHmacKeyData.data(), privateHmacKeyData.size() };
 
-        QByteArray out = YamlEmitter::fromVariantDocuments({ docs[0], docs[1] }, YamlVersion::V1_1, YamlEmitter::Style::Block);
-        QByteArray hmacCalc= QMessageAuthenticationCode::hash(out, hmacKey, QCryptographicHash::Sha256);
+            QByteArray out = YamlEmitter::fromVariantDocuments({ docs[0], docs[1] }, YamlVersion::V1_1, YamlEmitter::Style::Block);
+            QByteArray hmacCalc = QMessageAuthenticationCode::hash(out, hmacKey, QCryptographicHash::Sha256);
 
-        if (hmacFile != hmacCalc) {
-            throw Exception("HMAC does not match: expected '%1', but got '%2'")
-                .arg(hmacCalc.toHex()).arg(hmacFile.toHex());
+            if (hmacFile != hmacCalc) {
+                throw Exception("HMAC does not match: expected '%1', but got '%2'")
+                    .arg(hmacCalc.toHex()).arg(hmacFile.toHex());
+            }
         }
     } catch (const Exception &) {
         m_digest.clear();
+        m_manifestDigest.clear();
         m_diskSpaceUsed = 0;
         m_files.clear();
 
@@ -220,15 +249,18 @@ bool InstallationReport::serialize(QIODevice *to) const
 {
     if (!isValid() || !to || !to->isWritable())
         return false;
+    if (m_manifestDigest.size() != QCryptographicHash::hashLength(QCryptographicHash::Sha256))
+        return false;
 
     QVariantMap header {
-        { u"formatVersion"_s, 3 },
+        { u"formatVersion"_s, 4 },
         { u"formatType"_s, u"am-installation-report"_s }
     };
     QVariantMap root {
         { u"packageId"_s, packageId() },
         { u"diskSpaceUsed"_s, diskSpaceUsed() },
-        { u"digest"_s, QString::fromLatin1(digest().toHex()) }
+        { u"digest"_s, QString::fromLatin1(digest().toHex()) },
+        { u"manifestDigest"_s, QString::fromLatin1(m_manifestDigest.toHex()) }
     };
     if (!m_developerSignature.isEmpty())
         root[u"developerSignature"_s] = QString::fromLatin1(m_developerSignature.toBase64());
@@ -243,20 +275,8 @@ bool InstallationReport::serialize(QIODevice *to) const
 
     root[u"files"_s] = files();
 
-    QVector<QVariant> docs;
-    docs << header;
-    docs << root;
-
-    // generate hmac to prevent tampering
-    QByteArrayView hmacKey { privateHmacKeyData.data(), privateHmacKeyData.size() };
-    QByteArray out = YamlEmitter::fromVariantDocuments({ docs[0], docs[1] }, YamlVersion::V1_1, YamlEmitter::Style::Block);
-    QByteArray hmacCalc= QMessageAuthenticationCode::hash(out, hmacKey, QCryptographicHash::Sha256);
-
-    // add another YAML document with a single key/value (way faster than using QtYaml)
-    out += "---\nhmac: '";
-    out += hmacCalc.toHex();
-    out += "'\n";
-
+    const QByteArray out = YamlEmitter::fromVariantDocuments({ header, root }, YamlVersion::V1_1,
+                                                             YamlEmitter::Style::Block);
     return (to->write(out) == out.size());
 }
 

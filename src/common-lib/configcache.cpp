@@ -96,6 +96,11 @@ AbstractConfigCache::~AbstractConfigCache()
     delete d;
 }
 
+void AbstractConfigCache::setExpectedSourceDigests(const QHash<QString, QByteArray> &expectedByPath)
+{
+    d->expectedSourceDigests = expectedByPath;
+}
+
 void *AbstractConfigCache::takeMergedResult() const
 {
     Q_ASSERT(d->options & MergedResult);
@@ -132,6 +137,8 @@ void AbstractConfigCache::parse()
     // normalize all yaml file names
     QStringList rawFilePaths;
     rawFilePaths.reserve(d->rawFiles.size());
+    QHash<QString, QByteArray> expectedByCanonical;
+    expectedByCanonical.reserve(d->expectedSourceDigests.size());
     for (const auto &rawFile : std::as_const(d->rawFiles)) {
         const auto path = QFileInfo(rawFile).canonicalFilePath();
         if (path.isEmpty())
@@ -139,6 +146,8 @@ void AbstractConfigCache::parse()
         if (rawFilePaths.contains(path))
             throw Exception("duplicate files are not allowed - found %1 at least two times").arg(path);
         rawFilePaths << path;
+        if (auto it = d->expectedSourceDigests.constFind(rawFile); it != d->expectedSourceDigests.cend())
+            expectedByCanonical.insert(path, *it);
     }
 
     QFile cacheFile(cacheFilePath());
@@ -266,7 +275,7 @@ void AbstractConfigCache::parse()
 
     // reads a single config file and calculates its hash - defined as lambda to be usable
     // both via QtConcurrent and via std:for_each
-    auto readConfigFile = [&cacheIsComplete, this](ConfigCacheEntry &ce) {
+    auto readConfigFile = [&cacheIsComplete, &expectedByCanonical, this](ConfigCacheEntry &ce) {
         QFile file(ce.m_filePath);
         if (!file.open(QIODevice::ReadOnly))
             throw Exception("Failed to open file '%1' for reading.\n").arg(file.fileName());
@@ -277,7 +286,7 @@ void AbstractConfigCache::parse()
         ce.m_rawContent = file.readAll();
         preProcessSourceContent(ce.m_rawContent, ce.m_filePath);
 
-        QByteArray checksum = QCryptographicHash::hash(ce.m_rawContent, QCryptographicHash::Sha1);
+        QByteArray checksum = QCryptographicHash::hash(ce.m_rawContent, QCryptographicHash::Sha256);
         ce.m_checksumMatches = (checksum == ce.m_checksum);
         ce.m_checksum = checksum;
         if (!ce.m_checksumMatches) {
@@ -287,6 +296,20 @@ void AbstractConfigCache::parse()
                 ce.m_content = nullptr;
             }
             cacheIsComplete = false;
+        }
+
+        if (auto it = expectedByCanonical.constFind(ce.m_filePath); it != expectedByCanonical.cend()) {
+            if (checksum != it.value()) {
+                qCWarning(LogCache) << "Source content digest mismatch for" << ce.m_filePath
+                                    << "- expected:" << it.value().toHex()
+                                    << "- actual:" << checksum.toHex();
+                if (ce.m_content) {
+                    destruct(ce.m_content);
+                    ce.m_content = nullptr;
+                }
+                ce.m_rawContent.clear(); // prevent the next pass from parsing tampered bytes
+                cacheIsComplete = false;
+            }
         }
     };
 
@@ -311,6 +334,8 @@ void AbstractConfigCache::parse()
 
         auto parseConfigFile = [this, &count](ConfigCacheEntry &ce) {
             if (ce.m_content)
+                return;
+            if (ce.m_rawContent.isEmpty()) // cleared above (e.g. digest mismatch) - skip
                 return;
 
             ++count;

@@ -12,6 +12,8 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>
 #include <QtCore/QIODevice>
+#include <QtCore/QHash>
+#include <QtCore/QByteArray>
 #include <QtAppManCommon/qtappmancommonglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -42,6 +44,8 @@ public:
     AbstractConfigCache(const QStringList &configFiles, const QString &cacheBaseName,
                         std::array<char, 4> typeId, quint32 version = 0, Options options = None);
     virtual ~AbstractConfigCache();
+
+    void setExpectedSourceDigests(const QHash<QString, QByteArray> &expectedByPath);
 
     virtual void parse();
 

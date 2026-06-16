@@ -12,7 +12,7 @@ QT_BEGIN_NAMESPACE_AM
 struct ConfigCacheEntry
 {
     QString m_filePath;    // abs. file path
-    QByteArray m_checksum; // sha1 (fast and sufficient for this use-case)
+    QByteArray m_checksum; // sha256
     QByteArray m_rawContent;  // raw YAML m_content
     void *m_content = nullptr;  // parsed YAML content
     bool m_checksumMatches = false;
@@ -21,7 +21,7 @@ struct ConfigCacheEntry
 struct CacheHeader
 {
     enum { Magic = 0x23d39366, // dd if=/dev/random bs=4 count=1 status=none | xxd -p
-           Version = 4 | (QT_VERSION_MAJOR << 24) };
+           Version = 5 | (QT_VERSION_MAJOR << 24) };
 
     quint32 m_magic = Magic;
     quint32 m_version = Version;
@@ -43,6 +43,7 @@ public:
     QString cacheBaseName;
     QVector<ConfigCacheEntry> cache;
     QMap<QString, int> cacheIndex;
+    QHash<QString, QByteArray> expectedSourceDigests;
     void *mergedContent = nullptr;
     bool cacheWasRead = false;
     bool cacheWasWritten = false;

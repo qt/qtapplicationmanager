@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:data-parser
 
+#include <optional>
+
 #include <QStringList>
 #include <QThread>
 #include <QAtomicInt>
@@ -236,6 +238,7 @@ void PackageExtractorPrivate::extract()
         for (bool finished = false; !finished; ) {
             archive_entry *entry = nullptr;
             QFile f;
+            std::optional<QCryptographicHash> manifestDigest; // only instantiated for info.yaml
 
             // Try to read the next entry from the archive
 
@@ -384,6 +387,9 @@ void PackageExtractorPrivate::extract()
                 continue;
             }
 
+            if ((packageEntryType == PackageEntry_File) && (entryPath == u"info.yaml"))
+                manifestDigest.emplace(QCryptographicHash::Sha256);
+
             // Read in the entry's data (which can be a normal file or header/footer metadata)
 
             if (archive_entry_size(entry)) {
@@ -412,6 +418,8 @@ void PackageExtractorPrivate::extract()
                     switch (packageEntryType) {
                     case PackageEntry_File:
                         digest.addData({ buffer, qsizetype(bytesRead) });
+                        if (manifestDigest)
+                            manifestDigest->addData({ buffer, qsizetype(bytesRead) });
 
                         if (!f.write(buffer, qint64(bytesRead)))
                             throw Exception(f, "could not write to file");
@@ -438,6 +446,8 @@ void PackageExtractorPrivate::extract()
 
             case PackageEntry_File:
                 f.close();
+                if (manifestDigest)
+                    m_report.setManifestDigest(manifestDigest->result());
                 Q_FALLTHROUGH();
 
             case PackageEntry_Dir: {

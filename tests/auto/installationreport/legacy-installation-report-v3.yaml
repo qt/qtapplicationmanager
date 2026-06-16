@@ -1,0 +1,12 @@
+%YAML 1.1
+---
+formatType: 'am-installation-report'
+formatVersion: 3
+---
+digest: '2323642323'
+diskSpaceUsed: 0
+files:
+- 'f'
+packageId: 'test-pkg'
+---
+hmac: '9e65d6cdeb356ac3a67dc1dba6aabc174f74766d3d00943a703f078a731eac25'

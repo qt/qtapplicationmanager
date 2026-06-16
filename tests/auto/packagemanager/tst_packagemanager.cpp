@@ -56,6 +56,11 @@ private Q_SLOTS:
     void packageInstallation_data();
     void packageInstallation();
 
+    void developerCertificate();
+    void developmentModeApplication_data();
+    void developmentModeApplication();
+    void developmentModeApplicationReload();
+
     void simulateErrorConditions_data();
     void simulateErrorConditions();
 
@@ -510,6 +515,206 @@ void tst_PackageManager::packageInstallation()
         QStringList entries = QDir(pathTo(pl)).entryList({ u"test-pkg*"_s });
         QVERIFY2(entries.isEmpty(), qPrintable(pathTo(pl) + u": "_s + entries.join(u", "_s)));
     }
+}
+
+// Test the setDeveloperCertificate() API contract: it is only usable in
+// DevelopmentMode::Application, rejects certificates that aren't bound to a package id, persists
+// the resulting signature and can be cleared again with an empty certificate.
+void tst_PackageManager::developerCertificate()
+{
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#else
+    const auto readCert = [](const QString &file) -> QByteArray {
+        QFile f(file);
+        return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray { };
+    };
+    const QByteArray narrowP12 = readCert(AM_TESTDATA_DIR u"certificates/dev-certs/dev-narrow.p12"_s);
+    QVERIFY(!narrowP12.isEmpty());
+
+    QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    const QString iniFile = dataDir.absoluteFilePath(u"development-mode.ini"_s);
+    QFile::remove(iniFile);
+
+    // setting a certificate in System / Disabled mode is not allowed
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::System);
+        QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDeveloperCertificate(narrowP12, "password"));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+    }
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::Disabled);
+        QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDeveloperCertificate(narrowP12, "password"));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+    }
+
+    // in Application mode, setting a valid, package-bound certificate works and is persisted
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::Application);
+        QSignalSpy certChangedSpy(m_pm, &PackageManager::developerCertificateChanged);
+
+        QVERIFY(!m_pm->developerCertificate().isValid());
+        QVERIFY_THROWS_NO_EXCEPTION(m_pm->setDeveloperCertificate(narrowP12, "password"));
+        QVERIFY(m_pm->developerCertificate().isValid());
+        QCOMPARE(certChangedSpy.count(), 1);
+        QVERIFY(m_pm->developerCertificate().matchPackageId(u"test-pkg"_s));
+        QVERIFY(QFile::exists(iniFile));
+
+        // a wrong password must not change the currently set certificate
+        QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDeveloperCertificate(narrowP12, "wrong-password"));
+
+        // setting an empty certificate clears everything again
+        QVERIFY_THROWS_NO_EXCEPTION(m_pm->setDeveloperCertificate({ }, { }));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+        QCOMPARE(certChangedSpy.count(), 2);
+    }
+
+    // the "other" certificate is not bound to any package id and must be rejected
+    {
+        const QByteArray otherP12 = readCert(AM_TESTDATA_DIR u"certificates/other-certs/other.p12"_s);
+        QVERIFY(!otherP12.isEmpty());
+
+        DevMode devMode(PackageManager::DevelopmentMode::Application);
+        QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDeveloperCertificate(otherP12, "password"));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+    }
+
+    QFile::remove(iniFile);
+#endif
+}
+
+// Simulate the full 3rd-party developer workflow when the development mode is set to "application":
+// a developer certificate is set up-front and only packages that fall within the bounds of - and
+// are signed by - that exact certificate can be installed.
+void tst_PackageManager::developmentModeApplication_data()
+{
+    QTest::addColumn<QString>("certFile");      // certificate set via setDeveloperCertificate()
+    QTest::addColumn<QString>("packageName");   // (dev-signed) package to install
+    QTest::addColumn<bool>("expectedSuccess");
+    QTest::addColumn<QString>("errorString");   // start with ~ to create a RegExp
+
+    // dev-1 signs test-dev-signed and is bound to it: full circle install succeeds
+    QTest::newRow("matching-cert") \
+            << "dev-certs/dev-1.p12" << "test-dev-signed.ampkg"
+            << true << "";
+
+    // test-qml-dev-signed stays within dev-narrow's bounds, but was signed by dev-1: signer mismatch
+    QTest::newRow("signer-mismatch") \
+            << "dev-certs/dev-narrow.p12" << "test-qml-dev-signed.ampkg"
+            << false << "~.*the package's developer signature does not match the currently set developer certificate";
+
+    // dev-narrow only allows the qml runtime, test-dev-signed uses the native runtime
+    QTest::newRow("runtime-overreach") \
+            << "dev-certs/dev-narrow.p12" << "test-dev-signed.ampkg"
+            << false << "~the package's runtimes \\(native\\) do not match the currently set developer certificate.*";
+
+    // no certificate set at all: the package-id check against the (empty) certificate fails first
+    QTest::newRow("no-cert") \
+            << "" << "test-dev-signed.ampkg"
+            << false << "~the package's id \\(test-pkg\\) does not match the currently set developer certificate.*";
+
+    // dev-narrow is only bound to test-pkg, other-test-dev-signed has the id other-test-pkg
+    QTest::newRow("packageid-overreach") \
+            << "dev-certs/dev-narrow.p12" << "other-test-dev-signed.ampkg"
+            << false << "~the package's id \\(other-test-pkg\\) does not match the currently set developer certificate.*";
+
+    // dev-narrow only allows the capability cap-allowed, the package requests cap-denied
+    QTest::newRow("capability-overreach") \
+            << "dev-certs/dev-narrow.p12" << "test-cap-overreach-dev-signed.ampkg"
+            << false << "~the package's capabilities \\(cap-denied\\) do not match the currently set developer certificate.*";
+
+    // dev-narrow only allows the category test-category, the package adds denied-category
+    QTest::newRow("category-overreach") \
+            << "dev-certs/dev-narrow.p12" << "test-cat-overreach-dev-signed.ampkg"
+            << false << "~the package's categories \\(.*denied-category.*\\) do not match the currently set developer certificate.*";
+
+    // store-signed packages must not be installable through the developer path
+    QTest::newRow("store-signed-via-dev-path") \
+            << "dev-certs/dev-1.p12" << "test-store-signed.ampkg"
+            << false << "cannot install packages with only a store signature";
+}
+
+void tst_PackageManager::developmentModeApplication()
+{
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#else
+    QFETCH(QString, certFile);
+    QFETCH(QString, packageName);
+    QFETCH(bool, expectedSuccess);
+    QFETCH(QString, errorString);
+
+    const QString fullCertFile = certFile.isEmpty() ? QString()
+                                                     : AM_TESTDATA_DIR u"certificates/"_s + certFile;
+    DevMode devMode(PackageManager::DevelopmentMode::Application, false, fullCertFile, "password");
+
+    const QString url = AM_TESTDATA_DIR u"packages/"_s + packageName;
+    const QString taskId = m_pm->startPackageInstallation(url);
+    QVERIFY(!taskId.isEmpty());
+    m_pm->acknowledgePackageInstallation(taskId);
+
+    if (expectedSuccess) {
+        QVERIFY2(m_finishedSpy->wait(spyTimeout),
+                 m_failedSpy->isEmpty() ? "Did not receive finished signal"
+                                        : qPrintable(m_failedSpy->first()[2].toString()));
+        QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
+
+        // clean up the installed package again
+        clearSignalSpies();
+        const QString removeId = m_pm->removePackage(u"test-pkg"_s, false);
+        QVERIFY(!removeId.isEmpty());
+        QVERIFY(m_finishedSpy->wait(spyTimeout));
+    } else {
+        QVERIFY(m_failedSpy->wait(spyTimeout));
+        QCOMPARE(m_failedSpy->first()[0].toString(), taskId);
+        QT_AM_CHECK_ERRORSTRING(m_failedSpy->first()[2].toString(), errorString);
+    }
+#endif
+}
+
+// Verify the persistence reload path: a developer certificate set in a previous run is restored
+// from development-mode.ini when enableInstaller() runs again, and a corrupt ini is discarded.
+void tst_PackageManager::developmentModeApplicationReload()
+{
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#else
+    QFile narrow(AM_TESTDATA_DIR u"certificates/dev-certs/dev-narrow.p12"_s);
+    QVERIFY(narrow.open(QIODevice::ReadOnly));
+    const QByteArray narrowP12 = narrow.readAll();
+
+    QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    const QString iniFile = dataDir.absoluteFilePath(u"development-mode.ini"_s);
+    QFile::remove(iniFile);
+
+    DevMode devMode(PackageManager::DevelopmentMode::Application);
+
+    // set and persist the certificate
+    QVERIFY_THROWS_NO_EXCEPTION(m_pm->setDeveloperCertificate(narrowP12, "password"));
+    const Certificate expected = m_pm->developerCertificate();
+    QVERIFY(expected.isValid());
+    QVERIFY(QFile::exists(iniFile));
+
+    // drop the in-memory certificate, then let enableInstaller() restore it from the ini
+    qtam_PackageManager_clearDeveloperCertificate(m_pm);
+    QVERIFY(!m_pm->developerCertificate().isValid());
+
+    m_pm->enableInstaller();
+    QVERIFY(m_pm->developerCertificate().isValid());
+    QCOMPARE(m_pm->developerCertificate(), expected);
+
+    // a corrupted (but non-empty) signature must be discarded gracefully: enableInstaller()
+    // removes the ini and leaves no certificate set
+    qtam_PackageManager_clearDeveloperCertificate(m_pm);
+    {
+        QSettings corrupt(iniFile, QSettings::IniFormat);
+        corrupt.setValue(u"developerSignature"_s, QByteArray("not-a-valid-signature"));
+    }
+    QVERIFY(QFile::exists(iniFile));
+    m_pm->enableInstaller();
+    QVERIFY(!m_pm->developerCertificate().isValid());
+    QVERIFY(!QFile::exists(iniFile));
+#endif
 }
 
 

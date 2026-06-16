@@ -1010,7 +1010,7 @@ void PackageManager::lockConfiguration()
 }
 
 #if defined(QT_BUILD_INTERNAL)
-QT_END_NAMESPACE_AM
+
 static bool configurationIsForceUnlocked = false;
 
 // for auto-tests only
@@ -1018,8 +1018,16 @@ Q_AUTOTEST_EXPORT void qtam_PackageManager_forceUnlockConfiguration()
 {
     configurationIsForceUnlocked = true;
 }
-QT_BEGIN_NAMESPACE_AM
-#endif
+
+// for auto-tests only: clear the in-memory developer certificate without touching the persisted
+// development-mode.ini, so that enableInstaller()'s reload path can be verified
+Q_AUTOTEST_EXPORT void qtam_PackageManager_clearDeveloperCertificate(PackageManager *pm)
+{
+    pm->d->developerSignature.clear();
+    pm->d->developerCertificate = { };
+}
+
+#endif // QT_BUILD_INTERNAL
 
 bool PackageManager::isConfigurationLocked() const
 {

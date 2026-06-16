@@ -163,6 +163,35 @@ rm "$src/other"
 echo "test" >"$src/test"
 cp "info.yaml" "$src"
 
+### development-mode "application" overreach packages
+# These are all correctly signed with dev-1 (which has wildcard restrictions),
+# but each one declares a capability resp. category that the "narrow" developer
+# certificate is NOT bound to. They are used to test that the restriction check
+# against the *set* developer certificate rejects them, even though the package
+# itself is correctly dev-signed.
+
+info "Create a package with an overreaching capability"
+sed <info.yaml >"$src/info.yaml" 's/  code: "test"/  code: "test"\n  capabilities: [ "cap-denied" ]/'
+packager create-package "$dst/test-cap-overreach.ampkg" "$src"
+packager dev-sign-package --verbose "$dst/test-cap-overreach.ampkg" "$dst/test-cap-overreach-dev-signed.ampkg" certificates/dev-certs/dev-1.p12 password
+cp "info.yaml" "$src"
+
+info "Create a package with an overreaching category"
+sed <info.yaml >"$src/info.yaml" 's/categories: \[ "test-category" \]/categories: [ "test-category", "denied-category" ]/'
+packager create-package "$dst/test-cat-overreach.ampkg" "$src"
+packager dev-sign-package --verbose "$dst/test-cat-overreach.ampkg" "$dst/test-cat-overreach-dev-signed.ampkg" certificates/dev-certs/dev-1.p12 password
+cp "info.yaml" "$src"
+
+# This package stays fully within the "narrow" developer certificate's bounds
+# (test-pkg, test-app, test-category, runtime qml), but it is signed by dev-1.
+# It is used to test that installing it while dev-narrow is the set certificate
+# is rejected due to the signer mismatch - not due to any metadata overreach.
+info "Create a package with a qml runtime, signed by dev-1"
+sed <info.yaml >"$src/info.yaml" 's/runtime: "native"/runtime: "qml"/'
+packager create-package "$dst/test-qml.ampkg" "$src"
+packager dev-sign-package --verbose "$dst/test-qml.ampkg" "$dst/test-qml-dev-signed.ampkg" certificates/dev-certs/dev-1.p12 password
+cp "info.yaml" "$src"
+
 ### no-icon package
 
 info "Create a package without an icon"

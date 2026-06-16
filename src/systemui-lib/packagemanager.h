@@ -23,9 +23,15 @@ QT_BEGIN_NAMESPACE_AM
 
 class PackageDatabase;
 class Package;
+class PackageManager;
 class PackageManagerPrivate;
 class InstallationTask;
 class DeinstallationTask;
+
+#if defined(QT_BUILD_INTERNAL)
+Q_AUTOTEST_EXPORT void qtam_PackageManager_forceUnlockConfiguration();
+Q_AUTOTEST_EXPORT void qtam_PackageManager_clearDeveloperCertificate(PackageManager *pm);
+#endif
 
 // A place to collect signals used internally by appman without polluting
 // PackageManager's public QML API.
@@ -227,6 +233,10 @@ private:
     friend class InstallationTask;
     friend class DeinstallationTask;
     friend class ScopedDirectoryCreator; // odd, but needed for removeRecursive
+
+#if defined(QT_BUILD_INTERNAL)
+    friend void qtam_PackageManager_clearDeveloperCertificate(PackageManager *pm);
+#endif
 };
 
 QT_END_NAMESPACE_AM

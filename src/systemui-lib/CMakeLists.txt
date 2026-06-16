@@ -170,11 +170,6 @@ qt_internal_extend_target(AppManSystemUIPrivate CONDITION QT_FEATURE_am_installe
         Qt::AppManPackagePrivate
 )
 
-qt_internal_extend_target(AppManSystemUIPrivate CONDITION LINUX
-    SOURCES
-        sudo/socketipc.cpp sudo/socketipc.h sudo/socketipc_p.h
-)
-
 qt_internal_extend_target(AppManSystemUIPrivate CONDITION WIN32
     PUBLIC_LIBRARIES
         user32

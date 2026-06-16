@@ -38,3 +38,18 @@ function(qtam_internal_add_dbus_adaptor target)
 
     endforeach()
 endfunction()
+
+# Determines if QNX version is at least 8.0. If so, sets TEST_qnx_version_8 to true.
+# __QNX__ is defined by qcc; its value is the API release version with the decimal points removed
+# (e.g. 801 == 8.0.1). It supersedes the deprecated _NTO_VERSION from <sys/neutrino.h>.
+macro(qt_am_internal_check_qnx_version)
+    qt_config_compile_test(qnx_version_8
+        LABEL "QNX version >= 8.0"
+        CODE "
+#if !defined(__QNX__) || __QNX__ < 800
+#  error __QNX__ is less than 800
+#endif
+int main(int, char **) { return 0; }
+")
+    qt_run_config_compile_test(qnx_version_8)
+endmacro()

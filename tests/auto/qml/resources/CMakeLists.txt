@@ -13,10 +13,10 @@ qt_internal_add_resource(systemuiplugin "systemuiplugin_data"
         "qml/widgets/MagentaRect.qml"
 )
 
-qt_am_internal_add_qml_test(tst_resource
+qt_am_internal_add_qml_test(tst_resources
     CONFIG_YAML am-config.yaml
     EXTRA_FILES apps relative qml
-    TEST_FILE tst_resource.qml
+    TEST_FILE tst_resources.qml
 )
 
 qt_add_binary_resources(systemuifile systemuifile.qrc)

@@ -43,8 +43,10 @@
 #  endif
 #  if defined(Q_OS_QNX)
 #    include <process.h>
-#    include <backtrace.h>
 #    include <QtCore/private/qcore_unix_p.h>
+#    if (__QNX__ < 800)
+#      include <backtrace.h>
+#    endif
 #  else
 #    include <execinfo.h>
 #    include <sys/syscall.h>
@@ -641,6 +643,7 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
             }
         }
 #    elif (__QNX__ >= 800)
+        Q_UNUSED(stackFramesToIgnore);
         logMsg(logTo, "\n > C++ backtraces are not supported on QNX 8");
 #    else
         Q_UNUSED(stackFramesToIgnore);

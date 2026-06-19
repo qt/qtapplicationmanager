@@ -30,6 +30,7 @@ public:
 #endif
     std::optional<QString> instanceId;  // set via setInstanceId(), forwarded to the helper
     std::optional<QString> testPrefix;
+    std::optional<QStringList> allowedRemoveRoots;  // set via setAllowedRemoveRecursiveRoots()
 
     void commitTrusted(int writtenFd);
     void cancelTrusted(int stagingFd) noexcept;
@@ -59,6 +60,7 @@ public:
 
 public Q_SLOTS:
     void removeRecursive(const QString &fileOrDir);
+    void setAllowedRemoveRecursiveRoots(const QStringList &roots);
     void bindMountFileSystem(const QString &source, const QString &target, bool readOnly,
                              bool useNamespacePidFd, const QDBusUnixFileDescriptor &namespacePidFd);
     void setExtendedAttribute(const QString &file, const QByteArray &attrName,
@@ -89,6 +91,7 @@ private:
 
     std::optional<QString> m_instanceId;
     std::optional<QString> m_testPrefix;
+    std::optional<QStringList> m_allowedRemoveRoots;  // set once, then read-only
 
     static std::pair<quint64, quint64> saveSessionKey(int fd);
 };

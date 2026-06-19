@@ -4,6 +4,10 @@
     <method name="removeRecursive">
       <arg name="fileOrDir" type="s" direction="in"/>
     </method>
+    <!-- set-once: restricts removeRecursive to targets under one of these roots -->
+    <method name="setAllowedRemoveRecursiveRoots">
+      <arg name="roots" type="as" direction="in"/>
+    </method>
     <method name="bindMountFileSystem">
       <arg name="from" type="s" direction="in"/>
       <arg name="to" type="s" direction="in"/>

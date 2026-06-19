@@ -8,6 +8,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtCore/QByteArray>
 #include <QtCore/QFile>
 #include <QtCore/QPointer>
@@ -69,6 +70,7 @@ public:
     bool isFallbackImplementation() const;
 
     void removeRecursive(const QString &fileOrDir);
+    void setAllowedRemoveRecursiveRoots(const QStringList &roots);
     void bindMountFileSystem(const QString &source, const QString &target, bool readOnly,
                              int namespacePidFd);
     void setExtendedAttribute(const QString &file, const QByteArray &attrName,

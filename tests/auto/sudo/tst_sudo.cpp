@@ -58,6 +58,7 @@ private Q_SLOTS:
     void trustedFileOwnership();
     void setInstanceIdSecondCallSameValueOk();
     void setInstanceIdSecondCallDifferentValueThrows();
+    void removeRecursive();
     void removeRecursiveOutsideTestPrefixRejected();
     void setAllowedRemoveRootsSecondCallDifferentValueThrows();
 
@@ -484,6 +485,47 @@ void tst_Sudo::setInstanceIdSecondCallDifferentValueThrows()
         threw = true;
     }
     QVERIFY(threw);
+}
+
+// removeRecursive deletes a whole subtree (nested dirs + files) and, for a symlink inside the tree,
+// removes the link itself without following it - so the link's external target must survive. The
+// tree lives under m_testRoot, so it is allowed via the developer-build testPrefix branch.
+void tst_Sudo::removeRecursive()
+{
+    const QString tree = m_testRoot.path() + u"/tree"_s;
+    QDir treeDir(tree);
+    QVERIFY(treeDir.mkpath(tree + u"/sub/deeper"_s));
+    QVERIFY(QFile(tree + u"/top.txt"_s).open(QIODevice::WriteOnly));
+    QVERIFY(QFile(tree + u"/sub/deeper/leaf.txt"_s).open(QIODevice::WriteOnly));
+
+#if defined(Q_OS_UNIX)
+    // a file outside the tree, reached only via a symlink planted inside it (Unix only)
+    QTemporaryFile external;
+    QVERIFY(external.open());
+    external.write("survive");
+    external.close();
+    QVERIFY(QFile::link(external.fileName(), tree + u"/sub/escape"_s));
+
+    // a directory *with contents* outside the tree, reached only via a symlink planted inside it.
+    // removeRecursive must unlink the symlink, not follow it and delete the target's files - so
+    // exercise the symlink-to-dir guard that the file symlink above never reaches (isDir() is false
+    // for a file symlink regardless of the guard).
+    QTemporaryDir externalDir;
+    QVERIFY(externalDir.isValid());
+    const QString externalDirKeep = externalDir.path() + u"/keep.txt"_s;
+    QVERIFY(QFile(externalDirKeep).open(QIODevice::WriteOnly));
+    QVERIFY(QFile::link(externalDir.path(), tree + u"/sub/escape-dir"_s));
+#endif
+
+    QVERIFY(QFileInfo::exists(tree));
+    m_sudo->removeRecursive(tree);
+
+    QVERIFY(!QFileInfo::exists(tree));
+#if defined(Q_OS_UNIX)
+    QVERIFY2(QFileInfo::exists(external.fileName()), "removeRecursive must not follow symlinks out of the tree");
+    QVERIFY2(QFileInfo::exists(externalDirKeep),
+             "removeRecursive must not follow a directory symlink out of the tree");
+#endif
 }
 
 // removeRecursive is confined to the allowed roots (none set here) or, in developer builds,

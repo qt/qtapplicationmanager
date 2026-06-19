@@ -102,8 +102,9 @@ if(AM_COVERAGE)
     set(GCOV_OPTIONS
         --rc branch_coverage=1
         --rc check_data_consistency=0
-        --ignore-errors mismatch
-        --ignore-errors unused
+        --ignore-errors mismatch,mismatch
+        --ignore-errors unused,unused
+        --ignore-errors gcov,gcov
     )
 
     add_custom_target(check_coverage
@@ -118,7 +119,12 @@ if(AM_COVERAGE)
         COMMAND echo
         COMMAND echo "=== Running tests"
         COMMAND echo
-        COMMAND ctest --test-dir tests/auto --verbose --repeat until-pass:3
+        COMMAND ctest --test-dir tests/auto --repeat until-pass:3
+        COMMAND echo
+        COMMAND sh -c '[ x$$AM_SUDO_TESTS = x1 ] && { echo "=== Running sudo tests" \; } || { echo "=== Skipping sudo tests" \; }'
+        COMMAND echo
+        COMMAND sh -c '[ x$$AM_SUDO_TESTS = x1 ] && sudo ctest --test-dir tests/auto/sudo --repeat until-pass:3 || true'
+        COMMAND sh -c '[ x$$AM_SUDO_TESTS = x1 ] && sudo ctest --test-dir tests/auto/packagemanager --repeat until-pass:3 || true'
         COMMAND echo
         COMMAND echo "=== Collecting runtime coverage data from tests"
         COMMAND echo

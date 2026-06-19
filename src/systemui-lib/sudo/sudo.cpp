@@ -78,6 +78,9 @@ extern "C" {
 #ifndef MOVE_MOUNT_F_EMPTY_PATH
 #  define MOVE_MOUNT_F_EMPTY_PATH 0x00000004
 #endif
+#ifndef MOVE_MOUNT_T_EMPTY_PATH
+#  define MOVE_MOUNT_T_EMPTY_PATH 0x00000040
+#endif
 #ifndef SYS_move_mount
 #  define SYS_move_mount 429
 #endif
@@ -577,7 +580,7 @@ void SudoClient::removeRecursive(const QString &fileOrDir)
     to mount in the helper's own namespace. It is forwarded to the helper over D-Bus. In fallback mode
     this throws: it has no meaning without the privileged helper.
 */
-void SudoClient::bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
+void SudoClient::bindMountFileSystem(const QString &source, const QString &target, bool readOnly,
                                      int namespacePidFd)
 {
     if (d->isFallback)
@@ -598,13 +601,13 @@ void SudoClient::bindMountFileSystem(const QString &from, const QString &to, boo
             fd = placeholder.get();
         }
 
-        return checkDBusReply<void>(d->iface->bindMountFileSystem(from, to, readOnly, useNamespacePidFd,
+        return checkDBusReply<void>(d->iface->bindMountFileSystem(source, target, readOnly, useNamespacePidFd,
                                                                   QDBusUnixFileDescriptor(fd)),
                                                                   __func__);
     }
 #else
-    Q_UNUSED(from)
-    Q_UNUSED(to)
+    Q_UNUSED(source)
+    Q_UNUSED(target)
     Q_UNUSED(readOnly)
     Q_UNUSED(namespacePidFd)
 #endif // QT_CONFIG(am_multi_process)
@@ -1002,23 +1005,93 @@ void SudoServer::removeRecursive(const QString &fileOrDir)
     } catchExceptionAsDBusError()
 }
 
-void SudoServer::bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
+void SudoServer::bindMountFileSystem(const QString &source, const QString &target, bool readOnly,
                                      bool useNamespacePidFd,
                                      const QDBusUnixFileDescriptor &namespacePidFd)
 {
     try {
-        // Create a detached mount point for our source location
-        Unix::Fd fromFd { int(::syscall(SYS_open_tree, -EBADF, qPrintable(from), OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE)) };
-        if (!fromFd)
-            throw Exception(errno, "could not create a detached mount point for %1").arg(from);
+        const QByteArray sourceUtf8 = QDir::cleanPath(source).toLocal8Bit();
+        const QByteArray targetUtf8 = QDir::cleanPath(target).toLocal8Bit();
+
+        if (!sourceUtf8.startsWith('/'))
+            throw Exception("source path for bindMountFileSystem must be absolute: %1").arg(source);
+        if (!targetUtf8.startsWith('/'))
+            throw Exception("target path for bindMountFileSystem must be absolute: %1").arg(target);
+
+        // Defeat parent-symlink planting and detect non-canonical paths on both endpoints:
+        //  - "source" lives on the host filesystem, where third-party writers may exist at any
+        //    parent dir
+        //  - "target" lives either on the host (no-namespace case) or inside the given mount
+        //    namespace, which may contain writable areas owned by an app.
+        // Strategy: openPath() opens the cleaned path race-free (O_NOFOLLOW), validatePath()
+        // then asks the kernel which path that fd actually resolves to (readlink on
+        // /proc/self/fd/N - a kernel-side query of the held fd, not a fresh path-walk) and
+        // requires it to equal the cleaned input. move_mount then operates on the validated fd
+        // (MOVE_MOUNT_T_EMPTY_PATH), so the kernel never re-resolves any path string.
+
+        auto openPath = [](const QByteArray &path) -> Unix::Fd {
+            // async-signal-safe
+            return Unix::Fd { qt_safe_open(path.constData(), O_PATH | O_NOFOLLOW | O_CLOEXEC) };
+        };
+
+        auto validatePath = [](const QByteArray &path, Unix::Fd &fd) {
+            // async-signal-safe
+            if (fd) {
+                // This is a TOCTOU race-free and async-signal-safe version of comparing path with
+                // QDir::canonicalPath(path) to detect symlink planting.
+                // Note: there is no POSIX way to achieve this, but using /proc/self/fd is the
+                //       standard approach on Linux to this problem.
+
+                std::array<char, 64> procPath;
+                ::snprintf(procPath.data(), procPath.size(), "/proc/self/fd/%d", fd.get());
+                std::array<char, 8 * PATH_MAX> canonical;
+                ssize_t n = ::readlink(procPath.data(), canonical.data(), canonical.size());
+                if ((qsizetype(n) == path.size())
+                        && !::memcmp(canonical.data(), path.constData(), n)) {
+                    return;
+                } else {
+                    errno = EINVAL; // path is not canonical, or changed under us
+                }
+            }
+            fd.reset();
+        };
+
+        Unix::Fd sourcePathFd = openPath(sourceUtf8);
+        if (!sourcePathFd)
+            throw Exception(errno, "could not open the source path for bindMountFileSystem: %1").arg(source);
+        validatePath(sourceUtf8, sourcePathFd);
+        if (!sourcePathFd)
+            throw Exception(errno, "the source path for bindMountFileSystem is not canonical or tampered with: %1").arg(source);
+
+        // Create the detached mount from the validated fd, not from the path string. The mount
+        // object is anchored on the inode we just verified, so no further string-resolution race.
+        Unix::Fd sourceFd { int(::syscall(SYS_open_tree, sourcePathFd.get(), "",
+                                          OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE | AT_EMPTY_PATH | AT_RECURSIVE)) };
+        if (!sourceFd)
+            throw Exception(errno, "could not create a detached mount point for %1").arg(source);
 
         if (readOnly) {
             ::mount_attr mountAttr { MOUNT_ATTR_RDONLY, 0, 0, 0 };
-            if (::syscall(SYS_mount_setattr, fromFd.get(), "", AT_EMPTY_PATH | AT_RECURSIVE, &mountAttr, sizeof(mountAttr)) < 0)
-                throw Exception(errno, "could not set the detached mount point for %1 to read-only").arg(from);
+            if (::syscall(SYS_mount_setattr, sourceFd.get(), "", AT_EMPTY_PATH | AT_RECURSIVE,
+                          &mountAttr, sizeof(mountAttr)) < 0) {
+                throw Exception(errno, "could not set the detached mount point for %1 to read-only").arg(source);
+            }
         }
 
-        if (useNamespacePidFd) {
+        if (!useNamespacePidFd) {
+            // no target namespace: validate and mount in the helper's own mount namespace
+            Unix::Fd targetFd = openPath(targetUtf8);
+            if (!targetFd)
+                throw Exception(errno, "could not open the target path for bindMountFileSystem: %1").arg(target);
+            validatePath(targetUtf8, targetFd);
+            if (!targetFd)
+                throw Exception(errno, "the target path for bindMountFileSystem is not canonical or tampered with: %1").arg(target);
+
+            if (::syscall(SYS_move_mount, sourceFd.get(), "", targetFd.get(), "",
+                          MOVE_MOUNT_F_EMPTY_PATH | MOVE_MOUNT_T_EMPTY_PATH) < 0) {
+                throw Exception(errno, "could not move the detached mount point to %1").arg(target);
+            }
+        } else {
             // namespacePidFd is the target's pidfd, opened and kept open by the caller (the container,
             // via the main process), so we enter that exact process's mount namespace - no re-open,
             // no pid-recycle window. The fd is borrowed and valid for this synchronous call only.
@@ -1033,8 +1106,6 @@ void SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
             // on its own connection-manager thread. The solution: fork() a throw-away process that
             // does the setns() and the mount, and then immediately exits.
 
-            const QByteArray toLocal = to.toLocal8Bit();
-
             int pipeFd[2] = { -1, -1 };
             if (qt_safe_pipe(pipeFd) < 0)
                 throw Exception(errno, "could not create pipe for helper process of bindMountFileSystem");
@@ -1045,7 +1116,7 @@ void SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
                 qt_safe_close(pipeFd[1]);
                 throw Exception(errno, "could not fork helper process for bindMountFileSystem");
             } else if (pid == 0) {
-                // child process, throw-away setns+mount
+                // child process, throw-away setns, validate and mount
 
                 qt_safe_close(pipeFd[0]);
 
@@ -1060,11 +1131,27 @@ void SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
                     qt_safe_write(pipeFd[1], &e, sizeof(e));
                     ::_exit(1);
                 }
-                // Mount the detached mount point to the final location within the mount namespace
-                if (::syscall(SYS_move_mount, fromFd.get(), "", -EBADF, toLocal.constData(), MOVE_MOUNT_F_EMPTY_PATH) < 0) {
+
+                // Run the same 'open and validate' the no-namespace branch uses, but now resolving
+                // inside the target namespace (which the parent could not have looked into).
+                Unix::Fd targetFd = openPath(targetUtf8);
+                if (!targetFd) {
                     int e = errno;
                     qt_safe_write(pipeFd[1], &e, sizeof(e));
                     ::_exit(2);
+                }
+                validatePath(targetUtf8, targetFd);
+                if (!targetFd) {
+                    int e = errno;
+                    qt_safe_write(pipeFd[1], &e, sizeof(e));
+                    ::_exit(3);
+                }
+
+                if (::syscall(SYS_move_mount, sourceFd.get(), "", targetFd.get(), "",
+                              MOVE_MOUNT_F_EMPTY_PATH | MOVE_MOUNT_T_EMPTY_PATH) < 0) {
+                    int e = errno;
+                    qt_safe_write(pipeFd[1], &e, sizeof(e));
+                    ::_exit(4);
                 }
                 ::_exit(0);
             } else {
@@ -1090,7 +1177,11 @@ void SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
                         case 1:
                             throw Exception(e, "could not enter the target mount namespace");
                         case 2:
-                            throw Exception(e, "could not move the detached mount point to %1").arg(to);
+                            throw Exception(e, "could not open the target path for bindMountFileSystem in the target namespace: %1").arg(target);
+                        case 3:
+                            throw Exception(e, "the target path for bindMountFileSystem is not canonical or tampered with: %1").arg(target);
+                        case 4:
+                            throw Exception(e, "could not move the detached mount point to %1").arg(target);
                         default:
                             break;
                         }
@@ -1098,9 +1189,6 @@ void SudoServer::bindMountFileSystem(const QString &from, const QString &to, boo
                     throw Exception("helper process of bindMountFileSystem failed with unknown error");
                 }
             }
-        } else { // no target namespace: mount in the helper's own mount namespace
-            if (::syscall(SYS_move_mount, fromFd.get(), "", -EBADF, qPrintable(to), MOVE_MOUNT_F_EMPTY_PATH) < 0)
-                throw Exception(errno, "could not move the detached mount point to %1").arg(to);
         }
     } catchExceptionAsDBusError()
 }

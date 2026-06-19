@@ -58,6 +58,8 @@ private Q_SLOTS:
     void trustedFileOwnership();
     void setInstanceIdSecondCallSameValueOk();
     void setInstanceIdSecondCallDifferentValueThrows();
+    void removeRecursiveOutsideTestPrefixRejected();
+    void setAllowedRemoveRootsSecondCallDifferentValueThrows();
 
 private:
     QString trustedStatePath(const QString &relPath) const;
@@ -482,6 +484,31 @@ void tst_Sudo::setInstanceIdSecondCallDifferentValueThrows()
         threw = true;
     }
     QVERIFY(threw);
+}
+
+// removeRecursive is confined to the allowed roots (none set here) or, in developer builds,
+// anything under the testPrefix. A target outside both must be rejected before anything is deleted.
+// We point at a sibling temp dir that exists but lives outside m_testRoot, and verify it survives.
+void tst_Sudo::removeRecursiveOutsideTestPrefixRejected()
+{
+    QTemporaryDir outside;
+    QVERIFY(outside.isValid());
+    QVERIFY(!QString(outside.path() + u'/').startsWith(m_testRoot.path() + u'/'));
+
+    QVERIFY_THROWS_EXCEPTION(Exception, m_sudo->removeRecursive(outside.path()));
+    QVERIFY(QFileInfo::exists(outside.path()));
+}
+
+// setAllowedRemoveRecursiveRoots can only be set once, like setInstanceId: a second call with a
+// different value throws. This test never sets roots elsewhere, so the first call here pins the
+// value; the differing second call must throw.
+void tst_Sudo::setAllowedRemoveRootsSecondCallDifferentValueThrows()
+{
+    m_sudo->setAllowedRemoveRecursiveRoots({ m_testRoot.path() });
+    m_sudo->setAllowedRemoveRecursiveRoots({ m_testRoot.path() }); // same value -> no-op
+
+    QVERIFY_THROWS_EXCEPTION(Exception,
+                             m_sudo->setAllowedRemoveRecursiveRoots({ m_testRoot.path() + u"/other"_s }));
 }
 
 void tst_Sudo::cleanupTestCase()

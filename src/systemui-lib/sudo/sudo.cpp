@@ -559,11 +559,60 @@ static T checkDBusReply(QDBusPendingReply<T> &&reply, const char *operation)
 #endif // QT_CONFIG(am_multi_process)
 
 /*! \internal
+    Verify \a fileOrDir resolves to a path at or below one of \a allowedRoots. The target's parent
+    is canonicalized (it must exist; the target itself may be a dangling symlink we are about to
+    delete), so symlinks anywhere above the leaf cannot smuggle the operation outside an allowed
+    root. Until the allowed roots have been set, every removal is rejected (fail-closed).
+
+    In QT_BUILD_INTERNAL builds a non-empty \a testPrefix implicitly allows anything beneath it: the
+    test-cleanup callers operate inside their temp prefix and never set real roots. This branch is
+    compiled out of production builds, where setTestRootPathPrefix() itself is rejected.
+*/
+static void checkRemoveRecursiveAllowed(const QString &fileOrDir,
+                                        const std::optional<QStringList> &allowedRoots,
+                                        const std::optional<QString> &testPrefix)
+{
+    // Canonicalize the parent (resolves symlinked ancestors) but keep the leaf literal: safeRemove
+    // deletes the named entry, not its symlink target, and the leaf may be a dangling symlink that
+    // canonicalFilePath() would resolve to "".
+    const QFileInfo fi(fileOrDir);
+    const QString canonicalParent = fi.dir().canonicalPath();
+    if (canonicalParent.isEmpty())
+        throw Exception("removeRecursive target has no resolvable parent: %1").arg(fileOrDir);
+    const QString canonicalTarget = QDir::cleanPath(canonicalParent + u'/' + fi.fileName());
+
+    const auto isUnder = [&canonicalTarget](const QString &root) {
+        const QString canonicalRoot = QFileInfo(root).canonicalFilePath();
+        return !canonicalRoot.isEmpty()
+               && ((canonicalTarget == canonicalRoot)
+                   || canonicalTarget.startsWith(canonicalRoot + u'/'));
+    };
+
+#if defined(QT_BUILD_INTERNAL)
+    if (testPrefix && !testPrefix->isEmpty() && isUnder(*testPrefix))
+        return;
+#else
+    Q_UNUSED(testPrefix)
+#endif
+
+    if (!allowedRoots)
+        throw Exception("removeRecursive called before setAllowedRemoveRecursiveRoots");
+
+    for (const QString &root : *allowedRoots) {
+        if (isUnder(root))
+            return;
+    }
+    throw Exception("removeRecursive target (%1) escapes all allowed roots (%2)")
+        .arg(fileOrDir).arg(*allowedRoots);
+}
+
+/*! \internal
     In fallback mode (no root helper), this runs in-process.
 */
 void SudoClient::removeRecursive(const QString &fileOrDir)
 {
     if (d->isFallback) {
+        checkRemoveRecursiveAllowed(fileOrDir, d->allowedRemoveRoots, d->testPrefix);
         if (!recursiveOperation(fileOrDir, safeRemove))
             throw Exception(errno, "could not recursively remove %1").arg(fileOrDir);
         return;
@@ -573,6 +622,20 @@ void SudoClient::removeRecursive(const QString &fileOrDir)
         return checkDBusReply<void>(d->iface->removeRecursive(fileOrDir), __func__);
 #endif
     throw Exception("The sudo-helper process is not available.");
+}
+
+/*! \internal
+    Set-once call restricting removeRecursive() to targets under one of \a roots.
+*/
+void SudoClient::setAllowedRemoveRecursiveRoots(const QStringList &roots)
+{
+    if (d->allowedRemoveRoots && (*d->allowedRemoveRoots != roots))
+        throw Exception("setAllowedRemoveRecursiveRoots was already called with a different value");
+    d->allowedRemoveRoots = roots;
+#if QT_CONFIG(am_multi_process)
+    if (!d->isFallback && d->iface)
+        checkDBusReply<void>(d->iface->setAllowedRemoveRecursiveRoots(roots), __func__);
+#endif
 }
 
 /*! \internal
@@ -1000,8 +1063,18 @@ std::pair<quint64, quint64> SudoServer::saveSessionKey(int fd)
 void SudoServer::removeRecursive(const QString &fileOrDir)
 {
     try {
+        checkRemoveRecursiveAllowed(fileOrDir, m_allowedRemoveRoots, m_testPrefix);
         if (!recursiveOperation(fileOrDir, safeRemove))
             throw Exception(errno, "could not recursively remove %1").arg(fileOrDir);
+    } catchExceptionAsDBusError()
+}
+
+void SudoServer::setAllowedRemoveRecursiveRoots(const QStringList &roots)
+{
+    try {
+        if (m_allowedRemoveRoots && (*m_allowedRemoveRoots != roots))
+            throw Exception("setAllowedRemoveRecursiveRoots was already called with a different value");
+        m_allowedRemoveRoots = roots;
     } catchExceptionAsDBusError()
 }
 

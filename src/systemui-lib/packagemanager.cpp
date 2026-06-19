@@ -526,6 +526,15 @@ PackageManager::PackageManager(PackageDatabase *packageDatabase,
     d->database = packageDatabase;
     d->installationPath = packageDatabase->installedPackagesDir();
     d->documentPath = documentPath;
+
+    // Tell Sudo about the only roots removeRecursive() is ever asked to operate on. This is a
+    // set-once policy enforced on the sudo-helper side.
+    QStringList allowedRemoveRoots;
+    if (!d->installationPath.isEmpty())
+        allowedRemoveRoots << d->installationPath;
+    if (!d->documentPath.isEmpty())
+        allowedRemoveRoots << d->documentPath;
+    SudoClient::instance()->setAllowedRemoveRecursiveRoots(allowedRemoveRoots);
 }
 
 PackageManager::~PackageManager()

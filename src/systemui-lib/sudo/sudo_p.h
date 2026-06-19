@@ -59,7 +59,7 @@ public:
 
 public Q_SLOTS:
     void removeRecursive(const QString &fileOrDir);
-    void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
+    void bindMountFileSystem(const QString &source, const QString &target, bool readOnly,
                              bool useNamespacePidFd, const QDBusUnixFileDescriptor &namespacePidFd);
     void setExtendedAttribute(const QString &file, const QByteArray &attrName,
                               const QByteArray &attrValue);

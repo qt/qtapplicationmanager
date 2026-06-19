@@ -69,7 +69,7 @@ public:
     bool isFallbackImplementation() const;
 
     void removeRecursive(const QString &fileOrDir);
-    void bindMountFileSystem(const QString &from, const QString &to, bool readOnly,
+    void bindMountFileSystem(const QString &source, const QString &target, bool readOnly,
                              int namespacePidFd);
     void setExtendedAttribute(const QString &file, const QByteArray &attrName,
                               const QByteArray &attrValue);

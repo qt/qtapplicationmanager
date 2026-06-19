@@ -7,13 +7,31 @@
 #include <QTemporaryDir>
 #include <QStandardPaths>
 #include <sys/stat.h>
+#include <sys/mount.h>
+#include <sys/syscall.h>
+#include <sys/wait.h>
+#include <sched.h>
+#include <signal.h>
+#include <fcntl.h>
 #include <unistd.h>
+#include <optional>
+
+#ifndef SYS_open_tree
+#  define SYS_open_tree 428
+#endif
+#ifndef OPEN_TREE_CLOEXEC
+#  define OPEN_TREE_CLOEXEC O_CLOEXEC
+#endif
+#ifndef SYS_pidfd_open
+#  define SYS_pidfd_open 434
+#endif
 
 #if !defined(Q_OS_LINUX)
 #  error "This test is Linux specific!"
 #endif
 
 #include "utilities.h"
+#include "unix-utilities.h"
 #include "exception.h"
 #include "sudo.h"
 
@@ -31,6 +49,12 @@ public:
 
     static bool startedSudoServer;
     static QString sudoServerError;
+    // Targets we bind-mounted onto; swept in ~tst_Sudo (also reached from the crash handler) so a
+    // crash mid-test cannot leak a kernel mount that would pin m_testRoot forever.
+    static QStringList activeMounts;
+    // Parked children holding a private mount namespace (bindMountIntoNamespace); killing the child
+    // destroys its namespace and any mount inside it, so reaping them is the cleanup.
+    static QList<pid_t> activeMountChildren;
 
 private Q_SLOTS:
     void initTestCase();
@@ -62,6 +86,14 @@ private Q_SLOTS:
     void removeRecursiveOutsideTestPrefixRejected();
     void setAllowedRemoveRootsSecondCallDifferentValueThrows();
 
+    void bindMount_data();
+    void bindMount();
+    void bindMountMissing_data();
+    void bindMountMissing();
+    void bindMountPathValidation_data();
+    void bindMountPathValidation();
+    void bindMountIntoNamespace();
+
 private:
     QString trustedStatePath(const QString &relPath) const;
     void writeTrustedState(const QString &relPath, const QByteArray &bytes);
@@ -71,12 +103,21 @@ private:
     // Runs `body` briefly as root, then drops back. Returns whatever body() returned.
     template<typename F> auto sudo(F &&body);
 
+    // bind-mount test helpers
+    void skipIfNoBindMount();   // QSKIP (throws) in fallback mode or on a too-old kernel
+    int unmount(const QString &target);   // best-effort umount as root
+    // Checks <pid>'s mountinfo (default: our own); pid != self reads into another process's ns.
+    bool isMountPoint(const QString &path, pid_t pid = 0);
+
     SudoClient *m_sudo = nullptr;
     QTemporaryDir m_testRoot;
+    std::optional<bool> m_haveBindMount;   // cached kernel-support probe (open_tree/move_mount)
 };
 
 bool tst_Sudo::startedSudoServer = false;
 QString tst_Sudo::sudoServerError;
+QStringList tst_Sudo::activeMounts;
+QList<pid_t> tst_Sudo::activeMountChildren;
 
 tst_Sudo::tst_Sudo(QObject *parent)
     : QObject(parent)
@@ -88,6 +129,19 @@ tst_Sudo::~tst_Sudo()
     // before QTemporaryDir's destructor sweeps the (now-empty) tree. In fallback mode the
     // files are user-owned under <testRoot>/<XDG dir>/ and QTemporaryDir handles them.
     if (m_sudo && !m_sudo->isFallbackImplementation()) {
+        // Detach any bind mounts first - they are kernel objects QTemporaryDir cannot rmdir, and a
+        // leaked mount pins m_testRoot. This must run before removeRecursive() sweeps the tree.
+        for (const QString &target : std::as_const(activeMounts))
+            unmount(target);
+        activeMounts.clear();
+
+        // Reap parked namespace children; their death tears down the namespace and its mounts.
+        for (pid_t child : std::as_const(activeMountChildren)) {
+            ::kill(child, SIGKILL);
+            ::waitpid(child, nullptr, 0);
+        }
+        activeMountChildren.clear();
+
         try {
             m_sudo->removeRecursive(m_testRoot.path() + u"/var"_s);
         } catch (...) {
@@ -551,6 +605,280 @@ void tst_Sudo::setAllowedRemoveRootsSecondCallDifferentValueThrows()
 
     QVERIFY_THROWS_EXCEPTION(Exception,
                              m_sudo->setAllowedRemoveRecursiveRoots({ m_testRoot.path() + u"/other"_s }));
+}
+
+void tst_Sudo::skipIfNoBindMount()
+{
+    if (m_sudo->isFallbackImplementation())
+        QSKIP("bindMountFileSystem requires root privileges");
+
+    // Probe open_tree once: old CI kernels lack it (and move_mount), so skip rather than fail.
+    // Only ENOSYS means "no such syscall" - any other error means the syscall exists (the probe
+    // may legitimately fail for other reasons, e.g. we run as the dropped user here).
+    if (!m_haveBindMount) {
+        Unix::Fd fd = { int(::syscall(SYS_open_tree, AT_FDCWD, qPrintable(m_testRoot.path()),
+                                      OPEN_TREE_CLOEXEC)) };
+        m_haveBindMount = fd || (errno != ENOSYS);
+    }
+    if (!*m_haveBindMount)
+        QSKIP("kernel lacks open_tree/move_mount");
+}
+
+int tst_Sudo::unmount(const QString &target)
+{
+    // umount2 needs root and the path may already be gone (crash sweep, double call) - ignore errors.
+    return sudo([&] { return ::umount2(qPrintable(target), MNT_DETACH); });
+}
+
+bool tst_Sudo::isMountPoint(const QString &path, pid_t pid)
+{
+    // Scan the process's mountinfo for the mount point in field 5 (the canonical path is what
+    // move_mount records). Passing another process's pid reads that process's mount namespace.
+    const QByteArray needle = QDir::cleanPath(path).toLocal8Bit();
+    const QString miPath = pid ? u"/proc/%1/mountinfo"_s.arg(pid) : u"/proc/self/mountinfo"_s;
+    QFile mi(miPath);
+    if (!mi.open(QIODevice::ReadOnly))
+        return false;
+    const auto lines = mi.readAll().split('\n');
+    for (const QByteArray &line : lines) {
+        const auto fields = line.split(' ');
+        if ((fields.size() > 4) && (fields.at(4) == needle))
+            return true;
+    }
+    return false;
+}
+
+void tst_Sudo::bindMount_data()
+{
+    QTest::addColumn<bool>("readOnly");
+    QTest::newRow("read-write") << false;
+    QTest::newRow("read-only") << true;
+}
+
+// Bind-mount <src> onto <dst>, verify the source content shows through, and that detaching removes
+// the mount again. A read-write mount must accept writes (landing in the source); a read-only mount
+// must reject them with EROFS. Root-only: bindMountFileSystem throws in fallback mode.
+void tst_Sudo::bindMount()
+{
+    skipIfNoBindMount();
+
+    QFETCH(bool, readOnly);
+
+    const QString base = m_testRoot.path() + u"/mnt-"_s + QString::fromLatin1(QTest::currentDataTag());
+    const QString src = base + u"/src"_s;
+    const QString dst = base + u"/dst"_s;
+    QVERIFY(QDir().mkpath(src));
+    QVERIFY(QDir().mkpath(dst));
+
+    QFile marker(src + u"/data.txt"_s);
+    QVERIFY(marker.open(QIODevice::WriteOnly));
+    QCOMPARE(marker.write(QByteArray("payload")), 7);
+    marker.close();
+
+    // Before the mount, dst is empty.
+    QVERIFY(!QFileInfo::exists(dst + u"/data.txt"_s));
+
+    m_sudo->bindMountFileSystem(src, dst, readOnly, /*namespacePidFd*/ -1);
+    activeMounts << dst;
+    auto guard = qScopeGuard([&] { unmount(dst); activeMounts.removeAll(dst); });
+
+    QVERIFY(isMountPoint(dst));
+
+    // The source content shows through in either mode.
+    QFile seen(dst + u"/data.txt"_s);
+    QVERIFY(seen.open(QIODevice::ReadOnly));
+    QCOMPARE(seen.readAll(), QByteArray("payload"));
+    seen.close();
+
+    Unix::Fd fd { int(::open((dst + u"/data.txt"_s).toLocal8Bit().constData(), O_WRONLY)) };
+    if (readOnly) {
+        // Writing into the read-only mount must fail with EROFS (checked while still mounted).
+        QVERIFY(!fd);
+        QCOMPARE(errno, EROFS);
+    } else {
+        // A read-write mount must accept writes, and they must land in the source (real bind mount).
+        QVERIFY(fd);
+        QCOMPARE(::write(fd.get(), "changed", 7), 7);
+        fd.reset();
+
+        QFile fromSource(src + u"/data.txt"_s);
+        QVERIFY(fromSource.open(QIODevice::ReadOnly));
+        QCOMPARE(fromSource.readAll(), QByteArray("changed"));
+        fromSource.close();
+    }
+
+    // Detaching must remove the mount and hide the source content again - in both modes.
+    guard.dismiss();
+    unmount(dst);
+    activeMounts.removeAll(dst);
+    QVERIFY(!isMountPoint(dst));
+    QVERIFY(!QFileInfo::exists(dst + u"/data.txt"_s));
+}
+
+void tst_Sudo::bindMountMissing_data()
+{
+    QTest::addColumn<bool>("missingSource");
+    QTest::newRow("source") << true;
+    QTest::newRow("target") << false;
+}
+
+// A non-existent source or target cannot be opened, so the mount must fail before anything happens.
+// The two cases fail at different points: the source in the parent's openPath(), the target later
+// in the no-namespace branch's openPath().
+void tst_Sudo::bindMountMissing()
+{
+    skipIfNoBindMount();
+
+    QFETCH(bool, missingSource);
+
+    const QString base = m_testRoot.path() + u"/mnt-missing-"_s + QString::fromLatin1(QTest::currentDataTag());
+    const QString src = base + u"/src"_s;
+    const QString dst = base + u"/dst"_s;
+    // Create only the endpoint that is supposed to exist.
+    QVERIFY(QDir().mkpath(missingSource ? dst : src));
+
+    QVERIFY_THROWS_EXCEPTION(Exception,
+                             m_sudo->bindMountFileSystem(src, dst, false, -1));
+    // Confirm nothing was mounted onto the target (a missing target is trivially not a mountpoint).
+    QVERIFY(!isMountPoint(dst));
+}
+
+void tst_Sudo::bindMountPathValidation_data()
+{
+    QTest::addColumn<bool>("badSource"); // false -> the target is the bad one
+    QTest::addColumn<QString>("relativePath"); // non-empty -> relative-path case
+    QTest::addColumn<bool>("parentSymlink"); // true -> plant a parent symlink
+
+    QTest::newRow("relative source") << true << u"./relative/src"_s << false;
+    QTest::newRow("relative target") << false << u"./relative/dst"_s << false;
+    QTest::newRow("parent-symlink source") << true << QString() << true;
+    QTest::newRow("parent-symlink target") << false << QString() << true;
+}
+
+// The hardening: a non-absolute path, or a path that needs no cleanup yet whose *parent* is a
+// symlink (the real CVE - cleanPath leaves it untouched, O_NOFOLLOW opens the final component, but
+// the /proc/self/fd readlink reveals the redirect), must be rejected before any mount is created.
+void tst_Sudo::bindMountPathValidation()
+{
+    skipIfNoBindMount();
+
+    QFETCH(bool, badSource);
+    QFETCH(QString, relativePath);
+    QFETCH(bool, parentSymlink);
+
+    // Unique base per data row: the parent-symlink rows create an "evil" symlink that would
+    // otherwise collide across rows.
+    const QString base = m_testRoot.path() + u"/mnt-validate-"_s + QString::fromLatin1(QTest::currentDataTag());
+    const QString realSrc = base + u"/src"_s;
+    const QString realDst = base + u"/dst"_s;
+    QVERIFY(QDir().mkpath(realSrc));
+    QVERIFY(QDir().mkpath(realDst));
+    QVERIFY(QFile(realSrc + u"/data.txt"_s).open(QIODevice::WriteOnly));
+
+    QString src = realSrc;
+    QString dst = realDst;
+
+    if (!relativePath.isEmpty()) {
+        (badSource ? src : dst) = relativePath; // a relative path must be rejected outright
+    } else if (parentSymlink) {
+        // <base>/evil -> <base>/real_parent ; the bad path is <base>/evil/leaf, which cleanPath
+        // leaves unchanged (no . or .. to collapse) but resolves through the symlink to
+        // <base>/real_parent/leaf.
+        const QString realParent = base + u"/real_parent"_s;
+        QVERIFY(QDir().mkpath(realParent + u"/leaf"_s));
+        QVERIFY(QFile(realParent + u"/leaf/data.txt"_s).open(QIODevice::WriteOnly));
+        QVERIFY(QFile::link(realParent, base + u"/evil"_s));
+        (badSource ? src : dst) = base + u"/evil/leaf"_s;
+    }
+
+    activeMounts << dst;
+    QVERIFY_THROWS_EXCEPTION(Exception, m_sudo->bindMountFileSystem(src, dst, false, -1));
+    activeMounts.removeAll(dst);
+
+    // Nothing must have been mounted onto the real target on the way to rejecting.
+    QVERIFY(!isMountPoint(realDst));
+}
+
+// The namespace branch: fork a child that unshares its own mount namespace and parks, hand its
+// pidfd to bindMountFileSystem, and verify the mount lands inside *that* child's namespace - not
+// ours. This exercises the helper's fork()+setns()+validate+move_mount path that the no-namespace
+// tests cannot reach.
+void tst_Sudo::bindMountIntoNamespace()
+{
+    skipIfNoBindMount();
+
+    const QString base = m_testRoot.path() + u"/mnt-ns"_s;
+    const QString src = base + u"/src"_s;
+    const QString dst = base + u"/dst"_s;
+    QVERIFY(QDir().mkpath(src));
+    QVERIFY(QDir().mkpath(dst));
+    QFile marker(src + u"/data.txt"_s);
+    QVERIFY(marker.open(QIODevice::WriteOnly));
+    marker.write(QByteArray("ns-payload"));
+    marker.close();
+
+    // ready[0]/[0] tells us the child has its namespace set up; park[0] keeps the child alive
+    // until we close park[1] (so it never outlives this test even if we forget to kill it).
+    int readyPipe[2] = { -1, -1 };
+    int parkPipe[2] = { -1, -1 };
+    QVERIFY(::pipe(readyPipe) == 0);
+    QVERIFY(::pipe(parkPipe) == 0);
+
+    pid_t child = ::fork();
+    QVERIFY(child >= 0);
+    if (child == 0) {
+        // child: get a private mount namespace, then park
+        ::close(readyPipe[0]);
+        ::close(parkPipe[1]);
+
+        // unshare()/mount() need CAP_SYS_ADMIN, but the main process dropped to the test user
+        // (DropPrivilegesRegainable keeps saved-set-uid 0), so regain root first.
+        if (::setresuid(0, 0, 0) != 0)
+            ::_exit(2);
+
+        // Without making the tree MS_SLAVE, a mount into our namespace can propagate back to the
+        // host (systemd makes / shared). MS_SLAVE = receive from host, never send back.
+        if ((::unshare(CLONE_NEWNS) != 0)
+            || (::mount(nullptr, "/", nullptr, MS_REC | MS_SLAVE, nullptr) != 0)) {
+            ::_exit(1);
+        }
+        char ok = 1;
+        if (::write(readyPipe[1], &ok, 1) != 1)
+            ::_exit(3);
+
+        // block until the parent closes parkPipe[1] (test done) - read returns 0 on EOF
+        char discard;
+        while (::read(parkPipe[0], &discard, 1) > 0) { }
+        ::_exit(0);
+    }
+
+    // parent
+    ::close(readyPipe[1]);
+    ::close(parkPipe[0]);
+    activeMountChildren << child;
+    auto childGuard = qScopeGuard([&] {
+        ::close(parkPipe[1]); // release the child's park-read so it exits cleanly
+        ::kill(child, SIGKILL);
+        ::waitpid(child, nullptr, 0);
+        activeMountChildren.removeAll(child);
+    });
+
+    char ready = 0;
+    const ssize_t readyRead = ::read(readyPipe[0], &ready, 1); // child set up its namespace
+    ::close(readyPipe[0]); // done with the ready pipe
+    QCOMPARE(readyRead, 1);
+    QCOMPARE(ready, char(1));
+
+    int pidFd = int(::syscall(SYS_pidfd_open, child, 0));
+    QVERIFY(pidFd >= 0);
+    auto pidFdGuard = qScopeGuard([&] { ::close(pidFd); });
+
+    m_sudo->bindMountFileSystem(src, dst, /*readOnly*/ false, pidFd);
+
+    // The mount must be visible in the child's namespace ...
+    QVERIFY(isMountPoint(dst, child));
+    // ... and must NOT have leaked into our own namespace.
+    QVERIFY(!isMountPoint(dst));
 }
 
 void tst_Sudo::cleanupTestCase()

@@ -297,6 +297,103 @@ TestCase {
         IntentServer.intentRequestFilterFunction = undefined
     }
 
+    IntentModel {
+        id: intentModel
+    }
+
+    SignalSpy {
+        id: modelCountSpy
+        target: intentModel
+        signalName: "countChanged"
+    }
+
+    function test_model_count() {
+        // with no filter the model mirrors the IntentServer source model
+        compare(intentModel.filterFunction, undefined)
+        compare(intentModel.sortFunction, undefined)
+        compare(intentModel.count, IntentServer.count)
+        verify(intentModel.count > 0)
+    }
+
+    function test_model_filter() {
+        // how many intents the source model has for intents1
+        var serverForApp = 0
+        for (let s = 0; s < IntentServer.count; ++s) {
+            if (IntentServer.intent(s).applicationId === "intents1")
+                ++serverForApp
+        }
+        verify(serverForApp > 0)
+        verify(serverForApp < IntentServer.count)
+
+        // filter down to a single application's intents -> countChanged fires and count matches
+        modelCountSpy.clear()
+        intentModel.filterFunction = function(intent) { return intent.applicationId === "intents1" }
+        tryCompare(intentModel, "count", serverForApp, spyTimeout)
+        verify(modelCountSpy.count > 0)
+
+        // a filter matching nothing yields an empty model
+        intentModel.filterFunction = function(intent) { return intent.intentId === "does-not-exist" }
+        tryCompare(intentModel, "count", 0, spyTimeout)
+
+        // clearing the filter restores the full model
+        intentModel.filterFunction = undefined
+        tryCompare(intentModel, "count", IntentServer.count, spyTimeout)
+    }
+
+    function test_model_sort() {
+        // sort ascending by intentId
+        intentModel.sortFunction = function(a, b) { return a.intentId < b.intentId }
+        compare(intentModel.count, IntentServer.count)
+        for (let i = 1; i < intentModel.count; ++i) {
+            let prev = IntentServer.intent(intentModel.mapToSource(i - 1)).intentId
+            let cur = IntentServer.intent(intentModel.mapToSource(i)).intentId
+            verify(prev <= cur)
+        }
+
+        // the reverse comparator produces the reverse order
+        intentModel.sortFunction = function(a, b) { return a.intentId > b.intentId }
+        for (let j = 1; j < intentModel.count; ++j) {
+            let p = IntentServer.intent(intentModel.mapToSource(j - 1)).intentId
+            let c = IntentServer.intent(intentModel.mapToSource(j)).intentId
+            verify(p >= c)
+        }
+
+        intentModel.sortFunction = undefined
+    }
+
+    function test_model_indexOf() {
+        intentModel.filterFunction = undefined
+        intentModel.sortFunction = undefined
+
+        // an intent present in the source maps to a valid model index and back
+        var intent = IntentServer.applicationIntent("only1", "intents1")
+        verify(intent)
+        var idx = intentModel.indexOfIntent(intent)
+        verify(idx >= 0)
+        compare(intentModel.mapToSource(idx),
+                IntentServer.indexOfIntent("only1", "intents1", {}))
+
+        // the string-based overload resolves to the same index
+        compare(intentModel.indexOfIntent("only1", "intents1", {}), idx)
+
+        // an unknown intent is reported as not part of the model
+        compare(intentModel.indexOfIntent("does-not-exist", "intents1", {}), -1)
+
+        // once filtered out, the intent is no longer found in the model
+        intentModel.filterFunction = function(i) { return i.applicationId === "intents2.1" }
+        compare(intentModel.indexOfIntent(intent), -1)
+        intentModel.filterFunction = undefined
+    }
+
+    function test_model_invalidate() {
+        // invalidate() must not change a model with no filter/sort set
+        intentModel.filterFunction = undefined
+        intentModel.sortFunction = undefined
+        var before = intentModel.count
+        intentModel.invalidate()
+        compare(intentModel.count, before)
+    }
+
     IntentServerHandler {
         id: broadcastReceiver
         intentIds: [ "broadcast/pong" ]

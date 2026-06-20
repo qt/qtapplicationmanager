@@ -6,19 +6,16 @@
 #ifndef PROCESSSTATUS_H
 #define PROCESSSTATUS_H
 
-#include <QtCore/QAtomicInteger>
 #include <QtCore/QObject>
-#include <QtCore/QPointer>
-#include <QtCore/QThread>
 #include <QtCore/QVariant>
 #include <QtQml/QQmlParserStatus>
 
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
 #include <QtAppManSystemUI/amnamespace.h>
-#include <QtAppManSystemUI/application.h>
-#include <QtAppManShared/processreader.h>
 
 QT_BEGIN_NAMESPACE_AM
+
+class ProcessStatusPrivate;
 
 // It's assumed that all ProcessStatus instances are created from the same thread (most likely the main one).
 class Q_APPMANSYSTEMUI_EXPORT ProcessStatus : public QObject, public QQmlParserStatus
@@ -31,9 +28,9 @@ class Q_APPMANSYSTEMUI_EXPORT ProcessStatus : public QObject, public QQmlParserS
     Q_PROPERTY(QVariantMap memoryVirtual READ memoryVirtual NOTIFY memoryReportingChanged FINAL)
     Q_PROPERTY(QVariantMap memoryRss READ memoryRss NOTIFY memoryReportingChanged FINAL)
     Q_PROPERTY(QVariantMap memoryPss READ memoryPss NOTIFY memoryReportingChanged FINAL)
-    Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled
-                                           NOTIFY memoryReportingEnabledChanged)
+    Q_PROPERTY(bool memoryReportingEnabled READ isMemoryReportingEnabled WRITE setMemoryReportingEnabled  NOTIFY memoryReportingEnabledChanged)
     Q_PROPERTY(QStringList roleNames READ roleNames CONSTANT FINAL)
+
 public:
     ProcessStatus(QObject *parent = nullptr);
     ~ProcessStatus() override;
@@ -47,7 +44,7 @@ public:
     QString applicationId() const;
     void setApplicationId(const QString &appId);
 
-    qreal cpuLoad();
+    qreal cpuLoad() const;
     QVariantMap memoryVirtual() const;
     QVariantMap memoryRss() const;
     QVariantMap memoryPss() const;
@@ -66,28 +63,9 @@ Q_SIGNALS:
                                                                   const QVariantMap &memoryPss);
     void memoryReportingEnabledChanged(bool enabled);
 
-private Q_SLOTS:
-    void onRunStateChanged(QtAM::Am::RunState state);
-
 private:
-    void fetchReadings();
-    void determinePid();
-
-    QString m_appId;
-    qint64 m_pid = 0;
-
-    qreal m_cpuLoad = 0;
-    QVariantMap m_memoryVirtual;
-    QVariantMap m_memoryRss;
-    QVariantMap m_memoryPss;
-    bool m_memoryReportingEnabled = true;
-
-    QPointer<Application> m_application;
-
-    bool m_pendingUpdate = false;
-    ProcessReader *m_reader;
-    static QThread *m_workerThread;
-    static int m_instanceCount;
+    Q_DECLARE_PRIVATE(ProcessStatus)
+    Q_DISABLE_COPY(ProcessStatus)
 };
 
 QT_END_NAMESPACE_AM

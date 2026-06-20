@@ -5,7 +5,7 @@
 
 #include <QtCore>
 #include <QtTest>
-#include <QtAppManShared/processreader.h>
+#include <QtAppManSystemUI/private/processstatus_p.h>
 
 QT_USE_NAMESPACE_AM
 
@@ -17,6 +17,9 @@ public:
     tst_ProcessReader();
 
 private Q_SLOTS:
+    void initTestCase();
+
+#if defined(QT_BUILD_INTERNAL)
     void memInvalid_data();
     void memInvalid();
     void memTestProcess();
@@ -25,18 +28,28 @@ private Q_SLOTS:
 
 private:
     void printMem();
+
     ProcessReader reader;
+#endif
 };
 
 tst_ProcessReader::tst_ProcessReader()
 {}
+
+void tst_ProcessReader::initTestCase()
+{
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#endif
+}
+
+#if defined(QT_BUILD_INTERNAL)
 
 void tst_ProcessReader::memInvalid_data()
 {
     QTest::addColumn<QString>("file");
 
     QTest::newRow("arbitrary") << QFINDTESTDATA("tst_processreader.cpp");
-    QTest::newRow("binary") << QFINDTESTDATA("tst_processreader");
     QTest::newRow("missingvalue") << QFINDTESTDATA("invalid.smaps");
 }
 
@@ -113,6 +126,8 @@ void tst_ProcessReader::printMem()
     qDebug() << "heapRss:" << reader.memory.heapRss;
     qDebug() << "heapPss:" << reader.memory.heapPss;
 }
+
+#endif // QT_BUILD_INTERNAL
 
 QTEST_APPLESS_MAIN(tst_ProcessReader)
 

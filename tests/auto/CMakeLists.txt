@@ -42,4 +42,5 @@ endif()
 add_custom_target("Test-Header-Files" SOURCES
     error-checking.h
     devmode.h
+    toolrunner.h
 )

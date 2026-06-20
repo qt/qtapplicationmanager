@@ -3,6 +3,7 @@ qt_internal_add_test(tst_controller-tool
     EXCEPTIONS
     SOURCES
         ../error-checking.h
+        ../toolrunner.h
         tst_controller-tool.cpp
     DEFINES
         AM_TESTDATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../../data/"

@@ -18,23 +18,10 @@
 
 #include "utilities.h"
 
+#include "../toolrunner.h"
+
 
 using namespace Qt::StringLiterals;
-
-static QString findAppManTool(const QString &toolName)
-{
-    static const QStringList possibleLocations = {
-        QCoreApplication::applicationDirPath() + u"/../../../bin"_s,
-        QLibraryInfo::path(QLibraryInfo::BinariesPath)
-    };
-
-    for (const QString &possibleLocation : possibleLocations) {
-        QFileInfo fi(possibleLocation + u'/' + toolName);
-        if (fi.exists() && fi.isExecutable())
-            return fi.absoluteFilePath();
-    }
-    return { };
-}
 
 class tst_PackageServerTool : public QObject
 {
@@ -69,7 +56,7 @@ void tst_PackageServerTool::initTestCase()
     if (!QDir(QString::fromLatin1(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
-    const QString psTool = findAppManTool(u"appman-package-server"_s);
+    const QString psTool = ToolRunner::findTool(u"appman-package-server"_s);
     QVERIFY(!psTool.isEmpty());
 
     QVERIFY(m_tmpDir.isValid());

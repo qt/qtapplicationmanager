@@ -1,9 +1,6 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include <initializer_list>
-#include <memory>
-
 #include <QtCore>
 #include <QtTest>
 #include <QDir>
@@ -23,6 +20,7 @@
 #include <QtAppManSystemUI/configuration.h>
 #include "../devmode.h"
 #include "../error-checking.h"
+#include "../toolrunner.h"
 
 using namespace Qt::StringLiterals;
 
@@ -58,95 +56,23 @@ private:
     bool m_mainSetupDone = false;
 };
 
-class ControllerTool
+
+class ControllerTool : public ToolRunner
 {
 public:
     ControllerTool(const std::initializer_list<QString> &list)
-        : m_arguments(list)
+        : ControllerTool(QStringList(list))
     { }
     ControllerTool(const QStringList &arguments)
-        : m_arguments(arguments)
+        : ToolRunner("appman-controller", s_command,
+                     QStringList { u"--instance-id"_s, u"controller-test-id"_s } + arguments)
     { }
 
-    static void setControllerPath(const QString &path)
-    {
-        s_command = path;
-    }
+    static void setControllerPath(const QString &path) { s_command = path; }
 
-    int exitCode = 0;
-    QProcess::ExitStatus exitStatus = QProcess::NormalExit;
-    QByteArray stdOut;
-    QStringList stdOutList;
-    QByteArray stdErr;
-    QStringList stdErrList;
-    QByteArray failure;
-
-    bool call()
-    {
-        return start() && waitForFinished();
-    }
-
-    bool start()
-    {
-        if (m_started)
-            return false;
-
-        m_ctrl.reset(new QProcess);
-        m_spy.reset(new QSignalSpy(m_ctrl.get(), &QProcess::finished));
-        m_ctrl->setProgram(s_command);
-        QStringList args = { u"--instance-id"_s, u"controller-test-id"_s };
-        args.append(m_arguments);
-        m_ctrl->setArguments(args);
-        m_ctrl->start();
-
-        if (!m_ctrl->waitForStarted()) {
-            failure = "could not start appman-controller";
-            return false;
-        }
-        return m_started = true;
-    }
-
-    bool waitForFinished()
-    {
-        if (!m_started)
-            return false;
-
-        if (m_ctrl->state() == QProcess::Running) {
-            m_spy->wait(5000 * timeoutFactor());
-            if (m_ctrl->state() != QProcess::NotRunning) {
-                failure = "appman-controller did not exit";
-                return false;
-            }
-        }
-
-        exitCode = m_ctrl->exitCode();
-        exitStatus = m_ctrl->exitStatus();
-        stdOut = m_ctrl->readAllStandardOutput();
-        stdOutList = QString::fromLocal8Bit(stdOut).split(u'\n', Qt::SkipEmptyParts);
-        stdErr = m_ctrl->readAllStandardError();
-        stdErr.replace("QML debugging is enabled. Only use this in a safe environment.\n", "");
-        stdErrList = QString::fromLocal8Bit(stdErr).split(u'\n', Qt::SkipEmptyParts);
-
-        if (exitStatus == QProcess::CrashExit)
-            failure = "appman-controller crashed, signal: " + QByteArray::number(exitCode);
-        else if (exitCode != 0)
-            failure = "appman-controller returned an error code: " + QByteArray::number(exitCode);
-
-        // enable for debugging
-        // if (!failure.isEmpty()) {  qWarning() << "STDOUT" << stdOut << "\nSTDERR" << stdErr; }
-
-        m_started = false;
-        return failure.isEmpty();
-    }
 private:
-    QStringList m_arguments;
-    bool m_started = false;
-    std::unique_ptr<QSignalSpy> m_spy;
-    std::unique_ptr<QProcess> m_ctrl;
-    static QString s_command;
+    static inline QString s_command;
 };
-
-QString ControllerTool::s_command;
 
 
 tst_ControllerTool::tst_ControllerTool()
@@ -172,20 +98,7 @@ void tst_ControllerTool::initTestCase()
 
     m_main = new Main(m_argc, m_argv);  // QCoreApplication saves a reference to argc!
 
-    QStringList possibleLocations;
-    possibleLocations.append(QCoreApplication::applicationDirPath() + u"/../../../bin"_s);
-    possibleLocations.append(QLibraryInfo::path(QLibraryInfo::BinariesPath));
-
-    QString controllerPath;
-    const QString controllerName = u"/appman-controller"_s;
-    for (const QString &possibleLocation : possibleLocations) {
-        QFileInfo fi(possibleLocation + controllerName);
-
-        if (fi.exists() && fi.isExecutable()) {
-            controllerPath = fi.absoluteFilePath();
-            break;
-        }
-    }
+    const QString controllerPath = ToolRunner::findTool(u"appman-controller"_s);
     QVERIFY(!controllerPath.isEmpty());
     ControllerTool::setControllerPath(controllerPath);
 

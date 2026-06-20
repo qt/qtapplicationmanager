@@ -264,6 +264,100 @@ TestCase {
         compare(tracker.window, null)
     }
 
+    ProcessStatus {
+        id: procStatus
+    }
+
+    SignalSpy {
+        id: procAppIdSpy
+        target: procStatus
+        signalName: "applicationIdChanged"
+    }
+    SignalSpy {
+        id: procPidSpy
+        target: procStatus
+        signalName: "processIdChanged"
+    }
+    SignalSpy {
+        id: procMemEnabledSpy
+        target: procStatus
+        signalName: "memoryReportingEnabledChanged"
+    }
+    SignalSpy {
+        id: procMemReportingSpy
+        target: procStatus
+        signalName: "memoryReportingChanged"
+    }
+
+    function test_processStatus_defaults() {
+        compare(procStatus.roleNames, [ "cpuLoad", "memoryVirtual", "memoryRss", "memoryPss" ])
+        compare(procStatus.processId, 0)
+        compare(procStatus.cpuLoad, 0)
+        compare(procStatus.memoryReportingEnabled, true)
+        compare(procStatus.memoryVirtual, {})
+        compare(procStatus.memoryRss, {})
+        compare(procStatus.memoryPss, {})
+    }
+
+    function test_processStatus_memoryReportingEnabled() {
+        procMemEnabledSpy.clear()
+        procStatus.memoryReportingEnabled = false
+        compare(procMemEnabledSpy.count, 1)
+        compare(procStatus.memoryReportingEnabled, false)
+
+        // idempotent: no change, no signal
+        procStatus.memoryReportingEnabled = false
+        compare(procMemEnabledSpy.count, 1)
+
+        procStatus.memoryReportingEnabled = true
+        compare(procMemEnabledSpy.count, 2)
+        compare(procStatus.memoryReportingEnabled, true)
+    }
+
+    function test_processStatus_systemUI() {
+        // an empty applicationId means the System UI itself -> our own process
+        procAppIdSpy.clear()
+        procPidSpy.clear()
+        procStatus.applicationId = ""
+        compare(procStatus.applicationId, "")
+        compare(procAppIdSpy.count, 1)
+        // the System UI process is this test process, so the PID is non-zero
+        verify(procStatus.processId > 0)
+        verify(procPidSpy.count > 0)
+    }
+
+    function test_processStatus_invalidAppId() {
+        // an unknown application ID warns and resets the PID to 0
+        ignoreWarning(/.*Invalid application ID:.*no-such-app.*/)
+        procStatus.applicationId = "no-such-app"
+        compare(procStatus.applicationId, "no-such-app")
+        compare(procStatus.processId, 0)
+    }
+
+    function test_processStatus_update() {
+        // monitor the System UI's own process
+        procStatus.applicationId = ""
+        procStatus.memoryReportingEnabled = true
+        tryVerify(function() { return procStatus.processId > 0 }, spyTimeout)
+
+        procMemReportingSpy.clear()
+        procStatus.update()
+
+        // the worker thread reads /proc and reports back asynchronously
+        tryCompare(procMemReportingSpy, "count", 1, spyTimeout, "no memory reporting received")
+        verify(procStatus.cpuLoad >= 0)
+        // memory reporting is platform dependent: Linux reads all values from
+        // /proc, macOS only provides RSS and virtual size, others provide none
+        if (Qt.platform.os === "linux") {
+            verify(procStatus.memoryPss.total > 0)
+            verify(procStatus.memoryRss.total > 0)
+            verify(procStatus.memoryVirtual.total > 0)
+        } else if (Qt.platform.os === "osx") {
+            verify(procStatus.memoryRss.total > 0)
+            verify(procStatus.memoryVirtual.total > 0)
+        }
+    }
+
     function test_model() {
         compare(monitor.running, false)
         compare(monitor.dataSources.length, 5)

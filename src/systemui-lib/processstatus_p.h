@@ -1,25 +1,32 @@
-// Copyright (C) 2021 The Qt Company Ltd.
+// Copyright (C) 2026 The Qt Company Ltd.
 // Copyright (C) 2019 Luxoft Sweden AB
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#ifndef PROCESSREADER_H
-#define PROCESSREADER_H
+#ifndef PROCESSSTATUS_P_H
+#define PROCESSSTATUS_P_H
 
-#include <QtCore/QMutex>
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QObject>
+#include <QtCore/QMutex>
+#include <QtCore/QPointer>
+#include <QtCore/QString>
+#include <QtCore/QVariant>
+#include <private/qobject_p.h>
 
-#include <QtAppManShared/qtappmansharedglobal.h>
+#include <QtAppManSystemUI/application.h>
+
+#include "processstatus.h"
 
 #if defined(Q_OS_LINUX)
-#  include <memory>
-#  include <QtAppManShared/sysfsreader.h>
+#  include <QtCore/QFile>
 #endif
+
+QT_FORWARD_DECLARE_CLASS(QThread)
 
 QT_BEGIN_NAMESPACE_AM
 
-class Q_APPMANSHARED_EXPORT ProcessReader : public QObject {
+class Q_AUTOTEST_EXPORT ProcessReader : public QObject
+{
     Q_OBJECT
 
 public:
@@ -58,7 +65,7 @@ private:
 #if defined(Q_OS_LINUX)
     bool readSmaps(const QByteArray &smapsFile, Memory &mem);
 
-    std::unique_ptr<SysFsReader> m_statReader;
+    QFile m_statFile;
     QElapsedTimer m_elapsedTime;
     quint64 m_lastCpuUsage = 0.0;
 #endif
@@ -67,6 +74,33 @@ private:
     bool m_memoryReportingEnabled = true;
 };
 
-QT_END_NAMESPACE_AM
+class ProcessStatusPrivate : public QObjectPrivate
+{
+public:
+    void fetchReadings();
+    void determinePid();
 
-#endif // PROCESSREADER_H
+    QString m_appId;
+    qint64 m_pid = 0;
+
+    qreal m_cpuLoad = 0;
+    QVariantMap m_memoryVirtual;
+    QVariantMap m_memoryRss;
+    QVariantMap m_memoryPss;
+    bool m_memoryReportingEnabled = true;
+
+    QPointer<Application> m_application;
+
+    bool m_pendingUpdate = false;
+    ProcessReader *m_reader;
+
+    static QThread *s_workerThread;
+    static int s_instanceCount;
+
+    Q_DECLARE_PUBLIC(ProcessStatus)
+};
+
+QT_END_NAMESPACE_AM
+// We mean it. Dummy comment since syncqt needs this also for completely private Qt modules.
+
+#endif // PROCESSSTATUS_P_H

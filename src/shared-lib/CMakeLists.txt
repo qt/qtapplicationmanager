@@ -31,8 +31,6 @@ qt_internal_add_module(AppManSharedPrivate
         intent-client/intentclientrequest.cpp intent-client/intentclientrequest.h
         intent-client/intentclientsysteminterface.cpp intent-client/intentclientsysteminterface.h
         intent-client/intenthandler.cpp intent-client/intenthandler.h
-
-        monitor/processreader.cpp monitor/processreader.h
     LIBRARIES
         Qt::CorePrivate
         Qt::GuiPrivate
@@ -46,11 +44,6 @@ qt_internal_add_module(AppManSharedPrivate
         Qt::AppManCommonPrivate
     DEFINES
         AM_COMPILING_APPMAN
-)
-
-qt_internal_extend_target(AppManSharedPrivate CONDITION (LINUX OR ANDROID)
-    SOURCES
-        monitor/sysfsreader.cpp monitor/sysfsreader.h
 )
 
 qt_internal_extend_target(AppManSharedPrivate CONDITION QNX

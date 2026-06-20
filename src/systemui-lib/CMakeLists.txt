@@ -20,7 +20,7 @@ qt_internal_add_module(AppManSystemUIPrivate
         package.cpp package.h
         packagedatabase.cpp packagedatabase.h
         packagemanager.cpp packagemanager.h packagemanager_p.h
-        processstatus.cpp processstatus.h
+        processstatus.cpp processstatus.h processstatus_p.h
         quicklauncher.cpp quicklauncher.h
 
         cache/configcache.cpp cache/configcache.h cache/configcache_p.h

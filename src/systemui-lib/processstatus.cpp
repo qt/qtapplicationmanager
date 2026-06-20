@@ -5,16 +5,23 @@
 
 #include <QCoreApplication>
 #include <QMutexLocker>
+#include <QThread>
 #include <QtQml/qqmlinfo.h>
+
+#if defined(Q_OS_MACOS)
+#  include <mach/mach.h>
+#elif defined(Q_OS_LINUX)
+#  include <unistd.h>
+#endif
 
 #include "abstractruntime.h"
 #include "applicationmanager.h"
 #include "logging.h"
 #include "qml-utilities.h"
 #include "processstatus.h"
+#include "processstatus_p.h"
 
 using namespace Qt::StringLiterals;
-
 
 /*!
     \qmltype ProcessStatus
@@ -99,44 +106,49 @@ using namespace Qt::StringLiterals;
 */
 
 
-QT_USE_NAMESPACE_AM
+QT_BEGIN_NAMESPACE_AM
 
-QThread *ProcessStatus::m_workerThread = nullptr;
-int ProcessStatus::m_instanceCount = 0;
+QThread *ProcessStatusPrivate::s_workerThread = nullptr;
+int ProcessStatusPrivate::s_instanceCount = 0;
 
 ProcessStatus::ProcessStatus(QObject *parent)
-    : QObject(parent)
+    : QObject(*new ProcessStatusPrivate, parent)
 {
-    if (m_instanceCount == 0) {
-        m_workerThread = new QThread;
-        m_workerThread->setObjectName(u"QtAM-ProcessStatus"_s);
-        m_workerThread->start();
+    Q_D(ProcessStatus);
+
+    if (ProcessStatusPrivate::s_instanceCount == 0) {
+        ProcessStatusPrivate::s_workerThread = new QThread;
+        ProcessStatusPrivate::s_workerThread->setObjectName(u"QtAM-ProcessStatus"_s);
+        ProcessStatusPrivate::s_workerThread->start();
     }
-    ++m_instanceCount;
+    ++ProcessStatusPrivate::s_instanceCount;
 
-    m_reader = new ProcessReader;
-    m_reader->moveToThread(m_workerThread);
+    d->m_reader = new ProcessReader;
+    d->m_reader->moveToThread(ProcessStatusPrivate::s_workerThread);
 
-    connect(m_reader, &ProcessReader::updated, this, [this]() {
-        fetchReadings();
+    connect(d->m_reader, &ProcessReader::updated, this, [this]() {
+        Q_D(ProcessStatus);
+        d->fetchReadings();
         emit cpuLoadChanged();
-        emit memoryReportingChanged(m_memoryVirtual, m_memoryRss, m_memoryPss);
-        m_pendingUpdate = false;
+        emit memoryReportingChanged(d->m_memoryVirtual, d->m_memoryRss, d->m_memoryPss);
+        d->m_pendingUpdate = false;
     });
-    connect(this, &ProcessStatus::processIdChanged, m_reader, &ProcessReader::setProcessId);
-    connect(this, &ProcessStatus::memoryReportingEnabledChanged, m_reader, &ProcessReader::enableMemoryReporting);
+    connect(this, &ProcessStatus::processIdChanged, d->m_reader, &ProcessReader::setProcessId);
+    connect(this, &ProcessStatus::memoryReportingEnabledChanged, d->m_reader, &ProcessReader::enableMemoryReporting);
 }
 
 ProcessStatus::~ProcessStatus()
 {
-    m_reader->deleteLater();
+    Q_D(ProcessStatus);
 
-    --m_instanceCount;
-    if (m_instanceCount == 0) {
-        m_workerThread->quit();
-        m_workerThread->wait();
-        delete m_workerThread;
-        m_workerThread = nullptr;
+    d->m_reader->deleteLater();
+
+    --ProcessStatusPrivate::s_instanceCount;
+    if (ProcessStatusPrivate::s_instanceCount == 0) {
+        ProcessStatusPrivate::s_workerThread->quit();
+        ProcessStatusPrivate::s_workerThread->wait();
+        delete ProcessStatusPrivate::s_workerThread;
+        ProcessStatusPrivate::s_workerThread = nullptr;
     }
 }
 
@@ -147,9 +159,11 @@ ProcessStatus::~ProcessStatus()
 */
 void ProcessStatus::update()
 {
-    if (!m_pendingUpdate) {
-        m_pendingUpdate = true;
-        QMetaObject::invokeMethod(m_reader, &ProcessReader::update);
+    Q_D(ProcessStatus);
+
+    if (!d->m_pendingUpdate) {
+        d->m_pendingUpdate = true;
+        QMetaObject::invokeMethod(d->m_reader, &ProcessReader::update);
     }
 }
 
@@ -167,53 +181,35 @@ void ProcessStatus::update()
 */
 QString ProcessStatus::applicationId() const
 {
-    return m_appId;
+    Q_D(const ProcessStatus);
+    return d->m_appId;
 }
 
 void ProcessStatus::setApplicationId(const QString &appId)
 {
-    if (m_appId != appId || m_appId.isNull()) {
-        if (m_application) {
-            disconnect(m_application, nullptr, this, nullptr);
-            m_application = nullptr;
+    Q_D(ProcessStatus);
+
+    if (d->m_appId != appId || d->m_appId.isNull()) {
+        if (d->m_application) {
+            disconnect(d->m_application, nullptr, this, nullptr);
+            d->m_application = nullptr;
         }
-        m_appId = appId;
+        d->m_appId = appId;
         if (!appId.isEmpty()) {
             int appIndex = ApplicationManager::instance()->indexOfApplication(appId);
             if (appIndex < 0) {
                 qmlWarning(this) << "Invalid application ID:" << appId;
             } else {
-                m_application = ApplicationManager::instance()->application(appIndex);
-                connect(m_application.data(), &Application::runStateChanged, this, &ProcessStatus::onRunStateChanged);
+                d->m_application = ApplicationManager::instance()->application(appIndex);
+                connect(d->m_application.data(), &Application::runStateChanged,
+                        this, [d](Am::RunState state) {
+                    if ((state == Am::Running) || (state == Am::NotRunning))
+                        d->determinePid();
+                });
             }
         }
-        determinePid();
+        d->determinePid();
         emit applicationIdChanged(appId);
-    }
-}
-
-void ProcessStatus::onRunStateChanged(Am::RunState state)
-{
-    if (state == Am::Running || state == Am::NotRunning)
-        determinePid();
-}
-
-void ProcessStatus::determinePid()
-{
-    qint64 newId = 0;
-    if (m_appId.isEmpty()) {
-        newId = QCoreApplication::applicationPid();
-    } else if (m_application) {
-        if (ApplicationManager::instance()->isSingleProcess())
-            newId = 0;
-        else
-            newId = m_application->currentRuntime() ? m_application->currentRuntime()->applicationProcessId() : 0;
-    }
-    // an unknown application ID (m_application == nullptr) leaves the pid at 0
-
-    if (newId != m_pid) {
-        m_pid = newId;
-        emit processIdChanged(m_pid);
     }
 }
 
@@ -229,7 +225,8 @@ void ProcessStatus::determinePid()
 */
 qint64 ProcessStatus::processId() const
 {
-    return m_pid;
+    Q_D(const ProcessStatus);
+    return d->m_pid;
 }
 
 /*!
@@ -242,27 +239,10 @@ qint64 ProcessStatus::processId() const
 
     \sa update
 */
-qreal ProcessStatus::cpuLoad()
+qreal ProcessStatus::cpuLoad() const
 {
-    return m_cpuLoad;
-}
-
-void ProcessStatus::fetchReadings()
-{
-    QMutexLocker locker(&m_reader->mutex);
-
-    m_cpuLoad = m_reader->cpuLoad;
-
-    // Although smaps claims to report kB it's actually KiB (2^10 = 1024 Bytes)
-    m_memoryVirtual[u"total"_s] = static_cast<quint64>(m_reader->memory.totalVm) << 10;
-    m_memoryVirtual[u"text"_s] = static_cast<quint64>(m_reader->memory.textVm) << 10;
-    m_memoryVirtual[u"heap"_s] = static_cast<quint64>(m_reader->memory.heapVm) << 10;
-    m_memoryRss[u"total"_s] = static_cast<quint64>(m_reader->memory.totalRss) << 10;
-    m_memoryRss[u"text"_s] = static_cast<quint64>(m_reader->memory.textRss) << 10;
-    m_memoryRss[u"heap"_s] = static_cast<quint64>(m_reader->memory.heapRss) << 10;
-    m_memoryPss[u"total"_s] = static_cast<quint64>(m_reader->memory.totalPss) << 10;
-    m_memoryPss[u"text"_s] = static_cast<quint64>(m_reader->memory.textPss) << 10;
-    m_memoryPss[u"heap"_s] = static_cast<quint64>(m_reader->memory.heapPss) << 10;
+    Q_D(const ProcessStatus);
+    return d->m_cpuLoad;
 }
 
 /*!
@@ -279,7 +259,8 @@ void ProcessStatus::fetchReadings()
 */
 QVariantMap ProcessStatus::memoryVirtual() const
 {
-    return m_memoryVirtual;
+    Q_D(const ProcessStatus);
+    return d->m_memoryVirtual;
 }
 
 /*!
@@ -296,7 +277,8 @@ QVariantMap ProcessStatus::memoryVirtual() const
 */
 QVariantMap ProcessStatus::memoryRss() const
 {
-    return m_memoryRss;
+    Q_D(const ProcessStatus);
+    return d->m_memoryRss;
 }
 
 /*!
@@ -316,7 +298,8 @@ QVariantMap ProcessStatus::memoryRss() const
 */
 QVariantMap ProcessStatus::memoryPss() const
 {
-    return m_memoryPss;
+    Q_D(const ProcessStatus);
+    return d->m_memoryPss;
 }
 
 /*!
@@ -330,14 +313,17 @@ QVariantMap ProcessStatus::memoryPss() const
 
 bool ProcessStatus::isMemoryReportingEnabled() const
 {
-    return m_memoryReportingEnabled;
+    Q_D(const ProcessStatus);
+    return d->m_memoryReportingEnabled;
 }
 
 void ProcessStatus::setMemoryReportingEnabled(bool enabled)
 {
-    if (enabled != m_memoryReportingEnabled) {
-        m_memoryReportingEnabled = enabled;
-        emit memoryReportingEnabledChanged(m_memoryReportingEnabled);
+    Q_D(ProcessStatus);
+
+    if (enabled != d->m_memoryReportingEnabled) {
+        d->m_memoryReportingEnabled = enabled;
+        emit memoryReportingEnabledChanged(d->m_memoryReportingEnabled);
     }
 }
 
@@ -362,5 +348,364 @@ void ProcessStatus::componentComplete()
     if (!ensureCurrentContextIsSystemUI(this))
         return;
 }
+
+
+///////////////////////////////////////////////////////////////////////
+// ProcessStatusPrivate
+///////////////////////////////////////////////////////////////////////
+
+
+void ProcessStatusPrivate::fetchReadings()
+{
+    QMutexLocker locker(&m_reader->mutex);
+
+    m_cpuLoad = m_reader->cpuLoad;
+
+    // Although smaps claims to report kB it's actually KiB (2^10 = 1024 Bytes)
+    m_memoryVirtual[u"total"_s] = static_cast<quint64>(m_reader->memory.totalVm) << 10;
+    m_memoryVirtual[u"text"_s] = static_cast<quint64>(m_reader->memory.textVm) << 10;
+    m_memoryVirtual[u"heap"_s] = static_cast<quint64>(m_reader->memory.heapVm) << 10;
+    m_memoryRss[u"total"_s] = static_cast<quint64>(m_reader->memory.totalRss) << 10;
+    m_memoryRss[u"text"_s] = static_cast<quint64>(m_reader->memory.textRss) << 10;
+    m_memoryRss[u"heap"_s] = static_cast<quint64>(m_reader->memory.heapRss) << 10;
+    m_memoryPss[u"total"_s] = static_cast<quint64>(m_reader->memory.totalPss) << 10;
+    m_memoryPss[u"text"_s] = static_cast<quint64>(m_reader->memory.textPss) << 10;
+    m_memoryPss[u"heap"_s] = static_cast<quint64>(m_reader->memory.heapPss) << 10;
+}
+
+void ProcessStatusPrivate::determinePid()
+{
+    Q_Q(ProcessStatus);
+
+    qint64 newId = 0;
+    if (m_appId.isEmpty()) {
+        newId = QCoreApplication::applicationPid();
+    } else if (m_application) {
+        if (ApplicationManager::instance()->isSingleProcess())
+            newId = 0;
+        else
+            newId = m_application->currentRuntime() ? m_application->currentRuntime()->applicationProcessId() : 0;
+    }
+    // an unknown application ID (m_application == nullptr) leaves the pid at 0
+
+    if (newId != m_pid) {
+        m_pid = newId;
+        emit q->processIdChanged(m_pid);
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////
+// ProcessReader
+///////////////////////////////////////////////////////////////////////
+
+
+void ProcessReader::setProcessId(qint64 pid)
+{
+    m_pid = pid;
+    if (pid)
+        openCpuLoad();
+}
+
+void ProcessReader::enableMemoryReporting(bool enabled)
+{
+    m_memoryReportingEnabled = enabled;
+    if (!m_memoryReportingEnabled)
+        memory = Memory();
+}
+
+void ProcessReader::update()
+{
+    qreal load = readCpuLoad();
+
+    if (m_memoryReportingEnabled) {
+        Memory mem;
+        bool memRead = readMemory(mem);
+        QMutexLocker locker(&mutex);
+        memory = memRead ? mem : Memory();
+        cpuLoad = load;
+    } else {
+        QMutexLocker locker(&mutex);
+        cpuLoad = load;
+    }
+
+    emit updated();
+}
+
+#if defined(Q_OS_LINUX)
+
+void ProcessReader::openCpuLoad()
+{
+    m_statFile.setFileName(u"/proc/"_s + QString::number(m_pid) + u"/stat"_s);
+
+    if (!m_statFile.open(QIODevice::ReadOnly | QIODevice::Unbuffered)) {
+        qCritical("Couldn't open file for reading: %s (%s)",
+                  qPrintable(m_statFile.fileName()), qPrintable(m_statFile.errorString()));
+    }
+
+    m_lastCpuUsage = 0;
+    m_elapsedTime.invalidate();
+}
+
+qreal ProcessReader::readCpuLoad()
+{
+    qint64 elapsed;
+    if (m_elapsedTime.isValid()) {
+        elapsed = m_elapsedTime.restart();
+    } else {
+        elapsed = 0;
+        m_elapsedTime.start();
+    }
+
+    if (!m_statFile.isOpen()) {
+        m_lastCpuUsage = 0.0;
+        return 0.0;
+    }
+
+    m_statFile.seek(0);
+    const QByteArray str = m_statFile.readAll();
+    qsizetype pos = 0;
+    int blanks = 0;
+    while (pos < str.size() && blanks < 13) {
+        if (isblank(str.at(pos)))
+            ++blanks;
+        ++pos;
+    }
+
+    char *endPtr = nullptr;
+    quint64 utime = strtoull(str.constData() + pos, &endPtr, 10); // check missing for overflow
+    pos = int(endPtr - str.constData() + 1);
+    quint64 stime = strtoull(str.constData() + pos, nullptr, 10); // check missing for overflow
+
+    qreal load = elapsed ? (qreal(utime + stime - m_lastCpuUsage) * 1000 / qreal(sysconf(_SC_CLK_TCK)) / qreal(elapsed))
+                         : 0.0;
+    m_lastCpuUsage = utime + stime;
+    return load;
+}
+
+
+bool ProcessReader::readMemory(Memory &mem)
+{
+    const QByteArray smapsFile = "/proc/" + QByteArray::number(m_pid) + "/smaps";
+    return readSmaps(smapsFile, mem);
+}
+
+static uint parseValue(const char *pl) {
+    while (*pl && (*pl < '0' || *pl > '9'))
+        pl++;
+    return static_cast<uint>(strtoul(pl, nullptr, 10));
+}
+
+bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
+{
+    FILE *sf = nullptr;
+    auto closeFile = qScopeGuard([&]() { if (sf) fclose(sf); });
+
+    sf = fopen(smapsFile.constData(), "r");
+    if (!sf)
+        return false;
+
+    static const int lineLen = 100;  // we are not interested in full library paths
+    char line[lineLen + 5];   // padding for highly unlikely trailing perm flags below
+    char *pl = nullptr;       // pointer to chars within line
+    bool ok = true;
+
+    if (!fgets(line, lineLen, sf))
+        return false;
+
+    // sanity checks
+    for (pl = line; pl < (line + 4) && ok; ++pl)
+        ok = ((*pl >= '0' && *pl <= '9') || (*pl >= 'a' && *pl <= 'f'));
+    while (strlen(line) == lineLen - 1 && line[lineLen - 2] != '\n') {
+        if (Q_UNLIKELY(!fgets(line, lineLen, sf)))
+            break;
+    }
+    if (!fgets(line, lineLen, sf))
+        return false;
+    static const char strSize[] = "Size: ";
+    ok = ok && !qstrncmp(line, strSize, sizeof(strSize) - 1);
+    if (!ok)
+        return false;
+
+    // Determine block size
+    ok = false;
+    int blockLen = 0;
+    while (fgets(line, lineLen, sf) && !ok) {
+        if ((line[0] >= '0' && line[0] <= '9') || (line[0] >= 'a' && line[0] <= 'f'))
+            ok = true;
+        ++blockLen;
+    }
+    if (!ok || blockLen < 12 || blockLen > 32)
+        return false;
+
+    fseek(sf, 0, SEEK_SET);
+    bool wasPrivateOnly = false;
+    ok = false;
+
+    while (true) {
+        if (Q_UNLIKELY(!fgets(line, lineLen, sf))) {
+            ok = feof(sf);
+            break;
+        }
+
+        // Determine permission flags
+        pl = line;
+        while (*pl && *pl != ' ')
+            ++pl;
+        char permissions[4];
+        memcpy(permissions, ++pl, sizeof(permissions));
+
+        // Determine inode
+        int spaceCount = 0;
+        while (*pl && spaceCount < 3) {
+            if (*pl == ' ')
+                ++spaceCount;
+            ++pl;
+        }
+        bool hasInode = (*pl != '0');
+
+        // Determine library name
+        while (*pl && *pl != ' ')
+            ++pl;
+        while (*pl && *pl == ' ')
+            ++pl;
+
+        static const char strStack[] = "stack]";
+        bool isMainStack = (Q_UNLIKELY(*pl == '['
+                            && !qstrncmp(pl + 1, strStack, sizeof(strStack) - 1)));
+        // Skip rest of library path
+        while (strlen(line) == lineLen - 1 && line[lineLen - 2] != '\n') {
+            if (Q_UNLIKELY(!fgets(line, lineLen, sf)))
+                break;
+        }
+
+        int skipLen = blockLen;
+        uint vm = 0;
+        uint rss = 0;
+        uint pss = 0;
+        const int sizeTag = 0x01;
+        const int rssTag  = 0x02;
+        const int pssTag  = 0x04;
+        const int allTags = sizeTag | rssTag | pssTag;
+        int foundTags = 0;
+
+        while (foundTags < allTags && skipLen > 0) {
+            skipLen--;
+            if (Q_UNLIKELY(!fgets(line, lineLen, sf)))
+                break;
+            pl = line;
+
+            static const char strSize[] = "ize:";
+            static const char strXss[] = "ss:";
+
+            switch (*pl) {
+            case 'S':
+                if (!qstrncmp(pl + 1, strSize, sizeof(strSize) - 1)) {
+                    foundTags |= sizeTag;
+                    vm = parseValue(pl + sizeof(strSize));
+                }
+                break;
+            case 'R':
+                if (!qstrncmp(pl + 1, strXss, sizeof(strXss) - 1)) {
+                    foundTags |= rssTag;
+                    rss = parseValue(pl + sizeof(strXss));
+                }
+                break;
+            case 'P':
+                if (!qstrncmp(pl + 1, strXss, sizeof(strXss) - 1)) {
+                    foundTags |= pssTag;
+                    pss = parseValue(pl + sizeof(strXss));
+                }
+                break;
+            }
+        }
+
+        if (foundTags < allTags)
+            break;
+
+        mem.totalVm += vm;
+        mem.totalRss += rss;
+        mem.totalPss += pss;
+
+        static const char permRXP[] = { 'r', '-', 'x', 'p' };
+        static const char permRWP[] = { 'r', 'w', '-', 'p' };
+        if (!memcmp(permissions, permRXP, sizeof(permissions))) {
+            mem.textVm += vm;
+            mem.textRss += rss;
+            mem.textPss += pss;
+        } else if (!memcmp(permissions, permRWP, sizeof(permissions))
+                   && !isMainStack && (vm != 8192 || hasInode || !wasPrivateOnly) // try to exclude stack
+                   && !hasInode) {
+            mem.heapVm += vm;
+            mem.heapRss += rss;
+            mem.heapPss += pss;
+        }
+
+        static const char permP[] = { '-', '-', '-', 'p' };
+        wasPrivateOnly = !memcmp(permissions, permP, sizeof(permissions));
+
+        for (int skip = skipLen; skip; --skip) {
+            if (Q_UNLIKELY(!fgets(line, lineLen, sf)))
+                break;
+        }
+    }
+
+    return ok;
+}
+
+bool ProcessReader::testReadSmaps(const QByteArray &smapsFile)
+{
+    memory = Memory();
+    return readSmaps(smapsFile, memory);
+}
+
+#elif defined(Q_OS_MACOS)
+
+void ProcessReader::openCpuLoad()
+{
+}
+
+qreal ProcessReader::readCpuLoad()
+{
+    return 0.0;
+}
+
+bool ProcessReader::readMemory(Memory &mem)
+{
+    struct task_basic_info t_info;
+    mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+
+    if (task_info(mach_task_self(), TASK_BASIC_INFO,
+                  reinterpret_cast<task_info_t>(&t_info), &t_info_count) != 0) {
+        qCWarning(LogSystem) << "Could not read memory data";
+        return false;
+    }
+
+    mem.totalRss = t_info.resident_size;
+    mem.totalVm = t_info.virtual_size;
+
+    return true;
+}
+
+#else
+
+void ProcessReader::openCpuLoad()
+{
+}
+
+qreal ProcessReader::readCpuLoad()
+{
+    return 0.0;
+}
+
+bool ProcessReader::readMemory(Memory &mem)
+{
+    Q_UNUSED(mem)
+    return false;
+}
+
+#endif
+
+QT_END_NAMESPACE_AM
 
 #include "moc_processstatus.cpp"

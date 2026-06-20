@@ -13,7 +13,6 @@
 #include "exception.h"
 #include "packagedatabase.h"
 #include "packagemanager.h"
-#include "packagingjob.h"
 #include "qmlinprocruntime.h"
 #include "runtimefactory.h"
 #include "utilities.h"
@@ -21,6 +20,7 @@
 
 #include "../error-checking.h"
 #include "../devmode.h"
+#include "../toolrunner.h"
 
 using namespace Qt::StringLiterals;
 
@@ -76,6 +76,24 @@ private:
     QString m_hardwareId;
 };
 
+
+class PackagerTool : public ToolRunner
+{
+public:
+    PackagerTool(const std::initializer_list<QString> &list)
+        : PackagerTool(QStringList(list))
+    { }
+    PackagerTool(const QStringList &arguments)
+        : ToolRunner("appman-packager", s_command, arguments)
+    { }
+
+    static void setPackagerPath(const QString &path) { s_command = path; }
+
+private:
+    static inline QString s_command;
+};
+
+
 void tst_PackagerTool::initTestCase()
 {
 #if !defined(QT_BUILD_INTERNAL)
@@ -87,6 +105,10 @@ void tst_PackagerTool::initTestCase()
     Sudo::fallbackServer();
 
     spyTimeout *= timeoutFactor();
+
+    const QString packagerPath = ToolRunner::findTool(u"appman-packager"_s);
+    QVERIFY(!packagerPath.isEmpty());
+    PackagerTool::setPackagerPath(packagerPath);
 
     QVERIFY(m_workDir.isValid());
     QVERIFY(QDir::root().mkpath(pathTo("internal-0")));
@@ -151,201 +173,207 @@ void tst_PackagerTool::cleanupTestCase()
         dir.remove(fileName);
 }
 
-// exceptions are nice -- just not for unit testing :)
-static bool packagerCheck(PackagingJob *p, QString &errorString)
-{
-    bool result = false;
-    try {
-        p->execute();
-        errorString.clear();
-        result = (p->resultCode() == 0);
-        if (!result)
-            errorString = p->output();
-    } catch (const Exception &e) { \
-        errorString = e.errorString();
-    }
-    delete p;
-    return result;
-}
-
 void tst_PackagerTool::test()
 {
     QTemporaryDir tmp;
-    QString errorString;
 
     // no valid destination
-    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), pathTo("test.ampkg")), errorString));
-    QVERIFY2(errorString.contains(u"is not a directory"), qPrintable(errorString));
-
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("test.ampkg"), pathTo("test.ampkg") });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("is not a directory"), p.stdErr.constData());
+    }
     // no valid info.yaml
-    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString));
-    QVERIFY2(errorString.contains(u"Cannot open for reading"), qPrintable(errorString));
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("test.ampkg"), tmp.path() });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("Cannot open for reading"), p.stdErr.constData());
+    }
 
     // add an info.yaml file
     createInfoYaml(tmp);
 
     // no icon
-    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString));
-    QVERIFY2(errorString.contains(u"missing the file referenced by the 'icon' field"), qPrintable(errorString));
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("test.ampkg"), tmp.path() });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("missing the file referenced by the 'icon' field"), p.stdErr.constData());
+    }
 
     // add an icon
     createIconPng(tmp);
 
     // missing intent icon
-    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString));
-    QVERIFY2(errorString.contains(u"missing the file referenced by the 'icon' field for intent 'test-intent'"), qPrintable(errorString));
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("test.ampkg"), tmp.path() });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("missing the file referenced by the 'icon' field for intent 'test-intent'"), p.stdErr.constData());
+    }
 
     // add an icon for the intent
     createIconPng(tmp, u"intent-"_s);
 
     // no valid code
-    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString));
-    QVERIFY2(errorString.contains(u"missing the file referenced by the 'code' field"), qPrintable(errorString));
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("test.ampkg"), tmp.path() });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("missing the file referenced by the 'code' field"), p.stdErr.constData());
+    }
 
     // add a code file
     createCode(tmp);
 
     // missing app icon
-    QVERIFY(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString));
-    QVERIFY2(errorString.contains(u"missing the file referenced by the 'icon' field for application 'test-app'"), qPrintable(errorString));
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("test.ampkg"), tmp.path() });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("missing the file referenced by the 'icon' field for application 'test-app'"), p.stdErr.constData());
+    }
 
     // add an icon for the app
     createIconPng(tmp, u"app-"_s);
 
     // invalid destination
-    QVERIFY(!packagerCheck(PackagingJob::create(tmp.path(), tmp.path()), errorString));
-    QVERIFY2(errorString.contains(u"could not create package file"), qPrintable(errorString));
+    {
+        PackagerTool p({ u"create-package"_s, tmp.path(), tmp.path() });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("could not create package file"), p.stdErr.constData());
+    }
 
     // now everything is correct - try again
-    QVERIFY2(packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), errorString), qPrintable(errorString));
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("test.ampkg"), tmp.path() });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
 
     // invalid source package
-    QVERIFY(!packagerCheck(PackagingJob::developerSign(
-                               pathTo("no-such-file"),
-                               pathTo("test.dev-signed.ampkg"),
-                               m_devCertificate,
-                               m_devPassword), errorString));
-    QVERIFY2(errorString.contains(u"does not exist"), qPrintable(errorString));
-
+    {
+        PackagerTool p({ u"dev-sign-package"_s, pathTo("no-such-file"), pathTo("test.dev-signed.ampkg"),
+                         m_devCertificate, u"--password"_s, u"pass:"_s + m_devPassword });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("does not exist"), p.stdErr.constData());
+    }
     // invalid destination package
-    QVERIFY(!packagerCheck(PackagingJob::developerSign(
-                               pathTo("test.ampkg"),
-                               pathTo("."),
-                               m_devCertificate,
-                               m_devPassword), errorString));
-    QVERIFY2(errorString.contains(u"could not create package file"), qPrintable(errorString));
-
+    {
+        PackagerTool p({ u"dev-sign-package"_s, pathTo("test.ampkg"), pathTo("."),
+                         m_devCertificate, u"--password"_s, u"pass:"_s + m_devPassword });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("could not create package file"), p.stdErr.constData());
+    }
     // invalid dev key
-    QVERIFY(!packagerCheck(PackagingJob::developerSign(
-                               pathTo("test.ampkg"),
-                               pathTo("test.dev-signed.ampkg"),
-                               m_devCertificate,
-                               u"wrong-password"_s), errorString));
-    QVERIFY2(errorString.contains(u"could not create signature"), qPrintable(errorString));
-
+    {
+        PackagerTool p({ u"dev-sign-package"_s, pathTo("test.ampkg"), pathTo("test.dev-signed.ampkg"),
+                         m_devCertificate, u"--password"_s, u"pass:wrong-password"_s });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("could not create signature"), p.stdErr.constData());
+    }
     // store key as dev key
-    QVERIFY(!packagerCheck(PackagingJob::developerSign(
-                               pathTo("test.ampkg"),
-                               pathTo("test.dev-signed.ampkg"),
-                               m_storeCertificate,
-                               m_storePassword), errorString));
-    QVERIFY2(errorString.contains(u"could not create signature"), qPrintable(errorString));
-
+    {
+        PackagerTool p({ u"dev-sign-package"_s, pathTo("test.ampkg"), pathTo("test.dev-signed.ampkg"),
+                         m_storeCertificate, u"--password"_s, u"pass:"_s + m_storePassword });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("could not create signature"), p.stdErr.constData());
+    }
     // dev sign
-    QVERIFY2(packagerCheck(PackagingJob::developerSign(
-                               pathTo("test.ampkg"),
-                               pathTo("test.dev-signed.ampkg"),
-                               m_devCertificate,
-                               m_devPassword), errorString), qPrintable(errorString));
+    {
+        PackagerTool p({ u"dev-sign-package"_s, pathTo("test.ampkg"), pathTo("test.dev-signed.ampkg"),
+                         m_devCertificate, u"--password"_s, u"pass:"_s + m_devPassword });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
 
     // invalid store key
-    QVERIFY(!packagerCheck(PackagingJob::storeSign(
-                               pathTo("test.dev-signed.ampkg"),
-                               pathTo("test.store-signed.ampkg"),
-                               m_storeCertificate,
-                               u"wrong-password"_s,
-                               m_hardwareId), errorString));
-    QVERIFY2(errorString.contains(u"could not create signature"), qPrintable(errorString));
-
+    {
+        PackagerTool p({ u"store-sign-package"_s, pathTo("test.dev-signed.ampkg"), pathTo("test.store-signed.ampkg"),
+                         m_storeCertificate, u"--password"_s, u"pass:wrong-password"_s, u"--hardware-id"_s, m_hardwareId });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("could not create signature"), p.stdErr.constData());
+    }
     // dev key as store key
-    QVERIFY(!packagerCheck(PackagingJob::storeSign(
-                               pathTo("test.dev-signed.ampkg"),
-                               pathTo("test.store-signed.ampkg"),
-                               m_devCertificate,
-                               m_devPassword,
-                               m_hardwareId), errorString));
-    QVERIFY2(errorString.contains(u"could not create signature"), qPrintable(errorString));
-
+    {
+        PackagerTool p({ u"store-sign-package"_s, pathTo("test.dev-signed.ampkg"), pathTo("test.store-signed.ampkg"),
+                         m_devCertificate, u"--password"_s, u"pass:"_s + m_devPassword, u"--hardware-id"_s, m_hardwareId });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("could not create signature"), p.stdErr.constData());
+    }
     // store sign
-    QVERIFY2(packagerCheck(PackagingJob::storeSign(
-                               pathTo("test.dev-signed.ampkg"),
-                               pathTo("test.store-signed.ampkg"),
-                               m_storeCertificate,
-                               m_storePassword,
-                               m_hardwareId), errorString), qPrintable(errorString));
+    {
+        PackagerTool p({ u"store-sign-package"_s, pathTo("test.dev-signed.ampkg"), pathTo("test.store-signed.ampkg"),
+                         m_storeCertificate, u"--password"_s, u"pass:"_s + m_storePassword, u"--hardware-id"_s, m_hardwareId });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
 
-    // dev verify without any CA
-    QVERIFY(!packagerCheck(PackagingJob::developerVerify(
-                               pathTo("test.dev-signed.ampkg"),
-                               { }, m_crlFiles), errorString));
-    QVERIFY2(errorString.contains(u"Failed to verify signature"), qPrintable(errorString));
+    // --crl <file> ... arguments, shared by all verify invocations below
+    QStringList crlArgs;
+    for (const QString &crl : std::as_const(m_crlFiles))
+        crlArgs << u"--crl"_s << crl;
+
+    // dev verify without any CA: the tool requires at least one certificate and bails out with usage
+    {
+        PackagerTool p({ u"dev-verify-package"_s, pathTo("test.dev-signed.ampkg") });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdOut.contains("Usage:"), p.stdOut.constData());
+    }
+
+    QStringList devVerifyBaseArgs { u"dev-verify-package"_s, u"--verbose"_s,
+                                    pathTo("test.dev-signed.ampkg") };
 
     // dev verify without root CA
-    QVERIFY(!packagerCheck(PackagingJob::developerVerify(
-                               pathTo("test.dev-signed.ampkg"),
-                               m_devCaFiles, m_crlFiles), errorString));
-    QVERIFY2(errorString.contains(u"Failed to verify signature"), qPrintable(errorString));
-
+    {
+        PackagerTool p(devVerifyBaseArgs + m_devCaFiles + crlArgs);
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdOut.contains("Failed to verify signature"), p.stdOut.constData());
+    }
     // dev verify without dev CA
-    QVERIFY(!packagerCheck(PackagingJob::developerVerify(
-                               pathTo("test.dev-signed.ampkg"),
-                               m_commonCaFiles, m_crlFiles), errorString));
-    QVERIFY2(errorString.contains(u"Failed to verify signature"), qPrintable(errorString));
-
+    {
+        PackagerTool p(devVerifyBaseArgs + m_commonCaFiles + crlArgs);
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdOut.contains("Failed to verify signature"), p.stdOut.constData());
+    }
     // dev verify with store CA
-    QVERIFY(!packagerCheck(PackagingJob::developerVerify(
-                               pathTo("test.dev-signed.ampkg"),
-                               m_commonCaFiles + m_storeCaFiles, m_crlFiles), errorString));
-    QVERIFY2(errorString.contains(u"Failed to verify signature"), qPrintable(errorString));
-
+    {
+        PackagerTool p(devVerifyBaseArgs + m_commonCaFiles + m_storeCaFiles + crlArgs);
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdOut.contains("Failed to verify signature"), p.stdOut.constData());
+    }
     // dev verify
-    QVERIFY2(packagerCheck(PackagingJob::developerVerify(
-                               pathTo("test.dev-signed.ampkg"),
-                               m_commonCaFiles + m_devCaFiles, m_crlFiles), errorString), qPrintable(errorString));
+    {
+        PackagerTool p(devVerifyBaseArgs + m_commonCaFiles + m_devCaFiles + crlArgs);
+        QVERIFY2(p.call(), p.failure.constData());
+    }
 
-    // store verify without any CA
-    QVERIFY(!packagerCheck(PackagingJob::storeVerify(
-                               pathTo("test.store-signed.ampkg"),
-                               { }, m_crlFiles,
-                               m_hardwareId), errorString));
-    QVERIFY2(errorString.contains(u"Failed to verify signature"), qPrintable(errorString));
+    // store verify without any CA: the tool requires at least one certificate and bails out with usage
+    {
+        PackagerTool p({ u"store-verify-package"_s, pathTo("test.store-signed.ampkg"), m_hardwareId });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdOut.contains("Usage:"), p.stdOut.constData());
+    }
+
+    QStringList storeVerifyBaseArgs { u"store-verify-package"_s, u"--verbose"_s,
+                                     pathTo("test.store-signed.ampkg") };
 
     // store verify without root CA
-    QVERIFY(!packagerCheck(PackagingJob::storeVerify(
-                               pathTo("test.store-signed.ampkg"),
-                               m_storeCaFiles, m_crlFiles,
-                               m_hardwareId), errorString));
-    QVERIFY2(errorString.contains(u"Failed to verify signature"), qPrintable(errorString));
-
+    {
+        PackagerTool p(storeVerifyBaseArgs + m_storeCaFiles + QStringList { m_hardwareId } + crlArgs);
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdOut.contains("Failed to verify signature"), p.stdOut.constData());
+    }
     // store verify without store CA
-    QVERIFY(!packagerCheck(PackagingJob::storeVerify(
-                               pathTo("test.store-signed.ampkg"),
-                               m_commonCaFiles, m_crlFiles,
-                               m_hardwareId), errorString));
-    QVERIFY2(errorString.contains(u"Failed to verify signature"), qPrintable(errorString));
-
+    {
+        PackagerTool p(storeVerifyBaseArgs + m_commonCaFiles + QStringList { m_hardwareId } + crlArgs);
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdOut.contains("Failed to verify signature"), p.stdOut.constData());
+    }
     // store verify with dev CA
-    QVERIFY(!packagerCheck(PackagingJob::storeVerify(
-                               pathTo("test.store-signed.ampkg"),
-                               m_commonCaFiles + m_devCaFiles, m_crlFiles,
-                               m_hardwareId), errorString));
-    QVERIFY2(errorString.contains(u"Failed to verify signature"), qPrintable(errorString));
-
+    {
+        PackagerTool p(storeVerifyBaseArgs + m_commonCaFiles + m_devCaFiles + QStringList { m_hardwareId } + crlArgs);
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdOut.contains("Failed to verify signature"), p.stdOut.constData());
+    }
     // store verify
-    QVERIFY2(packagerCheck(PackagingJob::storeVerify(
-                               pathTo("test.store-signed.ampkg"),
-                               m_commonCaFiles + m_storeCaFiles, m_crlFiles,
-                               m_hardwareId), errorString), qPrintable(errorString));
+    {
+        PackagerTool p(storeVerifyBaseArgs + m_commonCaFiles + m_storeCaFiles + QStringList { m_hardwareId } + crlArgs);
+        QVERIFY2(p.call(), p.failure.constData());
+    }
 
     // now that we have it, see if the package actually installs correctly
 
@@ -367,28 +395,35 @@ void tst_PackagerTool::test()
 void tst_PackagerTool::expired()
 {
     QTemporaryDir tmp;
-    QString errorString;
     createInfoYaml(tmp);
     createIconPng(tmp);
     createIconPng(tmp, u"app-"_s);
     createIconPng(tmp, u"intent-"_s);
     createCode(tmp);
 
-    QVERIFY2(packagerCheck(PackagingJob::create(pathTo("expired.ampkg"), tmp.path()), errorString), qPrintable(errorString));
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("expired.ampkg"), tmp.path() });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
 
     //TODO: why does openssl allow signing with expired certs at all?
     // expired dev key
-    QVERIFY2(packagerCheck(PackagingJob::developerSign(
-                               pathTo("expired.ampkg"),
-                               pathTo("expired.dev-signed.ampkg"),
-                               m_devExpiredCertificate,
-                               m_devPassword), errorString), qPrintable(errorString));
+    {
+        PackagerTool p({ u"dev-sign-package"_s, pathTo("expired.ampkg"), pathTo("expired.dev-signed.ampkg"),
+                         m_devExpiredCertificate, u"--password"_s, u"pass:"_s + m_devPassword });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
 
     // dev verify expired
-    QVERIFY(!packagerCheck(PackagingJob::developerVerify(
-                               pathTo("expired.dev-signed.ampkg"),
-                               m_commonCaFiles + m_devCaFiles, m_crlFiles), errorString));
-    QVERIFY2(errorString.contains(u"expired"), qPrintable(errorString));
+    {
+        QStringList args { u"dev-verify-package"_s, u"--verbose"_s, pathTo("expired.dev-signed.ampkg") };
+        args += m_commonCaFiles + m_devCaFiles;
+        for (const QString &crl : std::as_const(m_crlFiles))
+            args << u"--crl"_s << crl;
+        PackagerTool p(args);
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdOut.contains("expired"), p.stdOut.constData());
+    }
 
     failToInstallPackage(pathTo("expired.dev-signed.ampkg"), u"expired"_s);
 }
@@ -396,25 +431,30 @@ void tst_PackagerTool::expired()
 void tst_PackagerTool::revoked()
 {
     QTemporaryDir tmp;
-    QString errorString;
     createInfoYaml(tmp);
     createIconPng(tmp);
     createIconPng(tmp, u"app-"_s);
     createIconPng(tmp, u"intent-"_s);
     createCode(tmp);
 
-    QVERIFY2(packagerCheck(PackagingJob::create(pathTo("revoked.ampkg"), tmp.path()), errorString), qPrintable(errorString));
-
-    QVERIFY2(packagerCheck(PackagingJob::developerSign(
-                               pathTo("revoked.ampkg"),
-                               pathTo("revoked.dev-signed.ampkg"),
-                               m_devRevokedCertificate,
-                               m_devPassword), errorString), qPrintable(errorString));
-
-    QVERIFY(!packagerCheck(PackagingJob::developerVerify(
-                               pathTo("revoked.dev-signed.ampkg"),
-                               m_commonCaFiles + m_devCaFiles, m_crlFiles), errorString));
-    QVERIFY2(errorString.contains(u"revoked"), qPrintable(errorString));
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("revoked.ampkg"), tmp.path() });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+    {
+        PackagerTool p({ u"dev-sign-package"_s, pathTo("revoked.ampkg"), pathTo("revoked.dev-signed.ampkg"),
+                         m_devRevokedCertificate, u"--password"_s, u"pass:"_s + m_devPassword });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+    {
+        QStringList args { u"dev-verify-package"_s, u"--verbose"_s, pathTo("revoked.dev-signed.ampkg") };
+        args += m_commonCaFiles + m_devCaFiles;
+        for (const QString &crl : std::as_const(m_crlFiles))
+            args << u"--crl"_s << crl;
+        PackagerTool p(args);
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdOut.contains("revoked"), p.stdOut.constData());
+    }
 
     failToInstallPackage(pathTo("revoked.dev-signed.ampkg"), u"revoked"_s);
 }
@@ -465,7 +505,6 @@ void tst_PackagerTool::developerSignCertBinding()
     QFETCH(QString, errorString);
 
     QTemporaryDir tmp;
-    QString error;
 
     auto manipulate = [&](QVariantMap &m) {
         if (!pkgIdOverride.isEmpty())
@@ -496,17 +535,20 @@ void tst_PackagerTool::developerSignCertBinding()
     const QString unsignedPkg = pathTo(("cb-" + rowName + ".ampkg").constData());
     const QString signedPkg = pathTo(("cb-" + rowName + ".dev-signed.ampkg").constData());
 
-    QVERIFY2(packagerCheck(PackagingJob::create(unsignedPkg, tmp.path()), error), qPrintable(error));
+    {
+        PackagerTool p({ u"create-package"_s, unsignedPkg, tmp.path() });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
 
-    const bool ok = packagerCheck(PackagingJob::developerSign(
-                                      unsignedPkg, signedPkg,
-                                      m_devNarrowCertificate, m_devPassword), error);
+    PackagerTool sign({ u"dev-sign-package"_s, unsignedPkg, signedPkg,
+                        m_devNarrowCertificate, u"--password"_s, u"pass:"_s + m_devPassword });
+    const bool ok = sign.call();
 
     if (errorString.isEmpty()) {
-        QVERIFY2(ok, qPrintable(error));
+        QVERIFY2(ok, sign.failure.constData());
     } else {
         QVERIFY2(!ok, "Signing should have failed but succeeded");
-        QVERIFY2(error.contains(errorString), qPrintable(error));
+        QVERIFY2(sign.stdErr.contains(errorString.toLocal8Bit()), sign.stdErr.constData());
     }
 }
 
@@ -548,8 +590,9 @@ void tst_PackagerTool::brokenMetadata()
 
     // check if packaging actually fails with the expected error
 
-    QString error;
-    QVERIFY2(!packagerCheck(PackagingJob::create(pathTo("test.ampkg"), tmp.path()), error), qPrintable(error));
+    PackagerTool p({ u"create-package"_s, pathTo("test.ampkg"), tmp.path() });
+    QVERIFY(!p.call());
+    QString error = QString::fromLocal8Bit(p.stdErr).trimmed();
     QT_AM_CHECK_ERRORSTRING(error, errorString);
 }
 
@@ -560,7 +603,6 @@ void tst_PackagerTool::brokenMetadata()
 void tst_PackagerTool::iconFileName()
 {
     QTemporaryDir tmp;
-    QString errorString;
 
     createInfoYaml(tmp, [](QVariantMap &m) { m[u"icon"_s] = u"foo.bar"_s; });
     createCode(tmp);
@@ -568,8 +610,10 @@ void tst_PackagerTool::iconFileName()
     createIconPng(tmp, u"intent-"_s);
     createDummyFile(tmp, u"foo.bar"_s, "this-is-a-dummy-icon-file");
 
-    QVERIFY2(packagerCheck(PackagingJob::create(pathTo("test-foobar-icon.ampkg"), tmp.path()), errorString),
-            qPrintable(errorString));
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("test-foobar-icon.ampkg"), tmp.path() });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
 
     // see if the package installs correctly
 

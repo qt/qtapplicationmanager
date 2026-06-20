@@ -46,6 +46,7 @@ private Q_SLOTS:
     void installRemove();
     void startStop();
     void injectIntent();
+    void developerCertificate();
 
 private:
     int m_spyTimeout;
@@ -101,6 +102,9 @@ void tst_ControllerTool::initTestCase()
     const QString controllerPath = ToolRunner::findTool(u"appman-controller"_s);
     QVERIFY(!controllerPath.isEmpty());
     ControllerTool::setControllerPath(controllerPath);
+
+    // am-config.yaml references the (build-tree) test certificates via ${env:AM_TESTDATA_DIR};
+    qputenv("AM_TESTDATA_DIR", QByteArray(AM_TESTDATA_DIR));
 
     m_config = new Configuration({ QFINDTESTDATA("am-config.yaml") }, QString());
     m_config->parseWithArguments(QCoreApplication::arguments());
@@ -345,6 +349,92 @@ void tst_ControllerTool::injectIntent()
         { u"status"_s, u"ok"_s },
     });
     QCOMPARE(vm, expected);
+}
+
+void tst_ControllerTool::developerCertificate()
+{
+    const QString narrowCert = QString::fromLatin1(AM_TESTDATA_DIR "certificates/dev-certs/dev-narrow.p12");
+    const QString otherCert = QString::fromLatin1(AM_TESTDATA_DIR "certificates/other-certs/other.p12");
+
+    auto showDevelopmentMode = [](QVariantMap &out) {
+        ControllerTool ctrl({ u"show-development-mode"_s });
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
+        const auto docs = YamlParser::parseAllDocuments(ctrl.stdOut);
+        QCOMPARE(docs.size(), 1);
+        out = docs.at(0).toMap();
+    };
+
+    // argument validation: a certificate is required unless --clear is given
+    {
+        ControllerTool ctrl({ u"set-developer-certificate"_s });
+        QVERIFY(!ctrl.call());
+        QVERIFY(ctrl.stdOut.contains("Usage:"));
+    }
+    // argument validation: --clear and --password are mutually exclusive
+    {
+        ControllerTool ctrl({ u"set-developer-certificate"_s, u"--clear"_s, u"--password"_s, u"pass:password"_s });
+        QVERIFY(!ctrl.call());
+        QVERIFY2(ctrl.stdErr.contains("Cannot use --password and --clear"), ctrl.stdErr.constData());
+    }
+
+    // in System mode the certificate cannot be set
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::System);
+        QVariantMap out;
+        showDevelopmentMode(out);
+        QCOMPARE(out.value(u"developmentMode"_s).toString(), u"System"_s);
+        QVERIFY(out.value(u"developerCertificate"_s).isNull());
+
+        ControllerTool ctrl({ u"set-developer-certificate"_s, narrowCert, u"--password"_s, u"pass:password"_s });
+        QVERIFY(!ctrl.call());
+    }
+
+    // in Application mode the workflow is: set -> shows valid -> clear -> shows invalid again
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::Application);
+
+        {
+            QVariantMap out;
+            showDevelopmentMode(out);
+            QCOMPARE(out.value(u"developmentMode"_s).toString(), u"Application"_s);
+            QVERIFY(out.value(u"developerCertificate"_s).isNull());
+        }
+        // wrong password is rejected
+        {
+            ControllerTool ctrl({ u"set-developer-certificate"_s, narrowCert, u"--password"_s, u"pass:wrong"_s });
+            QVERIFY(!ctrl.call());
+        }
+        // a certificate signed by an untrusted CA is rejected (the "other" CA
+        // is not among the configured developer CAs)
+        {
+            ControllerTool ctrl({ u"set-developer-certificate"_s, otherCert, u"--password"_s, u"pass:password"_s });
+            QVERIFY(!ctrl.call());
+        }
+        // a certificate signed by the trusted developer CA is accepted
+        {
+            ControllerTool ctrl({ u"set-developer-certificate"_s, narrowCert, u"--password"_s, u"pass:password"_s });
+            QVERIFY2(ctrl.call(), ctrl.failure.constData());
+        }
+        {
+            QVariantMap out;
+            showDevelopmentMode(out);
+            const QVariantMap cert = out.value(u"developerCertificate"_s).toMap();
+            QVERIFY(!cert.isEmpty());
+            // the narrow cert is bound to package "test-pkg" via a qtam://packageid/... SAN
+            const QStringList sans = cert.value(u"subjectAlternativeNames"_s).toStringList();
+            QVERIFY2(sans.contains(u"qtam://packageid/test-pkg"_s), qPrintable(sans.join(u',')));
+        }
+        // clearing removes the certificate again
+        {
+            ControllerTool ctrl({ u"set-developer-certificate"_s, u"--clear"_s });
+            QVERIFY2(ctrl.call(), ctrl.failure.constData());
+        }
+        {
+            QVariantMap out;
+            showDevelopmentMode(out);
+            QVERIFY(out.value(u"developerCertificate"_s).isNull());
+        }
+    }
 }
 
 QT_AM_VERBOSE_TEST_MAIN(tst_ControllerTool)

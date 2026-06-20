@@ -60,6 +60,110 @@ TestCase {
         id: tracker
     }
 
+    FrameTimer {
+        id: frameTimer
+    }
+
+    SignalSpy {
+        id: frameTimerRunningSpy
+        target: frameTimer
+        signalName: "runningChanged"
+    }
+    SignalSpy {
+        id: frameTimerIntervalSpy
+        target: frameTimer
+        signalName: "intervalChanged"
+    }
+    SignalSpy {
+        id: frameTimerWindowSpy
+        target: frameTimer
+        signalName: "windowChanged"
+    }
+    SignalSpy {
+        id: frameTimerUpdatedSpy
+        target: frameTimer
+        signalName: "updated"
+    }
+
+    function test_frameTimer_defaults() {
+        compare(frameTimer.roleNames, [ "averageFps", "minimumFps", "maximumFps", "jitterFps" ])
+        compare(frameTimer.running, false)
+        compare(frameTimer.interval, 1000)
+        compare(frameTimer.window, null)
+        compare(frameTimer.averageFps, 0)
+        compare(frameTimer.minimumFps, 0)
+        compare(frameTimer.maximumFps, 0)
+        compare(frameTimer.jitterFps, 0)
+    }
+
+    function test_frameTimer_interval() {
+        frameTimerIntervalSpy.clear()
+        frameTimer.interval = 500
+        compare(frameTimerIntervalSpy.count, 1)
+        compare(frameTimer.interval, 500)
+
+        // setting the same value must not emit again
+        frameTimer.interval = 500
+        compare(frameTimerIntervalSpy.count, 1)
+
+        frameTimer.interval = 1000
+        compare(frameTimerIntervalSpy.count, 2)
+    }
+
+    function test_frameTimer_running() {
+        frameTimerRunningSpy.clear()
+        compare(frameTimer.running, false)
+
+        frameTimer.running = true
+        compare(frameTimerRunningSpy.count, 1)
+        compare(frameTimer.running, true)
+
+        // idempotent: no change, no signal
+        frameTimer.running = true
+        compare(frameTimerRunningSpy.count, 1)
+
+        frameTimer.running = false
+        compare(frameTimerRunningSpy.count, 2)
+        compare(frameTimer.running, false)
+    }
+
+    function test_frameTimer_window() {
+        frameTimerWindowSpy.clear()
+        verify(Window.window)
+
+        // a real toplevel QQuickWindow is accepted
+        frameTimer.window = Window.window
+        compare(frameTimerWindowSpy.count, 1)
+        compare(frameTimer.window, Window.window)
+
+        // setting the same window again is a no-op
+        frameTimer.window = Window.window
+        compare(frameTimerWindowSpy.count, 1)
+
+        // render a few frames so reportFrameSwap() accumulates timing, then publish via update()
+        frameTimerUpdatedSpy.clear()
+        for (let i = 0; i < 3; ++i) {
+            Window.window.requestUpdate()
+            wait(50 * AmTest.timeoutFactor)
+        }
+        frameTimer.update()
+        compare(frameTimerUpdatedSpy.count, 1)
+        verify(frameTimer.averageFps >= 0)
+        verify(frameTimer.minimumFps >= 0)
+        verify(frameTimer.maximumFps >= 0)
+        verify(frameTimer.jitterFps >= 0)
+
+        // a non-window QObject is rejected with a warning
+        ignoreWarning(/.*The given window is neither a QQuickWindow, ApplicationManagerWindow nor a WindowObject\./)
+        frameTimer.window = frameTimer
+        compare(frameTimerWindowSpy.count, 2)
+
+        // clearing the window stops tracking
+        frameTimer.window = null
+        compare(frameTimerWindowSpy.count, 3)
+        compare(frameTimer.window, null)
+    }
+
     SignalSpy {
         id: trackerRunningSpy
         target: tracker

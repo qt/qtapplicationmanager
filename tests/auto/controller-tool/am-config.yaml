@@ -6,5 +6,18 @@ applications:
   installationDir: "${stdpath:TempLocation}/qtam-test/controller-tool/apps"
   documentDir: "${stdpath:TempLocation}/qtam-test/controller-tool/docs"
 
+# CA certificates needed to verify developer certificates set via set-developer-certificate.
+installer:
+  caCertificates:
+  - file: "${env:AM_TESTDATA_DIR}/certificates/root-ca/root-ca.crt"
+    scope: common
+    role: root
+  - file: "${env:AM_TESTDATA_DIR}/certificates/dev-ca/dev-ca.crt"
+    scope: developer
+    role: issuer
+  - file: "${env:AM_TESTDATA_DIR}/certificates/store-ca/store-ca.crt"
+    scope: store
+    role: issuer
+
 ui:
   mainQml: "${CONFIG_DIR}/system-ui.qml"

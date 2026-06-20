@@ -203,13 +203,13 @@ void ProcessStatus::determinePid()
     qint64 newId = 0;
     if (m_appId.isEmpty()) {
         newId = QCoreApplication::applicationPid();
-    } else {
-        Q_ASSERT(m_application);
+    } else if (m_application) {
         if (ApplicationManager::instance()->isSingleProcess())
             newId = 0;
         else
             newId = m_application->currentRuntime() ? m_application->currentRuntime()->applicationProcessId() : 0;
     }
+    // an unknown application ID (m_application == nullptr) leaves the pid at 0
 
     if (newId != m_pid) {
         m_pid = newId;

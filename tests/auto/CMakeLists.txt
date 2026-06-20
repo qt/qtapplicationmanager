@@ -27,6 +27,7 @@ add_subdirectory(architecture)
 add_subdirectory(yaml)
 
 if (LINUX)
+    add_subdirectory(filesystemmountwatcher)
     add_subdirectory(systemd)
     add_subdirectory(systemstatus)
     add_subdirectory(processreader)

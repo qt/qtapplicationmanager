@@ -6,6 +6,11 @@
 #include <QtTest>
 #include <QCoreApplication>
 
+#if defined(Q_OS_LINUX)
+#  include <unistd.h>
+#  include <fcntl.h>
+#endif
+
 #include "global.h"
 #include "applicationmanager.h"
 #include "application.h"
@@ -44,6 +49,7 @@ private Q_SLOTS:
     void brokenMetadata_data();
     void brokenMetadata();
     void iconFileName();
+    void passwordOptions();
 
 private:
     QString pathTo(const char *file)
@@ -88,6 +94,7 @@ public:
     { }
 
     static void setPackagerPath(const QString &path) { s_command = path; }
+    static QString packagerPath() { return s_command; }
 
 private:
     static inline QString s_command;
@@ -632,6 +639,128 @@ void tst_PackagerTool::iconFileName()
     }
 }
 
+
+// Exercises ToolApplicationBase::parsePasswordOption through "appman-packager dev-sign-package",
+// which passes the parsed password straight to PKCS#12 decryption: the correct password produces a
+// valid signature (exit 0), a wrong one fails with "could not create signature", and a malformed
+// option fails during parsing with a format-specific message.
+void tst_PackagerTool::passwordOptions()
+{
+    QTemporaryDir tmp;
+    createInfoYaml(tmp);
+    createIconPng(tmp);
+    createIconPng(tmp, u"app-"_s);
+    createIconPng(tmp, u"intent-"_s);
+    createCode(tmp);
+
+    const QString unsignedPkg = pathTo("pw.ampkg");
+    {
+        PackagerTool p({ u"create-package"_s, unsignedPkg, tmp.path() });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+
+    int signCounter = 0;
+    auto signedPkg = [&]() { return pathTo(("pw-signed-" + QByteArray::number(++signCounter)
+                                            + ".ampkg").constData()); };
+
+    auto baseArgs = [&](const QString &passwordOption) {
+        return QStringList { u"dev-sign-package"_s, unsignedPkg, signedPkg(),
+                             m_devCertificate, u"--password"_s, passwordOption };
+    };
+
+    // pass: - inline password
+    {
+        PackagerTool p(baseArgs(u"pass:"_s + m_devPassword));
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+    {
+        PackagerTool p(baseArgs(u"pass:wrong-password"_s));
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("could not create signature"), p.stdErr.constData());
+    }
+
+    // file: - password read from a file (trailing newline must be stripped)
+    {
+        const QString pwFile = pathTo("pw.txt");
+        QFile f(pwFile);
+        QVERIFY(f.open(QFile::WriteOnly));
+        QVERIFY(f.write((m_devPassword + u'\n').toLocal8Bit()) > 0);
+        f.close();
+
+        PackagerTool p(baseArgs(u"file:"_s + pwFile));
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+    {
+        PackagerTool p(baseArgs(u"file:"_s + pathTo("does-not-exist.txt")));
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("Could not open password file"), p.stdErr.constData());
+    }
+
+    // env: - password taken from an environment variable of the child process
+    {
+        QProcess proc;
+        QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+        env.insert(u"AM_TEST_PW"_s, m_devPassword);
+        proc.setProcessEnvironment(env);
+        proc.setProgram(PackagerTool::packagerPath());
+        proc.setArguments(baseArgs(u"env:AM_TEST_PW"_s));
+        proc.start();
+        QVERIFY(proc.waitForFinished(5000 * timeoutFactor()));
+        QCOMPARE(proc.exitCode(), 0);
+    }
+    {
+        PackagerTool p(baseArgs(u"env:AM_DEFINITELY_UNSET_PW"_s));
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("is not set"), p.stdErr.constData());
+    }
+
+#if defined(Q_OS_LINUX)
+    // fd: - password read from an inherited file descriptor
+    {
+        const QString pwFile = pathTo("pw-fd.txt");
+        QFile f(pwFile);
+        QVERIFY(f.open(QFile::WriteOnly));
+        QVERIFY(f.write((m_devPassword + u'\n').toLocal8Bit()) > 0);
+        f.close();
+
+        const QByteArray pwFileLocal = pwFile.toLocal8Bit();
+        constexpr int childFd = 42; // arbitrary, must match the fd:N argument below
+
+        QProcess proc;
+        proc.setProgram(PackagerTool::packagerPath());
+        proc.setArguments(baseArgs(u"fd:"_s + QString::number(childFd)));
+        proc.setChildProcessModifier([pwFileLocal] {
+            int src = ::open(pwFileLocal.constData(), O_RDONLY | O_CLOEXEC);
+            if (src < 0)
+                ::_exit(126);
+            // dup onto the well-known fd without O_CLOEXEC so the exec'd tool inherits it
+            if (::dup2(src, childFd) < 0)
+                ::_exit(126);
+            ::close(src);
+        });
+        proc.start();
+        QVERIFY(proc.waitForFinished(5000 * timeoutFactor()));
+        QCOMPARE(proc.exitCode(), 0);
+    }
+    {
+        PackagerTool p(baseArgs(u"fd:not-a-number"_s));
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("Could not parse file descriptor"), p.stdErr.constData());
+    }
+#endif
+
+    // The "stdin" format is deliberately not tested here: it reads from /dev/tty with echo
+    // disabled, so exercising it requires running the tool under a real pseudo-terminal. The
+    // amount of pty/fork plumbing needed to drive that would dwarf the code under test, so the
+    // cost/benefit isn't worth it.
+
+    // unknown format
+    {
+        PackagerTool p(baseArgs(u"bogus:whatever"_s));
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("Unknown password format"), p.stdErr.constData());
+    }
+}
 
 bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const std::function<void(QVariantMap &)> &manipulate)
 {

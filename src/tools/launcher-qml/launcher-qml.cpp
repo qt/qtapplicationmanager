@@ -151,6 +151,7 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched)
         int qt = am->runtimeConfiguration().value(u"quitTime"_s).toInt(&ok);
         if (!ok || qt < 0)
             qt = 250;
+        qt *= timeoutFactor();
         QTimer::singleShot(qt, [] { QCoreApplication::instance()->quit(); });
     });
 

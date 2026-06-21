@@ -55,4 +55,4 @@ flags:
 
 runtimes:
   qml:
-    quitTime: 5000
+    quitTime: 1000

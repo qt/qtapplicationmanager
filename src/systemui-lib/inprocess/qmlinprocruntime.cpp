@@ -268,6 +268,7 @@ void QmlInProcRuntime::stop(Am::ExitStatus exitStatus)
         int qt = configuration().value(u"quitTime"_s).toInt(&ok);
         if (!ok || qt < 0)
             qt = 250;
+        qt *= timeoutFactor();
         QTimer::singleShot(qt, this, [this]() {
             if (state() != Am::NotRunning)
                 finish(m_allWindowsClosed ? Am::NormalExit : Am::ForcedExit);

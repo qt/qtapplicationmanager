@@ -5,6 +5,7 @@
 
 import QtQuick 2.3
 import QtTest 1.0
+import QtApplicationManager 2.0
 import QtApplicationManager.SystemUI 2.0
 import QtApplicationManager.Test
 
@@ -75,6 +76,16 @@ TestCase {
         id: windowPropertyChangedSpy
         target: WindowManager
         signalName: "windowPropertyChanged"
+    }
+
+    FrameTimer {
+        id: frameTimer
+    }
+
+    SignalSpy {
+        id: frameTimerWindowSpy
+        target: frameTimer
+        signalName: "windowChanged"
     }
 
     function cleanup() {
@@ -311,5 +322,54 @@ TestCase {
         compare(topChrome.window.contentState, WindowObject.SurfaceWithContent);
         const img = grabImage(topChrome.Window.contentItem);
         compare(img.pixel(60,40), Qt.color("cyan"));
+    }
+
+    // Exercises SystemFrameTimerImpl, which is the FrameTimer backend used when a FrameTimer is
+    // pointed at a WindowObject (as opposed to a plain QQuickWindow). The WindowObject is an
+    // InProcessWindow in single-process mode and a WaylandWindow in multi-process mode, so this
+    // covers both branches of SystemFrameTimerImpl::connectToSystemWindow() across the two test
+    // configurations, plus disconnectFromSystemWindow() when the window is cleared.
+    function test_frameTimer_systemWindow() {
+        var app = ApplicationManager.application("test.winmap.amwin");
+
+        compare(WindowManager.count, 0);
+        app.start("show-main");
+        tryCompare(WindowManager, "count", 1, spyTimeout);
+        tryVerify(function() { return topChrome.window !== null }, spyTimeout);
+
+        frameTimerWindowSpy.clear();
+
+        if (ApplicationManager.singleProcess) {
+            // an InProcessWindow cannot have its FPS measured: the impl warns but still accepts it
+            ignoreWarning(/.*It makes no sense to measure the FPS of a WindowObject in single-process mode.*/);
+        }
+        frameTimer.window = topChrome.window;
+        compare(frameTimerWindowSpy.count, 1);
+        compare(frameTimer.window, topChrome.window);
+
+        // setting the same window again is a no-op
+        frameTimer.window = topChrome.window;
+        compare(frameTimerWindowSpy.count, 1);
+
+        if (!ApplicationManager.singleProcess) {
+            // in multi-process mode the impl hooks the Wayland surface's redraw signal; render a
+            // few frames and publish them, then check that we get sane values
+            for (let i = 0; i < 3; ++i) {
+                app.start("hide-main");
+                tryCompare(topChrome.window, "contentState", WindowObject.SurfaceNoContent, spyTimeout);
+                app.start("show-main");
+                tryCompare(topChrome.window, "contentState", WindowObject.SurfaceWithContent, spyTimeout);
+            }
+            frameTimer.update();
+            verify(frameTimer.averageFps >= 0);
+        }
+
+        // clearing the window exercises disconnectFromSystemWindow()
+        frameTimer.window = null;
+        compare(frameTimerWindowSpy.count, 2);
+        compare(frameTimer.window, null);
+
+        app.stop();
+        tryCompare(WindowManager, "count", 0, spyTimeout);
     }
 }

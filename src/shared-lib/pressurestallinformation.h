@@ -20,6 +20,7 @@ class Q_APPMANSHARED_EXPORT PressureStallInformation : public QObject
     Q_PROPERTY(Type type READ type CONSTANT FINAL)
     Q_PROPERTY(quint64 timeWindow READ timeWindow WRITE setTimeWindow NOTIFY timeWindowChanged FINAL)
     Q_PROPERTY(quint64 stallTime READ stallTime WRITE setStallTime NOTIFY stallTimeChanged FINAL)
+    Q_PROPERTY(bool active READ isActive NOTIFY activeChanged FINAL)
 
 public:
     enum class Mode : uint { Off, Some, Full };
@@ -41,12 +42,15 @@ public:
     quint64 stallTime() const;
     void setStallTime(quint64 stallTime);
 
+    bool isActive() const;
+
     void setPressureFile(const QString &path);
 
 Q_SIGNALS:
     void modeChanged();
     void timeWindowChanged();
     void stallTimeChanged();
+    void activeChanged();
 
     void triggered();
 

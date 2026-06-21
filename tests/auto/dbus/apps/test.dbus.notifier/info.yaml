@@ -1,0 +1,13 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'test.dbus.notifier'
+name:
+  en: 'D-Bus Notifier App'
+applications:
+- id:      'test.dbus.notifier'
+  code:    'app.qml'
+  runtime: 'qml'
+
+intents:
+- id: notify-request

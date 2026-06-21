@@ -32,8 +32,10 @@ public:
 
     void startReconfigure();
     void finishReconfigure();
+    void setActive(bool active);
 
     PressureStallInformation::Mode m_mode = PressureStallInformation::Mode::Off;
+    bool m_active = false;
     std::chrono::milliseconds m_timeWindow { };
     std::chrono::milliseconds m_stallTime { };
     QTimer m_reconfigureTimer;
@@ -41,6 +43,8 @@ public:
 
     PressureStallInformation::Type m_type { };
     QString m_pressureFile;
+
+    Q_DECLARE_PUBLIC(PressureStallInformation)
 };
 
 /*!
@@ -190,6 +194,24 @@ void PressureStallInformation::setStallTime(quint64 stallTime)
     emit stallTimeChanged();
 }
 
+/*! \qmlproperty bool PressureStallInformation::active
+    \readonly
+
+    Holds whether PSI monitoring is currently armed, i.e. the kernel trigger has been successfully
+    set up and the \l triggered signal can fire. This becomes \c true once \l mode is set to
+    \c Some or \c Full and the trigger could be installed on the underlying pressure file, and
+    \c false again when \l mode is set to \c Off or when arming the trigger fails (for example,
+    because the pressure file is unavailable or the requested \l timeWindow is rejected by the
+    kernel).
+
+    \sa mode, triggered
+*/
+bool PressureStallInformation::isActive() const
+{
+    Q_D(const PressureStallInformation);
+    return d->m_active;
+}
+
 void PressureStallInformation::setPressureFile(const QString &path)
 {
     Q_D(PressureStallInformation);
@@ -202,11 +224,21 @@ void PressureStallInformation::setPressureFile(const QString &path)
         d->startReconfigure();
 }
 
+void PressureStallInformationPrivate::setActive(bool active)
+{
+    Q_Q(PressureStallInformation);
+    if (m_active == active)
+        return;
+    m_active = active;
+    emit q->activeChanged();
+}
+
 void PressureStallInformationPrivate::startReconfigure()
 {
 #if defined(Q_OS_LINUX)
     m_eventFd.reset();
     m_notifier.setSocket(-1);
+    setActive(false);
 
     // make sure to reconfigure only once, even if multiple parameters are changed at once
     m_reconfigureTimer.start();
@@ -259,6 +291,7 @@ void PressureStallInformationPrivate::finishReconfigure()
 
         m_notifier.setSocket(m_eventFd.get());
         m_notifier.setEnabled(true);
+        setActive(true);
 
     } catch (const Exception &e) {
         qCWarning(LogSystem) << e.what();

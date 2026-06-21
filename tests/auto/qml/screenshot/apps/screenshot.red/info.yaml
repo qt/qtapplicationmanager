@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'screenshot.red'
+name:
+  en: 'Screenshot Red'
+applications:
+- id:      'screenshot.red'
+  code:    'app.qml'
+  runtime: 'qml'

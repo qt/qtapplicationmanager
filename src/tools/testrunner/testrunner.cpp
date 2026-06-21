@@ -33,6 +33,14 @@ AM_QML_REGISTER_TYPES(QtApplicationManager_Test)
 
 QT_BEGIN_NAMESPACE_AM
 
+static bool setEnvVars = [] {
+    // Force consistent 1x scaling for the test runner.
+    qputenv("QT_ENABLE_HIGHDPI_SCALING", "0");
+    qputenv("QT_SCALE_FACTOR", "");
+    qputenv("QT_SCREEN_SCALE_FACTORS", "1");
+    return true;
+}();
+
 void TestRunner::setup(Configuration *cfg)
 {
     const QString testFile = cfg->yaml.ui.mainQml;

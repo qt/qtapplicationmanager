@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'screenshot.green'
+name:
+  en: 'Screenshot Green'
+applications:
+- id:      'screenshot.green'
+  code:    'app.qml'
+  runtime: 'qml'

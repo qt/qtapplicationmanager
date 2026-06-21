@@ -17,7 +17,9 @@ runtimes:
 
 intents:
   timeouts:
-    disambiguation: 1000
-    startApplication: 1000
+    # kept low so the timeout-path tests (disambiguation/start-application timeouts) don't wait
+    # long; the runtime scales these by timeoutFactor() for slow CI machines
+    disambiguation: 300
+    startApplication: 300
     replyFromApplication: 1000
     replyFromSystem: 2000

@@ -8,6 +8,7 @@ import QtTest 1.0
 import QtApplicationManager 2.0
 import QtApplicationManager.SystemUI 2.0
 import QtApplicationManager.Test
+import SlowAnimHelper
 
 TestCase {
     id: testCase
@@ -76,6 +77,17 @@ TestCase {
         id: windowPropertyChangedSpy
         target: WindowManager
         signalName: "windowPropertyChanged"
+    }
+
+    SignalSpy {
+        id: slowAnimationsSpy
+        target: WindowManager
+        signalName: "slowAnimationsChanged"
+    }
+
+    // loaded in the System-UI process, to verify the System-UI side of the slowAnimations effect
+    SlowAnimHelper {
+        id: sysuiSlowAnimHelper
     }
 
     FrameTimer {
@@ -378,5 +390,76 @@ TestCase {
 
         app.stop();
         tryCompare(WindowManager, "count", 0, spyTimeout);
+    }
+
+    // Exercises WindowManager's slowAnimations machinery: the property/signal contract, plus the
+    // propagation all the way into a running application's process (verified via a helper QML
+    // module that reports the app's QUnifiedTimer speed modifier). WindowManager is a singleton,
+    // so the test restores slowAnimations to its default before returning.
+    function test_slowAnimations() {
+        if (sysuiSlowAnimHelper.speedModifier() < 0) {
+            // before Qt 6.11 there was no speed modifier, only a slow-mode flag, but that is private
+            skip("QUnifiedTimer::getSpeedModifier() is not supported in this Qt version.");
+        }
+
+        // slowAnimationSpeed() is a float, so compare round-tripped values with a tolerance
+        function speedIs(actual, expected) {
+            return Math.abs(actual - expected) < 0.001
+        }
+
+        compare(WindowManager.slowAnimations, false);
+        verify(speedIs(sysuiSlowAnimHelper.speedModifier(), 1.0));
+
+        slowAnimationsSpy.clear();
+        WindowManager.slowAnimations = true;
+        compare(WindowManager.slowAnimations, true);
+        compare(slowAnimationsSpy.count, 1);
+        // the System-UI's own animation timer must slow down to slowAnimationSpeed() (0.2)
+        tryVerify(() => { return speedIs(sysuiSlowAnimHelper.speedModifier(), 0.2) }, spyTimeout);
+
+        // setting the same value must not emit again
+        WindowManager.slowAnimations = true;
+        compare(slowAnimationsSpy.count, 1);
+
+        WindowManager.slowAnimations = false;
+        compare(WindowManager.slowAnimations, false);
+        compare(slowAnimationsSpy.count, 2);
+        tryVerify(() => { return speedIs(sysuiSlowAnimHelper.speedModifier(), 1.0) }, spyTimeout);
+
+        // Verifying that the flag reaches the application's process is only meaningful in
+        // multi-process mode; in single-process the app shares the System UI's QUnifiedTimer.
+        if (!ApplicationManager.singleProcess) {
+            // helper-module intent probe: ask the app for its current animation speed modifier
+            function appSpeedIs(expected) {
+                let req = IntentClient.sendIntentRequest("query-speed-modifier",
+                                                         "test.winmap.slowanim", { })
+                verify(req)
+                tryVerify(() => { return req.succeeded }, spyTimeout)
+                return speedIs(req.result.speedModifier, expected)
+            }
+
+            let app = ApplicationManager.application("test.winmap.slowanim");
+            app.start();
+            tryCompare(WindowManager, "count", 1, spyTimeout);
+
+            // app launched with slow animations off -> normal speed
+            verify(appSpeedIs(1.0));
+
+            // enabling slow animations must slow the running app's timer down to 0.2
+            WindowManager.slowAnimations = true;
+            compare(slowAnimationsSpy.count, 3);
+            tryVerify(() => { return appSpeedIs(0.2) }, spyTimeout);
+
+            // ... and disabling it must bring it back to normal speed
+            WindowManager.slowAnimations = false;
+            compare(slowAnimationsSpy.count, 4);
+            tryVerify(() => { return appSpeedIs(1.0) }, spyTimeout);
+
+            app.stop();
+            tryCompare(WindowManager, "count", 0, spyTimeout);
+        }
+
+        // restore the default for the other tests
+        compare(WindowManager.slowAnimations, false);
     }
 }

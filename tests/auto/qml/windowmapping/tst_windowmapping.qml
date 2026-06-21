@@ -123,8 +123,13 @@ TestCase {
 
     function test_amwin_advanced() {
         var app = ApplicationManager.application("test.winmap.amwin2");
+        // showing a sub-window while its parent is still hidden must not map any window: wait for
+        // the app to start, then flush the compositor (see QTBUG-83422) so that an erroneous
+        // window-add would have surfaced by now - without blindly waiting a fixed duration
         app.start("show-sub");
-        wait(2000 * AmTest.timeoutFactor);
+        tryCompare(app, "runState", Am.Running, spyTimeout);
+        AmTest.aboutToBlock();
+        wait(250 * AmTest.timeoutFactor);
         compare(WindowManager.count, 0);
 
         app.start("show-main");
@@ -205,7 +210,9 @@ TestCase {
         subChrome.window.close();
         AmTest.aboutToBlock();
         tryCompare(subChrome, "window", null, spyTimeout);
-        wait(200);
+        // closing a sub-window while the main window stays open must not quit the app: give a
+        // spurious quit a chance to surface, then confirm the app is still running
+        wait(250 * AmTest.timeoutFactor);
         compare(app.runState, Am.Running);
     }
 

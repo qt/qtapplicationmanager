@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'test.dbus.app1'
+name:
+  en: 'D-Bus Test App 1'
+applications:
+- id:      'test.dbus.app1'
+  code:    'app.qml'
+  runtime: 'qml'

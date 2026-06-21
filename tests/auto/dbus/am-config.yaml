@@ -1,0 +1,35 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_DIR}/apps"
+  installationDir: "${stdpath:TempLocation}/qtam-test/dbus/apps"
+  documentDir: "${stdpath:TempLocation}/qtam-test/dbus/docs"
+
+ui:
+  mainQml: "${CONFIG_DIR}/system-ui/main.qml"
+
+runtimes:
+  qml:
+    importPaths: [ '${EXECUTABLE_DIR}/apps/notifier' ]
+
+flags:
+  noSecurity: true
+
+systemProperties:
+  public:
+    aString: "hello"
+    anInt: 42
+    aBool: true
+
+# export the System UI's D-Bus interfaces onto the (private) session bus, so the test can
+# drive them as a regular D-Bus client
+dbus:
+  io.qt.ApplicationManager:
+    register: 'session'
+  io.qt.PackageManager:
+    register: 'session'
+  io.qt.WindowManager:
+    register: 'session'
+  org.freedesktop.Notifications:
+    register: 'session'

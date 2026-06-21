@@ -50,11 +50,14 @@ TestCase {
                 pid = match ? match[1] : 0
                 return pid
             }, spyTimeout);
-            wait(500 * AmTest.timeoutFactor);
 
-            let cmdLine = AmTest.runProgram([ "cat", `/proc/${pid}/cmdline` ]).stdout.split('\0')[0]
-            verify(cmdLine.endsWith(executable + quickArg),
-                   "cmdLine: '" + cmdLine + "' does not end with: '" + executable + quickArg + "'");
+            // the process sets its title asynchronously after starting, so poll for it rather
+            // than waiting a fixed amount of time
+            let cmdLine
+            tryVerify(function() {
+                cmdLine = AmTest.runProgram([ "cat", `/proc/${pid}/cmdline` ]).stdout.split('\0')[0]
+                return cmdLine.endsWith(executable + quickArg)
+            }, spyTimeout, "cmdLine does not end with: '" + executable + quickArg + "'");
         } else {
             sigIdx = 1;
             quickArg = ""
@@ -68,16 +71,20 @@ TestCase {
 
         compare(runStateChangedSpy.signalArguments[sigIdx][0], data.appId);
         compare(runStateChangedSpy.signalArguments[sigIdx][1], Am.Running);
-        wait(500 * AmTest.timeoutFactor);
 
         processStatus.applicationId = data.appId;
         pid = processStatus.processId;
 
-        let cmdLine = AmTest.runProgram([ "cat", `/proc/${pid}/cmdline` ]).stdout.split('\0')[0]
-        let psOutput = AmTest.runProgram([ "ps", "--no-headers", pid ]).stdout.trim()
+        // the process sets its title asynchronously after reaching Running, so poll the title in
+        // both /proc/<pid>/cmdline and ps output rather than waiting a fixed amount of time
         let checkStr = executable + ": " + data.appId
-        verify(psOutput.endsWith(checkStr), "ps output: '" + psOutput + "' does not end with: '" + checkStr + "'");
-        verify(cmdLine.endsWith(checkStr), "cmd.line: '" + cmdLine + "' does not end with: '" + checkStr + "'");
+        let cmdLine
+        let psOutput
+        tryVerify(function() {
+            cmdLine = AmTest.runProgram([ "cat", `/proc/${pid}/cmdline` ]).stdout.split('\0')[0]
+            psOutput = AmTest.runProgram([ "ps", "--no-headers", pid ]).stdout.trim()
+            return psOutput.endsWith(checkStr) && cmdLine.endsWith(checkStr)
+        }, spyTimeout, "ps output and/or cmdline do not end with: '" + checkStr + "'");
 
         let environment = AmTest.runProgram([ "cat", `/proc/${pid}/environ` ]).stdout
         verify(environment.includes("AM_CONFIG=%YAML"));

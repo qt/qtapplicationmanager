@@ -1,0 +1,13 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'test.winmap.slowanim'
+name:
+  en: 'SlowAnimations Probe'
+applications:
+- id:      'test.winmap.slowanim'
+  code:    'app.qml'
+  runtime: 'qml'
+
+intents:
+- id: query-speed-modifier

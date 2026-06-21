@@ -6,6 +6,12 @@
 #include <QtCore>
 #include <QtTest>
 
+#if !defined(Q_OS_LINUX)
+#  error "This test is Linux specific!"
+#endif
+
+#include <unistd.h>
+
 #include <cpustatus.h>
 #include <memorystatus.h>
 #include <iostatus.h>
@@ -29,6 +35,7 @@ private Q_SLOTS:
     void memoryStatus();
     void ioStatus();
     void cgroupStatus();
+    void pressureStallInformation();
     void systemStatus();
 
 };
@@ -38,8 +45,6 @@ void tst_SystemStatus::initTestCase()
 {
 #if !defined(QT_BUILD_INTERNAL)
     QSKIP("Not a developer build");
-#elif !defined(Q_OS_LINUX)
-    QSKIP("SystemStatus is only tested on Linux");
 #else
     setTestRootPathPrefix(u":/root/"_s);
 #endif
@@ -166,6 +171,106 @@ void tst_SystemStatus::cgroupStatus()
     QCOMPARE(cg.memoryUsed(), expectedMemoryUsed);
 }
 
+void tst_SystemStatus::pressureStallInformation()
+{
+    // pure property logic - no syscalls, always runs.
+    {
+        PressureStallInformation psi(PressureStallInformation::Type::Memory, nullptr);
+        QCOMPARE(psi.type(), PressureStallInformation::Type::Memory);
+        QCOMPARE(psi.mode(), PressureStallInformation::Mode::Off);
+        QCOMPARE(psi.timeWindow(), 0u);
+        QCOMPARE(psi.stallTime(), 0u);
+        QVERIFY(!psi.isActive());
+
+        QSignalSpy modeSpy(&psi, &PressureStallInformation::modeChanged);
+        QSignalSpy windowSpy(&psi, &PressureStallInformation::timeWindowChanged);
+        QSignalSpy stallSpy(&psi, &PressureStallInformation::stallTimeChanged);
+
+        psi.setTimeWindow(2000);
+        QCOMPARE(psi.timeWindow(), 2000u);
+        QCOMPARE(windowSpy.count(), 1);
+        psi.setTimeWindow(2000); // idempotent
+        QCOMPARE(windowSpy.count(), 1);
+
+        psi.setStallTime(50);
+        QCOMPARE(psi.stallTime(), 50u);
+        QCOMPARE(stallSpy.count(), 1);
+        psi.setStallTime(50); // idempotent
+        QCOMPARE(stallSpy.count(), 1);
+
+        // enabling a mode without a pressure file set: reconfigure runs but cannot arm anything
+        psi.setMode(PressureStallInformation::Mode::Some);
+        QCOMPARE(psi.mode(), PressureStallInformation::Mode::Some);
+        QCOMPARE(modeSpy.count(), 1);
+        psi.setMode(PressureStallInformation::Mode::Some); // idempotent
+        QCOMPARE(modeSpy.count(), 1);
+
+        QTest::qWait(100); // let the (empty-file) reconfigure run; it must stay inactive
+        QVERIFY(!psi.isActive());
+    }
+
+    // error path - arming against a non-existent file must fail and stay inactive.
+    {
+        PressureStallInformation psi(PressureStallInformation::Type::Cpu, nullptr);
+        QSignalSpy activeSpy(&psi, &PressureStallInformation::activeChanged);
+
+        psi.setPressureFile(u"/this/path/does/not/exist/pressure"_s);
+        QTest::ignoreMessage(QtWarningMsg, QRegularExpression(u"Failed to open PSI fd.*"_s));
+        psi.setMode(PressureStallInformation::Mode::Some);
+
+        // let the debounced reconfigure timer fire; it must not arm the trigger
+        QTest::qWait(100);
+        QVERIFY(!psi.isActive());
+        QCOMPARE(activeSpy.count(), 0); // never went active, so no transition
+    }
+
+    // the remaining checks need a real PSI file - only available on a PSI-enabled kernel.
+    // there might also be AppArmor restrictions (Ubuntu 22.04)
+    {
+        QFile f(u"/proc/pressure/memory"_s);
+        if (!f.exists() || !f.open(QIODevice::WriteOnly))
+            QSKIP("System-wide PSI for users is not available on this kernel");
+    }
+
+    // happy path - configure a legal trigger and verify it actually arms.
+    // Use the Memory type to exercise a different branch of the type-string mapping.
+    {
+        PressureStallInformation psi(PressureStallInformation::Type::Memory, nullptr);
+        QSignalSpy activeSpy(&psi, &PressureStallInformation::activeChanged);
+
+        psi.setPressureFile(u"/proc/pressure/memory"_s);
+        psi.setStallTime(50);
+        psi.setTimeWindow(2000); // legal even for unprivileged users (multiple of 2000ms)
+        psi.setMode(PressureStallInformation::Mode::Some);
+
+        QTRY_VERIFY(psi.isActive());
+        QCOMPARE(activeSpy.count(), 1);
+
+        // re-pointing the pressure file while active re-arms the trigger on the new file
+        psi.setPressureFile(u"/proc/pressure/cpu"_s);
+        QTRY_VERIFY(psi.isActive());
+
+        // setting mode back to Off must tear the trigger down again
+        psi.setMode(PressureStallInformation::Mode::Off);
+        QTRY_VERIFY(!psi.isActive());
+    }
+
+    // EINVAL path - unprivileged users can't set a window that isn't a multiple of 2000ms.
+    // Use the Io type to exercise the remaining branch of the type-string mapping.
+    if (::geteuid() != 0) {
+        PressureStallInformation psi(PressureStallInformation::Type::Io, nullptr);
+
+        psi.setPressureFile(u"/proc/pressure/io"_s);
+        psi.setStallTime(50);
+        psi.setTimeWindow(1500); // illegal for unprivileged users
+        QTest::ignoreMessage(QtWarningMsg, QRegularExpression(u"Failed to write PSI trigger data.*"_s));
+        psi.setMode(PressureStallInformation::Mode::Some);
+
+        QTest::qWait(100);
+        QVERIFY(!psi.isActive());
+    }
+}
+
 void tst_SystemStatus::systemStatus()
 {
     // Reparse the same fixtures used by cpuStatus() and memoryStatus() - SystemStatus
@@ -215,6 +320,6 @@ void tst_SystemStatus::systemStatus()
     QCOMPARE(sys.cpuLoad(), 0);
 }
 
-QTEST_APPLESS_MAIN(tst_SystemStatus)
+QTEST_GUILESS_MAIN(tst_SystemStatus)
 
 #include "tst_systemstatus.moc"

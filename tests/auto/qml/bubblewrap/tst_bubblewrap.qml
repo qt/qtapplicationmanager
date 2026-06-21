@@ -98,6 +98,23 @@ TestCase {
         compare(app.lastExitCode, 0)
     }
 
+    // Force-killing routes through BubblewrapContainer::stop(ForcedExit), which SIGKILLs the
+    // container process - unlike the graceful stop above, where the app quits voluntarily and the
+    // container's stop() is never reached.
+    function test_forceStop() {
+        skipIfUnsupported()
+
+        var app = ApplicationManager.application("TestApp")
+        netscriptArgs = []
+        startApp(app)
+
+        app.stop(true)
+        runStateChangedSpy.wait(spyTimeout)    // wait for ShuttingDown
+        runStateChangedSpy.wait(spyTimeout)    // wait for NotRunning
+        verify(app.runState === Am.NotRunning)
+        compare(app.lastExitStatus, Am.ForcedExit)
+    }
+
     function test_bubblewrap() {
         skipIfUnsupported()
 

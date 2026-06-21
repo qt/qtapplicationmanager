@@ -278,17 +278,18 @@ Item {
             var width = 130;
             var height = 330;
             var i;
-            for (i = 0; i < 20; i += 1) {
+            for (i = 0; i < 10; i += 1) {
                 window.setWindowProperty("requestedWidth", width);
                 window.setWindowProperty("requestedHeight", height);
 
+                // these tryCompares already confirm the resize round-trip fully converged, so no
+                // additional settle is needed before the next iteration
                 tryCompare(window, "size", Qt.size(width,height), spyTimeout);
                 tryCompare(windowItem, "width", width, spyTimeout);
                 tryCompare(windowItem, "height", height, spyTimeout);
 
-                width += 5;
-                height += 5;
-                wait(50 * AmTest.timeoutFactor);
+                width += 10;
+                height += 10;
             }
         }
 

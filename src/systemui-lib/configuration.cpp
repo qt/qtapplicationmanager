@@ -565,7 +565,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 28;
+    return 29;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -596,6 +596,7 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.installer.caCertificates
         & cd.installer.certificateRevocationLists
         & cd.installer.allowedURLs
+        & cd.installer.minimumCertificateVersion
         & cd.dbus.registrations
         & cd.quicklaunch.idleLoad
         & cd.quicklaunch.runtimesPerContainer
@@ -677,6 +678,7 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(installer.caCertificates);
     MERGE_FIELD(installer.certificateRevocationLists);
     MERGE_FIELD(installer.allowedURLs);
+    MERGE_FIELD(installer.minimumCertificateVersion);
     MERGE_FIELD(dbus.registrations);
     MERGE_FIELD(quicklaunch.idleLoad);
     MERGE_FIELD(quicklaunch.runtimesPerContainer);
@@ -865,6 +867,12 @@ void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &file
                           cd.installer.allowedURLs = yp.parseStringOrStringList(); } },
                      { "certificateRevocationLists", false, YamlParser::Scalar, [&]() {
                           cd.installer.certificateRevocationLists = yp.parseStringOrStringList(); } },
+                     { "minimumCertificateVersion", false, YamlParser::Scalar, [&]() {
+                          const QString str = yp.parseString();
+                          cd.installer.minimumCertificateVersion = QVersionNumber::fromString(str);
+                          if (cd.installer.minimumCertificateVersion.isNull())
+                              throw YamlParserException(&yp, "invalid minimumCertificateVersion: '%1'").arg(str);
+                          } },
                      { "caCertificates", false, YamlParser::Scalar | YamlParser::List, [&]() {
                           if (yp.isScalar()) { // simple format (just a file path)
                               cd.installer.caCertificates << CaCertificate { yp.parseString(),

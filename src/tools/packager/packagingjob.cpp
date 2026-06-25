@@ -389,6 +389,8 @@ void PackagingJob::execute() noexcept(false)
             throw Exception(Error::Package, "cannot sign packages with more than one certificate");
 
         try {
+            Certificate signer;
+
             if (m_mode == DeveloperSign) {
                 Signature sig(report.digest());
                 sig.requireKeyUsage(Certificate::KeyUsage::Developer);
@@ -396,7 +398,7 @@ void PackagingJob::execute() noexcept(false)
                 sig.requireApplicationIds(pkgApplicationIds);
                 sig.requireCapabilities(pkgCapabilities);
                 sig.requireCategories(pkgCategories);
-                QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8());
+                QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8(), &signer);
                 report.setDeveloperSignature(signature);
             } else if (m_mode == StoreSign) {
                 QByteArray sigDigest = report.digest();
@@ -406,8 +408,16 @@ void PackagingJob::execute() noexcept(false)
 
                 Signature sig(sigDigest);
                 sig.requireKeyUsage(Certificate::KeyUsage::Store);
-                QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8());
+                QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8(), &signer);
                 report.setStoreSignature(signature);
+            }
+
+            if (signer.isValid() && (signer.version() < Certificate::currentVersion())) {
+                std::cerr << "WARNING: signing with a " << qPrintable(signer.version().toString())
+                          << " certificate, which is older than this packager's certificate version "
+                          << qPrintable(Certificate::currentVersion().toString())
+                          << ". Devices configured to require a newer certificate version will reject "
+                             "this package." << std::endl;
             }
         } catch (const Exception &e) {
             throw Exception(Error::Package, "could not create signature: %1").arg(e.errorString());

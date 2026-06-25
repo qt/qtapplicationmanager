@@ -9,6 +9,7 @@
 #include <QStringList>
 #include <QHash>
 #include <QVariantMap>
+#include <QVersionNumber>
 #include <QtAppManCommon/exception.h>
 #include <QtAppManPackage/signature.h>
 
@@ -18,6 +19,7 @@ class SignaturePrivate
 {
 public:
     QByteArray hash;
+    QVersionNumber requireMinimumCertificateVersion;
     Certificate::KeyUsages requiredKeyUsages;
     QString requirePackageId;
     QStringList requiredApplicationIds;

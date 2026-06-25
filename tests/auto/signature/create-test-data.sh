@@ -21,6 +21,9 @@ fi
 cp $certdir/dev-certs/dev-1.p12 signing.p12
 cp $certdir/dev-certs/dev-narrow.p12 signing-narrow.p12
 cp $certdir/dev-certs/dev-huge.p12 signing-huge.p12
+cp $certdir/dev-certs/dev-legacy.p12 signing-legacy.p12
+cp $certdir/dev-certs/dev-multiversion.p12 signing-multiversion.p12
+cp $certdir/dev-certs/dev-pkgidonly.p12 signing-pkgidonly.p12
 openssl pkcs12 -export -out signing-no-key.p12 -password pass:password \
                -inkey $certdir/dev-certs/dev-1-priv.key -certfile $certdir/root-ca/root-ca.crt \
                -in $certdir/dev-certs/dev-1.crt -name "Developer 1 Certificate (no key)" -nokeys

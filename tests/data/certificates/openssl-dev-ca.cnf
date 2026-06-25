@@ -76,3 +76,12 @@ authorityKeyIdentifier=keyid,issuer
 
 basicConstraints = CA:FALSE
 keyUsage = nonRepudiation, digitalSignature, keyEncipherment, decipherOnly
+
+####################################################################
+# Used only for the "legacy" (pre-6.11) developer certificate: no key-usage, so the
+# resulting certificate is detected as version 6.10 and carries no restrictions.
+[ signing_req_legacy ]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer
+
+basicConstraints = CA:FALSE

@@ -1,0 +1,24 @@
+HOME            = .
+RANDFILE        = $ENV::HOME/.rnd
+
+####################################################################
+[ req ]
+prompt              = no
+distinguished_name  = dev_legacy_distinguished_name
+req_extensions      = dev_legacy_req_extensions
+string_mask         = utf8only
+
+####################################################################
+[ dev_legacy_distinguished_name ]
+C = DE
+O = Legacy Developer
+CN = Legacy Developer
+emailAddress = legacy@developer.com
+
+####################################################################
+[ dev_legacy_req_extensions ]
+
+# This deliberately models a pre-6.11 (legacy) certificate: no key-usage and no SANs
+# at all, so it is detected as version 6.10 and carries no restrictions.
+subjectKeyIdentifier= hash
+basicConstraints    = CA:FALSE

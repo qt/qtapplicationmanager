@@ -7,6 +7,7 @@
 #include <QtCore/QVariant>
 #include <QtCore/QVariantMap>
 #include <QtCore/QDateTime>
+#include <QtCore/QVersionNumber>
 #include <QtAppManPackage/qtappmanpackageglobal.h>
 
 QT_BEGIN_NAMESPACE_AM
@@ -64,6 +65,9 @@ public:
 
     bool operator==(const Certificate &other) const;
     bool operator!=(const Certificate &other) const;
+
+    QVersionNumber version() const;
+    static QVersionNumber currentVersion();
 
     Q_INVOKABLE QStringList packageIds() const;
     Q_INVOKABLE bool matchPackageId(const QString &name) const;

@@ -1,0 +1,32 @@
+HOME            = .
+RANDFILE        = $ENV::HOME/.rnd
+
+####################################################################
+[ req ]
+prompt              = no
+distinguished_name  = dev_pkgidonly_distinguished_name
+req_extensions      = dev_pkgidonly_req_extensions
+string_mask         = utf8only
+
+####################################################################
+[ dev_pkgidonly_distinguished_name ]
+C = DE
+O = Pkgid-only Developer
+CN = Pkgid-only Developer
+emailAddress = pkgidonly@developer.com
+
+####################################################################
+[ dev_pkgidonly_req_extensions ]
+
+subjectKeyIdentifier= hash
+basicConstraints    = CA:FALSE
+keyUsage            = nonRepudiation, digitalSignature, keyEncipherment, decipherOnly
+subjectAltName      = @dev_pkgidonly_restrictions
+
+####################################################################
+# This models a 6.11-era certificate: a valid key-usage and a package-id SAN, but no
+# application-id/capability/category SANs and no version SAN. It is detected as version 6.11,
+# where the package-id is enforced but capabilities/categories/application-ids are not (the
+# "capability loophole").
+[ dev_pkgidonly_restrictions ]
+URI.1 = "qtam://packageid/test-pkg"

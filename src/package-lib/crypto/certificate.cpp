@@ -103,10 +103,6 @@ static QStringList sanValues(const QStringList &sans, QStringView host)
 
 static bool sanValuesContainAll(const QStringList &sans, QStringView host, const QStringList &required)
 {
-    if constexpr (QT_CONFIG(am_legacy_certificates)) {
-        if (sans.isEmpty())
-            return true;
-    }
     const QStringList certValues = sanValues(sans, host);
     for (const auto &value : required) {
         bool found = false;
@@ -123,6 +119,48 @@ static bool sanValuesContainAll(const QStringList &sans, QStringView host, const
             return false;
     }
     return true;
+}
+
+/*!
+    \internal
+    Returns the certificate "version", i.e. the AM version that introduced the set of restrictions
+    this certificate carries. The version is derived from the certificate's contents, all of which
+    are issued by the CA and cannot be forged by the holder:
+
+      \list
+      \li exactly one parseable \c{qtam://version/<x.y>} SAN  ->  that version (6.12 and later)
+      \li no version SAN, but a valid AM key-usage            ->  6.11
+      \li no (or an incorrect) AM key-usage                   ->  6.10 (legacy)
+      \endlist
+
+    A missing/incorrect key-usage is the reliable discriminator for pre-6.11 (legacy) certificates.
+
+    A null version is returned for a malformed version SAN: more than one version SAN, or an
+    unparseable one. No legitimate certificate carries such a SAN, so callers must reject it.
+*/
+QVersionNumber Certificate::version() const
+{
+    const QStringList versions = sanValues(m_subjectAlternativeNames, u"version");
+    if (!versions.isEmpty()) {
+        // a legitimate certificate carries exactly one version SAN
+        if (versions.size() > 1)
+            return QVersionNumber();
+        return QVersionNumber::fromString(versions.constFirst()); // null if unparseable
+    }
+    if ((m_keyUsages == KeyUsages(KeyUsage::Store)) || (m_keyUsages == KeyUsages(KeyUsage::Developer)))
+        return QVersionNumber(6, 11);
+    return QVersionNumber(6, 10);
+}
+
+/*!
+    \internal
+    Returns the latest certificate policy version this build understands. Bump this \e only when
+    the set of certificate restrictions actually changes - not on every AM release. It is the
+    default value for the installer's minimum certificate version floor.
+*/
+QVersionNumber Certificate::currentVersion()
+{
+    return QVersionNumber(6, 12);
 }
 
 /*! \qmlmethod list<string> Certificate::packageIds()
@@ -144,6 +182,8 @@ QStringList Certificate::packageIds() const
 */
 bool Certificate::matchPackageId(const QString &packageId) const
 {
+    if (isValid() && (version() < QVersionNumber(6, 11))) // legacy certs carry no restrictions at all
+        return true;
     return sanValuesContainAll(m_subjectAlternativeNames, u"packageid", { packageId });
 }
 
@@ -166,6 +206,8 @@ QStringList Certificate::applicationIds() const
 */
 bool Certificate::matchApplicationIds(const QStringList &applicationIds) const
 {
+    if (isValid() && (version() < QVersionNumber(6, 12))) // application-id restrictions were introduced in 6.12
+        return true;
     return sanValuesContainAll(m_subjectAlternativeNames, u"applicationid", applicationIds);
 }
 
@@ -188,6 +230,8 @@ QStringList Certificate::capabilities() const
 */
 bool Certificate::matchCapabilities(const QStringList &capabilities) const
 {
+    if (isValid() && (version() < QVersionNumber(6, 12))) // capability restrictions were introduced in 6.12
+        return true;
     return sanValuesContainAll(m_subjectAlternativeNames, u"capability", capabilities);
 }
 
@@ -210,6 +254,8 @@ QStringList Certificate::categories() const
 */
 bool Certificate::matchCategories(const QStringList &categories) const
 {
+    if (isValid() && (version() < QVersionNumber(6, 12))) // category restrictions were introduced in 6.12
+        return true;
     return sanValuesContainAll(m_subjectAlternativeNames, u"category", categories);
 }
 

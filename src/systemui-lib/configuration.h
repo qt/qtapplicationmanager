@@ -10,6 +10,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariantMap>
 #include <QtCore/QVector>
+#include <QtCore/QVersionNumber>
 
 #include <chrono>
 #include <memory>
@@ -67,6 +68,7 @@ struct Q_APPMANSYSTEMUI_EXPORT ConfigurationData
         QList<CaCertificate> caCertificates;
         QStringList certificateRevocationLists;
         QStringList allowedURLs;
+        QVersionNumber minimumCertificateVersion; // null means "the version this build was compiled with"
     } installer;
 
     struct {

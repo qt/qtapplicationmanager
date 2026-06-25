@@ -8,6 +8,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QAbstractListModel>
+#include <QtCore/QVersionNumber>
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
 #include <QtAppManPackage/packageinfo.h>
 #include <QtAppManSystemUI/asynchronoustask.h>
@@ -115,6 +116,7 @@ public:
     void setHardwareId(const QString &hwId);
     QString architecture() const;
     void loadCertificates(const QList<CaCertificate> &caCertificates, const QStringList &crls = { });
+    void setMinimumCertificateVersion(const QVersionNumber &version);
     void setAllowedInstallationURLs(const QStringList &allowedURLs);
 
     void lockConfiguration();
@@ -205,6 +207,7 @@ private:
     QByteArrayList caCertificatesStore() const;
     QByteArrayList certificateRevocationLists() const;
     QHash<QByteArray, Signature::CertificateRole> certificateRoles() const;
+    QVersionNumber minimumCertificateVersion() const;
 
     // this honors the useSudoForDirectoryRemoval flag
     void removeRecursive(const QString &path) noexcept(false);

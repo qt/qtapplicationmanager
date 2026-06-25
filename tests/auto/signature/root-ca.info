@@ -1,7 +1,7 @@
-sha1 Fingerprint=9D:65:25:15:D6:30:E4:3F:CA:FF:E7:C2:A7:AA:DC:3A:45:2E:CA:BE
-notBefore=May 27 10:22:36 2026 GMT
-notAfter=May 24 10:22:36 2036 GMT
-serial=078DA32DC3BE04A469062D76E477D667B0BF9128
+sha1 Fingerprint=F7:65:48:C6:98:D5:95:1B:9B:06:21:33:60:05:B6:FF:D9:C1:95:84
+notBefore=Jun 24 18:29:41 2026 GMT
+notAfter=Jun 21 18:29:41 2036 GMT
+serial=015F07DF94B1462332F22DFEB6850A0E05409BB7
 issuer=C=DE, O=Pelagicore AG, OU=IT, CN=Pelagicore ROOT CA, emailAddress=info@pelagicore.com
 subject=C=DE, O=Pelagicore AG, OU=IT, CN=Pelagicore ROOT CA, emailAddress=info@pelagicore.com
-sha256 Fingerprint=FF:CB:16:EC:F7:1E:B1:35:78:4A:6D:84:69:01:CC:D0:A4:F8:57:61:51:6E:45:6B:39:43:6A:A2:F4:0A:81:5C
+sha256 Fingerprint=E2:CE:F2:C1:9C:DB:23:33:A9:BA:70:C9:F9:3E:64:1A:D6:06:1E:25:63:BE:FD:29:1F:33:DC:40:DF:8A:6C:7A

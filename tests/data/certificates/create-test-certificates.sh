@@ -100,6 +100,21 @@ runSSL req -config openssl-dev-huge.cnf -newkey rsa:2048 -nodes -keyout dev-cert
 runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-huge.crt -infiles dev-certs/dev-huge.csr
 runSSL pkcs12 -export -out dev-certs/dev-huge.p12 -password pass:password -inkey dev-certs/dev-huge-priv.key -nodes -in dev-certs/dev-huge.crt -name "Huge Developer Certificate"
 
+info "Generating, signing and exporting the \"legacy\" (pre-6.11) developer certificate"
+runSSL req -config openssl-dev-legacy.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-legacy-priv.key -out dev-certs/dev-legacy.csr
+runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req_legacy -out dev-certs/dev-legacy.crt -infiles dev-certs/dev-legacy.csr
+runSSL pkcs12 -export -out dev-certs/dev-legacy.p12 -password pass:password -inkey dev-certs/dev-legacy-priv.key -nodes -in dev-certs/dev-legacy.crt -name "Legacy Developer Certificate"
+
+info "Generating, signing and exporting the \"pkgid-only\" (6.11-era) developer certificate"
+runSSL req -config openssl-dev-pkgidonly.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-pkgidonly-priv.key -out dev-certs/dev-pkgidonly.csr
+runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-pkgidonly.crt -infiles dev-certs/dev-pkgidonly.csr
+runSSL pkcs12 -export -out dev-certs/dev-pkgidonly.p12 -password pass:password -inkey dev-certs/dev-pkgidonly-priv.key -nodes -in dev-certs/dev-pkgidonly.crt -name "Pkgid-only Developer Certificate"
+
+info "Generating, signing and exporting the \"multiversion\" (malformed) developer certificate"
+runSSL req -config openssl-dev-multiversion.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-multiversion-priv.key -out dev-certs/dev-multiversion.csr
+runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-multiversion.crt -infiles dev-certs/dev-multiversion.csr
+runSSL pkcs12 -export -out dev-certs/dev-multiversion.p12 -password pass:password -inkey dev-certs/dev-multiversion-priv.key -nodes -in dev-certs/dev-multiversion.crt -name "Multiversion Developer Certificate"
+
 info "Generating, signing and exporting the \"revoked\" developer certificate"
 runSSL req -config openssl-dev-revoked.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-revoked-priv.key -out dev-certs/dev-revoked.csr
 runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-revoked.crt -infiles dev-certs/dev-revoked.csr

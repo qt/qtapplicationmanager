@@ -206,6 +206,7 @@ void InstallationTask::execute()
                 QByteArray sigDigest = m_extractor->installationReport().digest();
 
                 Signature storeSig(sigDigest);
+                storeSig.requireMinimumCertificateVersion(m_pm->minimumCertificateVersion());
                 storeSig.requireRevocationCheck(m_pm->certificateRevocationLists());
                 storeSig.requireKeyUsage(Certificate::KeyUsage::Store);
                 storeSig.requireCertificateRoles(m_pm->certificateRoles());
@@ -218,6 +219,7 @@ void InstallationTask::execute()
                         // did not verify - if we have a hardware-id, try to verify with it
                         sigDigest = QMessageAuthenticationCode::hash(sigDigest, m_pm->hardwareId().toUtf8(), QCryptographicHash::Sha256);
                         Signature storeHwidSig(sigDigest);
+                        storeHwidSig.requireMinimumCertificateVersion(m_pm->minimumCertificateVersion());
                         storeHwidSig.requireRevocationCheck(m_pm->certificateRevocationLists());
                         storeHwidSig.requireKeyUsage(Certificate::KeyUsage::Store);
                         storeHwidSig.requireCertificateRoles(m_pm->certificateRoles());
@@ -269,6 +271,7 @@ void InstallationTask::execute()
                 }
 
                 Signature devSig(m_extractor->installationReport().digest());
+                devSig.requireMinimumCertificateVersion(m_pm->minimumCertificateVersion());
                 devSig.requireRevocationCheck(m_pm->certificateRevocationLists());
                 devSig.requireKeyUsage(Certificate::KeyUsage::Developer);
                 devSig.requirePackageId(m_packageId);

@@ -7,6 +7,7 @@
 
 #include <QtCore/QString>
 #include <QtCore/QByteArray>
+#include <QtCore/QVersionNumber>
 #include <QtAppManPackage/qtappmanpackageglobal.h>
 #include <QtAppManPackage/certificate.h>
 
@@ -21,7 +22,8 @@ public:
     ~Signature();
 
     QByteArray create(const QByteArray &signingCertificatePkcs12,
-                      const QByteArray &signingCertificatePassword) noexcept(false);
+                      const QByteArray &signingCertificatePassword,
+                      Certificate *signerCertificate = nullptr) noexcept(false);
 
     struct VerificationResult
     {
@@ -51,6 +53,7 @@ public:
         Root,
     };
 
+    void requireMinimumCertificateVersion(const QVersionNumber &version);
     void requireKeyUsage(Certificate::KeyUsages keyUsages);
     void requirePackageId(const QString &packageId);
     void requireApplicationIds(const QStringList &applicationIds);

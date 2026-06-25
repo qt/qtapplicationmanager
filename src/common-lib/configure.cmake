@@ -122,13 +122,6 @@ qt_feature("am-widgets-support" PUBLIC
     DISABLE INPUT_widgets_support STREQUAL 'no'
 )
 
-qt_feature("am-legacy-certificates" PUBLIC
-    LABEL "Support legacy packaging certificates"
-    AUTODETECT OFF
-    ENABLE INPUT_legacy-certificates STREQUAL 'yes'
-    DISABLE INPUT_legacy-certificates STREQUAL 'no'
-)
-
 qt_feature("am-reproducible-build" PRIVATE
     LABEL "Make the build fully reproducible"
     AUTODETECT OFF
@@ -139,7 +132,6 @@ qt_feature("am-reproducible-build" PRIVATE
 qt_configure_add_summary_section(NAME "Qt Application Manager")
 qt_configure_add_summary_entry(ARGS "am-system-libyaml")
 qt_configure_add_summary_entry(ARGS "am-system-libarchive")
-qt_configure_add_summary_entry(ARGS "am-legacy-certificates")
 qt_configure_add_summary_entry(ARGS "am-tools-only")
 
 if (NOT QT_FEATURE_am_tools_only)
@@ -164,13 +156,3 @@ if (NOT QT_FEATURE_am_tools_only)
     qt_configure_add_summary_entry(ARGS "am-reproducible-build")
 endif()
 qt_configure_end_summary_section() # end of "Qt ApplicationManger" section
-
-qt_configure_add_report_entry(
-    TYPE WARNING
-    MESSAGE [[
-Legacy packaging certificate support is enabled.
-In this mode, restrictions on package-id, application-ids, capabilities or categories in package
-signing certificates are effectively ignored!
-]]
-    CONDITION QT_FEATURE_am_legacy_certificates
-)

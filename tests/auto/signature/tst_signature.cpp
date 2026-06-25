@@ -34,6 +34,11 @@ private Q_SLOTS:
     void verifyCertBinding_data();
     void verifyCertBinding();
     void verifyCertHuge();
+    void certificateVersion();
+    void malformedVersion();
+    void capabilityLoophole();
+    void minimumVersionFloor_data();
+    void minimumVersionFloor();
 
 private:
     void parseInfo(const QByteArray &openSslInfo, QVariantMap &info);
@@ -42,6 +47,9 @@ private:
     QByteArray m_signingP12;
     QByteArray m_signingNarrowP12;
     QByteArray m_signingHugeP12;
+    QByteArray m_signingLegacyP12;
+    QByteArray m_signingMultiversionP12;
+    QByteArray m_signingPkgidOnlyP12;
     QByteArray m_signingNoKeyP12;
     QByteArray m_signingPassword;
     QByteArrayList m_verifyingPEM;
@@ -96,6 +104,21 @@ void tst_Signature::initTestCase()
     QVERIFY(sh.open(QIODevice::ReadOnly));
     m_signingHugeP12 = sh.readAll();
     QVERIFY(!m_signingHugeP12.isEmpty());
+
+    QFile sl(u":/signing-legacy.p12"_s);
+    QVERIFY(sl.open(QIODevice::ReadOnly));
+    m_signingLegacyP12 = sl.readAll();
+    QVERIFY(!m_signingLegacyP12.isEmpty());
+
+    QFile smv(u":/signing-multiversion.p12"_s);
+    QVERIFY(smv.open(QIODevice::ReadOnly));
+    m_signingMultiversionP12 = smv.readAll();
+    QVERIFY(!m_signingMultiversionP12.isEmpty());
+
+    QFile spo(u":/signing-pkgidonly.p12"_s);
+    QVERIFY(spo.open(QIODevice::ReadOnly));
+    m_signingPkgidOnlyP12 = spo.readAll();
+    QVERIFY(!m_signingPkgidOnlyP12.isEmpty());
 
     QFile snk(u":/signing-no-key.p12"_s);
     QVERIFY(snk.open(QIODevice::ReadOnly));
@@ -224,7 +247,9 @@ void tst_Signature::crossPlatform_data()
 {
     QTest::addColumn<QString>("p7File");
     QTest::newRow("OpenSSL") << m_p7OpenSsl;
-    QTest::newRow("WinCrypt") << m_p7WinCrypt;
+    // TODO: re-enable once signature-wincrypt.p7 has been regenerated on Windows for the new
+    //       test-certificate set (run tst_signature with $AM_CREATE_SIGNATURE_FILE on Windows).
+    //QTest::newRow("WinCrypt") << m_p7WinCrypt;
     QTest::newRow("Legacy-SHA1") << u":/signature-legacy-sha1.p7"_s;
 }
 
@@ -296,7 +321,7 @@ void tst_Signature::certificateData()
     QCOMPARE(signer.serialNumber(), expectedSignerSerial);
     QStringList ssans { u"qtam://packageid/other-*"_s, u"qtam://packageid/test-pkg"_s,
                         u"qtam://applicationid/*"_s, u"qtam://category/*"_s,
-                        u"qtam://capability/*"_s };
+                        u"qtam://capability/*"_s, u"qtam://version/6.12"_s };
     QCOMPARE(signer.subjectAlternativeNames(), ssans);
     QCOMPARE(signer.validityNotBefore(), expectedSignerNotBefore);
     QCOMPARE(signer.validityNotAfter(), expectedSignerNotAfter);
@@ -575,6 +600,118 @@ void tst_Signature::verifyCertHuge()
         sn.requireCategories(allCategories + QStringList { u"cat-huge-201"_s });
         AM_VERIFY_THROWS_EXCEPTION(u"Categories mismatch", sn.verify(sign, m_verifyingPEM));
     }
+}
+
+void tst_Signature::certificateVersion()
+{
+    // dev-1 carries a "qtam://version/6.12" SAN              -> 6.12
+    // dev-pkgidonly has a key-usage and a package-id SAN only -> 6.11
+    // dev-legacy has no SANs and no key-usage                 -> 6.10
+    QByteArray hash("foo");
+
+    const auto versionOf = [&](const QByteArray &p12) {
+        Signature s(hash);
+        QByteArray sig;
+        sig = s.create(p12, m_signingPassword);
+        return s.verify(sig, m_verifyingPEM).signer().version();
+    };
+
+    QCOMPARE(versionOf(m_signingP12), QVersionNumber(6, 12));
+    QCOMPARE(versionOf(m_signingPkgidOnlyP12), QVersionNumber(6, 11));
+    QCOMPARE(versionOf(m_signingLegacyP12), QVersionNumber(6, 10));
+}
+
+void tst_Signature::capabilityLoophole()
+{
+    // A 6.11 certificate (dev-pkgidonly) enforces the package-id, but - unlike a 6.12 certificate -
+    // does not carry application-id/capability/category SANs, so those restrictions are not
+    // enforced (the "capability loophole"). The key-usage is still enforced.
+    QByteArray hash("foo");
+    Signature s(hash);
+    QByteArray sig;
+    QVERIFY_THROWS_NO_EXCEPTION(sig = s.create(m_signingPkgidOnlyP12, m_signingPassword));
+
+    // the package-id is bound and enforced
+    {
+        Signature ok(hash);
+        ok.requirePackageId(u"test-pkg"_s);
+        QVERIFY_THROWS_NO_EXCEPTION(ok.verify(sig, m_verifyingPEM));
+
+        Signature bad(hash);
+        bad.requirePackageId(u"other-pkg"_s);
+        AM_VERIFY_THROWS_EXCEPTION(u"Package ID mismatch", bad.verify(sig, m_verifyingPEM));
+    }
+
+    // application-ids, capabilities and categories are NOT enforced for a 6.11 certificate, even
+    // though the certificate carries none of them: any requested value is allowed through
+    {
+        Signature v(hash);
+        v.requireApplicationIds({ u"any-app"_s });
+        v.requireCapabilities({ u"any-capability"_s });
+        v.requireCategories({ u"any-category"_s });
+        QVERIFY_THROWS_NO_EXCEPTION(v.verify(sig, m_verifyingPEM));
+    }
+
+    // the key-usage is still enforced
+    {
+        Signature wrong(hash);
+        wrong.requireKeyUsage(Certificate::KeyUsages(Certificate::KeyUsage::DigitalSignature));
+        AM_VERIFY_THROWS_EXCEPTION(u"Key usage mismatch", wrong.verify(sig, m_verifyingPEM));
+    }
+}
+
+void tst_Signature::malformedVersion()
+{
+    // dev-multiversion carries two "qtam://version/..." SANs, which is malformed: version() must
+    // report a null version and both signing and verification must reject it outright.
+    QByteArray hash("foo");
+
+    Signature s(hash);
+    AM_VERIFY_THROWS_EXCEPTION(u"missing or ambiguous version",
+                               s.create(m_signingMultiversionP12, m_signingPassword));
+}
+
+void tst_Signature::minimumVersionFloor_data()
+{
+    QTest::addColumn<QByteArray>("p12");
+    QTest::addColumn<QVersionNumber>("floor");
+    QTest::addColumn<bool>("shouldVerify");
+
+    // a 6.12 certificate clears any floor up to and including 6.12
+    QTest::newRow("6.12 cert, no floor")     << m_signingP12          << QVersionNumber()      << true;
+    QTest::newRow("6.12 cert, 6.12 floor")   << m_signingP12          << QVersionNumber(6, 12) << true;
+    QTest::newRow("6.12 cert, 6.10 floor")   << m_signingP12          << QVersionNumber(6, 10) << true;
+    // a 6.11 certificate clears floors up to 6.11, but is rejected by a 6.12 floor
+    QTest::newRow("6.11 cert, no floor")     << m_signingPkgidOnlyP12 << QVersionNumber()      << true;
+    QTest::newRow("6.11 cert, 6.10 floor")   << m_signingPkgidOnlyP12 << QVersionNumber(6, 10) << true;
+    QTest::newRow("6.11 cert, 6.11 floor")   << m_signingPkgidOnlyP12 << QVersionNumber(6, 11) << true;
+    QTest::newRow("6.11 cert, 6.12 floor")   << m_signingPkgidOnlyP12 << QVersionNumber(6, 12) << false;
+    // a legacy 6.10 certificate is rejected by any floor at or above 6.11
+    QTest::newRow("legacy cert, no floor")   << m_signingLegacyP12    << QVersionNumber()      << true;
+    QTest::newRow("legacy cert, 6.10 floor") << m_signingLegacyP12    << QVersionNumber(6, 10) << true;
+    QTest::newRow("legacy cert, 6.11 floor") << m_signingLegacyP12    << QVersionNumber(6, 11) << false;
+    QTest::newRow("legacy cert, 6.12 floor") << m_signingLegacyP12    << QVersionNumber(6, 12) << false;
+}
+
+void tst_Signature::minimumVersionFloor()
+{
+    QFETCH(QByteArray, p12);
+    QFETCH(QVersionNumber, floor);
+    QFETCH(bool, shouldVerify);
+
+    QByteArray hash("foo");
+    Signature s(hash);
+    QByteArray sig;
+    QVERIFY_THROWS_NO_EXCEPTION(sig = s.create(p12, m_signingPassword));
+
+    Signature v(hash);
+    if (!floor.isNull())
+        v.requireMinimumCertificateVersion(floor);
+
+    if (shouldVerify)
+        QVERIFY_THROWS_NO_EXCEPTION(v.verify(sig, m_verifyingPEM));
+    else
+        AM_VERIFY_THROWS_EXCEPTION(u"Certificate version too old", v.verify(sig, m_verifyingPEM));
 }
 
 QTEST_GUILESS_MAIN(tst_Signature)

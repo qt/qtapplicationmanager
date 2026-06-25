@@ -495,6 +495,18 @@ ui:
         \li A list of file paths to CA-certificates that are used to verify packages. For more
             details, see the \l {Public Key Infrastructure} {Installer documentation}.
     \row
+        \li [\c installer/minimumCertificateVersion]
+        \li string
+        \target minimum certificate version
+        \li The minimum version of developer and store certificates that the installer will accept
+            when verifying packages, given as a Qt version string (e.g. \c{"6.12"}). Certificates
+            older than this version are rejected at install time. The value denotes the application
+            manager version that introduced the set of restrictions the certificate has to carry;
+            it only changes when the certificate policy actually changes. If not set, it defaults to
+            the version this application manager was built with. Lowering it below the built-in
+            default re-enables support for older, less restrictive certificates and is a security
+            risk. For more details, see the \l {Public Key Infrastructure} {Installer documentation}.
+    \row
         \li [\c installer/allowedURLs]
         \li list<string>
         \target allowed installation urls

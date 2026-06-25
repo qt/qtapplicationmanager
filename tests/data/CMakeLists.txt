@@ -29,6 +29,9 @@ set(TEST_DATA_FILES
     certificates/openssl-dev-huge.cnf
     certificates/openssl-dev-revoked.cnf
     certificates/openssl-dev-expired.cnf
+    certificates/openssl-dev-legacy.cnf
+    certificates/openssl-dev-multiversion.cnf
+    certificates/openssl-dev-pkgidonly.cnf
     certificates/openssl-dev-ca.cnf
     certificates/openssl-store.cnf
     certificates/openssl-store-ca.cnf

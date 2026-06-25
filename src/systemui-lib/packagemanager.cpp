@@ -336,6 +336,7 @@ void PackageManager::enableInstaller()
                     d->developerSignature = devMode.value(u"developerSignature"_s).toByteArray();
 
                     Signature s("developmentMode");
+                    s.requireMinimumCertificateVersion(minimumCertificateVersion());
                     s.requireKeyUsage(Certificate::KeyUsage::Developer);
                     s.requireRevocationCheck(d->certificateRevocationLists);
                     s.requireCertificateRoles(d->certificateRoles);
@@ -750,6 +751,7 @@ void PackageManager::setDeveloperCertificate(const QByteArray &pkcs12Data, const
 
     if (!pkcs12Data.isEmpty()) {
         Signature s("developmentMode");
+        s.requireMinimumCertificateVersion(minimumCertificateVersion());
         s.requireKeyUsage(Certificate::KeyUsage::Developer);
         signature = s.create(pkcs12Data, pkcs12Password);
 
@@ -891,6 +893,19 @@ QByteArrayList PackageManager::certificateRevocationLists() const
 QHash<QByteArray, Signature::CertificateRole> PackageManager::certificateRoles() const
 {
     return d->certificateRoles;
+}
+
+QVersionNumber PackageManager::minimumCertificateVersion() const
+{
+    return d->minimumCertificateVersion.isNull() ? Certificate::currentVersion()
+                                                 : d->minimumCertificateVersion;
+}
+
+void PackageManager::setMinimumCertificateVersion(const QVersionNumber &version)
+{
+    if (isConfigurationLocked())
+        return;
+    d->minimumCertificateVersion = version;
 }
 
 void PackageManager::removeRecursive(const QString &path) noexcept(false)

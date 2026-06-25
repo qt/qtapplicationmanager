@@ -677,6 +677,8 @@ void Main::setupInstaller(const Configuration *cfg) noexcept(false)
     if (!cfg->yaml.flags.noSecurity) {
         m_packageManager->loadCertificates(cfg->yaml.installer.caCertificates,
                                            cfg->yaml.installer.certificateRevocationLists);
+        if (!cfg->yaml.installer.minimumCertificateVersion.isNull())
+            m_packageManager->setMinimumCertificateVersion(cfg->yaml.installer.minimumCertificateVersion);
     }
 
     m_packageManager->enableInstaller();

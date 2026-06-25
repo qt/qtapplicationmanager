@@ -29,6 +29,11 @@ Signature::~Signature()
     delete d;
 }
 
+void Signature::requireMinimumCertificateVersion(const QVersionNumber &version)
+{
+    d->requireMinimumCertificateVersion = version;
+}
+
 void Signature::requireKeyUsage(Certificate::KeyUsages keyUsages)
 {
     d->requiredKeyUsages = keyUsages;
@@ -65,7 +70,8 @@ void Signature::requireRevocationCheck(const QByteArrayList &crls)
 }
 
 QByteArray Signature::create(const QByteArray &signingCertificatePkcs12,
-                             const QByteArray &signingCertificatePassword)
+                             const QByteArray &signingCertificatePassword,
+                             Certificate *signerCertificate)
 {
     if (!d->requiredCRLs.isEmpty())
         qCWarning(LogCrypto) << "CRL checking is ignored as it does not work when creating signatures";
@@ -78,7 +84,11 @@ QByteArray Signature::create(const QByteArray &signingCertificatePkcs12,
         throw Exception("cannot sign an empty hash value");
 
     QByteArray sig = d->create(signingCertificatePkcs12, signingCertificatePassword,
-                               [this](const Certificate &signer) { d->checkSignerCertificate(signer); });
+                               [this, signerCertificate](const Certificate &signer) {
+        if (signerCertificate)
+            *signerCertificate = signer;
+        d->checkSignerCertificate(signer);
+    });
     // very useful while debugging
     // static int counter = 0;
     // QFile f(QDir::home().absoluteFilePath(u"sig%1.der"_s.arg(++counter)));
@@ -97,6 +107,22 @@ Signature::VerificationResult Signature::verify(const QByteArray &signaturePkcs7
 
 void SignaturePrivate::checkSignerCertificate(const Certificate &signer)
 {
+    const QVersionNumber certVersion = signer.version();
+
+    // a null version means a malformed version SAN (more than one, or unparseable): reject outright,
+    // regardless of the configured floor - no legitimate certificate looks like this.
+    if (certVersion.isNull())
+        throw Exception("the signing certificate has a missing or ambiguous version");
+
+    if (!requireMinimumCertificateVersion.isNull() && (certVersion < requireMinimumCertificateVersion)) {
+        throw Exception("Certificate version too old: the certificate is a %1 certificate, but the "
+                        "minimum required version is %2")
+            .arg(certVersion.toString(), requireMinimumCertificateVersion.toString());
+    }
+
+    // Per-version enforcement (the matchXxx() calls below allow-through anything a given
+    // certificate version does not yet carry, so they only need to be gated for key-usage here).
+
     if (!requirePackageId.isEmpty()) {
         if (!signer.matchPackageId(requirePackageId)) {
             throw Exception("Package ID mismatch: the certificate only allows '%1'; cannot sign '%2'")
@@ -129,13 +155,12 @@ void SignaturePrivate::checkSignerCertificate(const Certificate &signer)
         }
     }
 
-    if constexpr (!QT_CONFIG(am_legacy_certificates)) {
-        if (requiredKeyUsages) {
-            if (signer.keyUsages() != requiredKeyUsages) {
-                throw Exception("Key usage mismatch on certificate: expected 0x%1, but got 0x%2")
-                    .arg(requiredKeyUsages.toInt(), 3, 16, u'0')
-                    .arg(signer.keyUsages().toInt(), 3, 16, u'0');
-            }
+    // key-usage was introduced with the 6.11 certificates; legacy certs have no (usable) key-usage
+    if (requiredKeyUsages && (certVersion >= QVersionNumber(6, 11))) {
+        if (signer.keyUsages() != requiredKeyUsages) {
+            throw Exception("Key usage mismatch on certificate: expected 0x%1, but got 0x%2")
+                .arg(requiredKeyUsages.toInt(), 3, 16, u'0')
+                .arg(signer.keyUsages().toInt(), 3, 16, u'0');
         }
     }
 }

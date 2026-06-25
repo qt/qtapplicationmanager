@@ -22,3 +22,8 @@ emailAddress = info@pelagicore.com
 subjectKeyIdentifier= hash
 basicConstraints    = CA:FALSE
 keyUsage            = nonRepudiation, digitalSignature, keyEncipherment, encipherOnly
+subjectAltName      = @store_restrictions
+
+####################################################################
+[ store_restrictions ]
+URI.1 = "qtam://version/6.12"

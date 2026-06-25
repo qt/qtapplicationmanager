@@ -49,6 +49,7 @@ public:
     QByteArrayList caCertificatesStore;
     QByteArrayList certificateRevocationLists;
     QHash<QByteArray, Signature::CertificateRole> certificateRoles;
+    QVersionNumber minimumCertificateVersion;
     bool cleanupBrokenInstallationsDone = false;
 
 #if QT_CONFIG(am_installer)

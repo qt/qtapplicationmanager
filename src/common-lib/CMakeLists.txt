@@ -23,7 +23,7 @@ qt_internal_add_module(AppManCommonPrivate
         processtitle.cpp processtitle.h
         qml-utilities.cpp qml-utilities.h
         qtyaml.cpp qtyaml.h
-        systemd.cpp systemd.h
+        systemd.cpp systemd.h systemd_p.h
         unix-utilities.cpp unix-utilities.h
         unixsignalhandler.cpp unixsignalhandler.h
         utilities.cpp utilities.h

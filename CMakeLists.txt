@@ -105,6 +105,7 @@ if(AM_COVERAGE)
         --ignore-errors mismatch,mismatch
         --ignore-errors unused,unused
         --ignore-errors gcov,gcov
+        --filter branch,initializer,trivial
     )
 
     add_custom_target(check_coverage

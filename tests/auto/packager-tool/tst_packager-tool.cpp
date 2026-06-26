@@ -5,6 +5,9 @@
 
 #include <QtTest>
 #include <QCoreApplication>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 #if defined(Q_OS_LINUX)
 #  include <unistd.h>
@@ -18,6 +21,8 @@
 #include "exception.h"
 #include "packagedatabase.h"
 #include "packagemanager.h"
+#include "packageextractor.h"
+#include "installationreport.h"
 #include "qmlinprocruntime.h"
 #include "runtimefactory.h"
 #include "utilities.h"
@@ -50,6 +55,8 @@ private Q_SLOTS:
     void brokenMetadata();
     void iconFileName();
     void passwordOptions();
+    void yamlToJson();
+    void extraMetadata();
 
 private:
     QString pathTo(const char *file)
@@ -760,6 +767,100 @@ void tst_PackagerTool::passwordOptions()
         QVERIFY(!p.call());
         QVERIFY2(p.stdErr.contains("Unknown password format"), p.stdErr.constData());
     }
+}
+
+void tst_PackagerTool::yamlToJson()
+{
+    const QString yamlFile = pathTo("y2j.yaml");
+    {
+        QFile f(yamlFile);
+        QVERIFY(f.open(QFile::WriteOnly));
+        QVERIFY(f.write("key: value\n"
+                        "list: [ 1, 2, 3 ]\n"
+                        "---\n"
+                        "second: doc\n") > 0);
+    }
+
+    // no index -> all documents are returned as a JSON array
+    {
+        PackagerTool p({ u"yaml-to-json"_s, yamlFile });
+        QVERIFY2(p.call(), p.failure.constData());
+        const auto json = QJsonDocument::fromJson(p.stdOut);
+        QVERIFY(json.isArray());
+        const auto docs = json.array();
+        QCOMPARE(docs.size(), 2);
+        QCOMPARE(docs.at(0).toObject().value(u"key"_s).toString(), u"value"_s);
+        QCOMPARE(docs.at(0).toObject().value(u"list"_s).toArray().size(), 3);
+        QCOMPARE(docs.at(1).toObject().value(u"second"_s).toString(), u"doc"_s);
+    }
+
+    // --document-index selects a single sub-document
+    {
+        PackagerTool p({ u"yaml-to-json"_s, u"--document-index"_s, u"1"_s, yamlFile });
+        QVERIFY2(p.call(), p.failure.constData());
+        const auto json = QJsonDocument::fromJson(p.stdOut);
+        QVERIFY(json.isObject());
+        QCOMPARE(json.object().value(u"second"_s).toString(), u"doc"_s);
+    }
+
+    // an out-of-range index is an error
+    {
+        PackagerTool p({ u"yaml-to-json"_s, u"-i"_s, u"5"_s, yamlFile });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("only indices 0 to"), p.stdErr.constData());
+    }
+
+    // a non-numeric index is an error
+    {
+        PackagerTool p({ u"yaml-to-json"_s, u"-i"_s, u"abc"_s, yamlFile });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("Invalid document index"), p.stdErr.constData());
+    }
+}
+
+void tst_PackagerTool::extraMetadata()
+{
+    QTemporaryDir tmp;
+    createInfoYaml(tmp);
+    createIconPng(tmp);
+    createIconPng(tmp, u"app-"_s);
+    createIconPng(tmp, u"intent-"_s);
+    createCode(tmp);
+
+    // an extra-metadata file (read via -M) alongside an inline signed snippet (via -s)
+    const QString extraFile = pathTo("extra.yaml");
+    {
+        QFile f(extraFile);
+        QVERIFY(f.open(QFile::WriteOnly));
+        QVERIFY(f.write("from-file: 1\nnested: { a: b }\n") > 0);
+    }
+
+    const QString pkg = pathTo("extra.ampkg");
+    {
+        PackagerTool p({ u"create-package"_s, pkg, tmp.path(),
+                         u"--extra-metadata"_s, u"{ inline: hello }"_s,
+                         u"--extra-metadata-file"_s, extraFile,
+                         u"--extra-signed-metadata"_s, u"{ secret: 42 }"_s });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+
+    // extract the package again and verify the metadata round-tripped into the installation report
+    QTemporaryDir extractDir;
+    QVERIFY(extractDir.isValid());
+    PackageExtractor extractor(QUrl::fromLocalFile(pkg), extractDir.path());
+    QVERIFY2(extractor.extract(), qPrintable(extractor.errorString()));
+
+    const InstallationReport &report = extractor.installationReport();
+
+    const QVariantMap expectedMeta {
+        { u"inline"_s, u"hello"_s },
+        { u"from-file"_s, 1 },
+        { u"nested"_s, QVariantMap {{ u"a"_s, u"b"_s }} }
+    };
+    QCOMPARE(report.extraMetaData(), expectedMeta);
+
+    const QVariantMap expectedSignedMeta {{ u"secret"_s, 42 }};
+    QCOMPARE(report.extraSignedMetaData(), expectedSignedMeta);
 }
 
 bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const std::function<void(QVariantMap &)> &manipulate)

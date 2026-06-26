@@ -19,7 +19,7 @@
 #include <QtCore/private/qcoreapplication_p.h>
 #include <QGuiApplication>
 #include <QIcon>
-#if !defined(QT_NO_OPENGL)
+#if QT_CONFIG(opengl)
 #  include <private/qopenglcontext_p.h>
 #endif
 #include <private/qguiapplication_p.h>
@@ -50,15 +50,15 @@ static const QMap<int, QString> &openGLProfileNames()
     return map;
 }
 
-bool QtAM::SharedMain::s_initialized = false;
+bool QtAM::SharedMain::s_preConstructorCalled = false;
 
 SharedMain::SharedMain()
 {
-    if (Q_UNLIKELY(!s_initialized || !QCoreApplication::instance())) {
-        qCCritical(LogSystem) << "ERROR: Q(Gui)Application must be instantiated after SharedMain::initialize "
+    if (Q_UNLIKELY(!s_preConstructorCalled || !QCoreApplication::instance())) {
+        qCCritical(LogSystem) << "ERROR: Q(Gui)Application must be instantiated after SharedMain::preConstructor "
                                  "has been called and before SharedMain is instantiated";
     }
-#if !defined(QT_NO_OPENGL)
+#if QT_CONFIG(opengl)
     if (!(QGuiApplicationPrivate::instance()
             && QGuiApplicationPrivate::instance()->platformIntegration()
             && QGuiApplicationPrivate::instance()->platformIntegration()->hasCapability(QPlatformIntegration::OpenGL))) {
@@ -74,22 +74,24 @@ SharedMain::SharedMain()
 SharedMain::~SharedMain()
 { }
 
-// Initialization routine that needs to be called BEFORE the Q*Application constructor
-void SharedMain::initialize()
+// We need to do some things BEFORE the Q*Application constructor runs, so we're using this
+// old trick to do this hooking transparently for the user of the class.
+int &SharedMain::preConstructor(int &argc)
 {
     if (Q_UNLIKELY(QCoreApplication::instance()))
-        qCCritical(LogSystem) << "ERROR: SharedMain::initialize must be called before Q(Gui)Application is instantiated";
+        qCCritical(LogSystem) << "ERROR: SharedMain::preConstructor must be called before Q(Gui)Application is instantiated";
 
-    s_initialized = true;
+    s_preConstructorCalled = true;
 
-#if !defined(QT_NO_OPENGL)
-    // this is needed for both WebEngine and Wayland Multi-screen rendering
+#if QT_CONFIG(opengl)
+    // this is needed for both WebEngine and Wayland compositor
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
     // Calling this semi-private function before the QGuiApplication constructor is the only way to
     // set a custom global shared GL context. We are NOT creating it right now, since we still need
     // to parse the requested format from the config files - the creation is completed later
     // in setupOpenGL().
+    // You can however disable this shared context via the YAML configuration to save on RAM.
     qt_gl_set_global_share_context(new QOpenGLContext());
 #endif
 
@@ -101,13 +103,6 @@ void SharedMain::initialize()
 
     registerDBusTypes();
     ensureLibDBusIsAvailable();
-}
-
-// We need to do some things BEFORE the Q*Application constructor runs, so we're using this
-// old trick to do this hooking transparently for the user of the class.
-int &SharedMain::preConstructor(int &argc)
-{
-    initialize();
     return argc;
 }
 
@@ -185,14 +180,13 @@ void SharedMain::setupLogging(bool verbose, const QStringList &loggingRules,
     StartupTimer::instance()->checkpoint("after logging setup");
 }
 
-void SharedMain::setupOpenGL(const OpenGLConfiguration &openGLConfiguration)
+void SharedMain::setupOpenGL(const OpenGLConfiguration &openGLConfiguration, bool forceGlobalSharedContext)
 {
-#if !defined(QT_NO_OPENGL)
+#if QT_CONFIG(opengl)
     QString profileName = openGLConfiguration.desktopProfile;
     int majorVersion = openGLConfiguration.esMajorVersion;
     int minorVersion = openGLConfiguration.esMinorVersion;
 
-    QOpenGLContext *globalContext = qt_gl_global_share_context();
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
     bool isES = (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES);
 
@@ -249,29 +243,42 @@ void SharedMain::setupOpenGL(const OpenGLConfiguration &openGLConfiguration)
     if ((m_requestedOpenGLProfile != QSurfaceFormat::NoProfile) || (m_requestedOpenGLMajorVersion > -1))
         QSurfaceFormat::setDefaultFormat(format);
 
-    // Setting the screen is normally done by the QOpenGLContext constructor, but our constructor
-    // ran before the QGuiApplication constructor, so the screen was not initialized yet. So we have
-    // to tell the context about the screen again now:
-    globalContext->setScreen(QGuiApplication::primaryScreen());
+    QOpenGLContext *globalContext = qt_gl_global_share_context();
+    const char *globalContextState = "disabled";
+    if (openGLConfiguration.globalSharedContext || forceGlobalSharedContext) {
+        globalContextState = openGLConfiguration.globalSharedContext ? "enabled" : "enabled (forced)";
+        // Setting the screen is normally done by the QOpenGLContext constructor, but our constructor
+        // ran before the QGuiApplication constructor, so the screen was not initialized yet. So we have
+        // to tell the context about the screen again now:
+        globalContext->setScreen(QGuiApplication::primaryScreen());
 
-    if (!globalContext->create())
-        qCWarning(LogGraphics) << "Failed to create the global shared OpenGL context.";
+        if (!globalContext->create())
+            qCWarning(LogGraphics) << "Failed to create the global shared OpenGL context.";
 
-    // check if we got what we requested on the OpenGL side
-    checkOpenGLFormat("global shared context", globalContext->format());
+        // check if we got what we requested on the OpenGL side
+        checkOpenGLFormat("global shared context", globalContext->format());
 
-    qAddPostRoutine([]() { delete qt_gl_global_share_context(); });
+        qAddPostRoutine([]() { delete qt_gl_global_share_context(); });
+    } else {
+        delete globalContext;
+        qt_gl_set_global_share_context(nullptr);
+        // the normal way to reset the attribute would print a warning, so we do it manually
+        //QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts, false);
+        QCoreApplicationPrivate::attribs &= ~(1U << Qt::AA_ShareOpenGLContexts);
+    }
+    qCDebug(LogGraphics) << "The global shared OpenGL context is" << globalContextState;
 
     StartupTimer::instance()->checkpoint("after OpenGL setup");
 
 #else
     Q_UNUSED(openGLConfiguration)
+    Q_UNUSED(forceGlobalSharedContext)
 #endif
 }
 
 void SharedMain::checkOpenGLFormat(const char *what, const QSurfaceFormat &format) const
 {
-#if !defined(QT_NO_OPENGL)
+#if QT_CONFIG(opengl)
     if ((m_requestedOpenGLProfile != QSurfaceFormat::NoProfile)
             && (format.profile() != m_requestedOpenGLProfile)) {
         qCWarning(LogGraphics) << "Failed to get the requested OpenGL profile"

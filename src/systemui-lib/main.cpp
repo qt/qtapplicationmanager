@@ -235,14 +235,14 @@ void Main::setup(const Configuration *cfg) noexcept(false)
 
     registerResources(cfg->yaml.ui.resources);
 
-    setupOpenGL(cfg->yaml.ui.opengl);
+    setupSingleOrMultiProcess(cfg);
+    setupOpenGL(cfg->yaml.ui.opengl, !m_isSingleProcessMode);
     setupIconTheme(cfg->yaml.ui.iconThemeSearchPaths, cfg->yaml.ui.iconThemeName);
 
     loadStartupPlugins(cfg->yaml.plugins.startup);
     parseSystemProperties(cfg->yaml.systemProperties);
 
     setMainQmlFile(cfg->yaml.ui.mainQml);
-    setupSingleOrMultiProcess(cfg);
     setupRuntimesAndContainers(cfg);
 
     loadPackageDatabase(cfg);

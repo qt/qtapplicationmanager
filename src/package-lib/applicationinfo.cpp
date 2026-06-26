@@ -46,7 +46,9 @@ QVariantMap ApplicationInfo::allAppProperties() const
 
 quint32 ApplicationInfo::dataStreamVersion()
 {
-    return 7;
+    return 7
+           + OpenGLConfiguration::dataStreamVersion()
+           + WatchdogConfiguration::dataStreamVersion();
 }
 
 void ApplicationInfo::writeToDataStream(QDataStream &ds) const

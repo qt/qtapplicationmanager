@@ -25,14 +25,13 @@ public:
     SharedMain();
     ~SharedMain();
 
-    static void initialize();
     static int &preConstructor(int &argc);
     void setupIconTheme(const QStringList &themeSearchPaths, const QString &themeName);
     void setupQmlDebugging(bool qmlDebugging);
     void setupWatchdog(const WatchdogConfiguration &cfg);
     void setupLogging(bool verbose, const QStringList &loggingRules, const QString &messagePattern,
                       const QVariant &useAMConsoleLogger);
-    void setupOpenGL(const OpenGLConfiguration &openGLConfiguration);
+    void setupOpenGL(const OpenGLConfiguration &openGLConfiguration, bool forceGlobalSharedContext = false);
     void checkOpenGLFormat(const char *what, const QSurfaceFormat &format) const;
 
     [[noreturn]] static void errorExit(int result = 2);
@@ -49,7 +48,7 @@ public:
     };
 
 private:
-    static bool s_initialized;
+    static bool s_preConstructorCalled;
     QSurfaceFormat::OpenGLContextProfile m_requestedOpenGLProfile = QSurfaceFormat::NoProfile;
     int m_requestedOpenGLMajorVersion = -1;
     int m_requestedOpenGLMinorVersion = -1;

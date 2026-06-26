@@ -18,6 +18,8 @@ logging:
 ui:
   fullscreen: false
   mainQml: "${CONFIG_DIR}/system-ui/main.qml"
+  opengl:
+    globalSharedContext: yes
 
 systemProperties:
   protected:

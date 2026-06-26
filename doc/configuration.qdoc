@@ -872,6 +872,12 @@ The \c opengl sub-object lets you specify the required OpenGL version and/or pro
         \li int
         \li When set, the application manager requests the specified OpenGL ES minor version.
             For more information, see \c esMajorVersion above.
+    \row
+        \li \c globalSharedContext
+        \li bool
+        \li The global, shared OpenGL context is disabled by default, but it can be enabled by
+            setting this flag to \c true. This corresponds to the Qt::AA_ShareOpenGLContexts
+            flag for normal Qt applications.
 \endtable
 
 */

@@ -17,6 +17,7 @@ public:
     QString desktopProfile;
     int esMajorVersion = -1;
     int esMinorVersion = -1;
+    bool globalSharedContext = false;
 
     QVariantMap toMap() const;
     static OpenGLConfiguration fromMap(const QVariantMap &map);
@@ -25,10 +26,12 @@ public:
     OpenGLConfiguration() = default;
     OpenGLConfiguration(const OpenGLConfiguration &copy) = default;
     OpenGLConfiguration &operator=(const OpenGLConfiguration &other) = default;
-    explicit OpenGLConfiguration(const QString &profile, int major, int minor);
+    explicit OpenGLConfiguration(const QString &profile, int major, int minor, bool sharedContext);
 
     bool operator==(const OpenGLConfiguration &other) const;
     bool operator!=(const OpenGLConfiguration &other) const;
+
+    static quint32 dataStreamVersion();
 };
 
 Q_APPMANCOMMON_EXPORT QDataStream &operator<<(QDataStream &ds, const OpenGLConfiguration &cfg);

@@ -153,15 +153,16 @@ bool WatchdogConfiguration::operator!=(const WatchdogConfiguration &other) const
     return !(*this == other);
 }
 
-static constexpr quint32 WatchdogConfigurationVersion = 1;
+quint32 WatchdogConfiguration::dataStreamVersion()
+{
+    return 2;
+}
 
 QDataStream &operator<<(QDataStream &ds, const WatchdogConfiguration &cfg)
 {
     auto msOut = [](QDataStream &ds, std::chrono::milliseconds ms) {
         ds << qint64(ms.count());
     };
-
-    ds << quint32(WatchdogConfigurationVersion);
 
     msOut(ds, cfg.eventloop.checkInterval);
     msOut(ds, cfg.eventloop.warnTimeout);
@@ -182,15 +183,6 @@ QDataStream &operator>>(QDataStream &ds, WatchdogConfiguration &cfg)
         ds >> cnt;
         ms = std::chrono::milliseconds(cnt);
     };
-
-    quint32 version = 0;
-    ds >> version;
-
-    if (version != WatchdogConfigurationVersion) {
-        cfg = { };
-        ds.setStatus(QDataStream::ReadCorruptData);
-        return ds;
-    }
 
     msIn(ds, cfg.eventloop.checkInterval);
     msIn(ds, cfg.eventloop.warnTimeout);

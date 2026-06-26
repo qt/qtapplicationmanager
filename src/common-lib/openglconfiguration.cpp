@@ -17,6 +17,8 @@ QVariantMap OpenGLConfiguration::toMap() const
         map[u"esMajorVersion"_s] = esMajorVersion;
     if (esMinorVersion != def.esMinorVersion)
         map[u"esMinorVersion"_s] = esMinorVersion;
+    if (globalSharedContext != def.globalSharedContext)
+        map[u"globalSharedContext"_s] = globalSharedContext;
     return map;
 }
 
@@ -26,6 +28,7 @@ OpenGLConfiguration OpenGLConfiguration::fromMap(const QVariantMap &map)
     cfg.desktopProfile = map.value(u"desktopProfile"_s, cfg.desktopProfile).toString();
     cfg.esMajorVersion = map.value(u"esMajorVersion"_s, cfg.esMajorVersion).toInt();
     cfg.esMinorVersion = map.value(u"esMinorVersion"_s, cfg.esMinorVersion).toInt();
+    cfg.globalSharedContext = map.value(u"globalSharedContext"_s, cfg.globalSharedContext).toBool();
     return cfg;
 }
 
@@ -38,20 +41,26 @@ OpenGLConfiguration OpenGLConfiguration::fromYaml(YamlParser &yp)
         { "esMajorVersion", false, YamlParser::Scalar, [&]() {
              cfg.esMajorVersion = yp.parseInt(2); } },
         { "esMinorVersion", false, YamlParser::Scalar, [&]() {
-             cfg.esMinorVersion = yp.parseInt(0); } }
+             cfg.esMinorVersion = yp.parseInt(0); } },
+        { "globalSharedContext", false, YamlParser::Scalar, [&]() {
+             cfg.globalSharedContext = yp.parseBool(); } },
     });
     return cfg;
 }
 
-OpenGLConfiguration::OpenGLConfiguration(const QString &profile, int major, int minor)
-    : desktopProfile(profile), esMajorVersion(major), esMinorVersion(minor)
+OpenGLConfiguration::OpenGLConfiguration(const QString &profile, int major, int minor, bool sharedContext)
+    : desktopProfile(profile)
+    , esMajorVersion(major)
+    , esMinorVersion(minor)
+    , globalSharedContext(sharedContext)
 { }
 
 bool OpenGLConfiguration::operator==(const OpenGLConfiguration &other) const
 {
     return (desktopProfile == other.desktopProfile)
            && (esMajorVersion == other.esMajorVersion)
-           && (esMinorVersion == other.esMinorVersion);
+           && (esMinorVersion == other.esMinorVersion)
+           && (globalSharedContext == other.globalSharedContext);
 }
 
 bool OpenGLConfiguration::operator!=(const OpenGLConfiguration &other) const
@@ -59,15 +68,20 @@ bool OpenGLConfiguration::operator!=(const OpenGLConfiguration &other) const
     return !(*this == other);
 }
 
+quint32 OpenGLConfiguration::dataStreamVersion()
+{
+    return 2;
+}
+
 QDataStream &operator<<(QDataStream &ds, const OpenGLConfiguration &cfg)
 {
-    ds << cfg.desktopProfile << cfg.esMajorVersion << cfg.esMinorVersion;
+    ds << cfg.desktopProfile << cfg.esMajorVersion << cfg.esMinorVersion << cfg.globalSharedContext;
     return ds;
 }
 
 QDataStream &operator>>(QDataStream &ds, OpenGLConfiguration &cfg)
 {
-    ds >> cfg.desktopProfile >> cfg.esMajorVersion >> cfg.esMinorVersion;
+    ds >> cfg.desktopProfile >> cfg.esMajorVersion >> cfg.esMinorVersion >> cfg.globalSharedContext;
     return ds;
 }
 

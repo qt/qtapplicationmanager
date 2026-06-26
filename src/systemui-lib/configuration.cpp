@@ -565,7 +565,7 @@ void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData 
 
 quint32 ConfigurationPrivate::dataStreamVersion()
 {
-    return 29;
+    return 30;
 }
 
 void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
@@ -614,6 +614,7 @@ void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, boo
         & cd.ui.opengl.desktopProfile
         & cd.ui.opengl.esMajorVersion
         & cd.ui.opengl.esMinorVersion
+        & cd.ui.opengl.globalSharedContext
         & cd.applications.builtinAppsManifestDir
         & cd.applications.installationDir
         & cd.applications.documentDir
@@ -696,6 +697,7 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(ui.opengl.desktopProfile);
     MERGE_FIELD(ui.opengl.esMajorVersion);
     MERGE_FIELD(ui.opengl.esMinorVersion);
+    MERGE_FIELD(ui.opengl.globalSharedContext);
     MERGE_FIELD(applications.builtinAppsManifestDir);
     MERGE_FIELD(applications.installationDir);
     MERGE_FIELD(applications.documentDir);

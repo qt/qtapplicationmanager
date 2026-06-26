@@ -123,8 +123,8 @@ void PackageInfo::setInstallationReport(InstallationReport *report)
 quint32 PackageInfo::dataStreamVersion()
 {
     return 3
-           + (ApplicationInfo::dataStreamVersion() << 8)
-           + (IntentInfo::dataStreamVersion() << 16);
+           + ApplicationInfo::dataStreamVersion()
+           + IntentInfo::dataStreamVersion();
 }
 
 void PackageInfo::writeToDataStream(QDataStream &ds) const

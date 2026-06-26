@@ -146,7 +146,7 @@ void tst_ApplicationInfo::full()
     QCOMPARE(ai->runtimeParameters().size(), 4);
     QCOMPARE(ai->supportsApplicationInterface(), true);
     QCOMPARE(ai->capabilities(), QStringList { u"app1.cap"_s });
-    OpenGLConfiguration app1ogl { u"core"_s, 3, 2 };
+    OpenGLConfiguration app1ogl { u"core"_s, 3, 2, false };
     QCOMPARE(ai->openGLConfiguration(), app1ogl);
     QVariantMap app1prop { { u"custom.app1.key"_s, 42 } };
     QCOMPARE(ai->applicationProperties(), app1prop);

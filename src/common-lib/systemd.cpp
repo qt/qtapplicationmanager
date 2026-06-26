@@ -8,6 +8,7 @@
 #include <qplatformdefs.h>
 #include <sys/types.h>
 #include "systemd.h"
+#include "systemd_p.h"
 #include "exception.h"
 #include "logging.h"
 #include "unix-utilities.h"
@@ -39,28 +40,6 @@
 using namespace std::chrono_literals;
 
 QT_BEGIN_NAMESPACE_AM
-
-class SystemdPrivate
-{
-public:
-    QByteArray notifySocket;
-    QByteArray watchdogUsec;
-    QByteArray watchdogPid;
-    QByteArray listenFds;
-    QByteArray listenFdNames;
-    QByteArray listenPid;
-    QByteArray journalStream;
-
-#if defined(Q_OS_UNIX)
-    Unix::Fd notifySocketFd;
-#endif
-    bool notifySocketTriedToConnect = false;
-
-    QReadWriteLock extraJournalFieldsLock;
-    QMap<QByteArray, QByteArray> extraJournalFields;
-    QByteArray extraJournalFieldsBuffer;
-    bool extraJournalFieldsHasSyslogIdentifier = false;
-};
 
 Systemd *Systemd::instance()
 {
@@ -226,6 +205,18 @@ bool Systemd::canLogToJournal() const
 #endif
 }
 
+#if defined(QT_BUILD_INTERNAL) && defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+QByteArray SystemdPrivate::s_journalSocketPathForTesting;
+
+bool SystemdPrivate::setJournalSocketPathForTesting(const QByteArray &path)
+{
+    if (path.size() >= qsizetype(sizeof(sockaddr_un::sun_path)))
+        return false;
+    s_journalSocketPathForTesting = path;
+    return true;
+}
+#endif
+
 bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
                            const QString &message, QByteArray &b)
 {
@@ -339,8 +330,8 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
 
     iov.at(iovLen++) = { (void *) b.constData(), (size_t) b.size() };
 
-    // The target is always the same socket
-    static const ::sockaddr_un sa {
+    // The target is normally the system journal, but auto-tests can redirect it elsewhere.
+    static const ::sockaddr_un defaultSa {
         .sun_family = AF_UNIX,
 #if defined(__GNUC__) && (__GNUC__ < 11) && !defined(__clang__) // gcc < 11 bug
         { .sun_path = "/run/systemd/journal/socket" }
@@ -349,9 +340,26 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
 #endif
     };
 
+    ::sockaddr_un sa = defaultSa;
+    socklen_t saLen = (socklen_t) (offsetof(struct sockaddr_un, sun_path) + ::strlen(defaultSa.sun_path));
+
+#if defined(QT_BUILD_INTERNAL)
+    // auto-tests can redirect the journal datagrams onto a socket they control; the path is
+    // guaranteed to fit into sun_path by setJournalSocketPathForTesting()
+    if (Q_UNLIKELY(!SystemdPrivate::s_journalSocketPathForTesting.isEmpty())) {
+        const QByteArray &p = SystemdPrivate::s_journalSocketPathForTesting;
+        ::memset(&sa, 0, sizeof(sa));
+        sa.sun_family = AF_UNIX;
+        ::memcpy(sa.sun_path, p.constData(), p.size());
+        if (p.at(0) == '@') // abstract socket
+            sa.sun_path[0] = 0;
+        saLen = (socklen_t) (offsetof(struct sockaddr_un, sun_path) + p.size());
+    }
+#endif
+
     struct ::msghdr mh = {
         .msg_name    = (struct ::sockaddr *) &sa,
-        .msg_namelen = (socklen_t) (offsetof(struct sockaddr_un, sun_path) + ::strlen(sa.sun_path)),
+        .msg_namelen = saLen,
         .msg_iov     = iov.data(),
         .msg_iovlen  = iovLen,
         .msg_control = nullptr,

@@ -105,7 +105,12 @@ static void killThread(quintptr threadHandle)
                 if (::GetThreadContext(winHandle, &context) > 0) {
                     context.ContextFlags = CONTEXT_CONTROL;
 #  if defined(Q_PROCESSOR_ARM_64)
+#    if defined(_M_ARM64EC)
+                    // ARM64EC uses the x64 CONTEXT layout (EFlags, not Cpsr)
+                    context.EFlags |= 0x100; // single-step trap
+#    else
                     context.Cpsr |= 0x200000;  // single-step trap
+#    endif
 #  elif defined(Q_PROCESSOR_X86_64)
                     context.EFlags |= 0x100; // single-step trap
 #  else

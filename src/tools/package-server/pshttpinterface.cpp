@@ -40,10 +40,12 @@ PSHttpInterface::PSHttpInterface(PSConfiguration *cfg, QObject *parent)
     d->cfg = cfg;
     d->server = new QHttpServer(this);
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 11, 0)
     // Be explicit about the upload size cap so a Qt-default change can't silently widen it.
     QHttpServerConfiguration httpCfg = d->server->configuration();
     httpCfg.setMaximumBodySize(256 * 1024 * 1024); // 256MiB
     d->server->setConfiguration(httpCfg);
+#endif
 }
 
 void PSHttpInterface::listen()

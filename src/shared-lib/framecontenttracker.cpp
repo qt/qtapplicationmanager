@@ -178,7 +178,11 @@ void FrameContentTracker::setWindow(QObject *window)
                                                       this, [this, quickWindow]() {
                 // we are on the render thread
                 auto *wp = QQuickWindowPrivate::get(quickWindow);
-                QImage img = QSGRhiSupport::instance()->grabAndBlockInCurrentFrame(
+                auto *rhiSupport = QSGRhiSupport::instance();
+                if (!wp || !wp->swapchain || !rhiSupport)
+                    return;
+ 
+                QImage img = rhiSupport->grabAndBlockInCurrentFrame(
                     wp->rhi, wp->swapchain->currentFrameCommandBuffer());
                 if (img == m_lastFrame)
                     ++m_sameFrameCounter;

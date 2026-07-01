@@ -310,6 +310,6 @@ TestCase {
         tryCompare(WindowManager, "count", 1, spyTimeout);
         compare(topChrome.window.contentState, WindowObject.SurfaceWithContent);
         const img = grabImage(topChrome.Window.contentItem);
-        compare(img.pixel(60,40), "#4682b4");
+        compare(img.pixel(60,40), Qt.color("cyan"));
     }
 }

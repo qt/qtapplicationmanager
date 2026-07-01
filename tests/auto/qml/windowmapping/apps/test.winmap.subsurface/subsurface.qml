@@ -9,7 +9,7 @@ ApplicationManagerWindow {
         x: 50; y: 30
         window: Window {
             width: 20; height: 20
-            color: "#4682b4"
+            color: "cyan"
             visible: true
         }
     }

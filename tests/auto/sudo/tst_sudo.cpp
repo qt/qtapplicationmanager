@@ -167,9 +167,9 @@ auto tst_Sudo::sudo(F &&body)
     if (::setresuid(0, 0, 0) || ::setresgid(0, 0, 0))
         QTest::qFail("cannot re-gain root privileges", __FILE__, __LINE__);
     auto guard = qScopeGuard([uid, gid] {
-        // best-effort drop back to the test user - failures here are unrecoverable anyway
-        (void) ::setresgid(gid, gid, 0); // NOLINT(bugprone-unused-return-value)
-        (void) ::setresuid(uid, uid, 0); // NOLINT(bugprone-unused-return-value)
+        // drop back to the test user - a stuck root context would corrupt later tests
+        if (::setresgid(gid, gid, 0) || ::setresuid(uid, uid, 0))
+            QTest::qFail("cannot drop root privileges", __FILE__, __LINE__);
     });
     return body();
 }

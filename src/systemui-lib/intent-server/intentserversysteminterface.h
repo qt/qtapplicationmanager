@@ -30,6 +30,7 @@ public:
 
     virtual void startApplication(const QString &appId) = 0;
 
+    virtual bool isApplicationShuttingDown(const QString &appId) = 0;
 
     virtual bool checkApplicationCapabilities(const QString &applicationId,
                                               const QStringList &requiredCapabilities) = 0;

@@ -55,6 +55,7 @@ public:
     IpcConnection *findClientIpc(const QString &appId) override;
 
     void startApplication(const QString &appId) override;
+    bool isApplicationShuttingDown(const QString &appId) override;
     void requestToApplication(IpcConnection *clientIPC, IntentServerRequest *isr) override;
     void replyFromSystem(IpcConnection *clientIPC, IntentServerRequest *isr) override;
 

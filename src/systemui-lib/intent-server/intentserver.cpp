@@ -710,10 +710,15 @@ void IntentServer::processRequestQueue()
     }
 
     if (isr->state() == IntentServerRequest::State::StartedApplication) { // step 3) send request out
-        auto clientIPC = m_systemInterface->findClientIpc(isr->selectedIntent()->applicationId());
+        const QString appId = isr->selectedIntent()->applicationId();
+        auto clientIPC = m_systemInterface->findClientIpc(appId);
         if (!clientIPC) {
             qCWarning(LogIntentServer) << IntentDebug(isr) << "could not find an IPC connection for handling application to forward the intent request to";
             isr->setRequestFailed(u"No IPC channel to reach handling application."_s);
+        } else if (m_systemInterface->isApplicationShuttingDown(appId)) {
+            qCDebug(LogIntentServer) << IntentDebug(isr)
+                                     << "handling application is shutting down, not forwarding the intent request";
+            isr->setRequestFailed(u"Handling application is shutting down."_s);
         } else {
             qCDebug(LogIntentServer) << IntentDebug(isr) << "sending intent request to handling application";
             if (!isr->isBroadcast()) {

@@ -224,6 +224,12 @@ void IntentServerAMImplementation::startApplication(const QString &appId)
     ApplicationManager::instance()->startApplication(appId);
 }
 
+bool IntentServerAMImplementation::isApplicationShuttingDown(const QString &appId)
+{
+    const auto app = ApplicationManager::instance()->application(appId);
+    return app && (app->runState() == Am::ShuttingDown);
+}
+
 void IntentServerAMImplementation::requestToApplication(IntentServerSystemInterface::IpcConnection *clientIPC,
                                                         IntentServerRequest *isr)
 {

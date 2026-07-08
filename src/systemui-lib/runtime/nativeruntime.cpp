@@ -165,6 +165,14 @@ bool NativeRuntime::initialize()
 
 void NativeRuntime::shutdown(int exitCode, Am::ExitStatus status)
 {
+    // A crashing process emits the container's errorOccured() signal immediately followed by
+    // finished(), so onProcessError() and onProcessFinished() may both end up calling shutdown().
+    // Make sure the body only runs once: a second pass would emit finished() again and could clear
+    // an already-restarted runtime (see the setCurrentRuntime() guard below).
+    if (m_shutdownDone)
+        return;
+    m_shutdownDone = true;
+
     // see NativeRuntime::stop() below
 
     if (!m_isQuickLauncher || m_connectedToApplicationInterface) {

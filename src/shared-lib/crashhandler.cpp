@@ -44,9 +44,7 @@
 #  if defined(Q_OS_QNX)
 #    include <process.h>
 #    include <QtCore/private/qcore_unix_p.h>
-#    if (__QNX__ < 800)
-#      include <backtrace.h>
-#    endif
+#    include <backtrace.h>
 #  else
 #    include <execinfo.h>
 #    include <sys/syscall.h>
@@ -642,23 +640,32 @@ static void logCrashInfo(LogToDestination logTo, const char *why, int stackFrame
                 }
             }
         }
-#    elif (__QNX__ >= 800)
-        Q_UNUSED(stackFramesToIgnore);
-        logMsg(logTo, "\n > C++ backtraces are not supported on QNX 8");
 #    else
-        Q_UNUSED(stackFramesToIgnore);
-        constexpr int frames = 20;
+        constexpr int frames = 50;
+        bt_accessor_t acc;
         bt_addr_t addrs[frames];
         bt_memmap_t memmap;
-        char out[1024];
-        char fmt[] = "%a: %f (%o) + %l";
+        char out[2048];
+        char fmt[] = "   %a: %f (%o) + %l";
 
-        bt_get_backtrace(&bt_acc_self, addrs, frames);
-        bt_load_memmap(&bt_acc_self, &memmap);
-        bt_sprnf_addrs(&memmap, addrs, frames, fmt, out, sizeof(out), nullptr);
-
-        logMsg(logTo, "\n > C++ backtrace:");
-        logMsg(logTo, out);
+        if (bt_init_accessor(&acc, BT_SELF) != -1) {
+            int count = bt_get_backtrace(&acc, addrs, frames);
+            if (bt_load_memmap(&acc, &memmap) != -1) {
+                logMsg(logTo, "\n > C++ backtrace:");
+                int processed = stackFramesToIgnore - 1;
+                count -= stackFramesToIgnore - 1;
+                while (count > 0) {
+                    int w = bt_sprnf_addrs(&memmap, addrs + processed, count, fmt, out, sizeof(out), nullptr);
+                    if (w <= 0)
+                        break;
+                    logMsg(logTo, out);
+                    processed += w;
+                    count -= w;
+                }
+                bt_unload_memmap(&memmap);
+            }
+            bt_release_accessor(&acc);
+        }
 #    endif
 #  endif // QT_CONFIG(am_libbacktrace) && defined(BACKTRACE_SUPPORTED)
     }

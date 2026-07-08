@@ -381,15 +381,16 @@ void NativeRuntime::stop(Am::ExitStatus exitStatus)
     setState(Am::ShuttingDown);
     emit aboutToStop();
 
+    bool ok;
+    int qt = configuration().value(u"quitTime"_s).toInt(&ok);
+    if (!ok || qt < 0)
+        qt = 250;
+    qt *= timeoutFactor();
+
     switch (exitStatus) {
     case Am::NormalExit:
         if (m_connectedToApplicationInterface) {
             // Start a timer to kill the process if it hasn't exited voluntarily after a certain time
-            bool ok;
-            int qt = configuration().value(u"quitTime"_s).toInt(&ok);
-            if (!ok || qt < 0)
-                qt = 250;
-            qt *= timeoutFactor();
             QTimer::singleShot(qt, this, [this]() {
                 m_process->stop(Am::ForcedExit);
             });
@@ -405,6 +406,19 @@ void NativeRuntime::stop(Am::ExitStatus exitStatus)
         m_process->stop(exitStatus);
         break;
     }
+
+    // Last-resort safety net: even a SIGKILL'ed process should report its exit via finished() (or
+    // an error, see onProcessError()) almost immediately. If we are still in ShuttingDown after a
+    // generous grace period, that notification was never delivered - forcing the teardown here
+    // keeps the runtime from staying wedged forever and blocking any restart of the application.
+    QTimer::singleShot(qMax(qt * 4, 5000 * timeoutFactor()), this, [this]() {
+        if (m_state == Am::ShuttingDown) {
+            qCWarning(LogSystem, "Runtime for application '%s' (pid: %lld) did not report its exit "
+                                 "after being stopped - forcing shutdown",
+                      (m_app ? qPrintable(m_app->id()) : "<quicklauncher>"), applicationProcessId());
+            shutdown(-1, Am::ForcedExit);
+        }
+    });
 }
 
 void NativeRuntime::onProcessStarted()
@@ -417,8 +431,20 @@ void NativeRuntime::onProcessStarted()
 
 void NativeRuntime::onProcessError(Am::ProcessError error)
 {
-    Q_UNUSED(error)
-    if (!m_isQuickLauncher && (m_state != Am::Running && m_state != Am::ShuttingDown))
+    // The quick-launch pool manages the lifetime of quick-launcher runtimes itself.
+    if (m_isQuickLauncher)
+        return;
+
+    // A 'Crashed' error is always immediately followed by finished() (carrying the real exit
+    // code), so we let onProcessFinished() do the teardown for it. Every other error
+    // (FailedToStart, ReadError, WriteError, Timedout) is NOT followed by finished(): if we
+    // ignored it, we would never learn that the process is gone. While Running we keep waiting
+    // (the process may still be alive), but in any other state - and most importantly in
+    // ShuttingDown - we have to finish the teardown ourselves, otherwise the runtime stays wedged
+    // forever and ApplicationManager refuses to ever start the application again.
+    if (error == Am::Crashed)
+        return;
+    if (m_state != Am::Running)
         shutdown(-1, Am::CrashExit);
 }
 

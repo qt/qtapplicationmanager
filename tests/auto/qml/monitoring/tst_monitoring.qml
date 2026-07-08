@@ -49,9 +49,6 @@ TestCase {
     }
 
     function test_mem() {
-        if (Qt.platform.os == "qnx")
-            skip("Memory monitoring is not supported on QNX")
-
         mem.update()
         verify(mem.totalMemory >= 500000000) // 0.5GB
         verify(mem.totalMemory < 500000000000) // 500GB

@@ -15,6 +15,9 @@
 #elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
 #  include <mach/mach.h>
 #  include <sys/sysctl.h>
+#elif defined(Q_OS_QNX)
+#  include <sys/neutrino.h>
+#  include <sys/memmsg.h>
 #endif
 
 #include "logging.h"
@@ -131,6 +134,15 @@ MemoryStatus::MemoryStatus(QObject *parent)
 
         if (::sysctl(mib.data(), mib.size(), &hwPageSize, &hwPageSizeSize, nullptr, 0) == 0)
             MemoryStatusPrivate::s_pageSize = hwPageSize;
+
+#elif defined(Q_OS_QNX)
+    mem_info_t msg;
+    msg.i.type = _MEM_INFO;
+    msg.i.fd = -1;
+    if (MsgSend(MEMMGR_COID, &msg.i, sizeof(msg.i), &msg.o, sizeof(msg.o)) == -1)
+        qCCritical(LogSystem) << "Cannot determine the amount of physical RAM in this machine.";
+    else
+        MemoryStatusPrivate::s_totalMemory = msg.o.info.__posix_tmi_total;
 #endif
     });
 
@@ -243,6 +255,14 @@ quint64 MemoryStatusPrivate::read()
     } else {
         return 0u;
     }
+
+#elif defined(Q_OS_QNX)
+    mem_info_t msg;
+    msg.i.type = _MEM_INFO;
+    msg.i.fd = -1;
+    if (MsgSend(MEMMGR_COID, &msg.i, sizeof(msg.i), &msg.o, sizeof(msg.o)) == -1)
+        return 0u;
+    return s_totalMemory - msg.o.info.posix_tmi_length;
 #else
     return 0u;
 #endif

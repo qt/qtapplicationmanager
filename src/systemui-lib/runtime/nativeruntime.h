@@ -97,6 +97,7 @@ private:
     QString m_mimeType;
     bool m_connectedToApplicationInterface = false;
     bool m_dbusConnection = false;
+    bool m_shutdownDone = false;
     QString m_dbusConnectionName;
     QMap<QString, QString> m_applicationExtraDirs;
 

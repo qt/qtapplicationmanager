@@ -46,17 +46,15 @@ qt_internal_add_module(AppManSharedPrivate
         AM_COMPILING_APPMAN
 )
 
-if(QNX)
-    qt_internal_extend_target(AppManSharedPrivate CONDITION NOT TEST_qnx_version_8
-        PUBLIC_LIBRARIES
-            backtrace
-    )
-else()
-    qt_internal_extend_target(AppManSharedPrivate CONDITION TARGET WrapBacktrace::WrapBacktrace
-        PUBLIC_LIBRARIES
-            WrapBacktrace::WrapBacktrace
-    )
-endif()
+qt_internal_extend_target(AppManSharedPrivate CONDITION QNX
+    PUBLIC_LIBRARIES
+        backtrace
+)
+
+qt_internal_extend_target(AppManSharedPrivate CONDITION TARGET WrapBacktrace::WrapBacktrace
+    PUBLIC_LIBRARIES
+        WrapBacktrace::WrapBacktrace
+)
 
 qt_internal_extend_target(AppManSharedPrivate CONDITION QT_FEATURE_am_libbacktrace
     LIBRARIES

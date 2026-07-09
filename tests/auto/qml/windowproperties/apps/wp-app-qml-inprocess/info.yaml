@@ -4,5 +4,5 @@ formatType: am-package
 id:      'wp-app-qml-inprocess'
 applications:
 - id:      'wp-app-qml-inprocess'
-  code:    '../wp-app-qml/wp-app.qml'
+  code:    'wp-app-inprocess.qml'
   runtime: 'qml-inprocess'

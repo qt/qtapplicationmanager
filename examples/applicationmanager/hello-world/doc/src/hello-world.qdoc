@@ -149,11 +149,12 @@ an ApplicationManagerWindow, provided by the \c QtApplicationManager.Application
 
 \section2 Application Metadata
 
-The \c info.yaml file contains the metadata about an application. It starts with some boilerplate
-describing that this file contains Qt Application Manager package metadata.
+The \c info.yaml file contains the metadata about a package. It starts with the version directive
+and some boilerplate describing that this file contains Qt Application Manager package metadata.
 
 \quotefromfile applicationmanager/hello-world/apps/hello-world.blue/info.yaml
-\printuntil --
+\printuntil formatType
+\skipline ---
 
 Then comes the package ID, which uniquely identifies the package. It's recommended to
 follow a reverse DNS scheme, but it's not enforced. Here it's the "Blue" package from the

@@ -55,6 +55,8 @@ TestCase {
         for (const prop in props)
             windowItem.window.setWindowProperty(prop, props[prop])
 
+        AmTest.aboutToBlock();  // ensure flushing wayland messages in tests
+
         tryVerify(() => {
             return JSON.stringify(windowItem.window.windowProperty("BACKCHANNEL"))
                       === JSON.stringify(props)

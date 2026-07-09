@@ -59,6 +59,11 @@ void Signature::requireCategories(const QStringList &categories)
     d->requiredCategories = categories;
 }
 
+void Signature::requireRuntimes(const QStringList &runtimes)
+{
+    d->requiredRuntimes = runtimes;
+}
+
 void Signature::requireCertificateRoles(const QHash<QByteArray, CertificateRole> &trustedCertDataToRole)
 {
     d->requiredRoles = trustedCertDataToRole;
@@ -152,6 +157,14 @@ void SignaturePrivate::checkSignerCertificate(const Certificate &signer)
             throw Exception("Categories mismatch: the certificate only allows '%1'; cannot sign '%2'")
                 .arg(signer.categories())
                 .arg(requiredCategories);
+        }
+    }
+
+    if (!requiredRuntimes.isEmpty()) {
+        if (!signer.matchRuntimes(requiredRuntimes)) {
+            throw Exception("Runtimes mismatch: the certificate only allows '%1'; cannot sign '%2'")
+                .arg(signer.runtimes())
+                .arg(requiredRuntimes);
         }
     }
 

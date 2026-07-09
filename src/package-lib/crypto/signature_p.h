@@ -25,6 +25,7 @@ public:
     QStringList requiredApplicationIds;
     QStringList requiredCapabilities;
     QStringList requiredCategories;
+    QStringList requiredRuntimes;
     QHash<QByteArray, Signature::CertificateRole> requiredRoles;
     QByteArrayList requiredCRLs;
 

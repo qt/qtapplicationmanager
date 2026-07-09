@@ -26,8 +26,8 @@ serial      = $base_dir/serial.txt        # The current serial number
 crlnumber   = $base_dir/crlnumber.txt
 crl         = $base_dir/other-ca.crl
 
-unique_subject  = yes               # Set to 'no' to allow creation of
-                                    # several certificates with same subject.
+unique_subject  = no                # allow re-signing leaves with the same subject
+                                    # when the script is re-run against a preserved CA
 
 ####################################################################
 [ req ]

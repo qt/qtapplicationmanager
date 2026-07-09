@@ -321,7 +321,8 @@ void tst_Signature::certificateData()
     QCOMPARE(signer.serialNumber(), expectedSignerSerial);
     QStringList ssans { u"qtam://packageid/other-*"_s, u"qtam://packageid/test-pkg"_s,
                         u"qtam://applicationid/*"_s, u"qtam://category/*"_s,
-                        u"qtam://capability/*"_s, u"qtam://version/6.12"_s };
+                        u"qtam://capability/*"_s, u"qtam://runtime/*"_s,
+                        u"qtam://version/6.12"_s };
     QCOMPARE(signer.subjectAlternativeNames(), ssans);
     QCOMPARE(signer.validityNotBefore(), expectedSignerNotBefore);
     QCOMPARE(signer.validityNotAfter(), expectedSignerNotAfter);
@@ -442,12 +443,12 @@ void tst_Signature::createSignature()
 void tst_Signature::verifyCertBinding_data()
 {
     // The "narrow" cert grants exactly:
-    //   applicationid/test-app, capability/cap-allowed, category/test-category
+    //   applicationid/test-app, capability/cap-allowed, category/test-category, runtime/qml
     // The "permissive" cert (dev-1) grants:
-    //   applicationid/*, capability/*, category/*
+    //   applicationid/*, capability/*, category/*, runtime/*
 
     QTest::addColumn<bool>("usePermissiveCert");
-    QTest::addColumn<QString>("kind"); // "applicationid" | "capability" | "category"
+    QTest::addColumn<QString>("kind"); // "applicationid" | "capability" | "category" | "runtime"
     QTest::addColumn<QStringList>("required");
     QTest::addColumn<QString>("errorString");
 
@@ -471,6 +472,13 @@ void tst_Signature::verifyCertBinding_data()
     QTest::newRow("cat-empty-bypass")      << false << u"category"_s      << QStringList { }                              << QString { };
     QTest::newRow("cat-one-of-two-bad")    << false << u"category"_s      << QStringList { u"test-category"_s, u"wrong-category"_s } << u"Categories mismatch"_s;
     QTest::newRow("cat-wildcard")          << true  << u"category"_s      << QStringList { u"fancy-category"_s }          << QString { };
+
+    // runtime
+    QTest::newRow("runtime-exact-match")   << false << u"runtime"_s       << QStringList { u"qml"_s }                     << QString { };
+    QTest::newRow("runtime-no-match")      << false << u"runtime"_s       << QStringList { u"qml-inprocess"_s }           << u"Runtimes mismatch"_s;
+    QTest::newRow("runtime-empty-bypass")  << false << u"runtime"_s       << QStringList { }                              << QString { };
+    QTest::newRow("runtime-one-of-two-bad")<< false << u"runtime"_s       << QStringList { u"qml"_s, u"qml-inprocess"_s } << u"Runtimes mismatch"_s;
+    QTest::newRow("runtime-wildcard")      << true  << u"runtime"_s       << QStringList { u"qml-inprocess"_s }           << QString { };
 }
 
 void tst_Signature::verifyCertBinding()
@@ -494,6 +502,8 @@ void tst_Signature::verifyCertBinding()
         s.requireCapabilities(required);
     else if (kind == u"category"_s)
         s.requireCategories(required);
+    else if (kind == u"runtime"_s)
+        s.requireRuntimes(required);
     else
         QFAIL("unknown kind");
 

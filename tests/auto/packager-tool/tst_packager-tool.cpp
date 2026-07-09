@@ -423,7 +423,7 @@ void tst_PackagerTool::developerSignCertBinding_data()
 {
     // The "narrow" cert grants exactly:
     //   packageid/test-pkg, applicationid/test-app,
-    //   capability/cap-allowed, category/test-category
+    //   capability/cap-allowed, category/test-category, runtime/qml
     //
     // Each row manipulates info.yaml to either stay within those grants (success)
     // or step outside one of them (error). This is a wiring test: each negative row
@@ -434,22 +434,25 @@ void tst_PackagerTool::developerSignCertBinding_data()
     QTest::addColumn<QString>("appIdOverride");
     QTest::addColumn<QStringList>("capabilities");
     QTest::addColumn<QStringList>("categories");
+    QTest::addColumn<QString>("runtimeOverride");
     QTest::addColumn<QString>("errorString");
 
     QTest::newRow("ok-baseline")
-        << QString { } << QString { } << QStringList { } << QStringList { } << QString { };
+        << QString { } << QString { } << QStringList { } << QStringList { } << QString { } << QString { };
     QTest::newRow("ok-cap-allowed")
-        << QString { } << QString { } << QStringList { u"cap-allowed"_s } << QStringList { } << QString { };
+        << QString { } << QString { } << QStringList { u"cap-allowed"_s } << QStringList { } << QString { } << QString { };
     QTest::newRow("ok-category-allowed")
-        << QString { } << QString { } << QStringList { } << QStringList { u"test-category"_s } << QString { };
+        << QString { } << QString { } << QStringList { } << QStringList { u"test-category"_s } << QString { } << QString { };
     QTest::newRow("pkgid-mismatch")
-        << u"rogue-pkg"_s << QString { } << QStringList { } << QStringList { } << u"Package ID mismatch"_s;
+        << u"rogue-pkg"_s << QString { } << QStringList { } << QStringList { } << QString { } << u"Package ID mismatch"_s;
     QTest::newRow("appid-mismatch")
-        << QString { } << u"rogue-app"_s << QStringList { } << QStringList { } << u"Application ID mismatch"_s;
+        << QString { } << u"rogue-app"_s << QStringList { } << QStringList { } << QString { } << u"Application ID mismatch"_s;
     QTest::newRow("capability-mismatch")
-        << QString { } << QString { } << QStringList { u"forbidden-cap"_s } << QStringList { } << u"Capabilities mismatch"_s;
+        << QString { } << QString { } << QStringList { u"forbidden-cap"_s } << QStringList { } << QString { } << u"Capabilities mismatch"_s;
     QTest::newRow("category-mismatch")
-        << QString { } << QString { } << QStringList { } << QStringList { u"wrong-category"_s } << u"Categories mismatch"_s;
+        << QString { } << QString { } << QStringList { } << QStringList { u"wrong-category"_s } << QString { } << u"Categories mismatch"_s;
+    QTest::newRow("runtime-inprocess-blocked")
+        << QString { } << QString { } << QStringList { } << QStringList { } << u"qml-inprocess"_s << u"Runtimes mismatch"_s;
 }
 
 void tst_PackagerTool::developerSignCertBinding()
@@ -458,6 +461,7 @@ void tst_PackagerTool::developerSignCertBinding()
     QFETCH(QString, appIdOverride);
     QFETCH(QStringList, capabilities);
     QFETCH(QStringList, categories);
+    QFETCH(QString, runtimeOverride);
     QFETCH(QString, errorString);
 
     QTemporaryDir tmp;
@@ -468,13 +472,15 @@ void tst_PackagerTool::developerSignCertBinding()
             m[u"id"_s] = pkgIdOverride;
         if (!categories.isEmpty())
             m[u"categories"_s] = categories;
-        if (!appIdOverride.isEmpty() || !capabilities.isEmpty()) {
+        if (!appIdOverride.isEmpty() || !capabilities.isEmpty() || !runtimeOverride.isEmpty()) {
             QVariantList apps = m[u"applications"_s].toList();
             QVariantMap app = apps[0].toMap();
             if (!appIdOverride.isEmpty())
                 app[u"id"_s] = appIdOverride;
             if (!capabilities.isEmpty())
                 app[u"capabilities"_s] = capabilities;
+            if (!runtimeOverride.isEmpty())
+                app[u"runtime"_s] = runtimeOverride;
             apps[0] = app;
             m[u"applications"_s] = apps;
         }

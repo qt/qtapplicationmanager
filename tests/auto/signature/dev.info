@@ -1,7 +1,7 @@
-sha1 Fingerprint=AD:EA:4E:2F:BD:FC:E6:4D:0F:3E:89:FE:EB:6E:06:20:79:73:34:8F
-notBefore=Jun 24 18:29:41 2026 GMT
-notAfter=Jun 21 18:29:41 2036 GMT
+sha1 Fingerprint=C0:94:0F:D8:D9:35:3B:37:56:94:CD:89:CB:61:9E:A6:A0:D2:14:27
+notBefore=Jul  9 11:55:45 2026 GMT
+notAfter=Jul  6 11:55:45 2036 GMT
 serial=01
 issuer=C=DE, O=Pelagicore AG, OU=Developer Relations, CN=Pelagicore Developer CA
 subject=C=DE, O=Developer 1 GmbH, CN=Developer 1
-sha256 Fingerprint=0A:4C:2A:E4:67:52:92:45:4D:4E:61:06:AB:F9:EE:B6:E1:3C:19:DE:66:E5:57:D5:D1:D4:74:4C:31:49:E2:FC
+sha256 Fingerprint=45:98:79:D5:F8:CA:36:74:A3:B0:92:FC:7D:8B:B1:81:7F:44:2C:6D:C5:C3:E7:F4:4F:27:D0:2C:C8:3A:E5:87

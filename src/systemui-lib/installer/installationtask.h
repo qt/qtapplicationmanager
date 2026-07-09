@@ -61,6 +61,7 @@ private:
     QStringList m_applicationIds;
     QStringList m_capabilities;
     QStringList m_categories;
+    QStringList m_runtimes;
     std::unique_ptr<PackageInfo> m_package;
     std::unique_ptr<Package> m_tempPackageForAcknowledge;
     std::vector<std::unique_ptr<Application>> m_tempApplicationsForAcknowledge;

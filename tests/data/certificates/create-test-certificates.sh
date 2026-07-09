@@ -12,8 +12,26 @@ set -e
 
 . ../utilities.sh
 
-for i in root dev store other; do
-  rm -rf $i-ca $i-certs
+# By default, existing CA directories are preserved so that leaf certs can be
+# re-issued against the same root/sub-CA. This keeps checked-in .p7 files
+# (like signature-wincrypt.p7) valid when leaf certs are regenerated. Pass
+# --force to wipe everything and rebuild from scratch (this WILL invalidate
+# any signature files whose trust chain terminates at the old root CA).
+FORCE=0
+if [ "$1" = "--force" ]; then
+    FORCE=1
+fi
+
+if [ $FORCE -eq 1 ]; then
+    for i in root dev store other; do
+        rm -rf $i-ca $i-certs
+    done
+fi
+
+# Leaf certs are always regenerated - cheap, and the user typically edits a leaf
+# cnf and re-runs the script. unique_subject=no in the CA cnfs allows re-signing.
+for i in dev store other; do
+    rm -rf $i-certs
 done
 
 echo "OpenSSL installation check:"
@@ -59,26 +77,42 @@ runSSL()
 
 echo "Generating test certificates:"
 
+# CA state is only initialized if the CA directory is absent - preserves
+# root/sub-CAs and their index.txt/serial.txt across re-runs. Leaf certs are
+# regenerated further below. index.txt.attr is rewritten every time because
+# openssl caches unique_subject there and the value overrides the cnf.
 for i in root dev store other; do
-  mkdir -p $i-ca/new-certs
-  touch $i-ca/index.txt
-  echo '01' > $i-ca/serial.txt
-  echo '01' > $i-ca/crlnumber.txt
-  mkdir $i-certs
+    if [ ! -d $i-ca ]; then
+        mkdir -p $i-ca/new-certs
+        touch $i-ca/index.txt
+        echo '01' > $i-ca/serial.txt
+        echo '01' > $i-ca/crlnumber.txt
+    fi
+    echo 'unique_subject = no' > $i-ca/index.txt.attr
 done
 
-info "Generating root CA"
-# the -days parameter is needed due to an openssl bug: having -x509 on the
-# command-line makes it ignore the the default_days option in the config file
-runSSL req -config openssl-root-ca.cnf -x509 -new -days 3650 -newkey rsa:2048 -nodes -keyout root-ca/root-ca-priv.key -out root-ca/root-ca.crt
+for i in dev store other; do
+    mkdir $i-certs
+done
 
-info "Generating the developer sub-CA"
-runSSL req -config openssl-dev-ca.cnf -newkey rsa:2048 -nodes -keyout dev-ca/dev-ca-priv.key -out dev-ca/dev-ca.csr
-runSSL ca -batch -config openssl-root-ca.cnf -policy signing_policy -extensions root_ca_extensions -out dev-ca/dev-ca.crt -infiles dev-ca/dev-ca.csr
+if [ ! -f root-ca/root-ca.crt ]; then
+    info "Generating root CA"
+    # the -days parameter is needed due to an openssl bug: having -x509 on the
+    # command-line makes it ignore the the default_days option in the config file
+    runSSL req -config openssl-root-ca.cnf -x509 -new -days 3650 -newkey rsa:2048 -nodes -keyout root-ca/root-ca-priv.key -out root-ca/root-ca.crt
+fi
 
-info "Generating the store sub-CA"
-runSSL req -config openssl-store-ca.cnf -newkey rsa:2048 -nodes -keyout store-ca/store-ca-priv.key -out store-ca/store-ca.csr
-runSSL ca -batch -config openssl-root-ca.cnf -policy signing_policy -extensions root_ca_extensions -out store-ca/store-ca.crt -infiles store-ca/store-ca.csr
+if [ ! -f dev-ca/dev-ca.crt ]; then
+    info "Generating the developer sub-CA"
+    runSSL req -config openssl-dev-ca.cnf -newkey rsa:2048 -nodes -keyout dev-ca/dev-ca-priv.key -out dev-ca/dev-ca.csr
+    runSSL ca -batch -config openssl-root-ca.cnf -policy signing_policy -extensions root_ca_extensions -out dev-ca/dev-ca.crt -infiles dev-ca/dev-ca.csr
+fi
+
+if [ ! -f store-ca/store-ca.crt ]; then
+    info "Generating the store sub-CA"
+    runSSL req -config openssl-store-ca.cnf -newkey rsa:2048 -nodes -keyout store-ca/store-ca-priv.key -out store-ca/store-ca.csr
+    runSSL ca -batch -config openssl-root-ca.cnf -policy signing_policy -extensions root_ca_extensions -out store-ca/store-ca.crt -infiles store-ca/store-ca.csr
+fi
 
 info "Generating, signing and exporting the developer certificate #1"
 runSSL req -config openssl-dev-1.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-1-priv.key -out dev-certs/dev-1.csr
@@ -132,8 +166,10 @@ runSSL ca -batch -config openssl-store-ca.cnf -policy signing_policy -extensions
 runSSL pkcs12 -export -password pass:password -out store-certs/store.p12 -inkey store-certs/store-priv.key -nodes -in store-certs/store.crt -name "Pelagicore App Store"
 
 
-info "Generating the \"other\" CA"
-runSSL req -config openssl-other-ca.cnf -x509 -new -days 3650 -newkey rsa:2048 -nodes -keyout other-ca/other-ca-priv.key -out other-ca/other-ca.crt
+if [ ! -f other-ca/other-ca.crt ]; then
+    info "Generating the \"other\" CA"
+    runSSL req -config openssl-other-ca.cnf -x509 -new -days 3650 -newkey rsa:2048 -nodes -keyout other-ca/other-ca-priv.key -out other-ca/other-ca.crt
+fi
 
 info "Generating signing and exporting the \"other\" certificate"
 runSSL req -config openssl-other.cnf -newkey rsa:2048 -nodes -keyout other-certs/other-priv.key -out other-certs/other.csr

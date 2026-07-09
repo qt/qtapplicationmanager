@@ -259,6 +259,30 @@ bool Certificate::matchCategories(const QStringList &categories) const
     return sanValuesContainAll(m_subjectAlternativeNames, u"category", categories);
 }
 
+/*! \qmlmethod list<string> Certificate::runtimes()
+
+    This function returns the list of runtimes the certificate is bound to.
+*/
+QStringList Certificate::runtimes() const
+{
+    return sanValues(m_subjectAlternativeNames, u"runtime");
+}
+
+/*!
+    \qmlmethod bool Certificate::matchRuntimes(list<string> runtimes)
+
+    Returns \c true if all the given \a runtimes match the runtimes the certificate is
+    bound to or \c false otherwise.
+
+    \note Runtime entries containing \c{*} are matched as shell-style wildcards.
+*/
+bool Certificate::matchRuntimes(const QStringList &runtimes) const
+{
+    if (isValid() && (version() < QVersionNumber(6, 12))) // runtime restrictions were introduced in 6.12
+        return true;
+    return sanValuesContainAll(m_subjectAlternativeNames, u"runtime", runtimes);
+}
+
 QString Certificate::subjectAsString() const
 {
     QString subject;

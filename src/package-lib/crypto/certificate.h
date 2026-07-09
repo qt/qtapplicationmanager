@@ -81,6 +81,9 @@ public:
     Q_INVOKABLE QStringList categories() const;
     Q_INVOKABLE bool matchCategories(const QStringList &categories) const;
 
+    Q_INVOKABLE QStringList runtimes() const;
+    Q_INVOKABLE bool matchRuntimes(const QStringList &runtimes) const;
+
     Q_INVOKABLE QVariant toVariant() const;
 
 private:

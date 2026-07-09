@@ -311,6 +311,7 @@ void PackagingJob::execute() noexcept(false)
         QStringList pkgApplicationIds;
         QStringList pkgCapabilities;
         QStringList pkgCategories;
+        QStringList pkgRuntimes;
         {
             std::unique_ptr<PackageInfo> pkg(PackageInfo::fromManifest(
                 QDir(tmp.path()).absoluteFilePath(u"info.yaml"_s)));
@@ -320,11 +321,14 @@ void PackagingJob::execute() noexcept(false)
                 pkgApplicationIds.append(app->id());
                 pkgCapabilities.append(app->capabilities());
                 pkgCategories.append(app->categories()); // effective (own or inherited)
+                pkgRuntimes.append(app->runtimeName());
             }
             pkgCapabilities.sort();
             pkgCapabilities.removeDuplicates();
             pkgCategories.sort();
             pkgCategories.removeDuplicates();
+            pkgRuntimes.sort();
+            pkgRuntimes.removeDuplicates();
         }
 
         // check signatures
@@ -340,6 +344,7 @@ void PackagingJob::execute() noexcept(false)
                     sig.requireApplicationIds(pkgApplicationIds);
                     sig.requireCapabilities(pkgCapabilities);
                     sig.requireCategories(pkgCategories);
+                    sig.requireRuntimes(pkgRuntimes);
                     sig.requireRevocationCheck(crls);
                     auto result = sig.verify(report.developerSignature(), certificates);
                     m_output = u"valid developer signature\n\n"_s
@@ -399,6 +404,7 @@ void PackagingJob::execute() noexcept(false)
                 sig.requireApplicationIds(pkgApplicationIds);
                 sig.requireCapabilities(pkgCapabilities);
                 sig.requireCategories(pkgCategories);
+                sig.requireRuntimes(pkgRuntimes);
                 QByteArray signature = sig.create(certificates.first(), m_passphrase.toUtf8(), &signer);
                 report.setDeveloperSignature(signature);
             } else if (m_mode == StoreSign) {

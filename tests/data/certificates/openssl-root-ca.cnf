@@ -26,7 +26,7 @@ serial      = $base_dir/serial.txt       # The current serial number
 crlnumber   = $base_dir/crlnumber.txt
 crl         = $base_dir/root-ca.crl
 
-unique_subject  = yes               # Set to 'no' to allow creation of
+unique_subject  = no                # allow re-signing leaves with the same subject
 
 ####################################################################
 [ req ]

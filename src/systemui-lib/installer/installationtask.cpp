@@ -192,6 +192,10 @@ void InstallationTask::execute()
                         throw Exception(Error::Package, "the package's categories (%1) do not match the currently set developer certificate (%2)")
                             .arg(m_categories).arg(cert.categories());
                     }
+                    if (!cert.matchRuntimes(m_runtimes)) {
+                        throw Exception(Error::Package, "the package's runtimes (%1) do not match the currently set developer certificate (%2)")
+                            .arg(m_runtimes).arg(cert.runtimes());
+                    }
                 }
             }
         } else {
@@ -267,6 +271,10 @@ void InstallationTask::execute()
                             throw Exception(Error::Package, "the package's categories (%1) do not match the currently set developer certificate (%2)")
                                 .arg(m_categories).arg(cert.categories());
                         }
+                        if (!cert.matchRuntimes(m_runtimes)) {
+                            throw Exception(Error::Package, "the package's runtimes (%1) do not match the currently set developer certificate (%2)")
+                                .arg(m_runtimes).arg(cert.runtimes());
+                        }
                     }
                 }
 
@@ -278,6 +286,7 @@ void InstallationTask::execute()
                 devSig.requireApplicationIds(m_applicationIds);
                 devSig.requireCapabilities(m_capabilities);
                 devSig.requireCategories(m_categories);
+                devSig.requireRuntimes(m_runtimes);
                 devSig.requireCertificateRoles(m_pm->certificateRoles());
 
                 try {
@@ -379,19 +388,22 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
         else if (QFileInfo(m_iconFileName).path() != u'.')
             throw Exception(Error::Package, "the icon must be located in the package's root directory");
 
-        // copy all capabilites, app ids, and categories out from m_package, as we won't have
-        // access to it anymore after the m_package ownership transfer later on
+        // copy all capabilites, app ids, categories and runtimes out from m_package, as we won't
+        // have access to it anymore after the m_package ownership transfer later on
         m_categories.append(m_package->categories()); // package-level categories
         const QVector<ApplicationInfo *> applicationInfos = m_package->applications();
         for (const auto *applicationInfo : applicationInfos) {
             m_applicationIds.append(applicationInfo->id());
             m_capabilities.append(applicationInfo->capabilities());
             m_categories.append(applicationInfo->categories()); // effective (own or inherited)
+            m_runtimes.append(applicationInfo->runtimeName());
         }
         m_capabilities.sort();
         m_capabilities.removeDuplicates();
         m_categories.sort();
         m_categories.removeDuplicates();
+        m_runtimes.sort();
+        m_runtimes.removeDuplicates();
 
         m_mutex.lock();
         m_packageId = m_package->id();

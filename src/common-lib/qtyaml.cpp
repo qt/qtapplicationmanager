@@ -910,15 +910,24 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
             fieldsFound << key;
 
             nextEvent(); // read value
-            QVector<yaml_event_type_t> allowedEvents;
-            if (field->types & YamlParser::Scalar)
-                allowedEvents.append(YAML_SCALAR_EVENT);
-            if (field->types & YamlParser::Map)
-                allowedEvents.append(YAML_MAPPING_START_EVENT);
-            if (field->types & YamlParser::List)
-                allowedEvents.append(YAML_SEQUENCE_START_EVENT);
 
-            if (!allowedEvents.contains(d->event.type)) { // ALIASES MISSING HERE!
+            static const auto eventAsFieldType = [](yaml_event_type_t type) -> FieldType {
+                switch (type) {
+                case YAML_SCALAR_EVENT:         return YamlParser::Scalar;
+                case YAML_MAPPING_START_EVENT:  return YamlParser::Map;
+                case YAML_SEQUENCE_START_EVENT: return YamlParser::List;
+                default:                        return FieldType(0);
+                }
+            };
+
+            if (!(field->types & eventAsFieldType(d->event.type))) { // ALIASES MISSING HERE!
+                QVector<yaml_event_type_t> allowedEvents;
+                if (field->types & YamlParser::Scalar)
+                    allowedEvents.append(YAML_SCALAR_EVENT);
+                if (field->types & YamlParser::Map)
+                    allowedEvents.append(YAML_MAPPING_START_EVENT);
+                if (field->types & YamlParser::List)
+                    allowedEvents.append(YAML_SEQUENCE_START_EVENT);
                 throw YamlParserException(this, "Field '%1' expected to be of type '%2', but got '%3'")
                     .arg(field->name).arg(mapEventNames(allowedEvents)).arg(mapEventNames({ d->event.type }));
             }

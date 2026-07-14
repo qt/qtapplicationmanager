@@ -13,8 +13,6 @@
 
 #include <QtAppManPackage/qtappmanpackageglobal.h>
 
-QT_FORWARD_DECLARE_CLASS(QDataStream)
-
 QT_BEGIN_NAMESPACE_AM
 
 class YamlPackageScanner;
@@ -25,8 +23,6 @@ class Q_APPMANPACKAGE_EXPORT IntentInfo
 public:
     IntentInfo(PackageInfo *packageInfo);
     ~IntentInfo() = default;
-
-    static quint32 dataStreamVersion();
 
     enum Visibility {
         Public,
@@ -46,9 +42,6 @@ public:
     QString icon() const;
 
     bool handleOnlyWhenRunning() const;
-
-    void writeToDataStream(QDataStream &ds) const;
-    static IntentInfo *readFromDataStream(PackageInfo *pkg, QDataStream &ds);
 
 private:
     PackageInfo *m_packageInfo;

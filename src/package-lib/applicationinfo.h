@@ -17,8 +17,6 @@
 #include <QtAppManCommon/openglconfiguration.h>
 #include <QtAppManCommon/watchdogconfiguration.h>
 
-QT_FORWARD_DECLARE_CLASS(QDataStream)
-
 QT_BEGIN_NAMESPACE_AM
 
 class PackageInfo;
@@ -28,8 +26,6 @@ class Q_APPMANPACKAGE_EXPORT ApplicationInfo
 public:
     ApplicationInfo(PackageInfo *packageInfo);
     ~ApplicationInfo() = default;
-
-    static quint32 dataStreamVersion();
 
     PackageInfo *packageInfo() const;
 
@@ -56,12 +52,7 @@ public:
     QMap<QString, QString> descriptions() const;
     QString icon() const;
 
-    void writeToDataStream(QDataStream &ds) const;
-    static ApplicationInfo *readFromDataStream(PackageInfo *pkg, QDataStream &ds);
-
 private:
-    void read(QDataStream &ds);
-
     // static part from the manifest
     PackageInfo *m_packageInfo;
 

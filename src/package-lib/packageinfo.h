@@ -16,8 +16,6 @@
 
 #include <QtAppManPackage/qtappmanpackageglobal.h>
 
-QT_FORWARD_DECLARE_CLASS(QDataStream)
-
 QT_BEGIN_NAMESPACE_AM
 
 class InstallationReport;
@@ -29,8 +27,6 @@ class Q_APPMANPACKAGE_EXPORT PackageInfo
 {
 public:
     ~PackageInfo();
-
-    static quint32 dataStreamVersion();
 
     void validate() const noexcept(false);
 
@@ -53,9 +49,6 @@ public:
 
     const InstallationReport *installationReport() const;
     void setInstallationReport(InstallationReport *report);
-
-    void writeToDataStream(QDataStream &ds) const;
-    static PackageInfo *readFromDataStream(QDataStream &ds);
 
     static bool isValidApplicationId(const QString &appId, QString *errorString = nullptr);
 

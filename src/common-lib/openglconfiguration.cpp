@@ -68,11 +68,6 @@ bool OpenGLConfiguration::operator!=(const OpenGLConfiguration &other) const
     return !(*this == other);
 }
 
-quint32 OpenGLConfiguration::dataStreamVersion()
-{
-    return 2;
-}
-
 QDataStream &operator<<(QDataStream &ds, const OpenGLConfiguration &cfg)
 {
     ds << cfg.desktopProfile << cfg.esMajorVersion << cfg.esMinorVersion << cfg.globalSharedContext;

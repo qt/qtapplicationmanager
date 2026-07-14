@@ -2,12 +2,8 @@
 // Copyright (C) 2019 Luxoft Sweden AB
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include <QDataStream>
-
 #include "intentinfo.h"
 #include "packageinfo.h"
-
-#include <memory>
 
 using namespace Qt::StringLiterals;
 
@@ -66,51 +62,6 @@ QString IntentInfo::icon() const
 bool IntentInfo::handleOnlyWhenRunning() const
 {
     return m_handleOnlyWhenRunning;
-}
-
-quint32 IntentInfo::dataStreamVersion()
-{
-    return 3;
-}
-
-void IntentInfo::writeToDataStream(QDataStream &ds) const
-{
-    //NOTE: increment dataStreamVersion() above, if you make any changes here
-
-    ds << m_id
-       << (m_visibility == Public ? u"public"_s : u"private"_s)
-       << m_requiredCapabilities
-       << m_parameterMatch
-       << m_handlingApplicationId
-       << m_categories
-       << m_names
-       << m_descriptions
-       << m_icon
-       << m_handleOnlyWhenRunning;
-}
-
-IntentInfo *IntentInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
-{
-    //NOTE: increment dataStreamVersion() above, if you make any changes here
-
-    auto intent = std::make_unique<IntentInfo>(pkg);
-    QString visibilityStr;
-
-    ds >> intent->m_id
-       >> visibilityStr
-       >> intent->m_requiredCapabilities
-       >> intent->m_parameterMatch
-       >> intent->m_handlingApplicationId
-       >> intent->m_categories
-       >> intent->m_names
-       >> intent->m_descriptions
-       >> intent->m_icon
-       >> intent->m_handleOnlyWhenRunning;
-
-    intent->m_visibility = (visibilityStr == u"public") ? Public : Private;
-    intent->m_categories.sort();
-
-    return intent.release();
 }
 
 QT_END_NAMESPACE_AM

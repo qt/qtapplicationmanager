@@ -153,11 +153,6 @@ bool WatchdogConfiguration::operator!=(const WatchdogConfiguration &other) const
     return !(*this == other);
 }
 
-quint32 WatchdogConfiguration::dataStreamVersion()
-{
-    return 2;
-}
-
 QDataStream &operator<<(QDataStream &ds, const WatchdogConfiguration &cfg)
 {
     auto msOut = [](QDataStream &ds, std::chrono::milliseconds ms) {

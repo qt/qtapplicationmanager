@@ -3,15 +3,12 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include <QDataStream>
-
 #include "applicationinfo.h"
 #include "packageinfo.h"
 #include "utilities.h"
 
 #include <QCoreApplication>
 #include <QThread>
-#include <memory>
 
 using namespace Qt::StringLiterals;
 
@@ -43,66 +40,6 @@ QVariantMap ApplicationInfo::allAppProperties() const
 {
     return m_allAppProperties;
 }
-
-quint32 ApplicationInfo::dataStreamVersion()
-{
-    return 7
-           + OpenGLConfiguration::dataStreamVersion()
-           + WatchdogConfiguration::dataStreamVersion();
-}
-
-void ApplicationInfo::writeToDataStream(QDataStream &ds) const
-{
-    //NOTE: increment dataStreamVersion() above, if you make any changes here
-
-    ds << m_id
-       << m_sysAppProperties
-       << m_allAppProperties
-       << m_codeFilePath
-       << m_runtimeName
-       << m_runtimeParameters
-       << m_supportsApplicationInterface
-       << m_capabilities
-       << m_openGLConfiguration
-       << m_watchdogConfiguration
-       << m_dltId
-       << m_dltDescription
-       << m_supportedMimeTypes
-       << m_categories
-       << m_names
-       << m_descriptions
-       << m_icon;
-}
-
-ApplicationInfo *ApplicationInfo::readFromDataStream(PackageInfo *pkg, QDataStream &ds)
-{
-    //NOTE: increment dataStreamVersion() above, if you make any changes here
-
-    auto app = std::make_unique<ApplicationInfo>(pkg);
-
-    ds >> app->m_id
-       >> app->m_sysAppProperties
-       >> app->m_allAppProperties
-       >> app->m_codeFilePath
-       >> app->m_runtimeName
-       >> app->m_runtimeParameters
-       >> app->m_supportsApplicationInterface
-       >> app->m_capabilities
-       >> app->m_openGLConfiguration
-       >> app->m_watchdogConfiguration
-       >> app->m_dltId
-       >> app->m_dltDescription
-       >> app->m_supportedMimeTypes
-       >> app->m_categories
-       >> app->m_names
-       >> app->m_descriptions
-       >> app->m_icon;
-
-    app->m_capabilities.sort();
-
-    return app.release();
-}
-
 
 QVariantMap ApplicationInfo::toVariantMap() const
 {

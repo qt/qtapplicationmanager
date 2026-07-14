@@ -46,8 +46,6 @@ public:
 
     bool operator==(const WatchdogConfiguration &other) const;
     bool operator!=(const WatchdogConfiguration &other) const;
-
-    static quint32 dataStreamVersion();
 };
 
 Q_APPMANCOMMON_EXPORT QDataStream &operator<<(QDataStream &ds, const WatchdogConfiguration &cfg);

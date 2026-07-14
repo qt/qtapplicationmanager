@@ -3,9 +3,6 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 // Qt-Security score:critical reason:data-parser
 
-#include <QDataStream>
-#include <QBuffer>
-
 #include "packageinfo.h"
 #include "applicationinfo.h"
 #include "intentinfo.h"
@@ -118,97 +115,6 @@ const InstallationReport *PackageInfo::installationReport() const
 void PackageInfo::setInstallationReport(InstallationReport *report)
 {
     m_installationReport.reset(report);
-}
-
-quint32 PackageInfo::dataStreamVersion()
-{
-    return 3
-           + ApplicationInfo::dataStreamVersion()
-           + IntentInfo::dataStreamVersion();
-}
-
-void PackageInfo::writeToDataStream(QDataStream &ds) const
-{
-    //NOTE: increment dataStreamVersion() above, if you make any changes here
-
-    QByteArray serializedReport;
-
-    if (auto report = installationReport()) {
-        QBuffer buffer(&serializedReport);
-        buffer.open(QBuffer::WriteOnly);
-        report->serialize(&buffer);
-    }
-
-    ds << m_id
-       << m_names
-       << m_icon
-       << m_descriptions
-       << m_categories
-       << m_version
-       << m_builtIn
-       << m_baseDir.absolutePath()
-       << serializedReport;
-
-    ds << int(m_applications.size());
-    for (const auto &app : m_applications)
-        app->writeToDataStream(ds);
-
-    ds << int(m_intents.size());
-    for (const auto &intent : m_intents)
-        intent->writeToDataStream(ds);
-}
-
-PackageInfo *PackageInfo::readFromDataStream(QDataStream &ds)
-{
-    //NOTE: increment dataStreamVersion() above, if you make any changes here
-
-    std::unique_ptr<PackageInfo> pkg(new PackageInfo);
-
-    QString baseDir;
-    QByteArray serializedReport;
-
-    ds >> pkg->m_id
-       >> pkg->m_names
-       >> pkg->m_icon
-       >> pkg->m_descriptions
-       >> pkg->m_categories
-       >> pkg->m_version
-       >> pkg->m_builtIn
-       >> baseDir
-       >> serializedReport;
-
-    pkg->m_baseDir.setPath(baseDir);
-
-    if (!serializedReport.isEmpty()) {
-        QBuffer buffer(&serializedReport);
-        buffer.open(QBuffer::ReadOnly);
-        pkg->m_installationReport = std::make_unique<InstallationReport>(pkg->id());
-        try {
-            pkg->m_installationReport->deserialize(&buffer);
-        } catch (...) {
-            return nullptr;
-        }
-    }
-
-    int applicationsSize = 0;
-    ds >> applicationsSize;
-    while (--applicationsSize >= 0) {
-        if (auto app = ApplicationInfo::readFromDataStream(pkg.get(), ds))
-            pkg->m_applications << app;
-        else
-            return nullptr;
-    }
-
-    int intentsSize = 0;
-    ds >> intentsSize;
-    while (--intentsSize >= 0) {
-        if (auto intent = IntentInfo::readFromDataStream(pkg.get(), ds))
-            pkg->m_intents << intent;
-        else
-            return nullptr;
-    }
-
-    return pkg.release();
 }
 
 bool PackageInfo::isValidApplicationId(const QString &appId, QString *errorString)

@@ -6,8 +6,8 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
-#include <QDataStream>
 #include <QHash>
+#include <QBuffer>
 #include <QStandardPaths>
 #include <QtConcurrentMap>
 
@@ -17,37 +17,69 @@
 #include "installationreport.h"
 #include "exception.h"
 #include "logging.h"
-#include "configcache.h"
 #include "filesystemmountwatcher.h"
 #include "sudo.h"
 
 #include <memory>
+#include <optional>
+#include <vector>
 #include <cstdlib>
 
 using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-// the templated adaptor class needed to instantiate ConfigCache<PackageInfo> in parse() below
-template<> class ConfigCacheAdaptor<PackageInfo>
+// Parse a list of info.yaml manifests directly (no caching). Broken manifests are skipped and
+// reported as a nullptr in the result, which stays index-aligned with manifestFiles. If
+// expectedDigests is set, each file's raw content is verified against the recorded digest and a
+// mismatch is treated like a broken manifest.
+static std::vector<std::unique_ptr<PackageInfo>> parseManifests(const QStringList &manifestFiles,
+                                                                const std::optional<QHash<QString, QByteArray>> &expectedDigests = std::nullopt)
 {
-public:
-    PackageInfo *loadFromSource(QIODevice *source, const QString &fileName)
-    {
-        return YamlPackageScanner().scan(source, fileName);
-    }
-    PackageInfo *loadFromCache(QDataStream &ds)
-    {
-        return PackageInfo::readFromDataStream(ds);
-    }
-    void saveToCache(QDataStream &ds, const PackageInfo *pi)
-    {
-        pi->writeToDataStream(ds);
-    }
+    auto parseOne = [expectedDigests](const QString &manifestFile) -> PackageInfo * {
+        try {
+            QFile file(manifestFile);
+            if (!file.open(QIODevice::ReadOnly))
+                throw Exception("Failed to open file '%1' for reading").arg(manifestFile);
+            if (file.size() > 1024*1024)
+                throw Exception("File '%1' is too big (> 1MB)").arg(manifestFile);
 
-    void preProcessSourceContent(QByteArray &, const QString &) { }
-    void merge(PackageInfo *, const PackageInfo *) { }
-};
+            QByteArray rawContent = file.readAll();
+
+            if (expectedDigests) {
+                const QByteArray checksum = QCryptographicHash::hash(rawContent, QCryptographicHash::Sha256);
+                const auto it = expectedDigests->constFind(manifestFile);
+                if ((it == expectedDigests->cend()) || (checksum != it.value())) {
+                    qCWarning(LogInstaller) << "Source content digest mismatch for" << manifestFile
+                                            << "- the file will be ignored";
+                    return nullptr;
+                }
+            }
+
+            QBuffer buffer(&rawContent);
+            buffer.open(QIODevice::ReadOnly);
+            return YamlPackageScanner().scan(&buffer, manifestFile);
+        } catch (const Exception &e) {
+            qCWarning(LogSystem, "Could not parse file '%s': %s (file will be ignored)",
+                      qPrintable(manifestFile), qPrintable(e.errorString()));
+            return nullptr;
+        }
+    };
+
+    // parse in parallel if there is more than one file
+    QVector<PackageInfo *> parsed;
+    if (manifestFiles.size() > 1)
+        parsed = QtConcurrent::blockingMapped<QVector<PackageInfo *>>(manifestFiles, parseOne);
+    else if (!manifestFiles.isEmpty())
+        parsed << parseOne(manifestFiles.first());
+
+    // adopt the parsed manifests into owning pointers for the caller
+    std::vector<std::unique_ptr<PackageInfo>> result;
+    result.reserve(parsed.size());
+    for (PackageInfo *pi : std::as_const(parsed))
+        result.emplace_back(pi);
+    return result;
+}
 
 
 PackageDatabase::PackageDatabase(const QStringList &builtInPackagesDirs,
@@ -75,20 +107,6 @@ PackageDatabase::~PackageDatabase()
 QString PackageDatabase::installedPackagesDir() const
 {
     return m_installedPackagesDir;
-}
-
-void PackageDatabase::enableLoadFromCache()
-{
-    if (m_parsed)
-        qCWarning(LogSystem) << "PackageDatabase cannot change the caching mode after the initial load";
-    m_loadFromCache = true;
-}
-
-void PackageDatabase::enableSaveToCache()
-{
-    if (m_parsed)
-        qCWarning(LogSystem) << "PackageDatabase cannot change the caching mode after the initial load";
-    m_saveToCache = true;
 }
 
 bool PackageDatabase::builtInHasRemovableUpdate(PackageInfo *packageInfo) const
@@ -153,25 +171,17 @@ void PackageDatabase::parse(PackageLocations packageLocations)
         }
         m_parsedPackageLocations = Builtin | Installed;
     } else {
-        AbstractConfigCache::Options cacheOptions = AbstractConfigCache::IgnoreBroken;
-        if (!m_loadFromCache)
-            cacheOptions |= AbstractConfigCache::ClearCache;
-        if (!m_loadFromCache && !m_saveToCache)
-            cacheOptions |= AbstractConfigCache::NoCache;
-
         if ((packageLocations & Builtin) && !(m_parsedPackageLocations & Builtin)) {
             QStringList manifestFiles;
             for (const QString &dir : std::as_const(m_builtInPackagesDirs))
                 manifestFiles << findManifestsInDir(dir, true);
 
-            ConfigCache<PackageInfo> cache(manifestFiles, u"appdb-builtin"_s, { 'P','K','G','B' },
-                                           PackageInfo::dataStreamVersion(), cacheOptions);
-            cache.parse();
+            std::vector<std::unique_ptr<PackageInfo>> pkgs = parseManifests(manifestFiles);
 
             for (int i = 0; i < manifestFiles.size(); ++i) {
                 QString manifestFile = manifestFiles.at(i);
                 QDir pkgDir = QFileInfo(manifestFile).dir();
-                std::unique_ptr<PackageInfo> pkg(cache.takeResult(i));
+                std::unique_ptr<PackageInfo> pkg = std::move(pkgs[i]);
 
                 if (!pkg) { // the YAML file was not parseable and we ignore broken manifests
                     qCWarning(LogSystem) << "The file" << manifestFile << "is not a valid manifest YAML"
@@ -331,23 +341,14 @@ void PackageDatabase::parseInstalled()
         validReports.push_back(std::move(report));
     }
 
-    AbstractConfigCache::Options cacheOptions = AbstractConfigCache::IgnoreBroken;
-    if (!m_loadFromCache)
-        cacheOptions |= AbstractConfigCache::ClearCache;
-    if (!m_loadFromCache && !m_saveToCache)
-        cacheOptions |= AbstractConfigCache::NoCache;
-
-    ConfigCache<PackageInfo> cache(validManifests, u"appdb-installed"_s, { 'P','K','G','I' },
-                                   PackageInfo::dataStreamVersion(), cacheOptions);
-    cache.setExpectedSourceDigests(expectedDigests);
-    cache.parse();
+    std::vector<std::unique_ptr<PackageInfo>> pkgs = parseManifests(validManifests, expectedDigests);
 
     for (int i = 0; i < validManifests.size(); ++i) {
         QString manifestFile = validManifests.at(i);
         QDir pkgDir = QFileInfo(manifestFile).dir();
 
         try {
-            std::unique_ptr<PackageInfo> pkg(cache.takeResult(i));
+            std::unique_ptr<PackageInfo> pkg = std::move(pkgs[i]);
 
             if (!pkg) { // the YAML file was not parseable and we ignore broken manifests
                 qCWarning(LogSystem) << "The file" << manifestFile << "is not a valid manifest YAML"

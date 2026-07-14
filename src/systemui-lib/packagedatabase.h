@@ -32,9 +32,6 @@ public:
 
     QString installedPackagesDir() const;
 
-    void enableLoadFromCache();
-    void enableSaveToCache();
-
     void parse(PackageLocations packageLocations = All);
 
     PackageLocations parsedPackageLocations() const;
@@ -56,8 +53,6 @@ private:
     QStringList findManifestsInDir(const QDir &manifestDir, bool scanningBuiltInApps);
     void parseInstalled();
 
-    bool m_loadFromCache = false;
-    bool m_saveToCache = false;
     bool m_parsed = false;
     QStringList m_builtInPackagesDirs;
     QString m_installedPackagesDir;

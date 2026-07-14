@@ -529,9 +529,6 @@ void Main::loadPackageDatabase(const Configuration *cfg) noexcept(false)
         m_packageDatabase = new PackageDatabase(cfg->yaml.applications.builtinAppsManifestDir,
                                                 cfg->yaml.applications.installationDir,
                                                 cfg->yaml.applications.installationDirMountPoint);
-        if (!cfg->clearCache() && !cfg->noCache())
-            m_packageDatabase->enableLoadFromCache();
-        m_packageDatabase->enableSaveToCache();
     }
     m_packageDatabase->parse();
 

@@ -22,7 +22,7 @@
 QT_BEGIN_NAMESPACE_AM
 
 // IMPORTANT: if you add/remove/change anything in this struct, you also have to adjust the
-//            dataStreamVersion(), serialize() and merge() functions in the cpp file!
+//            merge() function in the cpp file!
 struct Q_APPMANSYSTEMUI_EXPORT ConfigurationData
 {
     QString instanceId;

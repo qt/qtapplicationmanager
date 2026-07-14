@@ -13,8 +13,6 @@ qt_internal_add_test(tst_yaml
         Qt::AppManSystemUIPrivate
     BUILTIN_TESTDATA
     TESTDATA
-        data/cache1.yaml
-        data/cache2.yaml
         data/test.yaml
         data/tricky.yaml
 )

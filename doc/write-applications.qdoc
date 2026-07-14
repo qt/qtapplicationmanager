@@ -44,11 +44,8 @@ Here are a few things to consider:
 The \l{Manifest Definition} has all the information you need to produce a minimal \c info.yaml
 file.
 
-Finding and parsing \c info.yaml files recursively, for potentially hundreds of applications can be
-a very time consuming task and would severely slow down the application manager's startup.
-Therefore, all manifest files are cached in a binary database. The application manager
-automatically detects when a manifest has changed and updates the cache accordingly, but you can
-also force a rebuild of this database by calling \c{appman --clear-cache}.
+The \c info.yaml manifests of all built-in and installed applications are found and parsed during
+the application manager's startup.
 
 \note Dynamically adding, updating, or removing individual applications is supported via the
 PackageManager interface.

@@ -109,12 +109,11 @@ void tst_Main::init()
 
 void tst_Main::initMain(const QString &mainQml)
 {
-    argc = mainQml.isNull() ? 2: 3;
+    argc = mainQml.isNull() ? 1 : 2;
     argv = new char*[size_t(argc) + 1];
     argv[0] = qstrdup("tst_Main");
-    argv[1] = qstrdup("--no-cache");
     if (!mainQml.isNull())
-        argv[2] = qstrdup(qPrintable(mainQml));
+        argv[1] = qstrdup(qPrintable(mainQml));
     argv[argc] = nullptr;
 
     main = new Main(argc, argv);

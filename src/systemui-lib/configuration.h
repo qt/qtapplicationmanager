@@ -152,8 +152,6 @@ public:
     QVariant buildConfig() const;
 
     // all command line arguments that do not map to YAML fields
-    bool noCache() const;
-    bool clearCache() const;
     bool verbose() const;
     void setForceVerbose(bool forceVerbose);
     bool isWatchdogDisabled() const;

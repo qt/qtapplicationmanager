@@ -64,9 +64,7 @@ void tst_Configuration::cleanup()
 void tst_Configuration::defaultConfig()
 {
     Configuration c;
-    c.parseWithArguments({ u"test"_s, u"--no-cache"_s });
-
-    QVERIFY(c.noCache());
+    c.parseWithArguments({ u"test"_s });
 
     // command line only
     QCOMPARE(c.noFullscreen(), true); // legacy
@@ -156,9 +154,7 @@ void tst_Configuration::defaultConfig()
 void tst_Configuration::simpleConfig()
 {
     Configuration c({ u":/data/config1.yaml"_s }, u":/build-config.yaml"_s);
-    QVERIFY_THROWS_NO_EXCEPTION(c.parseWithArguments({ u"test"_s, u"--no-cache"_s, u"--instance-id=i1"_s }));
-
-    QVERIFY(c.noCache());
+    QVERIFY_THROWS_NO_EXCEPTION(c.parseWithArguments({ u"test"_s, u"--instance-id=i1"_s }));
 
     // command line only
     QCOMPARE(c.noFullscreen(), false); // legacy
@@ -281,9 +277,7 @@ void tst_Configuration::simpleConfig()
 void tst_Configuration::mergedConfig()
 {
     Configuration c({ u":/data/"_s }, u":/build-config.yaml"_s);
-    c.parseWithArguments({ u"test"_s, u"--no-cache"_s, u"--instance-id=i2"_s });
-
-    QVERIFY(c.noCache());
+    c.parseWithArguments({ u"test"_s, u"--instance-id=i2"_s });
 
     // command line only
     QCOMPARE(c.noFullscreen(), false); // legacy
@@ -441,7 +435,7 @@ void tst_Configuration::mergedConfig()
 void tst_Configuration::commandLineConfig()
 {
     Configuration c;
-    QByteArrayList commandLine { "test", "--no-cache" };
+    QByteArrayList commandLine { "test" };
 
     commandLine << "--builtin-apps-manifest-dir" << "builtin-dir-cl1"
                 << "--builtin-apps-manifest-dir" << "builtin-dir-cl2"
@@ -473,8 +467,6 @@ void tst_Configuration::commandLineConfig()
         strCommandLine << QString::fromLatin1(cl);
 
     c.parseWithArguments(strCommandLine);
-
-    QVERIFY(c.noCache());
 
     // command line only
     QCOMPARE(c.noFullscreen(), true); // legacy

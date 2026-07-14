@@ -162,12 +162,11 @@ void tst_ControllerTool::initTestCase()
     if (!QDir(QString::fromLatin1(AM_TESTDATA_DIR "/packages")).exists())
         QSKIP("No test packages available in the data/ directory");
 
-    m_argc = 4;
+    m_argc = 3;
     m_argv = new char * [size_t(m_argc) + 1];
     m_argv[0] = qstrdup("tst_controller-tool");
-    m_argv[1] = qstrdup("--no-cache");
-    m_argv[2] = qstrdup("--development-mode=system");
-    m_argv[3] = qstrdup("--instance-id=controller-test-id");
+    m_argv[1] = qstrdup("--development-mode=system");
+    m_argv[2] = qstrdup("--instance-id=controller-test-id");
     m_argv[m_argc] = nullptr;
 
     m_main = new Main(m_argc, m_argv);  // QCoreApplication saves a reference to argc!

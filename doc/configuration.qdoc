@@ -127,29 +127,8 @@ ui:
                     to rules 1 and 2.
             \endlist
 
-            The application manager saves the result of parsing and evaluating all the
-            configuration files into a cache. This cache is loaded on subsequent starts, if the
-            exact set of config files is used, unchanged.
-
             In case the given argument is a directory, all files with a \c{.yaml} extension will be
             loaded from that directory in alphabetical order (ASCII sort order, non-recursive).
-    \row
-        \li \b --no-cache
-        \li bool
-        \li Disables the caching functionality for the configuration files and the application
-            database : the caches are neither read from or written to.
-            (default: false)
-    \row
-        \li \b --clear-cache
-        \li bool
-        \li Although the application manager should detect if the configuration file and application
-            database caches are out of sync, you can force-clear the caches on startup with this
-            option.
-
-            The old options \c --clear-config-cache, \c -r, and \c --recreate-database are also still
-            supported and do also - despite their names - clear both caches.
-
-            (default: false)
     \row
         \li \b --option or \b -o
         \li YAML

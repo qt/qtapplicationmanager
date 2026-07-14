@@ -248,7 +248,7 @@ function (qt_am_internal_add_qml_test target)
                 list(APPEND WRAPPER_ARGS EXTRA_ARGS -o "systemProperties: { public: { AM_TESTDATA_DIR: '${ARG_TESTDATA_DIR}' } }")
             endif()
 
-            list(APPEND WRAPPER_ARGS EXTRA_ARGS --no-cache --no-dlt-logging)
+            list(APPEND WRAPPER_ARGS EXTRA_ARGS --no-dlt-logging)
             if (APPLE)
                 list(APPEND WRAPPER_ARGS EXTRA_ARGS --dbus=none)
             endif()

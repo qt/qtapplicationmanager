@@ -23,8 +23,6 @@ qt_internal_add_module(AppManSystemUIPrivate
         processstatus.cpp processstatus.h processstatus_p.h
         quicklauncher.cpp quicklauncher.h
 
-        cache/configcache.cpp cache/configcache.h cache/configcache_p.h
-
         sudo/sudo.cpp sudo/sudo.h sudo/sudo_p.h
 
         container/abstractcontainer.cpp container/abstractcontainer.h

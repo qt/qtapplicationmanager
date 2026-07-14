@@ -10,10 +10,8 @@
 #include <QMetaEnum>
 #include <QProcessEnvironment>
 #include <QHash>
-#include <QDataStream>
 #include <QFileInfo>
 #include <QDir>
-#include <QBuffer>
 #include <QGuiApplication>
 
 #include <cstdlib>
@@ -26,7 +24,6 @@
 
 #include "logging.h"
 #include "qtyaml.h"
-#include "configcache.h"
 #include "utilities.h"
 #include "exception.h"
 #include "sudo.h"
@@ -38,109 +35,6 @@
 using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
-
-// helper functions to (de)serialize std::chrono::durations via QDataStream
-template <typename T, typename U>
-QDataStream &operator<<(QDataStream &ds, const std::chrono::duration<T, U> &duration)
-{
-    ds << qint64(duration.count());
-    return ds;
-}
-
-template <typename T, typename U>
-QDataStream &operator>>(QDataStream &ds, std::chrono::duration<T, U> &duration)
-{
-    qint64 count;
-    ds >> count;
-    duration = std::chrono::duration<T, U> { count };
-    return ds;
-}
-
-
-// helper class that makes it possible to handle QDataStream << and >> in a single function
-class SerializeStream {
-public:
-    SerializeStream(QDataStream &ds, bool write)
-        : m_ds(ds)
-        , m_write(write)
-    { }
-
-    template <typename T> SerializeStream &operator&(T &&t)
-    {
-        if (m_write)
-            m_ds << std::forward<T>(t);
-        else
-            m_ds >> std::forward<T>(t);
-
-        return *this;
-    }
-
-    QDataStream &m_ds;
-    bool m_write;
-};
-
-// helper class to serialize lists within the configuration using the SerializeStream mechanism
-template <typename LIST, typename ...MEMBER_PTRS>
-class SerializeList
-{
-public:
-    SerializeList(LIST &list, MEMBER_PTRS... memberPtrs)
-        : m_list(list)
-        , m_memberPtrs(memberPtrs...)
-    { }
-
-    QDataStream &serialize(QDataStream &ds)
-    {
-        // C++ doesn't allow parameter pack expansion directly for member function calls.
-        // So the ptr-to-members to stream-member-values operation has to done in two steps:
-        //   1) convert the ptr-to-member pack into a member-value pack
-        //   2) parameter expand THAT pack into operator << to stream the values
-        ds << m_list.size();
-        for (const auto &entry : std::as_const(m_list)) {
-            std::apply([&](auto... memberPtrs) {
-                [](QDataStream &ds, auto &&... resolvedMembers) {
-                    (ds << ... << resolvedMembers);
-                }(ds, entry.*memberPtrs...);
-            }, m_memberPtrs);
-        }
-        return ds;
-    }
-
-    QDataStream &deserialize(QDataStream &ds)
-    {
-        m_list.clear();
-        qsizetype s;
-        ds >> s;
-        m_list.reserve(s);
-        for (qsizetype i = 0; i < s; ++i) {
-            typename LIST::value_type entry;
-            std::apply([&](auto... memberPtrs) {
-                [](QDataStream &ds, auto &&... resolvedMembers) {
-                    (ds >> ... >> resolvedMembers);
-                }(ds, entry.*memberPtrs...);
-            }, m_memberPtrs);
-            m_list.append(entry);
-        }
-        return ds;
-    }
-
-private:
-    LIST &m_list;
-    std::tuple<MEMBER_PTRS...> m_memberPtrs;
-};
-
-template <typename ENTRY, typename ...MEMBER_PTRS>
-QDataStream &operator<<(QDataStream &ds, SerializeList<ENTRY, MEMBER_PTRS...> &&serialize)
-{
-    return serialize.serialize(ds);
-}
-
-template <typename ENTRY, typename ...MEMBER_PTRS>
-QDataStream &operator>>(QDataStream &ds, SerializeList<ENTRY, MEMBER_PTRS...> &&serialize)
-{
-    return serialize.deserialize(ds);
-}
-
 
 // helper functions to merge configuration fields when loading multiple YAML files
 template <typename T> void mergeField(T &into, const T &from, const T &def)
@@ -177,36 +71,6 @@ void mergeField(QList<std::pair<QString, QString>> &into, const QList<std::pair<
     }
 }
 
-
-// the templated adaptor class needed to instantiate ConfigCache<ConfigurationData> in parse() below
-template<> class ConfigCacheAdaptor<ConfigurationData>
-{
-public:
-    static ConfigurationData *loadFromSource(QIODevice *source, const QString &fileName)
-    {
-        auto cd = std::make_unique<ConfigurationData>();
-        ConfigurationPrivate::loadFromSource(source, fileName, *cd);
-        return cd.release();
-    }
-    void preProcessSourceContent(QByteArray &sourceContent, const QString &fileName)
-    {
-        sourceContent = ConfigurationPrivate::substituteVars(sourceContent, fileName);
-    }
-    ConfigurationData *loadFromCache(QDataStream &ds)
-    {
-        auto cd = std::make_unique<ConfigurationData>();
-        ConfigurationPrivate::loadFromCache(ds, *cd);
-        return cd.release();
-    }
-    void saveToCache(QDataStream &ds, const ConfigurationData *cd)
-    {
-        ConfigurationPrivate::saveToCache(ds, *cd);
-    }
-    static void merge(ConfigurationData *to, const ConfigurationData *from)
-    {
-        ConfigurationPrivate::merge(*from, *to);
-    }
-};
 
 static ConfigurationData::Flags::DevelopmentMode parseDevelopmentModeEnum(const QString &devMode)
 {
@@ -441,24 +305,33 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         }
     }
 
-    AbstractConfigCache::Options cacheOptions = AbstractConfigCache::MergedResult;
-    if (noCache())
-        cacheOptions |= AbstractConfigCache::NoCache;
-    if (clearCache())
-        cacheOptions |= AbstractConfigCache::ClearCache;
+    // parse and merge all config files directly (no caching); merge order matters
+    d->data = { };
+    QStringList canonicalPaths;
+    canonicalPaths.reserve(configFilePaths.size());
 
-    if (configFilePaths.isEmpty()) {
-        d->data = { };
-    } else {
-        ConfigCache<ConfigurationData> cache(configFilePaths, u"config"_s, { 'C','F','G','D' },
-                                             ConfigurationPrivate::dataStreamVersion(), cacheOptions);
+    for (const QString &configFilePath : std::as_const(configFilePaths)) {
+        const QString path = QFileInfo(configFilePath).canonicalFilePath();
+        if (path.isEmpty())
+            throw Exception("file %1 does not exist").arg(configFilePath);
+        if (canonicalPaths.contains(path))
+            throw Exception("duplicate files are not allowed - found %1 at least two times").arg(path);
+        canonicalPaths << path;
 
-        cache.parse();
-        if (auto result = cache.takeMergedResult()) {
-            d->data = *result;
-            delete result;
-        } else {
-            d->data = { };
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly))
+            throw Exception("Failed to open file '%1' for reading").arg(path);
+        if (file.size() > 1024*1024)
+            throw Exception("File '%1' is too big (> 1MB)").arg(path);
+
+        const QByteArray rawContent = ConfigurationPrivate::substituteVars(file.readAll(), path);
+
+        try {
+            ConfigurationData cd;
+            ConfigurationPrivate::loadFromSource(rawContent, path, cd);
+            ConfigurationPrivate::merge(cd, d->data);
+        } catch (const Exception &e) {
+            throw Exception("Could not parse config file '%1': %2").arg(path, e.errorString());
         }
     }
 
@@ -466,15 +339,10 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     for (const QString &option : options) {
         QByteArray yaml("formatVersion: 1\nformatType: am-configuration\n---\n");
         yaml.append(option.toUtf8());
-        QBuffer buffer(&yaml);
-        if (Q_UNLIKELY(!buffer.open(QIODevice::ReadOnly)))
-            throw Exception(buffer.errorString());
         try {
-            ConfigurationData *cd = ConfigCacheAdaptor<ConfigurationData>::loadFromSource(&buffer, u"command line"_s);
-            if (cd) {
-                ConfigCacheAdaptor<ConfigurationData>::merge(&d->data, cd);
-                delete cd;
-            }
+            ConfigurationData cd;
+            ConfigurationPrivate::loadFromSource(yaml, u"command line"_s, cd);
+            ConfigurationPrivate::merge(cd, d->data);
         } catch (const Exception &e) {
             throw Exception("Could not parse --option value: %1").arg(e.errorString());
         }
@@ -550,111 +418,13 @@ void Configuration::parseWithArguments(const QStringList &arguments)
 #endif
 }
 
-void ConfigurationPrivate::loadFromCache(QDataStream &ds, ConfigurationData &cd)
-
-{
-    serialize(ds, cd, false);
-}
-
-void ConfigurationPrivate::saveToCache(QDataStream &ds, const ConfigurationData &cd)
-{
-    Q_ASSERT(ds.device() && ds.device()->isWritable());
-    serialize(ds, const_cast<ConfigurationData &>(cd), true);
-}
-
-quint32 ConfigurationPrivate::dataStreamVersion()
-{
-    return 30;
-}
-
-void ConfigurationPrivate::serialize(QDataStream &ds, ConfigurationData &cd, bool write)
-{
-    //NOTE: increment dataStreamVersion() above, if you make any changes here
-
-    // IMPORTANT: when doing changes to ConfigurationData, remember to adjust both
-    //            serialize() and merge() at the same time!
-
-    SerializeStream ssm(ds, write);
-
-    ssm & cd.runtimes.configurations
-        & cd.runtimes.additionalLaunchers
-        & cd.containers.configurations
-        & cd.containers.selection
-        & cd.intents.timeouts.disambiguation
-        & cd.intents.timeouts.startApplication
-        & cd.intents.timeouts.replyFromApplication
-        & cd.intents.timeouts.replyFromSystem
-        & cd.plugins.startup
-        & cd.plugins.container
-        & cd.logging.dlt.id
-        & cd.logging.dlt.description
-        & cd.logging.dlt.longMessageBehavior
-        & cd.logging.rules
-        & cd.logging.messagePattern
-        & cd.logging.useAMConsoleLogger
-        & cd.installer.caCertificates
-        & cd.installer.certificateRevocationLists
-        & cd.installer.allowedURLs
-        & cd.installer.minimumCertificateVersion
-        & cd.dbus.registrations
-        & cd.quicklaunch.idleLoad
-        & cd.quicklaunch.runtimesPerContainer
-        & cd.quicklaunch.failedStartLimit
-        & cd.quicklaunch.failedStartLimitIntervalSec
-        & cd.ui.style
-        & cd.ui.mainQml
-        & cd.ui.resources
-        & cd.ui.fullscreen
-        & cd.ui.windowIcon
-        & cd.ui.importPaths
-        & cd.ui.pluginPaths
-        & cd.ui.iconThemeName
-        & cd.ui.iconThemeSearchPaths
-        & cd.ui.opengl.desktopProfile
-        & cd.ui.opengl.esMajorVersion
-        & cd.ui.opengl.esMinorVersion
-        & cd.ui.opengl.globalSharedContext
-        & cd.applications.builtinAppsManifestDir
-        & cd.applications.installationDir
-        & cd.applications.documentDir
-        & cd.applications.extraDirs
-        & cd.applications.installationDirMountPoint
-        & cd.crashAction.printBacktrace
-        & cd.crashAction.printQmlStack
-        & cd.crashAction.waitForGdbAttach
-        & cd.crashAction.dumpCore
-        & cd.crashAction.dumpCoreOnWatchdogKill
-        & cd.crashAction.stackFramesToIgnore.onCrash
-        & cd.crashAction.stackFramesToIgnore.onException
-        & cd.systemProperties
-        & cd.flags.noSecurity
-        & cd.flags.developmentMode
-        & cd.flags.forceMultiProcess
-        & cd.flags.forceSingleProcess
-        & cd.flags.allowUnsignedPackages
-        & cd.flags.allowUnknownUiClients
-        & cd.wayland.socketName
-        & cd.instanceId
-        & cd.shutdownTimeout
-        & cd.watchdog.eventloop.checkInterval
-        & cd.watchdog.eventloop.warnTimeout
-        & cd.watchdog.eventloop.killTimeout
-        & cd.watchdog.quickwindow.checkInterval
-        & cd.watchdog.quickwindow.warnTimeout
-        & cd.watchdog.quickwindow.killTimeout
-        & cd.watchdog.wayland.checkInterval
-        & cd.watchdog.wayland.warnTimeout
-        & cd.watchdog.wayland.killTimeout;
-}
-
 // using templates only would be better, but we cannot get nice pointers-to-member-data for
 // all elements in our sub-structs in a generic way without a lot of boilerplate code
 #define MERGE_FIELD(x) mergeField(into.x, from.x, defaultValue.x)
 
 void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationData &into)
 {
-    // IMPORTANT: when doing changes to ConfigurationData, remember to adjust both
-    //            serialize() and merge() at the same time!
+    // IMPORTANT: when doing changes to ConfigurationData, remember to adjust merge()
 
     static const ConfigurationData defaultValue { };
 
@@ -767,10 +537,10 @@ QByteArray ConfigurationPrivate::substituteVars(const QByteArray &sourceContent,
     return string;
 }
 
-void ConfigurationPrivate::loadFromSource(QIODevice *source, const QString &fileName, ConfigurationData &cd)
+void ConfigurationPrivate::loadFromSource(const QByteArray &source, const QString &fileName, ConfigurationData &cd)
 {
     try {
-        YamlParser yp(source->readAll(), fileName);
+        YamlParser yp(source, fileName);
         auto header = yp.parseHeader();
         if (!(header.first == u"am-configuration" && header.second == 1))
             throw Exception("Unsupported format type and/or version");

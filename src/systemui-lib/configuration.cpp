@@ -144,10 +144,6 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
     cf.setDefaultValues(d->defaultConfigFilePaths);
     d->clp.addOption(cf);
     d->clp.addOption({ { u"o"_s, u"option"_s },   u"Override a specific config option."_s, u"yaml-snippet"_s });
-    d->clp.addOption({ { u"no-cache"_s, u"no-config-cache"_s },
-                     u"Disable the use of the config and appdb file cache."_s });
-    d->clp.addOption({ { u"clear-cache"_s, u"clear-config-cache"_s },
-                     u"Ignore an existing config and appdb file cache."_s });
     if (!buildConfigFilePath.isEmpty())
         d->clp.addOption({ u"build-config"_s,     u"Dumps the build configuration and exits."_s });
 
@@ -180,6 +176,8 @@ Configuration::Configuration(const QStringList &defaultConfigFilePaths,
 
     d->deprecatedOptions = {
         { { u"r"_s, u"recreate-database"_s }, { } },
+        { { u"no-cache"_s, u"no-config-cache"_s }, { } },
+        { { u"clear-cache"_s, u"clear-config-cache"_s }, { } },
         { u"installed-apps-manifest-dir"_s, { }, u"dir"_s },
         { u"app-image-mount-dir"_s, { }, u"dir"_s },
         { u"disable-installer"_s, { } },
@@ -891,16 +889,6 @@ void ConfigurationPrivate::loadFromSource(const QByteArray &source, const QStrin
         throw Exception(e.errorCode(), "Failed to parse config file %1: %2")
             .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : u"<stream>"_s, e.errorString());
     }
-}
-
-bool Configuration::noCache() const
-{
-    return d->clp.isSet(u"no-cache"_s);
-}
-
-bool Configuration::clearCache() const
-{
-    return d->clp.isSet(u"clear-cache"_s);
 }
 
 bool Configuration::verbose() const

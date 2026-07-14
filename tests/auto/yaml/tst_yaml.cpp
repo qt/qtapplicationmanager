@@ -10,10 +10,8 @@
 #include <QTemporaryDir>
 
 #include "qtyaml.h"
-#include "configcache.h"
 #include "exception.h"
 #include "global.h"
-#include "sudo.h"
 
 using namespace Qt::StringLiterals;
 
@@ -27,14 +25,11 @@ public:
     tst_Yaml();
 
 private Q_SLOTS:
-    void initTestCase();
     void tests_data();
     void tests();
     void parser_data();
     void parser();
     void documentParser();
-    void cache();
-    void mergedCache();
     void parallel();
     void generate();
     void emitter();
@@ -45,8 +40,6 @@ private:
     static constexpr int ALL = 0;
     static constexpr int V11 = 1;
     static constexpr int V12 = 2;
-
-    QTemporaryDir m_testRoot;
 };
 
 static QVariant vnull = QVariant::fromValue(nullptr);
@@ -61,18 +54,6 @@ tst_Yaml::tst_Yaml()
     // remove this line to see all the YAML 1.1 deprecation warnings
     YamlParser::disableDeprecationWarnings();
 #endif
-}
-
-void tst_Yaml::initTestCase()
-{
-    // ConfigCache now routes through SudoClient unconditionally. Use the fallback (in-process)
-    // implementation and redirect its file storage into a per-run temp dir.
-    Sudo::fallbackServer();
-    QVERIFY(m_testRoot.isValid());
-#if defined(QT_BUILD_INTERNAL)
-    SudoClient::instance()->setTestRootPathPrefix(m_testRoot.path() + u'/');
-#endif
-    SudoClient::instance()->setInstanceId(QString());
 }
 
 void tst_Yaml::parser_data()
@@ -330,165 +311,6 @@ void tst_Yaml::documentParser()
     } catch (const Exception &e) {
         QVERIFY2(false, e.what());
     }
-}
-struct CacheTest
-{
-    QString name;
-    QString file;
-    QString value;
-};
-
-template<> class QtAM::ConfigCacheAdaptor<CacheTest>
-{
-public:
-    CacheTest *loadFromSource(QIODevice *source, const QString &fileName)
-    {
-        std::unique_ptr<CacheTest> ct(new CacheTest);
-        YamlParser yp(source->readAll(), fileName);
-        yp.nextDocument();
-        yp.parseFields({
-            { "name", true, YamlParser::Scalar, [&]() { ct->name = yp.parseString(); } },
-            { "file", true, YamlParser::Scalar, [&]() { ct->file = yp.parseString(); } },
-            { "value", false, YamlParser::Scalar, [&]() { ct->value = yp.parseString(); } }
-        });
-        return ct.release();
-    }
-    CacheTest *loadFromCache(QDataStream &ds)
-    {
-        CacheTest *ct = new CacheTest;
-        ds >> ct->name >> ct->file >> ct->value;
-        return ct;
-    }
-    void saveToCache(QDataStream &ds, const CacheTest *ct)
-    {
-        ds << ct->name << ct->file << ct->value;
-    }
-
-    void merge(CacheTest *ct1, const CacheTest *ct2)
-    {
-        ct1->name = ct2->name;
-        ct1->file = ct1->file + u","_s + ct2->file;
-        ct1->value.append(ct2->value);
-    }
-    void preProcessSourceContent(QByteArray &sourceContent, const QString &fileName)
-    {
-        sourceContent.replace("${FILE}", fileName.toUtf8());
-    }
-};
-
-void tst_Yaml::cache()
-{
-#if !defined(QT_BUILD_INTERNAL)
-    QSKIP("This test requires a developer-build");
-#endif
-    QStringList files = { u":/data/cache1.yaml"_s, u":/data/cache2.yaml"_s };
-
-    for (int step = 0; step < 2; ++step) {
-        try {
-            ConfigCache<CacheTest> cache(files, u"cache-test"_s, { 'C','T','S','T' }, 1,
-                                         step == 0 ? AbstractConfigCache::ClearCache
-                                                   : AbstractConfigCache::None);
-            cache.parse();
-            QVERIFY(cache.parseReadFromCache() == (step == 1));
-            QVERIFY(cache.parseWroteToCache() == (step == 0));
-            CacheTest *ct1 = cache.takeResult(0);
-            QVERIFY(ct1);
-            QCOMPARE(ct1->name, u"cache1"_s);
-            QCOMPARE(ct1->file, u":/data/cache1.yaml"_s);
-            CacheTest *ct2 = cache.takeResult(1);
-            QVERIFY(ct2);
-            QCOMPARE(ct2->name, u"cache2"_s);
-            QCOMPARE(ct2->file, u":/data/cache2.yaml"_s);
-
-            delete ct1;
-            delete ct2;
-        } catch (const Exception &e) {
-            QVERIFY2(false, e.what());
-        }
-    }
-
-    ConfigCache<CacheTest> wrongVersion(files, u"cache-test"_s, { 'C','T','S','T' }, 2,
-                                        AbstractConfigCache::None);
-    QTest::ignoreMessage(QtWarningMsg, "Failed to read cache: failed to parse cache header");
-    wrongVersion.parse();
-    QVERIFY(!wrongVersion.parseReadFromCache());
-
-    ConfigCache<CacheTest> wrongType(files, u"cache-test"_s, { 'X','T','S','T' }, 1,
-                                     AbstractConfigCache::None);
-    QTest::ignoreMessage(QtWarningMsg, "Failed to read cache: failed to parse cache header");
-    wrongType.parse();
-    QVERIFY(!wrongType.parseReadFromCache());
-
-    ConfigCache<CacheTest> duplicateCache({ u":/cache1.yaml"_s, u":/cache1.yaml"_s },
-                                          u"cache-test"_s, { 'D','T','S','T' }, 1,
-                                          AbstractConfigCache::None);
-    try {
-        duplicateCache.parse();
-        QVERIFY(false);
-    }  catch (const Exception &e) {
-        QVERIFY(e.errorString().contains(u"duplicate"_s));
-    }
-}
-
-void tst_Yaml::mergedCache()
-{
-#if !defined(QT_BUILD_INTERNAL)
-    QSKIP("This test requires a developer-build");
-#endif
-    // we need cache2 modifieable, so we copy it to a temp file
-    QTemporaryFile cache2File(u"cache2"_s);
-    QVERIFY(cache2File.open());
-    QFile cache2Resource(u":/data/cache2.yaml"_s);
-    QVERIFY(cache2Resource.open(QIODevice::ReadOnly));
-    QVERIFY(cache2File.write(cache2Resource.readAll()) > 0);
-    QVERIFY(cache2File.flush());
-
-    const QString cache2FileName = QFileInfo(cache2File).absoluteFilePath();
-    QStringList files = { u":/data/cache1.yaml"_s, cache2FileName };
-
-    for (int step = 0; step < 4; ++step) {
-        AbstractConfigCache::Options options = AbstractConfigCache::MergedResult;
-        if (step % 2 == 0)
-            options |= AbstractConfigCache::ClearCache;
-        if (step == 2)
-            std::reverse(files.begin(), files.end());
-
-        try {
-            ConfigCache<CacheTest> cache(files, u"cache-test"_s, { 'M','T','S','T' }, 1, options);
-            cache.parse();
-            QVERIFY(cache.parseReadFromCache() == (step % 2 == 1));
-            QVERIFY(cache.parseWroteToCache() == (step % 2 == 0));
-            CacheTest *ct = cache.takeMergedResult();
-            QVERIFY(ct);
-            QCOMPARE(ct->name, QFileInfo(files.last()).baseName());
-            QCOMPARE(ct->file, files.join(u","_s));
-
-            delete ct;
-        } catch (const Exception &e) {
-            QVERIFY2(false, e.what());
-        }
-    }
-
-    // modify one of the YAML files to see if the merged result gets invalidated
-
-    QVERIFY(cache2File.seek(0));
-    QByteArray ba = cache2File.readAll();
-    QVERIFY(ba.size() > 0);
-    QByteArray ba2 = ba;
-    ba2.replace("FOOBAR", "foobar");
-    QVERIFY(ba != ba2);
-    QVERIFY(cache2File.seek(0));
-    QCOMPARE(cache2File.write(ba2), ba2.size());
-    QVERIFY(cache2File.flush());
-
-    ConfigCache<CacheTest> brokenCache(files, u"cache-test"_s, { 'M','T','S','T' }, 1,
-                                       AbstractConfigCache::MergedResult);
-    QTest::ignoreMessage(QtWarningMsg, "Failed to read Cache: cached file checksums do not match");
-    brokenCache.parse();
-    QVERIFY(brokenCache.parseReadFromCache());
-    CacheTest *ct = brokenCache.takeMergedResult();
-    QCOMPARE(ct->value, u"foobar"_s);
-    delete ct;
 }
 
 class YamlRunnable : public QRunnable

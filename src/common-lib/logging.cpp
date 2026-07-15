@@ -120,7 +120,6 @@ static constexpr const char *s_defaultSystemUiDltDescription = "Qt Application M
 \endtable
 //! [am-logging-categories]
 */
-// AXIVION DISABLE Qt-NonPodGlobalStatic
 QDLT_REGISTER_CONTEXT_ON_FIRST_USE(true)
 QDLT_REGISTER_APPLICATION(s_defaultSystemUiDltId, s_defaultSystemUiDltDescription)
 QDLT_LOGGING_CATEGORY(LogSystem, "am.system", "SYS", "General system messages")
@@ -143,7 +142,6 @@ QDLT_LOGGING_CATEGORY(LogStartupTimer, "am.startup", "STTI", "StartupTimer messa
 QDLT_LOGGING_CATEGORY(LogCrypto, "am.crypto", "CRYP", "Cryptography sub-system messages")
 QDLT_LOGGING_CATEGORY(LogGeneral, "general", "GEN", "Messages without dedicated context ID (fallback)")
 QDLT_FALLBACK_CATEGORY(LogGeneral)
-// AXIVION ENABLE Qt-NonPodGlobalStatic
 
 struct DeferredMessage
 {

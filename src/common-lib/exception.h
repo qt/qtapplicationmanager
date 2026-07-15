@@ -71,7 +71,7 @@ public:
     // this will generate compiler errors if there's no suitable QString::arg(const Ts &) overload
     template <typename... Ts> Exception &arg(const Ts & ...ts) noexcept
     {
-        m_errorString = m_errorString.arg(ts...); // AXIVION Line Qt-QStringArg: Axivion thinks ts is an int
+        m_errorString = m_errorString.arg(ts...);
         return *this;
     }
 

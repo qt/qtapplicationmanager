@@ -7,8 +7,8 @@
 
     "Description": "Multi-format archive and compression library.",
     "Homepage": "https://www.libarchive.org/",
-    "Version": "3.8.1",
-    "DownloadLocation": "https://github.com/libarchive/libarchive/releases/download/v3.8.1/libarchive-3.8.1.tar.xz",
+    "Version": "3.8.8",
+    "DownloadLocation": "https://github.com/libarchive/libarchive/releases/download/v3.8.1/libarchive-3.8.8.tar.xz",
     "PURL": [
         "pkg:github/libarchive/libarchive@v$<VERSION>"
     ],

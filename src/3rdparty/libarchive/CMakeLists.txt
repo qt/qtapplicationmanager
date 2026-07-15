@@ -100,6 +100,7 @@ qt_internal_extend_target(BundledLibArchive CONDITION WIN32
     PUBLIC_LIBRARIES
         advapi32
         crypt32
+        bcrypt
 )
 
 qt_internal_extend_target(BundledLibArchive CONDITION ANDROID

@@ -757,7 +757,7 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
             bwrapCommand += { u"--setenv"_s, it.key(), it.value() };
     }
 
-    m_process->setProgram(manager()->bwrapPath());
+    m_process->setProgram(manager()->bwrapPath());  // AXIVION Line Qt-Security-QProcessStart: path is absolute or user-defined
     QStringList processArguments;
     processArguments += bwrapCommand;
     processArguments += u"--"_s;

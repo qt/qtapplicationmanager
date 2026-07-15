@@ -228,7 +228,7 @@ QByteArray YamlEmitter::fromVariantDocuments(const QVector<QVariant> &documents,
 }
 
 
-class YamlParserPrivate   // AXIVION Line Qt-Generic-InitializeAllFieldsInConstructor: not possible
+class YamlParserPrivate
 {
 public:
     QString sourceName;

@@ -937,8 +937,8 @@ static QVariantMap resolveInstanceInfo(const QString &instanceId)
         QStringList allIds;
         for (auto it = running.cbegin(); it != running.cend(); ++it)
             allIds.append(it.key() + u'-' + QString::number(it.value()));
-        throw Exception(u"%1\n\nAvailable instances:\n  %2"_s.arg(e.errorString())
-                        .arg(allIds.join(u"\n  ")));
+        throw Exception(u"%1\n\nAvailable instances:\n  %2"_s
+                            .arg(e.errorString(), allIds.join(u"\n  ")));
     }
 
     QFile infof(baseDir + u'/' + result + u".json"_s);

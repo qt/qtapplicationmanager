@@ -229,7 +229,7 @@ QList<AbstractRuntime *> AbstractRuntimeManager::fromProcessId(qint64 pid, int p
         // Returns the inode number of a pidfd, uniquely identifying the process.
         static auto pidfdInode = [](int fd) -> quint64 {
             struct ::stat st { };
-            return (::fstat(fd, &st) == 0) ? quint64(st.st_ino) : 0;
+            return ((fd >= 0) && (::fstat(fd, &st) == 0)) ? quint64(st.st_ino) : 0;
         };
 
         Unix::Fd ownedPidfd;

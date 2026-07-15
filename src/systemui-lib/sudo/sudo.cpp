@@ -142,7 +142,7 @@ QT_BEGIN_NAMESPACE_AM
 #if QT_CONFIG(am_multi_process)
 // The read end of the inherited pipe over which the forked helper hands its P2P D-Bus address back
 // to the main process. forkServer() fills it in; startServer() drains and closes it.
-static Unix::Fd s_sudoAddressPipe;
+static Unix::Fd s_sudoAddressPipe; // clazy:exclude=non-pod-global-static
 #endif
 
 

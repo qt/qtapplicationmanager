@@ -152,7 +152,9 @@ Controller::Controller(ApplicationMain *am, bool quickLaunched)
         if (!ok || qt < 0)
             qt = 250;
         qt *= timeoutFactor();
-        QTimer::singleShot(qt, [] { QCoreApplication::instance()->quit(); });
+        QTimer::singleShot(qt, QCoreApplication::instance(), [] {
+            QCoreApplication::instance()->quit();
+        });
     });
 
     connect(&m_engine, &QObject::destroyed, QCoreApplication::instance(), &QCoreApplication::quit);
@@ -350,7 +352,8 @@ void Controller::startApplication(const QString &baseDir, const QString &qmlFile
 
     QStringList systemStartupPluginPaths;
     const QDir systemStartupPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + u"appman_startup"_s);
-    for (const auto &pluginName : systemStartupPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot)) {
+    const QStringList pluginNames = systemStartupPluginDir.entryList(QDir::Files | QDir::NoDotAndDotDot);
+    for (const auto &pluginName : pluginNames) {
         const QString filePath = systemStartupPluginDir.absoluteFilePath(pluginName);
         if (!QLibrary::isLibrary(filePath))
             continue;

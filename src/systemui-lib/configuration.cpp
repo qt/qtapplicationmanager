@@ -537,7 +537,6 @@ void Configuration::parseWithArguments(const QStringList &arguments)
         if (!args.isEmpty())
             d->data.ui.mainQml = args.at(0);
 
-        QStringList importPaths = d->data.ui.importPaths;
         for (auto &ip : d->data.ui.importPaths)
             ip = toAbsoluteFilePath(ip);
     }

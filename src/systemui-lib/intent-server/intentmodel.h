@@ -6,6 +6,7 @@
 #define INTENTMODEL_H
 
 #include <QtCore/QSortFilterProxyModel>
+#include <QtCore/QVariantMap>
 #include <QtQml/QJSValue>
 #include <QtQml/QQmlParserStatus>
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>

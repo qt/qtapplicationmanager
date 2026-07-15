@@ -6,6 +6,7 @@
 #ifndef PACKAGECREATOR_P_H
 #define PACKAGECREATOR_P_H
 
+#include <QtCore/QVariantMap>
 #include <QtAppManPackage/packagecreator.h>
 
 #include <archive.h>

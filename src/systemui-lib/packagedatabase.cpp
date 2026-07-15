@@ -7,7 +7,9 @@
 #include <QDir>
 #include <QFile>
 #include <QDataStream>
+#include <QHash>
 #include <QStandardPaths>
+#include <QtConcurrentMap>
 
 #include "packagedatabase.h"
 #include "packageinfo.h"

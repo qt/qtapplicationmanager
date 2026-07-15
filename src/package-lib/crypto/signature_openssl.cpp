@@ -374,7 +374,8 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
     QHash<X509 *, Signature::CertificateRole> x509ToRole;
 
     auto cleanup = qScopeGuard([&] {
-        for (auto cert : x509ToRole.keys())
+        const QList<X509 *> keys = x509ToRole.keys();
+        for (auto cert : keys)
             am_X509_free(cert);
     });
 

@@ -662,7 +662,6 @@ QVariant YamlParser::parseScalar()
 
                 if (regExp.match(scalar).hasMatch()) {
                     bool ok = false;
-                    QVariant val;
                     QString numberStr = offset ? scalar.mid(offset) : scalar;
 
                     if (d->parseVersion == YamlVersion::V1_1) {

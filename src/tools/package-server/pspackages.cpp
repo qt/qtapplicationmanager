@@ -114,7 +114,7 @@ void PSPackages::initialize()
     auto dirWatcher = new QFileSystemWatcher({ dd.absoluteFilePath(UploadDirName),
                                               dd.absoluteFilePath(RemoveDirName) }, this);
     QObject::connect(dirWatcher, &QFileSystemWatcher::directoryChanged,
-                     this, [&](const QString &dir) {
+                     this, [this](const QString &dir) {
         const auto dirName = QDir(dir).dirName();
         if (dirName == RemoveDirName)
             d->scanRemoves();

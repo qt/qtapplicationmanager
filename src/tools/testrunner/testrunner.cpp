@@ -93,7 +93,7 @@ void TestRunner::setup(Configuration *cfg)
 int TestRunner::exec(QQmlEngine *qmlEngine)
 {
     if (qEnvironmentVariableIsSet("AM_BACKGROUND_TEST") && !qApp->topLevelWindows().isEmpty()) {
-        QWindow *w = qApp->topLevelWindows().first();
+        QWindow *w = qApp->topLevelWindows().constFirst();
         w->setFlag(Qt::WindowStaysOnBottomHint);
         w->setFlag(Qt::WindowDoesNotAcceptFocus);
     }

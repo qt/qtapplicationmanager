@@ -214,7 +214,7 @@ size_t getProcessName(qint64 pid, char *buffer, size_t bufferSize)
                 len = 0;
         }
     }
-    buffer[len] = '\0';
+    buffer[len] = '\0'; // NOLINT(clang-analyzer-security.ArrayBound)
     return len;
 
 #elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
@@ -521,7 +521,7 @@ std::unique_ptr<QFile> openWithSafePermissions(const QString &path) noexcept(fal
 }
 
 #if defined(Q_OS_LINUX)
-static QString s_testRootPathPrefix;
+static QString s_testRootPathPrefix; // clazy:exclude=non-pod-global-static
 
 void setTestRootPathPrefix(const QString &path)
 {

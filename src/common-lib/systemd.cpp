@@ -247,7 +247,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
     }();
 
     const QByteArray appId = Logging::applicationId();
-    std::array<char, 32> lineBuf;
+    std::array<char, 11> lineBuf;
     std::array<char, 32> priAndTid { "PRIORITY=0\nTID=" };
     priAndTid.at(9) = priority;
     const auto [endPtr, error] = std::to_chars(priAndTid.begin() + 15, priAndTid.end(),
@@ -258,7 +258,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
     // and with minimal copying.
     // For efficiency, the required trailing new-line is always pre-pended to the next field.
 
-    std::array<struct ::iovec, 14> iov {{
+    std::array<struct ::iovec, 15> iov {{
         { (void *) priAndTid.data(), (size_t) priAndTidLen },
         { (void *) "\nQT_CATEGORY=", 13 },
         { (void *) context.category, qstrlen(context.category) },
@@ -274,10 +274,11 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
         iov.at(iovLen++) = { (void *) context.file, (size_t) qstrlen(context.file) };
     }
     if (context.line > 0) {
-        ::strcpy(lineBuf.data(), "\nCODE_LINE=");
-        auto [endPtr, error] = std::to_chars(lineBuf.begin() + 11, lineBuf.end(), context.line);
-        if (error == std::errc())
+        auto [endPtr, error] = std::to_chars(lineBuf.begin(), lineBuf.end(), context.line);
+        if (error == std::errc()) {
+            iov.at(iovLen++) = { (void *) "\nCODE_LINE=", 11 };
             iov.at(iovLen++) = { (void *) lineBuf.data(), (size_t) (endPtr - lineBuf.data()) };
+        }
     }
     if (context.function && context.function[0]) {
         iov.at(iovLen++) = { (void *) "\nCODE_FUNC=", 11 };

@@ -316,7 +316,8 @@ void PackagingJob::execute() noexcept(false)
             std::unique_ptr<PackageInfo> pkg(PackageInfo::fromManifest(
                 QDir(tmp.path()).absoluteFilePath(u"info.yaml"_s)));
             pkgCategories = pkg->categories();
-            for (const auto *app : pkg->applications()) {
+            const QVector<ApplicationInfo *> apps = pkg->applications();
+            for (const auto *app : apps) {
                 pkgApplicationIds.append(app->id());
                 pkgCapabilities.append(app->capabilities());
                 pkgCategories.append(app->categories()); // effective (own or inherited)

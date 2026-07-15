@@ -125,7 +125,6 @@ public:
         if (m_lastCheck.isValid()) {
             elapsed = m_lastCheck.restart();
         } else {
-            elapsed = -1;
             m_lastCheck.start();
             return;
         }

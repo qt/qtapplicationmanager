@@ -518,7 +518,7 @@ bool ProcessReader::readSmaps(const QByteArray &smapsFile, Memory &mem)
         ok = ((*pl >= '0' && *pl <= '9') || (*pl >= 'a' && *pl <= 'f'));
     while (strlen(line) == lineLen - 1 && line[lineLen - 2] != '\n') {
         if (Q_UNLIKELY(!fgets(line, lineLen, sf)))
-            break;
+            return false;
     }
     if (!fgets(line, lineLen, sf))
         return false;

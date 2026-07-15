@@ -1010,7 +1010,8 @@ bool WindowManager::makeScreenshot(const QString &filename, const QString &selec
         QList<Application *> apps;
         if (!appId.isEmpty()) {
             QRegularExpression wre = QRegularExpression(QRegularExpression::wildcardToRegularExpression(appId));
-            for (auto app : ApplicationManager::instance()->applications()) {
+            const QVector<Application *> allApps = ApplicationManager::instance()->applications();
+            for (auto app : allApps) {
                 if (wre.match(app->id()).hasMatch())
                     apps << app;
             }

@@ -269,7 +269,8 @@ bool PackageCreatorPrivate::create()
                         throw Exception(errno, "cannot read xattrs of file '%1'").arg(filePath);
                 }
                 xattrList.resize(xattrListSize);
-                for (const QByteArray &xattrName : xattrList.split('\0')) {
+                const QList<QByteArray> xattrNames = xattrList.split('\0');
+                for (const QByteArray &xattrName : xattrNames) {
                     if (xattrName.isEmpty())
                         continue;
                     if (xattrName.startsWith("system.posix_acl"))

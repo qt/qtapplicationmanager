@@ -21,6 +21,8 @@ class Q_APPMANSHARED_EXPORT CGroupStatus : public QObject
     Q_PROPERTY(quint64 memoryHigh READ memoryHigh NOTIFY pathChanged FINAL)
     Q_PROPERTY(quint64 memoryMax READ memoryMax NOTIFY pathChanged FINAL)
     Q_PROPERTY(quint64 memoryUsed READ memoryUsed NOTIFY memoryUsedChanged FINAL)
+    Q_PROPERTY(quint64 memoryAnon READ memoryAnon NOTIFY memoryAnonChanged FINAL)
+    Q_PROPERTY(quint64 memoryShmem READ memoryShmem NOTIFY memoryShmemChanged FINAL)
 
     Q_PROPERTY(qreal cpuLoad READ cpuLoad NOTIFY cpuLoadChanged FINAL)
 
@@ -39,6 +41,8 @@ public:
     quint64 memoryHigh() const;
     quint64 memoryMax() const;
     quint64 memoryUsed() const;
+    quint64 memoryAnon() const;
+    quint64 memoryShmem() const;
 
     qreal cpuLoad() const;
 
@@ -54,6 +58,8 @@ public:
 
 Q_SIGNALS:
     void memoryUsedChanged();
+    void memoryAnonChanged();
+    void memoryShmemChanged();
     void cpuLoadChanged();
     void pathChanged();
 

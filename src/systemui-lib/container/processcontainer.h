@@ -36,7 +36,7 @@ class Q_APPMANSYSTEMUI_EXPORT HostProcess : public AbstractContainerProcess
     Q_OBJECT
 
 public:
-    HostProcess();
+    HostProcess(const QByteArray &cgroupProcsPath = QByteArray());
     ~HostProcess() override;
 
     qint64 processId() const override;

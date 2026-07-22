@@ -6,6 +6,8 @@
 
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QCoreApplication>
+#include <QElapsedTimer>
 
 #include "logging.h"
 #include "utilities.h"
@@ -31,20 +33,30 @@ using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
-
-HostProcess::HostProcess()
+HostProcess::HostProcess(const QByteArray &cgroupProcsPath)
     : m_process(new QProcess)
 {
     m_process->setProcessChannelMode(QProcess::ForwardedChannels);
     m_process->setInputChannelMode(QProcess::ForwardedInputChannel);
 #if defined(Q_OS_UNIX)
-    m_process->setChildProcessModifier([this]() {
+    m_process->setChildProcessModifier([this, cgroupProcsPath]() {
         if (m_stopBeforeExec) {
             std::cerr << "\n*** a 'process' container was started in stopped state ***\n"
                          "The process is suspended via SIGSTOP and you can attach a debugger to it via\n"
                          "\n   gdb -p " << ::getpid() << "\n\n";
             ::raise(SIGSTOP);
         }
+
+        if (!cgroupProcsPath.isEmpty()) {
+            Unix::Fd fd { ::open(cgroupProcsPath.constData(), O_WRONLY | O_CLOEXEC) };
+            if (!fd)
+                m_process->failChildProcessModifier("open cgroup.procs", errno);
+            // Writing "0" moves the calling (child) process into the cgroup
+            static const char zero[] = { '0', '\n' };
+            if (::write(*fd, zero, sizeof(zero)) != sizeof(zero))
+                m_process->failChildProcessModifier("write cgroup.procs", errno);
+        }
+
         // duplicate any requested redirections to the respective stdin/out/err fd. Also make sure to
         // close the original fd: otherwise we would block the tty where the fds originated from.
         for (int i = 0; i < 3; ++i) {
@@ -77,6 +89,8 @@ void HostProcess::start(const QString &program, const QStringList &arguments)
         emit started();
     });
     connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
+        if (error == QProcess::FailedToStart)
+            qCWarning(LogSystem, "Failed to start process: %s", qPrintable(m_process->errorString()));
         emit errorOccured(static_cast<Am::ProcessError>(error));
     });
     connect(m_process, &QProcess::finished,
@@ -190,7 +204,7 @@ ProcessContainer::ProcessContainer(ProcessContainerManager *manager, Application
 #if defined(Q_OS_LINUX)
     static std::once_flag once;
     std::call_once(once, [] {
-        s_hasCGroupV2 = QFile::exists(u"/sys/fs/cgroup/cgroup.controllers"_s);
+        s_hasCGroupV2 = QFile::exists(testRootPathPrefix() + u"/sys/fs/cgroup/cgroup.controllers"_s);
     });
 #endif
 }
@@ -219,17 +233,19 @@ bool ProcessContainer::setControlGroup(const QString &groupName)
         return false;
     }
 
-    const QByteArray pidString = QByteArray::number(m_process->processId()) + '\n';
+    if (m_process->state() == Am::Running) {
+        const QByteArray pidString = QByteArray::number(m_process->processId()) + '\n';
 
-    QString procsFile = u"/sys/fs/cgroup/%1/cgroup.procs"_s.arg(groupName);
-    QFile f(procsFile);
-    bool ok = f.open(QFile::WriteOnly);
-    ok = ok && (f.write(pidString) == pidString.size());
+        QString procsFile = testRootPathPrefix() + u"/sys/fs/cgroup/"_s + groupName + u"/cgroup.procs"_s;
+        QFile f(procsFile);
+        bool ok = f.open(QFile::WriteOnly);
+        ok = ok && (f.write(pidString) == pidString.size());
 
-    if (!ok) {
-        qCWarning(LogSystem) << "Failed setting cgroup for" << m_program << ", pid"
-                             << m_process->processId() << "to" << groupName;
-        return false;
+        if (!ok) {
+            qCWarning(LogSystem) << "Failed setting cgroup for" << m_program << ", pid"
+                                 << m_process->processId() << "to" << groupName;
+            return false;
+        }
     }
 
     m_currentControlGroup = groupName;
@@ -277,11 +293,55 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments,
             penv.insert(it.key(), it.value());
     }
 
-    auto *process = new HostProcess();
+    QString controlGroup = configuration().value(u"defaultControlGroup"_s).toString();
+    bool createControlGroupPerProcess = configuration().value(u"createControlGroupPerProcess"_s).toBool();
+    if (createControlGroupPerProcess) {
+        // Do we really want to use the app id if possible only only fall back to uuid when quick-launch is used ?
+        if (auto app = application())
+            controlGroup += u"/"_s + app->id();
+        else
+            controlGroup += u"/app-"_s + QUuid::createUuid().toString(QUuid::WithoutBraces);
+    }
+    QString cgroupDir;
+    QByteArray cgroupProcsPath;
+    if (!controlGroup.isEmpty()) {
+        cgroupDir = testRootPathPrefix() + u"/sys/fs/cgroup/"_s + controlGroup;
+        // mkpath succeeds if the cgroup already exists, so this only fails if we really cannot use
+        // it. Starting the process is still attempted: it will fail when joining the cgroup, but
+        // this warning tells the user what the actual problem was.
+        if (!QDir().mkpath(cgroupDir))
+            qCWarning(LogSystem) << "Failed to create cgroup" << cgroupDir;
+        cgroupProcsPath = QString(cgroupDir + u"/cgroup.procs"_s).toLocal8Bit();
+
+        // Under test (testRootPathPrefix set), the faked cgroupfs has no kernel-created
+        // cgroup.procs; wait for the test to create it before the child tries to join, as the
+        // child opens it O_WRONLY without O_CREAT. No-op in production (prefix empty) and when the
+        // file already exists (a pre-existing, shared group).
+        if (!testRootPathPrefix().isEmpty()) {
+            QElapsedTimer timer;
+            timer.start();
+            while (!QFile::exists(QString::fromLocal8Bit(cgroupProcsPath))
+                   && (timer.elapsed() < (5000 * timeoutFactor()))) {
+                QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+            }
+        }
+    }
+
+    auto *process = new HostProcess(cgroupProcsPath);
     process->setWorkingDirectory(m_baseDirectory);
     process->setProcessEnvironment(penv);
     process->setStopBeforeExec(configuration().value(u"stopBeforeExec"_s).toBool());
     process->setStdioRedirections(std::move(m_stdioRedirections));
+
+    connect(process, &HostProcess::finished, this, [createControlGroupPerProcess, cgroupDir]() {
+        // Only delete the cgroup if it is not shared with other apps
+        if (createControlGroupPerProcess && !cgroupDir.isEmpty()) {
+            if (::rmdir(cgroupDir.toLocal8Bit().constData()) != 0) {
+                qCWarning(LogSystem) << "Failed to remove cgroup" << cgroupDir << ":"
+                                     << qt_error_string(errno);
+            }
+        }
+    });
 
     QString command = m_program;
     QStringList args = arguments;
@@ -296,8 +356,9 @@ AbstractContainerProcess *ProcessContainer::start(const QStringList &arguments,
 
     process->start(command, args);
     m_process = process;
+    setControlGroup(controlGroup);
 
-    setControlGroup(configuration().value(u"defaultControlGroup"_s).toString());
+
     return process;
 }
 

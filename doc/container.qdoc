@@ -460,5 +460,25 @@ The \c bubblewrap container accepts the following configuration settings:
 
         \note Mount entries in \c extra whose host path does not exist at container start time
               will cause \c bwrap to fail. Ensure all configured paths are present.
+  \row
+    \li \c defaultControlGroup
+    \li string
+    \li The name of the \b v2 cgroup that a launched process is placed into. The group is created on
+        demand, but it is never removed again, as it is shared between all applications. When
+        \c createControlGroupPerProcess is set, this is used as the parent for the per-process cgroups
+        instead. Defaults to empty, which leaves the process in the System UI's own cgroup.
+  \row
+    \li \c createControlGroupPerProcess
+    \li bool
+    \li If set to \c true, each launched container is placed into its own nested \b v2 cgroup below
+        the \c defaultControlGroup, instead of sharing the \c defaultControlGroup directly. The
+        nested group is named after the application's ID (for example \c{<defaultControlGroup>/com.example.app});
+        for quick-launched processes that do not have an application ID yet, a unique
+        \c{app-<uuid>} name is used instead. In contrast to a shared \c defaultControlGroup, this
+        nested group is exclusive to the process, so it is removed again after the process exited.
+
+        The default value is \c false.
+
+        \note This setting requires \b v2 cgroups and is ignored otherwise.
 \endtable
 */

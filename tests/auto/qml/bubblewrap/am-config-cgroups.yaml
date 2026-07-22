@@ -1,0 +1,56 @@
+formatVersion: 1
+formatType: am-configuration
+---
+applications:
+  builtinAppsManifestDir: "${CONFIG_DIR}/apps"
+
+ui:
+  # makes the CGroupTestHelper QML module importable from the System-UI test file
+  importPaths: [ '${CONFIG_DIR}/cgroup-helper' ]
+
+runtimes:
+  qml:
+    quitTime: 10000  # coin can be VERY slow
+    importPaths: [ '${CONFIG_DIR}/apps/helper' ]
+
+flags:
+  developmentMode: true
+
+containers:
+  selection:
+    - "TestApp": "bubblewrap"
+
+  bubblewrap:
+    # each launched process gets its own nested cgroup below the default one, created on demand
+    defaultControlGroup: "tst-bwrap-cgroup.slice"
+    createControlGroupPerProcess: true
+
+    bindMountHome: true
+    configuration:
+    - symlink:
+        usr/bin: [ '/bin', '/sbin' ]
+    - ro-bind:
+        /lib: '/lib'
+        /usr/bin: '/usr/bin'
+        /usr/lib: '/usr/lib'
+        /etc: '/etc'
+        /usr/share/fonts: '/usr/share/fonts'
+        /usr/share/fontconfig: '/usr/share/fontconfig'
+        /sys/dev/char: '/sys/dev/char'
+    - ro-bind-try:
+        /lib64: '/lib64'
+        /usr/lib64: '/usr/lib64'
+        /usr/local/lib: '/usr/local/lib'
+        /usr/local/lib64: '/usr/local/lib64'
+        '/sys/devices/pci0000:00': '/sys/devices/pci0000:00'
+        /usr/share/glvnd/egl_vendor.d: '/usr/share/glvnd/egl_vendor.d'
+        /usr/share/ca-certificates: '/usr/share/ca-certificates'
+        /usr/share/X11/xkb: '/usr/share/X11/xkb'
+        /run/resolvconf: '/run/resolvconf'
+    - dev: '/dev'
+    - dev-bind:
+        /dev/dri: '/dev/dri'
+    - tmpfs:
+        /tmp
+    - proc:
+        /proc

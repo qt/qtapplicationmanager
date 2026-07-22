@@ -5,6 +5,8 @@
 
 #include <QtCore>
 #include <QtTest>
+#include <QTemporaryDir>
+#include <QScopeGuard>
 
 #if !defined(Q_OS_LINUX)
 #  error "This test is Linux specific!"
@@ -35,6 +37,8 @@ private Q_SLOTS:
     void memoryStatus();
     void ioStatus();
     void cgroupStatus();
+    void cgroupStatusLazyAndSignals();
+    void cgroupStatusInvalidPath();
     void pressureStallInformation();
     void systemStatus();
 
@@ -160,15 +164,151 @@ void tst_SystemStatus::cgroupStatus()
     QVERIFY(memCurrentFile.open(QIODevice::ReadOnly));
     const quint64 expectedMemoryUsed = ::strtoull(memCurrentFile.readAll().constData(), nullptr, 10);
 
+    // Mirror readMemoryStat(): find the "anon " and "shmem " lines in memory.stat. The trailing
+    // space matters - it must not match longer keys like "anon_thp" or "shmem_thp".
+    QFile memStatFile(base + u"memory.stat"_s);
+    QVERIFY(memStatFile.open(QIODevice::ReadOnly));
+    quint64 expectedAnon = 0;
+    quint64 expectedShmem = 0;
+    const auto statLines = memStatFile.readAll().split('\n');
+    for (const QByteArray &line : statLines) {
+        if (line.startsWith("anon "))
+            expectedAnon = ::strtoull(line.constData() + 5, nullptr, 10);
+        else if (line.startsWith("shmem "))
+            expectedShmem = ::strtoull(line.constData() + 6, nullptr, 10);
+    }
+    QVERIFY(expectedAnon > 0);
+    QVERIFY(expectedShmem > 0);
+    QVERIFY(expectedAnon != expectedShmem); // guard against parsing both from the same key
+
     CGroupStatus cg;
     QCOMPARE(cg.path(), expectedPath);
     QCOMPARE(cg.memoryHigh(), expectedMemoryHigh);
     QCOMPARE(cg.memoryMax(), expectedMemoryMax);
     QCOMPARE(cg.memoryUsed(), expectedMemoryUsed);
+    QCOMPARE(cg.memoryAnon(), expectedAnon);
+    QCOMPARE(cg.memoryShmem(), expectedShmem);
 
-    // update() re-reads the same static file -> result must be stable
+    // update() re-reads the same static files -> results must be stable
     cg.update();
     QCOMPARE(cg.memoryUsed(), expectedMemoryUsed);
+    QCOMPARE(cg.memoryAnon(), expectedAnon);
+    QCOMPARE(cg.memoryShmem(), expectedShmem);
+}
+
+void tst_SystemStatus::cgroupStatusLazyAndSignals()
+{
+#if !defined(QT_BUILD_INTERNAL) || !defined(Q_OS_LINUX)
+    QSKIP("Needs setTestRootPathPrefix() from a developer build on Linux");
+#else
+    // The resource fixtures are read-only, so build a writable cgroup-v2 tree in a temp dir. This
+    // lets us change the values between reads and observe the lazy-read and change-signal behavior.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString rootPrefix = tmp.path() + u"/"_s;
+
+    const QString group = u"testgrp"_s;
+    const QString cgDir = rootPrefix + u"sys/fs/cgroup/"_s;
+    const QString grpDir = cgDir + group + u"/"_s;
+    QVERIFY(QDir().mkpath(grpDir));
+    QVERIFY(QDir().mkpath(rootPrefix + u"proc/self/"_s));
+
+    auto writeFile = [](const QString &path, const QByteArray &content) -> bool {
+        QFile f(path);
+        if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            return false;
+        return f.write(content) == content.size();
+    };
+
+    // memory.stat with anon/shmem surrounded by same-prefix decoys (anon_thp, shmem_thp): a correct
+    // parser must match the exact "anon "/"shmem " keys and ignore the longer ones.
+    auto statContent = [](quint64 anon, quint64 shmem) -> QByteArray {
+        return QByteArray("anon_thp 999999\n")
+             + "anon " + QByteArray::number(anon) + "\n"
+             + "file 424242\n"
+             + "shmem_thp 888888\n"
+             + "shmem " + QByteArray::number(shmem) + "\n";
+    };
+
+    QVERIFY(writeFile(cgDir + u"cgroup.controllers"_s, "cpu memory\n"));
+    QVERIFY(writeFile(rootPrefix + u"proc/self/cgroup"_s, "0::/" + group.toLocal8Bit() + "\n"));
+    QVERIFY(writeFile(grpDir + u"memory.stat"_s, statContent(100, 200)));
+    QVERIFY(writeFile(grpDir + u"memory.current"_s, "1000\n"));
+    QVERIFY(writeFile(grpDir + u"memory.high"_s, "max\n"));
+    QVERIFY(writeFile(grpDir + u"memory.max"_s, "max\n"));
+    QVERIFY(writeFile(grpDir + u"cpu.stat"_s, "usage_usec 5000\n"));
+
+    const QString savedPrefix = testRootPathPrefix();
+    auto restorePrefix = qScopeGuard([&] { setTestRootPathPrefix(savedPrefix); });
+    setTestRootPathPrefix(rootPrefix);
+
+    CGroupStatus cg;
+    QCOMPARE(cg.path(), group);
+
+    QSignalSpy anonSpy(&cg, &CGroupStatus::memoryAnonChanged);
+    QSignalSpy shmemSpy(&cg, &CGroupStatus::memoryShmemChanged);
+    QSignalSpy usedSpy(&cg, &CGroupStatus::memoryUsedChanged);
+
+    // Setting the path performs no memory I/O; the first access reads and caches the value, but
+    // must stay silent (no change signal for the initial, lazy read).
+    QCOMPARE(cg.memoryAnon(), quint64(100));
+    QCOMPARE(cg.memoryShmem(), quint64(200));
+    QCOMPARE(cg.memoryUsed(), quint64(1000));
+    QCOMPARE(anonSpy.count(), 0);
+    QCOMPARE(shmemSpy.count(), 0);
+    QCOMPARE(usedSpy.count(), 0);
+
+    // Change the underlying files and refresh: now the values must update and a change signal must
+    // be emitted for each.
+    QVERIFY(writeFile(grpDir + u"memory.stat"_s, statContent(111, 222)));
+    QVERIFY(writeFile(grpDir + u"memory.current"_s, "1111\n"));
+    cg.update();
+    QCOMPARE(cg.memoryAnon(), quint64(111));
+    QCOMPARE(cg.memoryShmem(), quint64(222));
+    QCOMPARE(cg.memoryUsed(), quint64(1111));
+    QCOMPARE(anonSpy.count(), 1);
+    QCOMPARE(shmemSpy.count(), 1);
+    QCOMPARE(usedSpy.count(), 1);
+
+    // Refreshing without any change must not emit again.
+    cg.update();
+    QCOMPARE(anonSpy.count(), 1);
+    QCOMPARE(shmemSpy.count(), 1);
+    QCOMPARE(usedSpy.count(), 1);
+
+    // A value first read through update() (never via a getter) must also be primed silently.
+    CGroupStatus cg2;
+    QSignalSpy anonSpy2(&cg2, &CGroupStatus::memoryAnonChanged);
+    QSignalSpy usedSpy2(&cg2, &CGroupStatus::memoryUsedChanged);
+    cg2.update();
+    QCOMPARE(anonSpy2.count(), 0);
+    QCOMPARE(usedSpy2.count(), 0);
+    QCOMPARE(cg2.memoryAnon(), quint64(111));
+    QCOMPARE(cg2.memoryUsed(), quint64(1111));
+#endif
+}
+
+void tst_SystemStatus::cgroupStatusInvalidPath()
+{
+    // Uses the read-only resource fixtures (prefix set in initTestCase): the default cgroup, read
+    // from /proc/self/cgroup, is "testing.slice".
+    CGroupStatus cg;
+    QCOMPARE(cg.path(), u"testing.slice"_s);
+
+    // A leading '/' or any ".." component would escape /sys/fs/cgroup and must be rejected, leaving
+    // the current path untouched.
+    cg.setPath(u"/etc"_s);
+    QCOMPARE(cg.path(), u"testing.slice"_s);
+
+    cg.setPath(u"../../etc"_s);
+    QCOMPARE(cg.path(), u"testing.slice"_s);
+
+    cg.setPath(u"foo/../bar"_s);
+    QCOMPARE(cg.path(), u"testing.slice"_s);
+
+    // A syntactically valid but non-existent group (no memory.stat) is rejected as well.
+    cg.setPath(u"nonexistent.slice"_s);
+    QCOMPARE(cg.path(), u"testing.slice"_s);
 }
 
 void tst_SystemStatus::pressureStallInformation()

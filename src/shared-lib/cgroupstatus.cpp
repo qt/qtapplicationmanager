@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <limits>
 #include <mutex>
+#include <optional>
 
 #include <QElapsedTimer>
 #include <QFile>
@@ -24,7 +25,7 @@ QT_BEGIN_NAMESPACE_AM
     \ingroup common-instantiatable
     \brief Provides information on the status of a Linux cgroup.
 
-    CGroupStatus monitors a Linux cgroup v2 control group, providing both memory statistics and
+    CGroupStatus monitors a Linux \b v2 cgroup, providing both memory statistics and
     pressure stall information (PSI). It defaults to the cgroup of the current process, but you
     can point it at any other cgroup by setting the \l path property.
 
@@ -36,8 +37,11 @@ QT_BEGIN_NAMESPACE_AM
 
     \section2 Memory and CPU monitoring
 
-    The \l memoryHigh and \l memoryMax limits are read once when \l path is set. The current
-    memory usage is available via \l memoryUsed, which is updated on every call to \l update().
+    The \l memoryHigh and \l memoryMax limits are read once, lazily, the first time any value is
+    accessed (or on the first \l update() call). The current memory usage is available via
+    \l memoryUsed, which is updated on every call to \l update().
+
+    Setting \l path itself performs no file I/O; the values are only read on first access.
 
     Similarly, \l cpuLoad is also updated on every call to \l update(), and reflects the CPU
     utilization of the cgroup since the previous \l update() call.
@@ -106,18 +110,38 @@ QT_BEGIN_NAMESPACE_AM
 class CGroupStatusPrivate : public QObjectPrivate
 {
 public:
+    Q_DECLARE_PUBLIC(CGroupStatus)
+
     void setControlGroup(const QString &path);
     static quint64 readCGroupValue(const QString &path);
-    quint64 readMemoryUsed();
-    qreal readCpuLoad();
+
+    // The memory reads are lazy and cache into the mutable members below, so they can be called
+    // from the const property getters without const_cast. readCpuLoad() is different: it needs a
+    // base sample to compute a meaningful value, so it is primed in setControlGroup() and only
+    // refreshed via update() - it is never called from a getter and therefore isn't const.
+    void readMemoryHigh() const;
+    void readMemoryMax() const;
+    void readMemoryUsed() const;
+    void readMemoryStat() const;
+    void readCpuLoad();
 
     QString m_path { };
-    QFile m_memoryCurrentFile;
+    QString m_basePath { };
+
+    // Mutated by the const, lazy memory read functions above (hence mutable): the file handles they
+    // read through and the cached values below.
+    mutable QFile m_memoryCurrentFile;
+    mutable QFile m_memoryStatFile;
     QFile m_cpuStatFile;
 
-    quint64 m_memoryHigh = 0u;
-    quint64 m_memoryMax = 0u;
-    quint64 m_memoryUsed = 0u;
+    // Each memory value is read lazily on first access; an empty optional means "not read yet",
+    // which also suppresses the change signal for that very first read (signals are only emitted
+    // for later reads done via update()). m_memoryAnon and m_memoryShmem are always read together.
+    mutable std::optional<quint64> m_memoryHigh;
+    mutable std::optional<quint64> m_memoryMax;
+    mutable std::optional<quint64> m_memoryUsed;
+    mutable std::optional<quint64> m_memoryAnon;
+    mutable std::optional<quint64> m_memoryShmem;
 
     quint64 m_lastCpuUsageUsec = 0u;
     QElapsedTimer m_cpuClock;        // used as a monotonic clock; never restarted
@@ -222,42 +246,39 @@ void CGroupStatusPrivate::setControlGroup(const QString &path)
     }
 
     m_memoryCurrentFile.close();
+    m_memoryStatFile.close();
     m_cpuStatFile.close();
     m_lastCpuUsageUsec = 0u;
     m_lastCpuSampleNsec = -1;
     m_cpuLoad = 0;
+    m_memoryHigh.reset();
+    m_memoryMax.reset();
+    m_memoryUsed.reset();
+    m_memoryAnon.reset();
+    m_memoryShmem.reset();
 
     const QString base = testRootPathPrefix() + u"/sys/fs/cgroup/" + path + u'/';
-    if (!QFile::exists(base + u"memory.current")) {
-        qCWarning(LogSystem) << "cgroup" << path << "is not valid (no memory.current file)";
+    if (!QFile::exists(base + u"memory.stat")) {
+        qCWarning(LogSystem) << "cgroup" << path << "is not valid (no memory.stat file)";
         return;
     }
 
+    // The memory values are read lazily on first access (see the per-property read functions) and
+    // refreshed via update(), so merely setting up their paths here performs no file I/O.
     m_path = path;
-    m_memoryHigh = readCGroupValue(base + u"memory.high"_s);
-    m_memoryMax = readCGroupValue(base + u"memory.max"_s);
+    m_basePath = base;
 
+    m_memoryStatFile.setFileName(base + u"memory.stat");
     m_memoryCurrentFile.setFileName(base + u"memory.current");
-    if (!m_memoryCurrentFile.open(QIODevice::ReadOnly)) {
-        qCWarning(LogSystem) << "Cannot read cgroup memory statistics from"
-                             << m_memoryCurrentFile.fileName();
-        return;
-    }
-
-    m_memoryUsed = readMemoryUsed();
-
     m_cpuStatFile.setFileName(base + u"cpu.stat");
-    if (!m_cpuStatFile.open(QIODevice::ReadOnly)) {
-        qCWarning(LogSystem) << "Cannot read cgroup CPU statistics from"
-                             << m_cpuStatFile.fileName();
-        return;
-    }
-
-    m_cpuLoad = readCpuLoad(); // prime usage and sample timestamp
 
     m_cpuPSI->setPressureFile(base + u"cpu.pressure"_s);
     m_memoryPSI->setPressureFile(base + u"memory.pressure"_s);
     m_ioPSI->setPressureFile(base + u"io.pressure"_s);
+
+    // cpuLoad is a rate, so it needs a base sample to compare against. Read it right away so the
+    // first update() can already compute a meaningful value.
+    readCpuLoad();
 
 #else
     Q_UNUSED(path)
@@ -270,13 +291,15 @@ void CGroupStatusPrivate::setControlGroup(const QString &path)
     The memory.high soft limit (in bytes) of this cgroup, or 0 if not running under cgroup v2.
     When the cgroup file contains the string \c "max", this returns \l max.
 
-    \note As the kernel does not have a mechanism to notify changes, this value is not updated after
-         the initial read when \l path is set.
+    \note As the kernel does not have a mechanism to notify changes, this value is only read once,
+         lazily on first access, and is not updated afterwards.
 */
 quint64 CGroupStatus::memoryHigh() const
 {
     Q_D(const CGroupStatus);
-    return d->m_memoryHigh;
+    if (!d->m_memoryHigh)
+        d->readMemoryHigh();
+    return d->m_memoryHigh.value_or(0);
 }
 
 /*! \qmlproperty int CGroupStatus::memoryMax
@@ -285,13 +308,15 @@ quint64 CGroupStatus::memoryHigh() const
     The memory.max hard limit (in bytes) of this cgroup, or 0 if not running under cgroup v2.
     When the cgroup file contains the string \c "max", this returns \l max.
 
-    \note As the kernel does not have a mechanism to notify changes, this value is not updated after
-         the initial read when \l path is set.
+    \note As the kernel does not have a mechanism to notify changes, this value is only read once,
+         lazily on first access, and is not updated afterwards.
 */
 quint64 CGroupStatus::memoryMax() const
 {
     Q_D(const CGroupStatus);
-    return d->m_memoryMax;
+    if (!d->m_memoryMax)
+        d->readMemoryMax();
+    return d->m_memoryMax.value_or(0);
 }
 
 /*! \qmlproperty int CGroupStatus::memoryUsed
@@ -305,15 +330,34 @@ quint64 CGroupStatus::memoryMax() const
 quint64 CGroupStatus::memoryUsed() const
 {
     Q_D(const CGroupStatus);
-    return d->m_memoryUsed;
+    if (!d->m_memoryUsed)
+        d->readMemoryUsed();
+    return d->m_memoryUsed.value_or(0);
+}
+
+quint64 CGroupStatus::memoryAnon() const
+{
+    Q_D(const CGroupStatus);
+    if (!d->m_memoryAnon)
+        d->readMemoryStat();
+    return d->m_memoryAnon.value_or(0);
+}
+
+quint64 CGroupStatus::memoryShmem() const
+{
+    Q_D(const CGroupStatus);
+    if (!d->m_memoryShmem)
+        d->readMemoryStat();
+    return d->m_memoryShmem.value_or(0);
 }
 
 /*! \qmlproperty real CGroupStatus::cpuLoad
     \readonly
 
     The average CPU utilization of this cgroup over the interval between the two most recent calls
-    to \l update() (or between \l path being set and the first \l update() call), as a value
-    ranging from \c 0 (inclusive, completely idle) to \c 1 (inclusive, all CPU cores fully busy).
+    to \l update() (or between \l path being set, which takes the base sample, and the first
+    \l update() call), as a value ranging from \c 0 (inclusive, completely idle) to \c 1
+    (inclusive, all CPU cores fully busy).
 
     The value is computed from the cgroup's \c cpu.stat \c usage_usec counter, divided by elapsed
     wall-clock time and normalized by the number of CPU cores on the system.
@@ -412,43 +456,136 @@ void CGroupStatus::update()
 {
     Q_D(CGroupStatus);
 
-    const quint64 newUsed = d->readMemoryUsed();
-    if (d->m_memoryUsed != newUsed) {
-        d->m_memoryUsed = newUsed;
-        emit memoryUsedChanged();
-    }
-
-    const qreal newLoad = d->readCpuLoad();
-    if (!qFuzzyCompare(d->m_cpuLoad, newLoad)) {
-        d->m_cpuLoad = newLoad;
-        emit cpuLoadChanged();
-    }
+    // The read functions update the cached values and emit the respective change signals
+    // themselves (the memory values stay silent on their very first, lazy read; cpuLoad was
+    // already primed when the path was set).
+    d->readMemoryUsed();
+    d->readMemoryStat();
+    d->readCpuLoad();
 }
 
-quint64 CGroupStatusPrivate::readMemoryUsed()
+void CGroupStatusPrivate::readMemoryHigh() const
+{
+    // memory.high has no change notification, so it is read exactly once (its NOTIFY is pathChanged).
+#if defined(Q_OS_LINUX)
+    m_memoryHigh = m_path.isEmpty() ? quint64(0) : readCGroupValue(m_basePath + u"memory.high"_s);
+#else
+    m_memoryHigh = quint64(0);
+#endif
+}
+
+void CGroupStatusPrivate::readMemoryMax() const
+{
+    // memory.max has no change notification, so it is read exactly once (its NOTIFY is pathChanged).
+#if defined(Q_OS_LINUX)
+    m_memoryMax = m_path.isEmpty() ? quint64(0) : readCGroupValue(m_basePath + u"memory.max"_s);
+#else
+    m_memoryMax = quint64(0);
+#endif
+}
+
+void CGroupStatusPrivate::readMemoryUsed() const
 {
 #if defined(Q_OS_LINUX)
-    if (!m_memoryCurrentFile.isOpen())
-        return 0u;
+    if (m_path.isEmpty())
+        return;
+    if (!m_memoryCurrentFile.isOpen()) {
+        if (!m_memoryCurrentFile.open(QIODevice::ReadOnly)) {
+            qCWarning(LogSystem) << "Cannot read cgroup memory statistics from"
+                                 << m_memoryCurrentFile.fileName();
+            return;
+        }
+    }
     m_memoryCurrentFile.seek(0);
     const QByteArray buffer = m_memoryCurrentFile.read(32); // 64-bit decimal value
-    return ::strtoull(buffer.constData(), nullptr, 10);
+    const quint64 value = ::strtoull(buffer.constData(), nullptr, 10);
+
+    if (!m_memoryUsed) {
+        // First (lazy) read: just cache the value, don't emit a change signal.
+        m_memoryUsed = value;
+    } else if (m_memoryUsed != value) {
+        m_memoryUsed = value;
+        // Q_Q can't be used in a const method; q_ptr's pointee is non-const, so emit through it.
+        emit static_cast<CGroupStatus *>(q_ptr)->memoryUsedChanged();
+    }
 #endif
-    return 0u;
 }
 
-qreal CGroupStatusPrivate::readCpuLoad()
+void CGroupStatusPrivate::readMemoryStat() const
 {
 #if defined(Q_OS_LINUX)
-    if (!m_cpuStatFile.isOpen())
-        return 0;
+    if (m_path.isEmpty())
+        return;
+    if (!m_memoryStatFile.isOpen()) {
+        if (!m_memoryStatFile.open(QIODevice::ReadOnly)) {
+            qCWarning(LogSystem) << "Cannot read cgroup memory statistics from"
+                                 << m_memoryStatFile.fileName();
+            return;
+        }
+    }
+    m_memoryStatFile.seek(0);
+
+    // memory.stat is a list of "<key> <number>" lines. The cgroup v2 ABI does not document a field
+    // order, so search by key. The trailing space in the keys avoids matching longer keys that
+    // share the same prefix (eg. "anon_thp", "shmem_thp").
+    static constexpr QByteArrayView anonKey("anon ");
+    static constexpr QByteArrayView shmemKey("shmem ");
+    quint64 anon = 0;
+    quint64 shmem = 0;
+    int found = 0;
+    // sysfs files report a size of 0, so atEnd() cannot be used to detect EOF here. Loop until
+    // readLine() returns an empty line instead.
+    QByteArray line;
+    while ((found < 2) && !(line = m_memoryStatFile.readLine(64)).isEmpty()) {
+        if (line.startsWith(anonKey)) {
+            anon = ::strtoull(line.constData() + anonKey.size(), nullptr, 10);
+            ++found;
+        } else if (line.startsWith(shmemKey)) {
+            shmem = ::strtoull(line.constData() + shmemKey.size(), nullptr, 10);
+            ++found;
+        }
+    }
+
+    if (!m_memoryAnon) {
+        // First (lazy) read: just cache the values, don't emit change signals.
+        m_memoryAnon = anon;
+        m_memoryShmem = shmem;
+    } else {
+        // Q_Q can't be used in a const method; q_ptr's pointee is non-const, so emit through it.
+        auto *q = static_cast<CGroupStatus *>(q_ptr);
+        if (m_memoryAnon != anon) {
+            m_memoryAnon = anon;
+            emit q->memoryAnonChanged();
+        }
+        if (m_memoryShmem != shmem) {
+            m_memoryShmem = shmem;
+            emit q->memoryShmemChanged();
+        }
+    }
+#endif
+}
+
+void CGroupStatusPrivate::readCpuLoad()
+{
+#if defined(Q_OS_LINUX)
+    if (m_path.isEmpty())
+        return;
+    if (!m_cpuStatFile.isOpen()) {
+        if (!m_cpuStatFile.open(QIODevice::ReadOnly)) {
+            qCWarning(LogSystem) << "Cannot read cgroup CPU statistics from"
+                                 << m_cpuStatFile.fileName();
+            return;
+        }
+    }
     m_cpuStatFile.seek(0);
     // cpu.stat is a list of "<key> <number>" lines. The kernel currently emits usage_usec first,
     // but the cgroup v2 ABI does not document a field order, so search by key.
     static constexpr QByteArrayView key("usage_usec ");
     quint64 usageUsec = 0;
-    while (!m_cpuStatFile.atEnd()) {
-        const QByteArray line = m_cpuStatFile.readLine(64);
+    // sysfs files report a size of 0, so atEnd() cannot be used to detect EOF here. Loop until
+    // readLine() returns an empty line instead.
+    QByteArray line;
+    while (!(line = m_cpuStatFile.readLine(64)).isEmpty()) {
         if (line.startsWith(key)) {
             usageUsec = ::strtoull(line.constData() + key.size(), nullptr, 10);
             break;
@@ -470,9 +607,15 @@ qreal CGroupStatusPrivate::readCpuLoad()
     }
     m_lastCpuUsageUsec = usageUsec;
     m_lastCpuSampleNsec = nowNsec;
-    return load;
+
+    // The priming call from setControlGroup() has no previous sample, so it computes load == 0
+    // (== m_cpuLoad) and thus emits nothing; later update() calls emit on an actual change.
+    if (!qFuzzyCompare(m_cpuLoad, load)) {
+        m_cpuLoad = load;
+        Q_Q(CGroupStatus);
+        emit q->cpuLoadChanged();
+    }
 #endif
-    return 0;
 }
 
 QT_END_NAMESPACE_AM

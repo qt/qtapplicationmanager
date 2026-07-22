@@ -9,7 +9,11 @@
 #include <QStandardPaths>
 #include <QLibraryInfo>
 #include <QLoggingCategory>
+#include <QCoreApplication>
+#include <QElapsedTimer>
 #include <QDir>
+#include <QFileInfo>
+#include <QUuid>
 #include <QtCore/private/qcore_unix_p.h> // qt_safe_read
 
 #if defined(Q_OS_LINUX)
@@ -17,6 +21,7 @@
 #endif
 
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include "bubblewrapcontainer.h"
 #include "systemd.h"
@@ -286,7 +291,7 @@ BubblewrapContainer::BubblewrapContainer(BubblewrapContainerManager *manager, co
     , m_debugWrapperEnvironment(debugWrapperEnvironment)
     , m_debugWrapperCommand(debugWrapperCommand)
 {
-    s_hasCGroupV2 = QFile::exists(u"/sys/fs/cgroup/cgroup.controllers"_s);
+    s_hasCGroupV2 = QFile::exists(testRootPathPrefix() + u"/sys/fs/cgroup/cgroup.controllers"_s);
 }
 
 BubblewrapContainer::~BubblewrapContainer()
@@ -457,22 +462,31 @@ bool BubblewrapContainer::setControlGroup(const QString &groupName)
 
     //qCWarning(lcBwrap) << "Setting cgroup for" << m_program << ", pid" << m_process->processId() << ":" << "->" << groupName;
 
-    QString file = u"/sys/fs/cgroup/%1/cgroup.procs"_s.arg(groupName);
-    QFile f(file);
+    // When called from start() the process isn't running yet: it joins the cgroup itself at fork
+    // time (see the child-process modifier), so there is nothing to move here and we only need to
+    // record the group below.
+    if (m_process && m_process->state() == QProcess::Running) {
+        QString file = testRootPathPrefix() + u"/sys/fs/cgroup/"_s + groupName + u"/cgroup.procs"_s;
+        QFile f(file);
 
-    // A bit awkward, but cgroupfs accepts only one pid per write
-    for (quint64 pid : { quint64(m_process->processId()), m_namespacePid }) {
-        bool ok = f.open(QFile::WriteOnly);
-        QByteArray pidString = QByteArray::number(pid);
-        pidString.append('\n');
-        ok = ok && (f.write(pidString) == pidString.size());
+        // A bit awkward, but cgroupfs accepts only one pid per write
+        for (quint64 pid : { quint64(m_process->processId()), m_namespacePid }) {
+            // Never write "0": in cgroupfs that would move the writing (manager) process itself.
+            if (pid == 0)
+                continue;
 
-        if (!ok) {
-            qCWarning(lcBwrap) << "Failed setting cgroup for" << m_program << ", pid"
-                               << pid << "to" << groupName;
-            return false;
+            bool ok = f.open(QFile::WriteOnly);
+            QByteArray pidString = QByteArray::number(pid);
+            pidString.append('\n');
+            ok = ok && (f.write(pidString) == pidString.size());
+
+            if (!ok) {
+                qCWarning(lcBwrap) << "Failed setting cgroup for" << m_program << ", pid"
+                                   << pid << "to" << groupName;
+                return false;
+            }
+            f.close();
         }
-        f.close();
     }
 
     m_currentControlGroup = groupName;
@@ -532,8 +546,49 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
     if (!QFile::exists(m_program))
         return false;
 
+    // Determine the target cgroup, mirroring the options of the 'process' container. With
+    // 'createControlGroupPerProcess' each container gets its own nested cgroup below the
+    // 'defaultControlGroup', which is created here and removed again once the process has finished.
+    QString controlGroup = m_manager->configuration().value(u"defaultControlGroup"_s).toString();
+    bool createControlGroupPerProcess =
+            m_manager->configuration().value(u"createControlGroupPerProcess"_s).toBool();
+    if (createControlGroupPerProcess) {
+        const QString appId = m_application.value(u"id"_s).toString();
+        if (!appId.isEmpty())
+            controlGroup += u"/"_s + appId;
+        else
+            controlGroup += u"/app-"_s + QUuid::createUuid().toString(QUuid::WithoutBraces);
+    }
+    QString cgroupDir;
+    QByteArray cgroupProcsPath;
+    if (s_hasCGroupV2 && !controlGroup.isEmpty()) {
+        cgroupDir = testRootPathPrefix() + u"/sys/fs/cgroup/"_s + controlGroup;
+        // mkpath succeeds if the cgroup already exists, so this only fails if we really cannot use
+        // it. Starting the process is still attempted: it will fail when joining the cgroup, but
+        // this warning tells the user what the actual problem was.
+        if (!QDir().mkpath(cgroupDir))
+            qCWarning(lcBwrap) << "Failed to create cgroup" << cgroupDir;
+        cgroupProcsPath = QString(cgroupDir + u"/cgroup.procs"_s).toLocal8Bit();
+
+        // Under test (testRootPathPrefix set), the faked cgroupfs has no kernel-created
+        // cgroup.procs; wait for the test to create it before the child tries to join, as the
+        // child opens it O_WRONLY without O_CREAT. No-op in production (prefix empty) and when the
+        // file already exists (a pre-existing, shared group).
+        if (!testRootPathPrefix().isEmpty()) {
+            QElapsedTimer timer;
+            timer.start();
+            while (!QFile::exists(QString::fromLocal8Bit(cgroupProcsPath))
+                   && (timer.elapsed() < (5000 * timeoutFactor()))) {
+                QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+            }
+        }
+    }
+
     m_process = new QProcess(this);
     connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
+        if (error == QProcess::FailedToStart)
+            qCWarning(lcBwrap, "Failed to start process: %s", qPrintable(m_process->errorString()));
+
         Q_ASSERT(sizeof(QProcess::ProcessError) == sizeof(ContainerInterface::ProcessError));
         auto processError = static_cast<ContainerInterface::ProcessError>(error);
 
@@ -552,6 +607,15 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
         emit started();
     });
     connect(m_process, &QProcess::finished, this, &BubblewrapContainer::containerExited);
+    if (createControlGroupPerProcess && !cgroupDir.isEmpty()) {
+        // Only delete the cgroup if it is not shared with other apps
+        connect(m_process, &QProcess::finished, this, [cgroupDir]() {
+            if (::rmdir(cgroupDir.toLocal8Bit().constData()) != 0) {
+                qCWarning(lcBwrap) << "Failed to remove cgroup" << cgroupDir << ":"
+                                   << qt_error_string(errno);
+            }
+        });
+    }
     connect(m_process, &QProcess::stateChanged, this, [this](QProcess::ProcessState processState) {
         switch (processState) {
             case QProcess::NotRunning: m_state = ContainerInterface::NotRunning; break;
@@ -580,7 +644,7 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
 
     m_process->setProcessChannelMode(QProcess::ForwardedChannels);
     m_process->setInputChannelMode(QProcess::ForwardedInputChannel);
-    m_process->setChildProcessModifier([this, stopBeforeExec]() {
+    m_process->setChildProcessModifier([this, stopBeforeExec, cgroupProcsPath]() {
           // copied from processcontainer, this could be moved into a helper
         if (stopBeforeExec) {
             std::cerr << "\n*** a 'process' container was started in stopped state ***\n"
@@ -588,6 +652,17 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
                          "\n   gdb -p " << ::getpid() << "\n\n";
             ::raise(SIGSTOP);
         }
+
+        if (!cgroupProcsPath.isEmpty()) {
+            Unix::Fd fd { ::open(cgroupProcsPath.constData(), O_WRONLY | O_CLOEXEC) };
+            if (!fd)
+                m_process->failChildProcessModifier("open cgroup.procs", errno);
+            // Writing "0" moves the calling (child) process into the cgroup
+            static const char zero[] = { '0', '\n' };
+            if (::write(*fd, zero, sizeof(zero)) != sizeof(zero))
+                m_process->failChildProcessModifier("write cgroup.procs", errno);
+        }
+
         // duplicate any requested redirections to the respective stdin/out/err fd. Also make sure to
         // close the original fd: otherwise we would block the tty where the fds originated from.
         for (int i = 0; i < 3; ++i) {
@@ -784,6 +859,10 @@ bool BubblewrapContainer::start(const QStringList &arguments, const QMap<QString
                                << "\n * arguments . " << dumpArgs(m_process->arguments(), u"   "_s);
 
     m_process->start();
+
+    // The process joins its cgroup itself at fork time (see the child-process modifier); this only
+    // records the current group, as the process is not in the Running state yet.
+    setControlGroup(controlGroup);
 
     // we are forked now and the child process has received a copy of all redirected fds
     // now it's time to close our fds, since we don't need them anymore (plus we would block

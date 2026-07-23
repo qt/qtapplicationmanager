@@ -36,6 +36,7 @@ public:
     bool allowInstallationOfUnsignedPackages = false;
     bool useSudoForDirectoryRemoval = false;
     QStringList allowedInstallationURLs;
+    QStringList allowedExtendedAttributes;
     bool configurationIsLocked = false;
 
     QString installationPath;

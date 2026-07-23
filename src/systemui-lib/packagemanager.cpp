@@ -993,6 +993,17 @@ void PackageManager::setAllowedInstallationURLs(const QStringList &allowedURLs)
         d->allowedInstallationURLs = allowedURLs;
 }
 
+void PackageManager::setAllowedExtendedAttributes(const QStringList &allowedExtendedAttributes)
+{
+    if (!isConfigurationLocked())
+        d->allowedExtendedAttributes = allowedExtendedAttributes;
+}
+
+QStringList PackageManager::allowedExtendedAttributes() const
+{
+    return d->allowedExtendedAttributes;
+}
+
 void PackageManager::lockConfiguration()
 {
     d->configurationIsLocked = true;

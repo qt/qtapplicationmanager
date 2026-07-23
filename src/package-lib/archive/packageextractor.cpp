@@ -307,9 +307,6 @@ void PackageExtractorPrivate::extract()
                     const QByteArrayView xattrValue { static_cast<const char *>(xattrValueRaw),
                                                     qsizetype(xattrValueSize) };
 
-                    if (xattrName.startsWith("system.posix_acl"))
-                        continue;
-
                     if (m_extendedAttributeCallback) {
                         // the callback will throw on error
                         m_extendedAttributeCallback(filePath, xattrName, xattrValue);

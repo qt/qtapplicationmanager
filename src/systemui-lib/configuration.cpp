@@ -634,6 +634,8 @@ void ConfigurationPrivate::loadFromSource(const QByteArray &source, const QStrin
                           (void) yp.parseBool(); } },
                      { "allowedURLs", false, YamlParser::Scalar | YamlParser::List, [&]() {
                           cd.installer.allowedURLs = yp.parseStringOrStringList(); } },
+                     { "allowedExtendedAttributes", false, YamlParser::Scalar | YamlParser::List, [&]() {
+                          cd.installer.allowedExtendedAttributes = yp.parseStringOrStringList(); } },
                      { "certificateRevocationLists", false, YamlParser::Scalar, [&]() {
                           cd.installer.certificateRevocationLists = yp.parseStringOrStringList(); } },
                      { "minimumCertificateVersion", false, YamlParser::Scalar, [&]() {

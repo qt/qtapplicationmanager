@@ -495,6 +495,18 @@ ui:
             wildcard character, it will be matched using the wildcard rules of QRegularExpression.
             If this list is empty or not set at all, then any URL is accepted.
     \row
+        \li [\c installer/allowedExtendedAttributes]
+        \li list<string>
+        \target allowed xattrs
+        \li A whitelist of POSIX extended attribute names (e.g. \c{security.ima} or
+            \c{user.mytag}) that packages are allowed to carry. When a package is installed, any
+            file that has an extended attribute whose name is not in this list causes the
+            installation to be rejected. If this list is empty or not set at all, then packages
+            that carry any extended attributes cannot be installed.
+            Restoring attributes in the \c{security.*} or \c{trusted.*} namespaces (for example
+            those used by EVM/IMA) requires the application manager to have root privileges, see
+            \l{System Integration}; attributes in the \c{user.*} namespace do not.
+    \row
         \li [\c crashAction]
         \li object
         \li Specifies which actions to take, if the application manager is crashing. For more

@@ -582,6 +582,7 @@ void Main::setupSingletons(const Configuration *cfg) noexcept(false)
     }(cfg->yaml.flags.developmentMode);
     m_packageManager->setDevelopmentMode(pmDevMode);
     m_packageManager->setAllowedInstallationURLs(cfg->yaml.installer.allowedURLs);
+    m_packageManager->setAllowedExtendedAttributes(cfg->yaml.installer.allowedExtendedAttributes);
 
     m_applicationManager->setSystemProperties(m_systemProperties.at(SP_SystemUi));
     m_applicationManager->setContainerSelectionConfiguration(cfg->yaml.containers.selection);

@@ -181,7 +181,7 @@ FileSystemMountWatcher::~FileSystemMountWatcher()
 QMultiMap<QString, QString> FileSystemMountWatcher::currentMountPoints()
 {
     // if we have an active cache, then use it
-    if (d->m_procMountsNotifier)
+    if (d && d->m_procMountsNotifier)
         return d->m_mounts;
     return FileSystemMountWatcherPrivate::currentMountPoints();
 }

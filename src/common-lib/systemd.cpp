@@ -396,7 +396,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
         // where memfd_create() did not support the MFD_EXEC and MFD_NOEXEC_SEAL flags
 
         int mfd = ::memfd_create(name, mode);
-        if ((mfd < 0) && (errno == -EINVAL)) {
+        if ((mfd < 0) && (errno == EINVAL)) {
             auto modeCompat = mode & ~(MFD_EXEC | MFD_NOEXEC_SEAL);
             if (mode == modeCompat)
                 return mfd;

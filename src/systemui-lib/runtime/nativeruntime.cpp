@@ -504,7 +504,10 @@ void NativeRuntime::applicationFinishedInitialization()
 {
     m_connectedToApplicationInterface = true;
 
-    if (m_app) {
+    // A quick-launcher can be adopted (see attachApplicationToQuickLauncher) before it has connected
+    // to the peer D-Bus and reported back here. If the runtime was stopped in the meantime, this
+    // late notification must neither (re-)start the application nor pull the runtime back to Running.
+    if (m_app && (state() != Am::ShuttingDown) && (state() != Am::NotRunning)) {
         // now we know which app was launched, so initialize any additional interfaces on the p2p bus
         emit applicationReadyOnPeerDBus(QDBusConnection(m_dbusConnectionName), m_app);
 

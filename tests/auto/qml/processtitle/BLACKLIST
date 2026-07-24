@@ -1,0 +1,2 @@
+# our memory layout tricks do not work on qemu/b2qt images
+b2qt

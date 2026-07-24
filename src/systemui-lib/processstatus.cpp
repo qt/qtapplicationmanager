@@ -436,6 +436,7 @@ void ProcessReader::update()
 
 void ProcessReader::openCpuLoad()
 {
+    m_statFile.close();
     m_statFile.setFileName(u"/proc/"_s + QString::number(m_pid) + u"/stat"_s);
 
     if (!m_statFile.open(QIODevice::ReadOnly | QIODevice::Unbuffered)) {

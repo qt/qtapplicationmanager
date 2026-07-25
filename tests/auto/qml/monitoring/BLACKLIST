@@ -1,0 +1,3 @@
+# /proc/<pid>/smaps does have valid content inside qemu.
+[Monitoring::test_processStatus_update]
+b2qt

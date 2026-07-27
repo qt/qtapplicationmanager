@@ -62,7 +62,7 @@ SharedMain::SharedMain()
     if (!(QGuiApplicationPrivate::instance()
             && QGuiApplicationPrivate::instance()->platformIntegration()
             && QGuiApplicationPrivate::instance()->platformIntegration()->hasCapability(QPlatformIntegration::OpenGL))) {
-        qCCritical(LogGraphics) << "No OpenGL capable Wayland client buffer integration available: "
+        qCCritical(LogGraphics) << "The current platform integration does not support OpenGL: "
                                    "this application can only use software rendering";
     }
 #else

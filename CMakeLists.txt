@@ -101,13 +101,22 @@ if(AM_COVERAGE)
         list(APPEND COVERAGE_DEPENDS tests/auto/install)
     endif()
 
-    set(GCOV_OPTIONS
-        --rc branch_coverage=1
+    # Shared base options. Branch coverage stays at its default (off) here so
+    # the -i baseline (gcno-only) carries no branch data to clash with the
+    # runtime capture on merge (lcov 2.x: "incompatible expressions").
+    set(GCOV_BASE_OPTIONS
         --rc check_data_consistency=0
         --ignore-errors mismatch,mismatch
         --ignore-errors unused,unused
         --ignore-errors gcov,gcov
-        --filter branch,initializer,trivial
+        --filter initializer,trivial
+    )
+
+    # Branch coverage is collected everywhere except the baseline capture.
+    set(GCOV_OPTIONS
+        ${GCOV_BASE_OPTIONS}
+        --rc branch_coverage=1
+        --filter branch
     )
 
     add_custom_target(check_coverage
@@ -118,7 +127,7 @@ if(AM_COVERAGE)
         COMMAND echo
         COMMAND echo "=== Initializing from compile time coverage data"
         COMMAND echo
-        COMMAND lcov -keep-going -c -i -d . --rc geninfo_auto_base=1 ${GCOV_OPTIONS} -o "${CMAKE_CURRENT_BINARY_DIR}/base.gcov-info"
+        COMMAND lcov -keep-going -c -i -d . --rc geninfo_auto_base=1 ${GCOV_BASE_OPTIONS} -o "${CMAKE_CURRENT_BINARY_DIR}/base.gcov-info"
         COMMAND echo
         COMMAND echo "=== Running tests"
         COMMAND echo
@@ -126,8 +135,8 @@ if(AM_COVERAGE)
         COMMAND echo
         COMMAND sh -c '[ x$$AM_SUDO_TESTS = x1 ] && { echo "=== Running sudo tests" \; } || { echo "=== Skipping sudo tests" \; }'
         COMMAND echo
-        COMMAND sh -c '[ x$$AM_SUDO_TESTS = x1 ] && sudo ctest --test-dir tests/auto/sudo --repeat until-pass:3 || true'
-        COMMAND sh -c '[ x$$AM_SUDO_TESTS = x1 ] && sudo ctest --test-dir tests/auto/packagemanager --repeat until-pass:3 || true'
+        COMMAND sh -c '[ x$$AM_SUDO_TESTS = x1 ] && sudo "${CMAKE_CTEST_COMMAND}" --test-dir tests/auto/sudo --repeat until-pass:3 || true'
+        COMMAND sh -c '[ x$$AM_SUDO_TESTS = x1 ] && sudo "${CMAKE_CTEST_COMMAND}" --test-dir tests/auto/packagemanager --repeat until-pass:3 || true'
         COMMAND echo
         COMMAND echo "=== Collecting runtime coverage data from tests"
         COMMAND echo

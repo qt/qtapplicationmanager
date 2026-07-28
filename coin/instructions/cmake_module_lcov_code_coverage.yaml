@@ -20,6 +20,9 @@ instructions:
   - type: EnvironmentVariable
     variableName: AM_TIMEOUT_FACTOR
     variableValue: 4
+  - type: EnvironmentVariable
+    variableName: AM_SUDO_TESTS
+    variableValue: 1
   - type: ExecuteCommand
     command: "{{.Env.CONFIGURE_ENV_PREFIX}} ninja check_coverage"
     executeCommandArgumentSplitingBehavior: SplitAfterVariableSubstitution

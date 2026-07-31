@@ -10,7 +10,7 @@
     "Version": "2024-05-20",
     "DownloadLocation": "https://codeload.github.com/yaml/libyaml/zip/840b65c40675e2d06bf40405ad3f12dec7f35923",
     "PURL": [
-        "pkg:github/yaml/libyaml@$<VERSION>"
+        "pkg:github/yaml/libyaml@840b65c40675e2d06bf40405ad3f12dec7f35923"
     ],
     "CPE": "cpe:2.3:a:pyyaml:libyaml:$<VERSION>:*:*:*:*:*:*:*",
 

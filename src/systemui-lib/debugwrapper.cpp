@@ -33,7 +33,9 @@ bool parseSpecification(const QString &debugWrapperSpecification, QStringList &r
     qsizetype size = debugWrapperSpecification.size();
     for (qsizetype i = 0; i <= size; ++i) {
         const QChar c = (i < size) ? debugWrapperSpecification.at(i) : QChar(0);
-        if (!escaped || c.isNull()) {
+        if (escaped && c.isNull())
+            return false; // dangling '\' at the end of the specification
+        if (!escaped) {
             switch (c.unicode()) {
             case '\\':
                 escaped = true;

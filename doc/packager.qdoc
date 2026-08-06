@@ -157,4 +157,20 @@ package installations.
 
 The \c{appman-packager} naturally supports the standard Unix \c{--help} command-line option.
 
+\section1 Processing Packages From Third Parties
+
+All signing and verification commands unpack the whole input package into a temporary directory,
+i.e. below \c TMPDIR (or the platform equivalent). The amount of data written is determined by the
+package being read: a small package can legitimately expand to many gigabytes, and there is no
+size limit, because no limit could suit every deployment.
+
+\note If you run these commands on untrusted or unverified input - for example on a server that
+signs packages uploaded by application developers - point \c TMPDIR at a filesystem whose size is
+bounded (a quota, a separate partition, or a size-limited \c tmpfs), and apply the usual resource
+limits to the process. Otherwise a single crafted package can fill the filesystem.
+
+Note that decompression time and the number of created files are equally unbounded, so bounding
+the available disk space alone is not sufficient: treat the packager as any other process that
+consumes untrusted input.
+
 */

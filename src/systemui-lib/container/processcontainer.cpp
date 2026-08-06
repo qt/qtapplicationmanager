@@ -8,6 +8,7 @@
 #include <QProcessEnvironment>
 #include <QCoreApplication>
 #include <QElapsedTimer>
+#include <QUuid>
 
 #include "logging.h"
 #include "utilities.h"

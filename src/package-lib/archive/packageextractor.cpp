@@ -421,10 +421,15 @@ void PackageExtractorPrivate::extract()
                         if (!f.write(buffer, qint64(bytesRead)))
                             throw Exception(f, "could not write to file");
                         break;
+                    // the header and footer are buffered in memory, so bound their attacker-controlled size
                     case PackageEntry_Header:
+                        if ((header.size() + qsizetype(bytesRead)) > 1024*1024)
+                            throw Exception(Error::Package, "the package's header is too big (> 1MB)");
                         header.append(buffer, qsizetype(bytesRead));
                         break;
                     case PackageEntry_Footer:
+                        if ((footer.size() + qsizetype(bytesRead)) > 1024*1024)
+                            throw Exception(Error::Package, "the package's footer is too big (> 1MB)");
                         footer.append(buffer, qsizetype(bytesRead));
                         break;
                     default:

@@ -17,6 +17,7 @@
 #endif
 
 #include "global.h"
+#include "packagecreator.h"
 #include "packageextractor.h"
 #include "installationreport.h"
 #include "packageutilities.h"
@@ -43,6 +44,8 @@ private Q_SLOTS:
 
     void extractAndVerify_data();
     void extractAndVerify();
+
+    void oversizedHeader();
 
     void cancelExtraction();
 
@@ -178,6 +181,33 @@ void tst_PackageExtractor::extractAndVerify()
     reportEntries.sort();
     entries.sort();
     QCOMPARE(reportEntries, entries);
+}
+
+void tst_PackageExtractor::oversizedHeader()
+{
+    QTemporaryDir sourceDir;
+    QVERIFY(sourceDir.isValid());
+    QFile content(sourceDir.filePath(u"test"_s));
+    QVERIFY(content.open(QIODevice::WriteOnly));
+    QCOMPARE(content.write("test\n"), 5);
+    content.close();
+
+    InstallationReport report(u"com.pelagicore.test"_s);
+    report.addFile(u"test"_s);
+    report.setDiskSpaceUsed(5);
+    // the header compresses down to almost nothing, but it is buffered uncompressed
+    report.setExtraMetaData({ { u"filler"_s, QString(2 * 1024 * 1024, u'x') } });
+
+    QTemporaryFile package;
+    QVERIFY(package.open());
+    PackageCreator creator(QDir(sourceDir.path()), &package, report);
+    QVERIFY2(creator.create(), qPrintable(creator.errorString()));
+    package.close();
+
+    PackageExtractor extractor(QUrl::fromLocalFile(package.fileName()), m_extractDir->path());
+    QVERIFY(!extractor.extract());
+    QVERIFY(extractor.errorCode() == Error::Package);
+    QT_AM_CHECK_ERRORSTRING(extractor.errorString(), u"~.*the package's header is too big \\(> 1MB\\)"_s);
 }
 
 void tst_PackageExtractor::cancelExtraction()

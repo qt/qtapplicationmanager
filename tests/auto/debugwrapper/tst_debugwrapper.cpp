@@ -65,6 +65,11 @@ void tst_DebugWrapper::specification_data()
     QTest::newRow("9") << "foo=bar a= baz zab" << true << ByteArrayMap {{ "foo", "bar" }, { "a", "" }} << QByteArrayList { "baz", "zab", "%program%", "%arguments%" };
     QTest::newRow("a") << "foo=b\\ a=\\n baz z\\ ab" << true << ByteArrayMap {{ "foo", "b a=\n" }} << QByteArrayList { "baz", "z ab", "%program%", "%arguments%" };
     QTest::newRow("b") << "a=b c d=e" << true << ByteArrayMap {{ "a", "b" }} << QByteArrayList { "c", "d=e", "%program%", "%arguments%" };
+    QTest::newRow("c") << "foo\\\\" << true << noenv << QByteArrayList { "foo\\", "%program%", "%arguments%" };
+
+    QTest::newRow("dangling-backslash") << "foo\\" << false << noenv << QByteArrayList();
+    QTest::newRow("dangling-backslash2") << "foo \\" << false << noenv << QByteArrayList();
+    QTest::newRow("invalid-escape") << "fo\\o" << false << noenv << QByteArrayList();
 
     QTest::newRow("z") << "a=b %program% c %arguments% d" << true << ByteArrayMap {{ "a", "b" }} << QByteArrayList { "%program%", "c", "%arguments%", "d" };
     QTest::newRow("y") << "a=b %program% c d" << true << ByteArrayMap {{ "a", "b" }} << QByteArrayList { "%program%", "c", "d", "%arguments%" };

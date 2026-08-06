@@ -3,7 +3,9 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <atomic>
 #include <cstdio>
+#include <cstdlib>
 #include <typeinfo>
 
 #if defined(QT_QML_LIB)
@@ -442,6 +444,10 @@ static void initBacktraceUnix()
     });
 
     std::set_terminate([]() {
+        static std::atomic_bool recursionGuard = false;
+        if (recursionGuard.exchange(true))
+            std::_Exit(EXIT_FAILURE);
+
         char buffer [1024];
         int ignoreFrames = chg()->stackFramesToIgnoreOnException;
 
@@ -908,6 +914,12 @@ static void PreventSetUnhandledExceptionFilter()
 
 static LONG WINAPI windowsExceptionFilter(EXCEPTION_POINTERS *ep)
 {
+    static std::atomic_bool recursionGuard = false;
+    if (recursionGuard.exchange(true)) {
+        TerminateProcess(GetCurrentProcess(), ep->ExceptionRecord->ExceptionCode);
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
+
     static char buffer [1024];
     bool suppressBacktrace = false;
     int stackFramesToIgnore = 0;
@@ -1046,6 +1058,10 @@ static void initBacktraceWindows()
     // Windows exception, so we have to adapt:
 
     std::set_terminate([]() {
+        static std::atomic_bool recursionGuard = false;
+        if (recursionGuard.exchange(true))
+            std::_Exit(EXIT_FAILURE);
+
         char buffer [1024];
 
         if (auto type = abi::__cxa_current_exception_type()) {

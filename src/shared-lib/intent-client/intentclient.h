@@ -11,9 +11,10 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariantMap>
-#include <QtCore/QList>
+#include <QtCore/QHash>
 #include <QtCore/QMap>
-#include <QtCore/QElapsedTimer>
+#include <QtCore/QPointer>
+#include <QtCore/QUuid>
 
 #include <QtAppManShared/qtappmansharedglobal.h>
 
@@ -73,8 +74,7 @@ private:
     Q_DISABLE_COPY_MOVE(IntentClient)
     static IntentClient *s_instance;
 
-    QList<QPointer<IntentClientRequest>> m_waiting;
-    QElapsedTimer m_lastWaitingCleanup;
+    QHash<QUuid, QPointer<IntentClientRequest>> m_waiting; // requestId -> request
     QMap<std::pair<QString, QString>, AbstractIntentHandler *> m_handlers; // intentId + appId -> handler
 
     // no timeouts by default -- these have to be set at runtime

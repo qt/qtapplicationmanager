@@ -102,7 +102,6 @@ IntentClient::IntentClient(IntentClientSystemInterface *systemInterface, QObject
     : QObject(parent)
     , m_systemInterface(systemInterface)
 {
-    m_lastWaitingCleanup.start();
     m_systemInterface->setParent(this);
 }
 
@@ -235,32 +234,23 @@ void IntentClient::requestToSystemFinished(IntentClientRequest *icr, const QUuid
         icr->setErrorMessage(u"No matching Intent found in the system"_s);
     } else {
         icr->setRequestId(newRequestId);
-        m_waiting << icr;
+        m_waiting.insert(newRequestId, icr);
+        // removes requests that got gc'ed on the JS side before a reply was received
+        connect(icr, &QObject::destroyed, this, [this, newRequestId]() {
+            m_waiting.remove(newRequestId);
+        });
     }
 }
 
 void IntentClient::replyFromSystem(const QUuid &requestId, bool error, const QVariantMap &result)
 {
-    IntentClientRequest *icr = nullptr;
-    auto it = std::find_if(m_waiting.cbegin(), m_waiting.cend(),
-                           [requestId](const QPointer<IntentClientRequest> &ir) -> bool {
-            return ir && (ir->requestId() == requestId);
-    });
-
-    if (it == m_waiting.cend()) {
+    IntentClientRequest *icr = m_waiting.take(requestId);
+    if (!icr) {
         qCWarning(LogIntentClient).nospace().noquote()
             << requestId.toString(QUuid::WithoutBraces)
             << " [?] {" << m_systemInterface->currentApplicationId(this) << " -> ?} "
             << "received a reply for an unknown request id";
         return;
-    }
-    icr = *it;
-    m_waiting.erase(it);
-
-    // make sure to periodically remove all requests that were gc'ed before a reply was received
-    if (m_lastWaitingCleanup.elapsed() > 1000) {
-        m_waiting.removeAll({ });
-        m_lastWaitingCleanup.start();
     }
 
     if (error)

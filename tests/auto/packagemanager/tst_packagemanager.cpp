@@ -55,6 +55,8 @@ private Q_SLOTS:
 
     void packageInstallation_data();
     void packageInstallation();
+    void systemUiRequiresStoreSignature();
+    void systemDeveloperStoreSideload();
 
     void developerCertificate();
     void developmentModeApplication_data();
@@ -124,6 +126,12 @@ private:
         m_progressSpy->clear();
         m_finishedSpy->clear();
         m_failedSpy->clear();
+    }
+
+    // install via the dev-mode controller origin - System UI installs require a store signature
+    QString startDevPackageInstallation(const QString &url)
+    {
+        return m_pm->startPackageInstallationInternal(QUrl::fromUserInput(url), true);
     }
 
     static bool isDataTag(const char *tag)
@@ -334,13 +342,16 @@ void tst_PackageManager::packageInstallation_data()
             << true << false << true << true << nomd << "";
     QTest::newRow("no-store-signed") \
             << "test.ampkg" << ""
-            << false << true << false << false << nomd << "packages without store signatures cannot be installed unless development mode is enabled";
+            << false << true << false << false << nomd << "packages without a store signature can only be installed via appman-controller in development mode";
     QTest::newRow("no-store-but-dev-signed") \
             << "test-dev-signed.ampkg" << ""
-            << false << true << false << false << nomd << "packages without store signatures cannot be installed unless development mode is enabled";
+            << false << true << false << false << nomd << "packages without a store signature can only be installed via appman-controller in development mode";
     QTest::newRow("store-signed-only") \
             << "test-store-signed.ampkg" << ""
             << false << true << false << false << nomd << "cannot install packages with only a store signature";
+    QTest::newRow("store-dev-signed") \
+            << "test-store-dev-signed.ampkg" << ""
+            << false << true << true << false << nomd << "";
     QTest::newRow("extra-metadata") \
             << "test-extra.ampkg" << ""
             << false << false << true << false << extramd << "";
@@ -417,7 +428,9 @@ void tst_PackageManager::packageInstallation()
 
         QString url = AM_TESTDATA_DIR u"packages/" + (pass == 1 ? packageName : updatePackageName);
 
-        QString taskId = m_pm->startPackageInstallation(url);
+        // dev-signed packages can only be installed via the controller origin
+        QString taskId = devSigned ? startDevPackageInstallation(url)
+                                   : m_pm->startPackageInstallation(url);
         QVERIFY(!taskId.isEmpty());
         m_pm->acknowledgePackageInstallation(taskId);
 
@@ -517,6 +530,47 @@ void tst_PackageManager::packageInstallation()
     }
 }
 
+// System-UI-originated installations always require a store signature: enabling development mode
+// only relaxes this for installations coming in via the appman-controller origins.
+void tst_PackageManager::systemUiRequiresStoreSignature()
+{
+    // initTestCase() has set DevelopmentMode::System for the whole test run
+    QCOMPARE(m_pm->developmentMode(), PackageManager::DevelopmentMode::System);
+
+    const QString taskId = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
+    QVERIFY(!taskId.isEmpty());
+    m_pm->acknowledgePackageInstallation(taskId);
+
+    QVERIFY(m_failedSpy->wait(spyTimeout));
+    QCOMPARE(m_failedSpy->first()[0].toString(), taskId);
+    QT_AM_CHECK_ERRORSTRING(m_failedSpy->first()[2].toString(),
+                            u"packages without a store signature can only be installed via appman-controller in development mode"_s);
+    clearSignalSpies();
+}
+
+// SystemDeveloper installs can sideload store-signed packages via appman-controller
+void tst_PackageManager::systemDeveloperStoreSideload()
+{
+    // initTestCase() has set DevelopmentMode::System for the whole test run
+    QCOMPARE(m_pm->developmentMode(), PackageManager::DevelopmentMode::System);
+
+    const QString taskId = startDevPackageInstallation(AM_TESTDATA_DIR u"packages/test-store-dev-signed.ampkg"_s);
+    QVERIFY(!taskId.isEmpty());
+    m_pm->acknowledgePackageInstallation(taskId);
+
+    QVERIFY2(m_finishedSpy->wait(spyTimeout),
+             m_failedSpy->isEmpty() ? "Did not receive finished signal"
+                                    : qPrintable(m_failedSpy->first()[2].toString()));
+    QCOMPARE(m_finishedSpy->first()[0].toString(), taskId);
+
+    // clean up the installed package again
+    clearSignalSpies();
+    const QString removeId = m_pm->removePackage(u"test-pkg"_s, false);
+    QVERIFY(!removeId.isEmpty());
+    QVERIFY(m_finishedSpy->wait(spyTimeout));
+    clearSignalSpies();
+}
+
 // Test the setDeveloperCertificate() API contract: it is only usable in
 // DevelopmentMode::Application, rejects certificates that aren't bound to a package id, persists
 // the resulting signature and can be cleared again with an empty certificate.
@@ -601,17 +655,17 @@ void tst_PackageManager::developmentModeApplication_data()
     // test-qml-dev-signed stays within dev-narrow's bounds, but was signed by dev-1: signer mismatch
     QTest::newRow("signer-mismatch") \
             << "dev-certs/dev-narrow.p12" << "test-qml-dev-signed.ampkg"
-            << false << "~.*the package's developer signature does not match the currently set developer certificate";
+            << false << "the package's developer signature does not match the currently set developer certificate";
 
     // dev-narrow only allows the qml runtime, test-dev-signed uses the native runtime
     QTest::newRow("runtime-overreach") \
             << "dev-certs/dev-narrow.p12" << "test-dev-signed.ampkg"
             << false << "~the package's runtimes \\(native\\) do not match the currently set developer certificate.*";
 
-    // no certificate set at all: the package-id check against the (empty) certificate fails first
+    // no certificate set at all: rejected up-front
     QTest::newRow("no-cert") \
             << "" << "test-dev-signed.ampkg"
-            << false << "~the package's id \\(test-pkg\\) does not match the currently set developer certificate.*";
+            << false << "the development mode is set to 'application', but there is no developer certificate set";
 
     // dev-narrow is only bound to test-pkg, other-test-dev-signed has the id other-test-pkg
     QTest::newRow("packageid-overreach") \
@@ -631,7 +685,7 @@ void tst_PackageManager::developmentModeApplication_data()
     // store-signed packages must not be installable through the developer path
     QTest::newRow("store-signed-via-dev-path") \
             << "dev-certs/dev-1.p12" << "test-store-signed.ampkg"
-            << false << "cannot install packages with only a store signature";
+            << false << "~packages with store signatures cannot be installed via appman-controller.*";
 }
 
 void tst_PackageManager::developmentModeApplication()
@@ -649,7 +703,7 @@ void tst_PackageManager::developmentModeApplication()
     DevMode devMode(PackageManager::DevelopmentMode::Application, false, fullCertFile, "password");
 
     const QString url = AM_TESTDATA_DIR u"packages/"_s + packageName;
-    const QString taskId = m_pm->startPackageInstallation(url);
+    const QString taskId = startDevPackageInstallation(url);
     QVERIFY(!taskId.isEmpty());
     m_pm->acknowledgePackageInstallation(taskId);
 
@@ -756,7 +810,7 @@ void tst_PackageManager::simulateErrorConditions()
     if (testUpdate) {
         // the check will run when updating a package, so we need to install it first
 
-        taskId = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
+        taskId = startDevPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
         QVERIFY(!taskId.isEmpty());
         m_pm->acknowledgePackageInstallation(taskId);
         QVERIFY(m_finishedSpy->wait(spyTimeout));
@@ -768,7 +822,7 @@ void tst_PackageManager::simulateErrorConditions()
     for (const auto &f : beforeStart)
         QVERIFY(f());
 
-    taskId = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
+    taskId = startDevPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
 
     const auto afterStart = functions.values("after-start");
     for (const auto &f : afterStart)
@@ -810,7 +864,7 @@ void tst_PackageManager::cancelPackageInstallation()
 {
     QFETCH(bool, expectedResult);
 
-    QString taskId = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
+    QString taskId = startDevPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
     QVERIFY(!taskId.isEmpty());
 
     if (isDataTag("before-started-signal")) {
@@ -849,12 +903,12 @@ void tst_PackageManager::cancelPackageInstallation()
 
 void tst_PackageManager::parallelPackageInstallation()
 {
-    QString task1Id = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
+    QString task1Id = startDevPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
     QVERIFY(!task1Id.isEmpty());
     QVERIFY(m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout));
     QCOMPARE(m_blockingUntilInstallationAcknowledgeSpy->first()[0].toString(), task1Id);
 
-    QString task2Id = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/other-test-dev-signed.ampkg"_s);
+    QString task2Id = startDevPackageInstallation(AM_TESTDATA_DIR u"packages/other-test-dev-signed.ampkg"_s);
     QVERIFY(!task2Id.isEmpty());
     m_pm->acknowledgePackageInstallation(task2Id);
     QVERIFY(m_finishedSpy->wait(spyTimeout));
@@ -870,12 +924,12 @@ void tst_PackageManager::parallelPackageInstallation()
 
 void tst_PackageManager::doublePackageInstallation()
 {
-    QString task1Id = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
+    QString task1Id = startDevPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
     QVERIFY(!task1Id.isEmpty());
     QVERIFY(m_blockingUntilInstallationAcknowledgeSpy->wait(spyTimeout));
     QCOMPARE(m_blockingUntilInstallationAcknowledgeSpy->first()[0].toString(), task1Id);
 
-    QString task2Id = m_pm->startPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
+    QString task2Id = startDevPackageInstallation(AM_TESTDATA_DIR u"packages/test-dev-signed.ampkg"_s);
     QVERIFY(!task2Id.isEmpty());
     m_pm->acknowledgePackageInstallation(task2Id);
     QVERIFY(m_failedSpy->wait(spyTimeout));

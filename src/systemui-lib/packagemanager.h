@@ -147,11 +147,11 @@ public:
 
     // all QString return values are task-ids
     QString startPackageInstallationInternal(const QUrl &sourceUrl,
-                                             bool fromApplicationDeveloper = false);
+                                             bool fromDevModeController = false);
     Q_SCRIPTABLE QString startPackageInstallation(const QString &sourceUrl);
     Q_SCRIPTABLE void acknowledgePackageInstallation(const QString &taskId);
     QString removePackageInternal(const QString &id, bool keepDocuments, bool force,
-                                  bool fromApplicationDeveloper = false);
+                                  bool fromDevModeController = false);
     Q_SCRIPTABLE QString removePackage(const QString &id, bool keepDocuments, bool force = false);
 
     Q_SCRIPTABLE QtAM::AsynchronousTask::TaskState taskState(const QString &taskId) const;

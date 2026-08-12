@@ -67,6 +67,8 @@ public:
             all += activeTask;
         return all;
     }
+
+    AsynchronousTask::Origin taskOrigin(bool fromDevModeController) const;
 #endif
 };
 

@@ -216,12 +216,8 @@ QString PackageManagerAdaptor::removePackage(const QString &packageId, bool keep
         checkInstaller();
         checkPackageAccess(packageId);
 
-        bool fromApplicationDeveloper = isDevelopmentModeBus(this)
-                                        && (PackageManager::instance()->developmentMode()
-                                            == PackageManager::DevelopmentMode::Application);
-
         return PackageManager::instance()->removePackageInternal(packageId, keepDocuments, force,
-                                                                 fromApplicationDeveloper);
+                                                                 isDevelopmentModeBus(this));
     } catchExceptionAsDBusError({})
 }
 
@@ -231,12 +227,8 @@ QString PackageManagerAdaptor::startPackageInstallation(const QString &sourceUrl
         checkDBusAccess();
         checkInstaller();
 
-        bool fromApplicationDeveloper = isDevelopmentModeBus(this)
-                                        && (PackageManager::instance()->developmentMode()
-                                            == PackageManager::DevelopmentMode::Application);
-
         return PackageManager::instance()->startPackageInstallationInternal(QUrl::fromUserInput(sourceUrl),
-                                                                            fromApplicationDeveloper);
+                                                                            isDevelopmentModeBus(this));
     } catchExceptionAsDBusError({})
 }
 

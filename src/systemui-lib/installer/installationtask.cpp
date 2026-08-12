@@ -135,6 +135,34 @@ void InstallationTask::acknowledge()
     m_installationAcknowledgeWaitCondition.wakeAll();
 }
 
+// checks that a developer certificate is set and that the package stays within its bounds
+void InstallationTask::checkDeveloperCertificate() const noexcept(false)
+{
+    const auto cert = m_pm->developerCertificate();
+    if (!cert.isValid())
+        throw Exception(Error::Package, "the development mode is set to 'application', but there is no developer certificate set");
+    if (!cert.matchPackageId(m_packageId)) {
+        throw Exception(Error::Package, "the package's id (%1) does not match the currently set developer certificate (%2)")
+            .arg(m_packageId).arg(cert.packageIds());
+    }
+    if (!cert.matchApplicationIds(m_applicationIds)) {
+        throw Exception(Error::Package, "the package's application ids (%1) do not match the currently set developer certificate (%2)")
+            .arg(m_applicationIds).arg(cert.applicationIds());
+    }
+    if (!cert.matchCapabilities(m_capabilities)) {
+        throw Exception(Error::Package, "the package's capabilities (%1) do not match the currently set developer certificate (%2)")
+            .arg(m_capabilities).arg(cert.capabilities());
+    }
+    if (!cert.matchCategories(m_categories)) {
+        throw Exception(Error::Package, "the package's categories (%1) do not match the currently set developer certificate (%2)")
+            .arg(m_categories).arg(cert.categories());
+    }
+    if (!cert.matchRuntimes(m_runtimes)) {
+        throw Exception(Error::Package, "the package's runtimes (%1) do not match the currently set developer certificate (%2)")
+            .arg(m_runtimes).arg(cert.runtimes());
+    }
+}
+
 void InstallationTask::execute()
 {
     try {
@@ -178,38 +206,15 @@ void InstallationTask::execute()
             throw Exception(Error::Package, "package did not contain a valid info.yaml and icon file");
 
         if (m_pm->allowInstallationOfUnsignedPackages()) {
-            if (origin() == Origin::ApplicationDeveloper) {
-                if (m_pm->developmentMode() == PackageManager::DevelopmentMode::Application) {
-                    const auto cert = m_pm->developerCertificate();
-                    if (!cert.matchPackageId(m_packageId)) {
-                        throw Exception(Error::Package, "the package's id (%1) does not match the currently set developer certificate (%2)")
-                            .arg(m_packageId).arg(cert.packageIds());
-                    }
-                    if (!cert.matchApplicationIds(m_applicationIds)) {
-                        throw Exception(Error::Package, "the package's application ids (%1) do not match the currently set developer certificate (%2)")
-                            .arg(m_applicationIds).arg(cert.applicationIds());
-                    }
-                    if (!cert.matchCapabilities(m_capabilities)) {
-                        throw Exception(Error::Package, "the package's capabilities (%1) do not match the currently set developer certificate (%2)")
-                            .arg(m_capabilities).arg(cert.capabilities());
-                    }
-                    if (!cert.matchCategories(m_categories)) {
-                        throw Exception(Error::Package, "the package's categories (%1) do not match the currently set developer certificate (%2)")
-                            .arg(m_categories).arg(cert.categories());
-                    }
-                    if (!cert.matchRuntimes(m_runtimes)) {
-                        throw Exception(Error::Package, "the package's runtimes (%1) do not match the currently set developer certificate (%2)")
-                            .arg(m_runtimes).arg(cert.runtimes());
-                    }
-                }
-            }
+            if (origin() == Origin::ApplicationDeveloper)
+                checkDeveloperCertificate();
         } else {
             bool hasStoreSignature = !m_extractor->installationReport().storeSignature().isEmpty();
 
             // Step 1: verify the store signature (optional, if in dev mode)
             if (hasStoreSignature) {
                 if (origin() == Origin::ApplicationDeveloper)
-                    throw Exception("packages with store signatures cannot be installed via appman-controller when the development mode is set to 'application'");
+                    throw Exception(Error::Package, "packages with store signatures cannot be installed via appman-controller when the development mode is set to 'application'");
 
                 // normal package from the store
                 QByteArray sigDigest = m_extractor->installationReport().digest();
@@ -246,8 +251,8 @@ void InstallationTask::execute()
                     }
                 }
             } else {
-                if (m_pm->developmentMode() == PackageManager::DevelopmentMode::Disabled)
-                    throw Exception(Error::Package, "packages without store signatures cannot be installed unless development mode is enabled");
+                if (origin() == Origin::SystemUI)
+                    throw Exception(Error::Package, "packages without a store signature can only be installed via appman-controller in development mode");
             }
 
             // Step 2: verify the developer signature (required)
@@ -256,31 +261,10 @@ void InstallationTask::execute()
                 // signature have to match the current developer certificate
                 if (!hasStoreSignature) {
                     // This is just a safeguard for future refactoring.
-                    Q_ASSERT(m_pm->developmentMode() != PackageManager::DevelopmentMode::Disabled);
+                    Q_ASSERT(origin() != Origin::SystemUI);
 
-                    if (m_pm->developmentMode() == PackageManager::DevelopmentMode::Application) {
-                        const auto cert = m_pm->developerCertificate();
-                        if (!cert.matchPackageId(m_packageId)) {
-                            throw Exception(Error::Package, "the package's id (%1) does not match the currently set developer certificate (%2)")
-                                .arg(m_packageId).arg(cert.packageIds());
-                        }
-                        if (!cert.matchApplicationIds(m_applicationIds)) {
-                            throw Exception(Error::Package, "the package's application ids (%1) do not match the currently set developer certificate (%2)")
-                                .arg(m_applicationIds).arg(cert.applicationIds());
-                        }
-                        if (!cert.matchCapabilities(m_capabilities)) {
-                            throw Exception(Error::Package, "the package's capabilities (%1) do not match the currently set developer certificate (%2)")
-                                .arg(m_capabilities).arg(cert.capabilities());
-                        }
-                        if (!cert.matchCategories(m_categories)) {
-                            throw Exception(Error::Package, "the package's categories (%1) do not match the currently set developer certificate (%2)")
-                                .arg(m_categories).arg(cert.categories());
-                        }
-                        if (!cert.matchRuntimes(m_runtimes)) {
-                            throw Exception(Error::Package, "the package's runtimes (%1) do not match the currently set developer certificate (%2)")
-                                .arg(m_runtimes).arg(cert.runtimes());
-                        }
-                    }
+                    if (origin() == Origin::ApplicationDeveloper)
+                        checkDeveloperCertificate();
                 }
 
                 Signature devSig(m_extractor->installationReport().digest());
@@ -294,21 +278,19 @@ void InstallationTask::execute()
                 devSig.requireRuntimes(m_runtimes);
                 devSig.requireCertificateRoles(m_pm->certificateRoles());
 
+                Signature::VerificationResult result;
                 try {
-                    auto result = devSig.verify(m_extractor->installationReport().developerSignature(),
-                                                m_pm->caCertificatesCommon() + m_pm->caCertificatesDeveloper());
-
-                    if (!hasStoreSignature) { // we still allow store installations while in dev mode
-                        if (m_pm->developmentMode() == PackageManager::DevelopmentMode::Application) {
-                            if (!m_pm->developerCertificate().isValid())
-                                throw Exception(Error::Package, "the development mode is set to 'application', but there is no developer certificate set");
-                            else if (m_pm->developerCertificate() != result.signer())
-                                throw Exception(Error::Package, "the package's developer signature does not match the currently set developer certificate");
-                        }
-                    }
+                    result = devSig.verify(m_extractor->installationReport().developerSignature(),
+                                           m_pm->caCertificatesCommon() + m_pm->caCertificatesDeveloper());
                 } catch (const Exception &e) {
                     throw Exception(Error::Package, "could not verify the package's developer signature: %1")
                         .arg(e.errorString());
+                }
+
+                if (origin() == Origin::ApplicationDeveloper) { // implies !hasStoreSignature (see step 1)
+                    // checkDeveloperCertificate() above guarantees that a certificate is set
+                    if (m_pm->developerCertificate() != result.signer())
+                        throw Exception(Error::Package, "the package's developer signature does not match the currently set developer certificate");
                 }
             } else {
                 if (hasStoreSignature)

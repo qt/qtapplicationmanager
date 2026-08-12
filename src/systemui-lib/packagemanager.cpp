@@ -11,6 +11,7 @@
 #include <QStandardPaths>
 #include <QRegularExpression>
 #include "packagemanager.h"
+#include "installer/asynchronoustask.h"
 #include "packagedatabase.h"
 #include "packagemanager_p.h"
 #include "architecture.h"
@@ -1327,9 +1328,26 @@ QVariantMap PackageManager::installedPackageExtraSignedMetaData(const QString &p
     return { };
 }
 
-QString PackageManager::startPackageInstallationInternal(const QUrl &sourceUrl, bool fromApplicationDeveloper)
+#if QT_CONFIG(am_installer)
+
+AsynchronousTask::Origin PackageManagerPrivate::taskOrigin(bool fromDevModeController) const
 {
-    AM_TRACE(LogInstaller, sourceUrl, fromApplicationDeveloper)
+    if (fromDevModeController) {
+        if (developmentMode == PackageManager::DevelopmentMode::Application)
+            return AsynchronousTask::Origin::ApplicationDeveloper;
+        else if (developmentMode == PackageManager::DevelopmentMode::System)
+            return AsynchronousTask::Origin::SystemDeveloper;
+    } else {
+        return AsynchronousTask::Origin::SystemUI;
+    }
+    return AsynchronousTask::Origin::Invalid;
+}
+
+#endif
+
+QString PackageManager::startPackageInstallationInternal(const QUrl &sourceUrl, bool fromDevModeController)
+{
+    AM_TRACE(LogInstaller, sourceUrl, fromDevModeController)
 
     if (!d->allowedInstallationURLs.isEmpty()) {
         bool allowed = false;
@@ -1352,9 +1370,12 @@ QString PackageManager::startPackageInstallationInternal(const QUrl &sourceUrl, 
 
 #if QT_CONFIG(am_installer)
     if (d->enableInstaller) {
-        auto task = new InstallationTask(d->installationPath, d->documentPath, sourceUrl,
-                                         fromApplicationDeveloper ? AsynchronousTask::Origin::ApplicationDeveloper
-                                                                  : AsynchronousTask::Origin::System);
+        auto origin = d->taskOrigin(fromDevModeController);
+        Q_ASSERT(origin != AsynchronousTask::Origin::Invalid);
+        if (origin == AsynchronousTask::Origin::Invalid)
+            return { };
+
+        auto task = new InstallationTask(d->installationPath, d->documentPath, sourceUrl, origin);
         return enqueueTask(task);
     }
 #endif
@@ -1365,6 +1386,11 @@ QString PackageManager::startPackageInstallationInternal(const QUrl &sourceUrl, 
     \qmlmethod string PackageManager::startPackageInstallation(string sourceUrl)
 
     Downloads an application package from \a sourceUrl and installs it.
+
+    Packages installed through this API always need a valid store signature (unless the
+    \l{allow-unsigned-packages}{\c allowUnsignedPackages} configuration is active). Packages that
+    only carry a developer signature can only be installed via the \l{Controller}
+    {\c appman-controller} tool in \l{Development Mode}{development mode}.
 
     The actual download and installation will happen asynchronously in the background. The
     PackageManager emits the signals \l taskStarted, \l taskProgressChanged, \l
@@ -1423,17 +1449,20 @@ void PackageManager::acknowledgePackageInstallation(const QString &taskId)
 }
 
 QString PackageManager::removePackageInternal(const QString &packageId, bool keepDocuments,
-                                              bool force, bool fromApplicationDeveloper)
+                                              bool force, bool fromDevModeController)
 {
-    AM_TRACE(LogInstaller, packageId, keepDocuments, force, fromApplicationDeveloper)
+    AM_TRACE(LogInstaller, packageId, keepDocuments, force, fromDevModeController)
 
 #if QT_CONFIG(am_installer)
     if (d->enableInstaller) {
         if (fromId(packageId)) {
+            auto origin = d->taskOrigin(fromDevModeController);
+            Q_ASSERT(origin != AsynchronousTask::Origin::Invalid);
+            if (origin == AsynchronousTask::Origin::Invalid)
+                return { };
+
             auto task = new DeinstallationTask(packageId, d->installationPath,
-                                               d->documentPath, force, keepDocuments,
-                                               fromApplicationDeveloper ? AsynchronousTask::Origin::ApplicationDeveloper
-                                                                        : AsynchronousTask::Origin::System);
+                                               d->documentPath, force, keepDocuments, origin);
             return enqueueTask(task);
         }
     }

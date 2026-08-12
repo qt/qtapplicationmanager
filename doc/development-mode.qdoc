@@ -57,6 +57,11 @@ appman --development-mode system
 \c application mode, the private D-Bus interface can be used to install packages, start
 applications, and inject intents, which bypasses normal access controls.
 
+Starting with 6.12, enabling development mode does not relax the signature requirements for
+installations going through the System UI's \l{PackageManager::startPackageInstallation} API: these
+always require a valid store signature. Developer-signed packages can only be installed via the
+\c appman-controller tool.
+
 \section1 System Mode
 
 When \c developmentMode is set to \c system, the application manager grants the

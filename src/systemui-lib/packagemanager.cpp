@@ -209,15 +209,25 @@ using namespace Qt::StringLiterals;
 
     This signal is emitted when the task identified by \a taskId enters the \c Finished state.
 
-    \sa taskStateChanged()
+    This signal and taskFailed() are mutually exclusive: exactly one of the two is emitted for any
+    given task, and neither is ever emitted more than once.
+
+    \sa taskStateChanged(), taskFailed()
 */
 
 /*!
-    \qmlsignal PackageManager::taskFailed(string taskId)
+    \qmlsignal PackageManager::taskFailed(string taskId, int errorCode, string errorString)
 
-    This signal is emitted when the task identified by \a taskId enters the \c Failed state.
+    This signal is emitted when the task identified by \a taskId enters the \c Failed state. A
+    human-readable description of the failure is supplied via \a errorString.
 
-    \sa taskStateChanged()
+    The \a errorCode parameter is \c 1, if the task failed because it was canceled via cancelTask(),
+    and \c{> 1} for any other failure. Use \a errorString to report the actual failure.
+
+    This signal and taskFinished() are mutually exclusive: exactly one of the two is emitted for any
+    given task, and neither is ever emitted more than once.
+
+    \sa taskStateChanged(), taskFinished()
 */
 
 /*!

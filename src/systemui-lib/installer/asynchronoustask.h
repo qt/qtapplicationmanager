@@ -35,8 +35,10 @@ public:
     Q_ENUM(TaskState)
 
     enum class Origin {
+        Invalid,
         ApplicationDeveloper,
-        System
+        SystemDeveloper,
+        SystemUI
     };
     Q_ENUM(Origin)
 

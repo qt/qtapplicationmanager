@@ -925,7 +925,8 @@ void tst_PackagerTool::installPackage(const QString &filePath, bool allowUnsigne
 
     DevMode devMode(PackageManager::DevelopmentMode::System, allowUnsigned);
 
-    QString taskId = m_pm->startPackageInstallation(filePath);
+    // dev-signed packages can only be installed via the controller origin
+    QString taskId = m_pm->startPackageInstallationInternal(QUrl::fromUserInput(filePath), true);
     m_pm->acknowledgePackageInstallation(taskId);
 
     QVERIFY(finishedSpy.wait(2 * spyTimeout));
@@ -938,7 +939,7 @@ void tst_PackagerTool::failToInstallPackage(const QString &filePath, const QStri
 
     DevMode devMode(PackageManager::DevelopmentMode::System);
 
-    QString taskId = m_pm->startPackageInstallation(filePath);
+    QString taskId = m_pm->startPackageInstallationInternal(QUrl::fromUserInput(filePath), true);
     m_pm->acknowledgePackageInstallation(taskId);
 
     QVERIFY(failedSpy.wait(2 * spyTimeout));

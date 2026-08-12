@@ -72,7 +72,7 @@ void checkTaskAccessPrivate(const QDBusAbstractAdaptor *a, const QString &taskId
         return;
 
     case PackageManager::DevelopmentMode::Application:
-        if (task->origin() == AsynchronousTask::Origin::System)
+        if (task->origin() != AsynchronousTask::Origin::ApplicationDeveloper)
             throw Exception("Task id '%1' is not accessible").arg(taskId);
         break;
     }

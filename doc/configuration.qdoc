@@ -295,7 +295,8 @@ ui:
             \br [\c flags/developmentMode]
         \li string
         \target development-mode
-        \li Allows the installation of packages that only come with a valid developer signature.
+        \li Allows the installation of packages that only come with a valid developer signature
+            via the \l{Controller}{\c appman-controller} tool.
             Must be either \c disabled, \c system or \c application:
             \list
                 \li \c disabled: the development mode is disabled (default)
@@ -311,6 +312,10 @@ ui:
         \li Allows the installation of packages that have no signature at all. Only use this in
             production, if you are verifying packages by other means, while also limiting the
             access to the installer API. (default: false)
+            Even with this flag set, packages installed via \c appman-controller while the
+            \l{development-mode}{development mode} is set to \c application still have to stay
+            within the bounds of the currently set developer certificate. See
+            \l{Development Mode} for details.
     \row
         \li [\c flags/allowUnknownUiClients]
         \li bool

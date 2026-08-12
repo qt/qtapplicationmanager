@@ -139,8 +139,7 @@ void tst_PackageExtractor::extractAndVerify()
     if (expectedSuccess) {
         QVERIFY2(result, qPrintable(extractor.errorString()));
     } else {
-        QVERIFY(extractor.errorCode() != Error::None);
-        QVERIFY(extractor.errorCode() != Error::Canceled);
+        QVERIFY(extractor.hasFailed());
         QVERIFY(!extractor.wasCanceled());
 
         QT_AM_CHECK_ERRORSTRING(extractor.errorString(), errorString);
@@ -206,7 +205,8 @@ void tst_PackageExtractor::oversizedHeader()
 
     PackageExtractor extractor(QUrl::fromLocalFile(package.fileName()), m_extractDir->path());
     QVERIFY(!extractor.extract());
-    QVERIFY(extractor.errorCode() == Error::Package);
+    QVERIFY(extractor.hasFailed());
+    QVERIFY(!extractor.wasCanceled());
     QT_AM_CHECK_ERRORSTRING(extractor.errorString(), u"~.*the package's header is too big \\(> 1MB\\)"_s);
 }
 
@@ -217,7 +217,7 @@ void tst_PackageExtractor::cancelExtraction()
         extractor.cancel();
         QVERIFY(!extractor.extract());
         QVERIFY(extractor.wasCanceled());
-        QVERIFY(extractor.errorCode() == Error::Canceled);
+        QCOMPARE(extractor.errorString(), u"canceled"_s);
         QVERIFY(extractor.hasFailed());
     }
     {
@@ -228,7 +228,7 @@ void tst_PackageExtractor::cancelExtraction()
         });
         QVERIFY(!extractor.extract());
         QVERIFY(extractor.wasCanceled());
-        QVERIFY(extractor.errorCode() == Error::Canceled);
+        QCOMPARE(extractor.errorString(), u"canceled"_s);
         QVERIFY(extractor.hasFailed());
     }
 }

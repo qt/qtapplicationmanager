@@ -14,7 +14,6 @@ qt_internal_add_module(AppManCommonPrivate
         colorprint.h colorprint.cpp
         console.h console.cpp
         dbus-utilities.cpp dbus-utilities.h
-        error.h
         exception.cpp exception.h
         filesystemmountwatcher.cpp filesystemmountwatcher.h
         global.h

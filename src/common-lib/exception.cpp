@@ -4,45 +4,30 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include <QFile>
-#include <cerrno>
+#include <cstring>
 
 #include "exception.h"
 
 QT_BEGIN_NAMESPACE_AM
 
 Exception::Exception(const char *errorString) noexcept
-    : m_errorCode(Error::System)
-    , m_errorString(errorString ? QString::fromLatin1(errorString) : QString())
+    : m_errorString(errorString ? QString::fromLatin1(errorString) : QString())
 { }
 
 Exception::Exception(const QString &errorString) noexcept
-    : m_errorCode(Error::System)
-    , m_errorString(errorString)
-{ }
-
-Exception::Exception(Error errorCode, const char *errorString) noexcept
-    : m_errorCode(errorCode)
-    , m_errorString(errorString ? QString::fromLatin1(errorString) : QString())
-{ }
-
-Exception::Exception(Error errorCode, const QString &errorString) noexcept
-    : m_errorCode(errorCode)
-    , m_errorString(errorString)
+    : m_errorString(errorString)
 { }
 
 Exception::Exception(int _errno, const char *errorString) noexcept
-    : m_errorCode(_errno == EACCES ? Error::Permissions : Error::IO)
-    , m_errorString(QString::fromLatin1(errorString) + u": " + QString::fromLocal8Bit(strerror(_errno)))
+    : m_errorString(QString::fromLatin1(errorString) + u": " + QString::fromLocal8Bit(strerror(_errno)))
 { }
 
 Exception::Exception(const QFileDevice &file, const char *errorString) noexcept
-    : m_errorCode(file.error() == QFileDevice::PermissionsError ? Error::Permissions : Error::IO)
-    , m_errorString(QString::fromLatin1(errorString) + u" (" + file.fileName() + u"): " + file.errorString())
+    : m_errorString(QString::fromLatin1(errorString) + u" (" + file.fileName() + u"): " + file.errorString())
 { }
 
 Exception::Exception(const Exception &copy) noexcept
     : QException(copy)
-    , m_errorCode(copy.m_errorCode)
     , m_errorString(copy.m_errorString)
 { }
 
@@ -50,7 +35,6 @@ Exception &Exception::operator=(const Exception &copy) noexcept
 {
     if (this != &copy) {
         QException::operator=(copy);
-        m_errorCode = copy.m_errorCode;
         m_errorString = copy.m_errorString;
     }
     return *this;
@@ -58,14 +42,12 @@ Exception &Exception::operator=(const Exception &copy) noexcept
 
 Exception::Exception(Exception &&move) noexcept
     : QException(move)
-    , m_errorCode(move.m_errorCode)
     , m_errorString(move.m_errorString)
 { }
 
 Exception &Exception::operator=(Exception &&move) noexcept
 {
     QException::operator=(move);
-    m_errorCode = move.m_errorCode;
     m_errorString = move.m_errorString;
     return *this;
 }
@@ -73,11 +55,6 @@ Exception &Exception::operator=(Exception &&move) noexcept
 Exception::~Exception() noexcept
 {
     delete m_whatBuffer;
-}
-
-Error Exception::errorCode() const noexcept
-{
-    return m_errorCode;
 }
 
 QString Exception::errorString() const noexcept

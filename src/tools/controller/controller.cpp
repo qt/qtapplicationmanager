@@ -25,7 +25,6 @@
 #include <iostream>
 
 #include <QtAppManCommon/global.h>
-#include <QtAppManCommon/error.h>
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/unixsignalhandler.h>
 #include <QtAppManCommon/utilities.h>
@@ -433,7 +432,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
             auto stopReply = dbus()->manager()->stopApplication(appId, pass > 0 /*forceKill*/);
             stopReply.waitForFinished();
             if (stopReply.isError())
-                throw Exception(Error::IO, "failed to call stopApplication via DBus: %1").arg(stopReply.error().message());
+                throw Exception("failed to call stopApplication via DBus: %1").arg(stopReply.error().message());
 
             static const int checksPerSecond = 10;
 
@@ -442,7 +441,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                 auto stateReply = dbus()->manager()->applicationRunState(appId);
                 stateReply.waitForFinished();
                 if (stateReply.isError())
-                    throw Exception(Error::IO, "failed to get the current run-state from application manager: %1").arg(stateReply.error().message());
+                    throw Exception("failed to get the current run-state from application manager: %1").arg(stateReply.error().message());
 
                 if (stateReply.value() == 0 /* NotRunning */)
                     isStopped = true;
@@ -462,7 +461,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
         // just bail out, if the AM or bus dies
         QObject::connect(dbus(), &DBus::disconnected,
                          qApp, [](const QString &reason) {
-            throw Exception(Error::IO, "application might not be running: lost connection to the D-Bus service (%1)").arg(reason);
+            throw Exception("application might not be running: lost connection to the D-Bus service (%1)").arg(reason);
         });
 
         // in case application quits -> quit the controller
@@ -472,7 +471,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
                 auto getReply = dbus()->manager()->get(id);
                 getReply.waitForFinished();
                 if (getReply.isError())
-                    throw Exception(Error::IO, "failed to get exit code from application manager: %1").arg(getReply.error().message());
+                    throw Exception("failed to get exit code from application manager: %1").arg(getReply.error().message());
                 std::cout << "\n --- application has quit ---\n\n";
                 auto app = getReply.value();
                 qApp->exit(app.value(u"lastExitCode"_s, 1).toInt());
@@ -510,7 +509,7 @@ void startOrDebugApplication(const QString &debugWrapper, const QString &appId,
 
     reply.waitForFinished();
     if (reply.isError()) {
-        throw Exception(Error::IO, "failed to call %2Application via DBus: %1")
+        throw Exception("failed to call %2Application via DBus: %1")
                 .arg(reply.error().message()).arg(isDebug ? "debug" : "start");
     }
 
@@ -535,7 +534,7 @@ void stopApplication(const QString &appId, bool forceKill) noexcept(false)
     auto reply = dbus()->manager()->stopApplication(appId, forceKill);
     reply.waitForFinished();
     if (reply.isError())
-        throw Exception(Error::IO, "failed to call stopApplication via DBus: %1").arg(reply.error().message());
+        throw Exception("failed to call stopApplication via DBus: %1").arg(reply.error().message());
     qApp->quit();
 }
 
@@ -546,7 +545,7 @@ void stopAllApplications() noexcept(false)
     auto reply = dbus()->manager()->stopAllApplications();
     reply.waitForFinished();
     if (reply.isError())
-        throw Exception(Error::IO, "failed to call stopAllApplications via DBus: %1").arg(reply.error().message());
+        throw Exception("failed to call stopAllApplications via DBus: %1").arg(reply.error().message());
     qApp->quit();
 }
 
@@ -557,7 +556,7 @@ void listApplications() noexcept(false)
     auto reply = dbus()->manager()->applicationIds();
     reply.waitForFinished();
     if (reply.isError())
-        throw Exception(Error::IO, "failed to call applicationIds via DBus: %1").arg(reply.error().message());
+        throw Exception("failed to call applicationIds via DBus: %1").arg(reply.error().message());
 
     const auto applicationIds = reply.value();
     for (const auto &applicationId : applicationIds)
@@ -572,7 +571,7 @@ void showApplication(const QString &appId, bool asJson) noexcept(false)
     auto reply = dbus()->manager()->get(appId);
     reply.waitForFinished();
     if (reply.isError())
-        throw Exception(Error::IO, "failed to get application via DBus: %1").arg(reply.error().message());
+        throw Exception("failed to get application via DBus: %1").arg(reply.error().message());
 
     QVariant app = convertFromDBusVariant(reply.value());
     std::cout << (asJson ? QJsonDocument::fromVariant(app).toJson().constData()
@@ -587,7 +586,7 @@ void listPackages() noexcept(false)
     auto reply = dbus()->packager()->packageIds();
     reply.waitForFinished();
     if (reply.isError())
-        throw Exception(Error::IO, "failed to call packageIds via DBus: %1").arg(reply.error().message());
+        throw Exception("failed to call packageIds via DBus: %1").arg(reply.error().message());
 
     const auto packageIds = reply.value();
     for (const auto &packageId : packageIds)
@@ -602,7 +601,7 @@ void showPackage(const QString &packageId, bool asJson) noexcept(false)
     auto reply = dbus()->packager()->get(packageId);
     reply.waitForFinished();
     if (reply.isError())
-        throw Exception(Error::IO, "failed to get package via DBus: %1").arg(reply.error().message());
+        throw Exception("failed to get package via DBus: %1").arg(reply.error().message());
 
     QVariant package = convertFromDBusVariant(reply.value());
     std::cout << (asJson ? QJsonDocument::fromVariant(package).toJson().constData()
@@ -631,7 +630,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
         }
 
         if (!success)
-            throw Exception(Error::IO, "Could not copy from stdin to temporary file %1").arg(package);
+            throw Exception("Could not copy from stdin to temporary file %1").arg(package);
     }
 
     if (packageFile.startsWith(u"file://"))
@@ -639,7 +638,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
     if (!packageFile.startsWith(u"http://") && !packageFile.startsWith(u"https://")) {
         QFileInfo fi(packageFile);
         if (!fi.exists() || !fi.isReadable() || !fi.isFile())
-            throw Exception(Error::IO, "Package file is not readable: %1").arg(packageFile);
+            throw Exception("Package file is not readable: %1").arg(packageFile);
         packageFile = fi.absoluteFilePath();
     }
 
@@ -651,7 +650,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
     // just bail out, if the AM or bus dies
     QObject::connect(dbus(), &DBus::disconnected,
                      qApp, [](const QString &reason) {
-        throw Exception(Error::IO, "package might not be installed: lost connection to the D-Bus service (%1)").arg(reason);
+        throw Exception("package might not be installed: lost connection to the D-Bus service (%1)").arg(reason);
     });
 
     // all the async lambdas below need to share this variable
@@ -665,7 +664,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
                 return;
             QString packageId = metadata.value(u"packageId"_s).toString();
             if (packageId.isEmpty())
-                throw Exception(Error::IO, "could not find a valid package id in the package");
+                throw Exception("could not find a valid package id in the package");
             std::cout << "Acknowledging package installation for " << qPrintable(packageId) << "...\n";
             dbus()->packager()->acknowledgePackageInstallation(taskId);
         });
@@ -676,7 +675,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
                      qApp, [](const QString &taskId, int errorCode, const QString &errorString) {
         if (taskId != installationId)
             return;
-        throw Exception(Error::IO, "failed to install package: %1 (code: %2)").arg(errorString).arg(errorCode);
+        throw Exception("failed to install package: %1 (code: %2)").arg(errorString).arg(errorCode);
     });
 
     // on success
@@ -693,11 +692,11 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
     auto reply = dbus()->packager()->startPackageInstallation(packageFile);
     reply.waitForFinished();
     if (reply.isError())
-        throw Exception(Error::IO, "failed to call startPackageInstallation via DBus: %1").arg(reply.error().message());
+        throw Exception("failed to call startPackageInstallation via DBus: %1").arg(reply.error().message());
 
     installationId = reply.value();
     if (installationId.isEmpty())
-        throw Exception(Error::IO, "startPackageInstallation returned an empty taskId");
+        throw Exception("startPackageInstallation returned an empty taskId");
 
     // cancel the job on Ctrl+C
 
@@ -720,7 +719,7 @@ void removePackage(const QString &packageId, bool keepDocuments, bool force) noe
     // just bail out, if the AM or bus dies
     QObject::connect(dbus(), &DBus::disconnected,
                      qApp, [](const QString &reason) {
-        throw Exception(Error::IO, "package might not be removed: lost connection to the D-Bus service (%1)").arg(reason);
+        throw Exception("package might not be removed: lost connection to the D-Bus service (%1)").arg(reason);
     });
 
     // both the async lambdas below need to share this variables
@@ -731,7 +730,7 @@ void removePackage(const QString &packageId, bool keepDocuments, bool force) noe
                      qApp, [](const QString &taskId, int errorCode, const QString &errorString) {
         if (taskId != installationId)
             return;
-        throw Exception(Error::IO, "failed to remove package: %1 (code: %2)").arg(errorString).arg(errorCode);
+        throw Exception("failed to remove package: %1 (code: %2)").arg(errorString).arg(errorCode);
     });
 
     // on success
@@ -747,11 +746,11 @@ void removePackage(const QString &packageId, bool keepDocuments, bool force) noe
     auto reply = dbus()->packager()->removePackage(packageId, keepDocuments, force);
     reply.waitForFinished();
     if (reply.isError())
-        throw Exception(Error::IO, "failed to call removePackage via DBus: %1").arg(reply.error().message());
+        throw Exception("failed to call removePackage via DBus: %1").arg(reply.error().message());
 
     installationId = reply.value();
     if (installationId.isEmpty())
-        throw Exception(Error::IO, "removePackage returned an empty taskId");
+        throw Exception("removePackage returned an empty taskId");
 }
 
 void listInstallationTasks() noexcept(false)
@@ -761,7 +760,7 @@ void listInstallationTasks() noexcept(false)
     auto reply = dbus()->packager()->activeTaskIds();
     reply.waitForFinished();
     if (reply.isError())
-        throw Exception(Error::IO, "failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
+        throw Exception("failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
 
     const auto taskIds = reply.value();
     for (const auto &taskId : taskIds)
@@ -777,7 +776,7 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
     // just bail out, if the AM or bus dies
     QObject::connect(dbus(), &DBus::disconnected,
                      qApp, [](const QString &reason) {
-        throw Exception(Error::IO, "installation task(s) might not be canceled: lost connection to the D-Bus service (%1)").arg(reason);
+        throw Exception("installation task(s) might not be canceled: lost connection to the D-Bus service (%1)").arg(reason);
     });
 
     // both the async lambdas below need to share these variables
@@ -790,7 +789,7 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
         auto reply = dbus()->packager()->activeTaskIds();
         reply.waitForFinished();
         if (reply.isError())
-            throw Exception(Error::IO, "failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
+            throw Exception("failed to call activeTaskIds via DBus: %1").arg(reply.error().message());
 
         const auto taskIds = reply.value();
         cancelTaskIds.reserve(taskIds.size());
@@ -807,7 +806,7 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
     QObject::connect(dbus()->packager(), &IoQtPackageManagerInterface::taskFailed,
                      qApp, [](const QString &taskId, int errorCode, const QString &errorString) {
         if (cancelTaskIds.removeOne(taskId)) {
-            if (errorCode != int(Error::Canceled)) {
+            if (errorCode != 1) {
                 std::cout << "Could not cancel task " << qPrintable(taskId) << ": "
                           << "the installation task already failed (" << qPrintable(errorString)
                           << ").\n";
@@ -840,10 +839,10 @@ void cancelInstallationTask(bool all, const QString &singleTaskId) noexcept(fals
         auto reply = dbus()->packager()->cancelTask(cancelTaskId);
         reply.waitForFinished();
         if (reply.isError())
-            throw Exception(Error::IO, "failed to call cancelTask via DBus: %1").arg(reply.error().message());
+            throw Exception("failed to call cancelTask via DBus: %1").arg(reply.error().message());
 
         if (!reply.value())
-            throw Exception(Error::IO, "failed to cancel the installation task.");
+            throw Exception("failed to cancel the installation task.");
     }
 }
 
@@ -976,7 +975,7 @@ void injectIntentRequest(const QString &intentId, bool isBroadcast,
                     jsonParameters);
         reply.waitForFinished();
         if (reply.isError())
-            throw Exception(Error::IO, "failed to call broadcastIntentRequest via DBus: %1").arg(reply.error().message());
+            throw Exception("failed to call broadcastIntentRequest via DBus: %1").arg(reply.error().message());
     } else {
         auto reply = dbus()->manager()->sendIntentRequestAs(requestingApplicationId,
                     intentId,
@@ -984,7 +983,7 @@ void injectIntentRequest(const QString &intentId, bool isBroadcast,
                     jsonParameters);
         reply.waitForFinished();
         if (reply.isError())
-            throw Exception(Error::IO, "failed to call sendIntentRequest via DBus: %1").arg(reply.error().message());
+            throw Exception("failed to call sendIntentRequest via DBus: %1").arg(reply.error().message());
         const auto jsonResult = reply.value();
         std::cout << qPrintable(jsonResult) << '\n';
     }

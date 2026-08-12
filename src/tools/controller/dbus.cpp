@@ -115,7 +115,7 @@ QDBusConnection DBus::connectTo(const QString &iface) noexcept(false)
         m_dbusService = u"io.qt.ApplicationManager"_s;
 
     if (!conn.isConnected()) {
-        throw Exception(Error::IO, "Could not connect to the application manager D-Bus interface %1 at %2: %3")
+        throw Exception("Could not connect to the application manager D-Bus interface %1 at %2: %3")
             .arg(iface, m_dbusName, conn.lastError().message());
     }
 

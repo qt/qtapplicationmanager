@@ -91,8 +91,7 @@ void tst_PackageCreator::createAndVerify()
     if (expectedSuccess) {
         QVERIFY2(result, qPrintable(creator.errorString()));
     } else {
-        QVERIFY(creator.errorCode() != Error::None);
-        QVERIFY(creator.errorCode() != Error::Canceled);
+        QVERIFY(creator.hasFailed());
         QVERIFY(!creator.wasCanceled());
 
         QT_AM_CHECK_ERRORSTRING(creator.errorString(), errorString);

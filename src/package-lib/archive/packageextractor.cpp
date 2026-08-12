@@ -23,7 +23,6 @@
 #include "packageextractor.h"
 #include "packageextractor_p.h"
 #include "exception.h"
-#include "error.h"
 #include "installationreport.h"
 #include "utilities.h"
 #include "packageinfo.h"
@@ -106,11 +105,6 @@ bool PackageExtractor::hasFailed() const
 bool PackageExtractor::wasCanceled() const
 {
     return d->m_canceled != 0;
-}
-
-Error PackageExtractor::errorCode() const
-{
-    return wasCanceled() ? Error::Canceled : (d->m_failed ? d->m_errorCode : Error::None);
 }
 
 QString PackageExtractor::errorString() const
@@ -267,7 +261,7 @@ void PackageExtractorPrivate::extract()
                 packageEntryType = PackageEntry_Dir;
                 break;
             default:
-                throw Exception(Error::Package, "file %1 in the archive has the unsupported type (mode) 0%2").arg(entryPath).arg(int(entryMode & S_IFMT), 0, 8);
+                throw Exception("file %1 in the archive has the unsupported type (mode) 0%2").arg(entryPath).arg(int(entryMode & S_IFMT), 0, 8);
             }
 
             // Check if this entry is special (metadata vs. data)
@@ -277,16 +271,16 @@ void PackageExtractorPrivate::extract()
             else if (entryPath.startsWith(u"--PACKAGE-FOOTER--"))
                 packageEntryType = PackageEntry_Footer;
             else if (entryPath.startsWith(u"--"))
-                throw Exception(Error::Package, "filename %1 in the archive starts with the reserved characters '--'").arg(entryPath);
+                throw Exception("filename %1 in the archive starts with the reserved characters '--'").arg(entryPath);
 
             // The first (and only the first) file in every package needs to be --PACKAGE-HEADER--
 
             if (seenHeader == (packageEntryType == PackageEntry_Header))
-                throw Exception(Error::Package, "the first (and only the first) file of the package must be --PACKAGE-HEADER--");
+                throw Exception("the first (and only the first) file of the package must be --PACKAGE-HEADER--");
 
             // There cannot be and normal files after the first --PACKAGE-FOOTER--
             if (seenFooter && (packageEntryType != PackageEntry_Footer))
-                throw Exception(Error::Package, "only --PACKAGE-FOOTER--* files are allowed at the end of the package");
+                throw Exception("only --PACKAGE-FOOTER--* files are allowed at the end of the package");
 
             // The order of operations is a bit different between dirs and files, hence the lambda
             auto extractExtendedAttributes = [&]() {
@@ -323,7 +317,7 @@ void PackageExtractorPrivate::extract()
             switch (packageEntryType) {
             case PackageEntry_Dir:
                 if (!entryPath.endsWith(u'/'))
-                    throw Exception(Error::Package, "invalid archive entry '%1': directory name is missing '/' at the end").arg(entryPath);
+                    throw Exception("invalid archive entry '%1': directory name is missing '/' at the end").arg(entryPath);
                 entryPath.chop(1);
                 Q_FALLTHROUGH();
 
@@ -331,20 +325,20 @@ void PackageExtractorPrivate::extract()
                 // get the directory, where the new entry will be created
                 QDir entryDir(QString(m_destinationPath + entryPath).section(u'/', 0, -2));
                 if (!entryDir.exists())
-                    throw Exception(Error::Package, "invalid archive entry '%1': parent directory is missing").arg(entryPath);
+                    throw Exception("invalid archive entry '%1': parent directory is missing").arg(entryPath);
 
                 QString entryCanonicalPath = entryDir.canonicalPath() + u'/';
                 QString baseCanonicalPath = QDir(m_destinationPath).canonicalPath() + u'/';
 
                 // security check: make sure that entryCanonicalPath is NOT outside of baseCanonicalPath
                 if (!entryCanonicalPath.startsWith(baseCanonicalPath))
-                    throw Exception(Error::Package, "invalid archive entry '%1': pointing outside of extraction directory").arg(entryPath);
+                    throw Exception("invalid archive entry '%1': pointing outside of extraction directory").arg(entryPath);
 
                 if (packageEntryType == PackageEntry_Dir) {
                     QString entryName = entryPath.section(u'/', -1, -1);
 
                     if ((entryName != u".") && !entryDir.mkdir(entryName))
-                        throw Exception(Error::IO, "could not create directory '%1'").arg(entryDir.filePath(entryName));
+                        throw Exception("could not create directory '%1'").arg(entryDir.filePath(entryName));
 
                     if (m_report.includeExtendedAttributes())
                         extractExtendedAttributes();
@@ -408,7 +402,7 @@ void PackageExtractorPrivate::extract()
                     }
 
                     if (offset != readPosition)
-                        throw Exception(Error::Package, "[libarchive] current read position (%1) does not match requested offset (%2)").arg(readPosition).arg(offset);
+                        throw Exception("[libarchive] current read position (%1) does not match requested offset (%2)").arg(readPosition).arg(offset);
 
                     readPosition += __LA_INT64_T(bytesRead);
 
@@ -424,12 +418,12 @@ void PackageExtractorPrivate::extract()
                     // the header and footer are buffered in memory, so bound their attacker-controlled size
                     case PackageEntry_Header:
                         if ((header.size() + qsizetype(bytesRead)) > 1024*1024)
-                            throw Exception(Error::Package, "the package's header is too big (> 1MB)");
+                            throw Exception("the package's header is too big (> 1MB)");
                         header.append(buffer, qsizetype(bytesRead));
                         break;
                     case PackageEntry_Footer:
                         if ((footer.size() + qsizetype(bytesRead)) > 1024*1024)
-                            throw Exception(Error::Package, "the package's footer is too big (> 1MB)");
+                            throw Exception("the package's footer is too big (> 1MB)");
                         footer.append(buffer, qsizetype(bytesRead));
                         break;
                     default:
@@ -478,7 +472,7 @@ void PackageExtractorPrivate::extract()
 
     } catch (const Exception &e) {
         if (!q->wasCanceled())
-            setError(e.errorCode(), e.errorString());
+            setError(e.errorString());
     }
 
     if (ar)
@@ -494,7 +488,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
     try {
         docs = YamlParser::parseAllDocuments(metadata);
     } catch (const Exception &e) {
-        throw Exception(Error::Package, "metadata is not a valid YAML document: %1")
+        throw Exception("metadata is not a valid YAML document: %1")
                 .arg(e.errorString());
     }
 
@@ -504,7 +498,7 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
         formatVersion = checkYamlFormat(docs, -2 /*at least 2 docs*/, { { formatType, 2 },
                                                                         { formatType, 1 } }).second;
     } catch (const Exception &e) {
-        throw Exception(Error::Package, "metadata has an invalid format specification: %1").arg(e.errorString());
+        throw Exception("metadata has an invalid format specification: %1").arg(e.errorString());
     }
 
     QVariantMap map = docs.at(1).toMap();
@@ -516,11 +510,11 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
         quint64 diskSpaceUsed = map.value(u"diskSpaceUsed"_s).toULongLong();
 
         if (packageId.isNull() || !PackageInfo::isValidApplicationId(packageId))
-            throw Exception(Error::Package, "metadata has an invalid %2 field (%1)").arg(packageId).arg(idField);
+            throw Exception("metadata has an invalid %2 field (%1)").arg(packageId).arg(idField);
         m_report.setPackageId(packageId);
 
         if (!diskSpaceUsed)
-            throw Exception(Error::Package, "metadata has an invalid diskSpaceUsed field (%1)").arg(diskSpaceUsed);
+            throw Exception("metadata has an invalid diskSpaceUsed field (%1)").arg(diskSpaceUsed);
         m_report.setDiskSpaceUsed(diskSpaceUsed);
 
         m_report.setExtraMetaData(map.value(u"extra"_s).toMap());
@@ -536,25 +530,23 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
         QByteArray packageDigest = QByteArray::fromHex(map.value(u"digest"_s).toString().toLatin1());
 
         if (packageDigest.isEmpty())
-            throw Exception(Error::Package, "metadata is missing the digest field");
+            throw Exception("metadata is missing the digest field");
         m_report.setDigest(packageDigest);
 
         QByteArray calculatedDigest = digest.result();
         if (calculatedDigest != packageDigest)
-            throw Exception(Error::Package, "package digest mismatch (is %1, but should be %2").arg(calculatedDigest.toHex()).arg(packageDigest.toHex());
+            throw Exception("package digest mismatch (is %1, but should be %2").arg(calculatedDigest.toHex()).arg(packageDigest.toHex());
 
         m_report.setStoreSignature(QByteArray::fromBase64(map.value(u"storeSignature"_s).toString().toLatin1()));
         m_report.setDeveloperSignature(QByteArray::fromBase64(map.value(u"developerSignature"_s).toString().toLatin1()));
     }
 }
 
-void PackageExtractorPrivate::setError(Error errorCode, const QString &errorString)
+void PackageExtractorPrivate::setError(const QString &errorString)
 {
-    m_failed = true;
-
     // only the first error is the one that counts!
-    if (m_errorCode == Error::None) {
-        m_errorCode = errorCode;
+    if (!m_failed) {
+        m_failed = true;
         m_errorString = errorString;
     }
 }
@@ -587,7 +579,7 @@ void PackageExtractorPrivate::download(const QUrl &url)
 
 void PackageExtractorPrivate::networkError(QNetworkReply::NetworkError)
 {
-    setError(Error::Network, qobject_cast<QNetworkReply *>(sender())->errorString());
+    setError(qobject_cast<QNetworkReply *>(sender())->errorString());
     QMetaObject::invokeMethod(&m_loop, "quit", Qt::QueuedConnection);
 }
 

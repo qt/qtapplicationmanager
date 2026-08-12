@@ -22,7 +22,7 @@ using namespace Qt::StringLiterals;
 QT_BEGIN_NAMESPACE_AM
 
 ArchiveException::ArchiveException(struct ::archive *ar, const char *errorString)
-    : Exception(Error::Archive, u"[libarchive] "_s + QString::fromLatin1(errorString) + u": "_s + QString::fromLocal8Bit(::archive_error_string(ar)))
+    : Exception(u"[libarchive] "_s + QString::fromLatin1(errorString) + u": "_s + QString::fromLocal8Bit(::archive_error_string(ar)))
 { }
 
 
@@ -49,7 +49,7 @@ void PackageUtilities::addHeaderDataToDigest(const QVariantMap &header, QCryptog
 
             QVariant v = header.value(it.key());
             if (!v.convert(it.value().metaType()))
-                throw Exception(Error::Package, "metadata field %1 has invalid type for digest calculation (cannot convert %2 to %3)")
+                throw Exception("metadata field %1 has invalid type for digest calculation (cannot convert %2 to %3)")
                     .arg(it.key()).arg(header.value(it.key()).metaType().name()).arg(it.value().metaType().name());
             ds << v;
 

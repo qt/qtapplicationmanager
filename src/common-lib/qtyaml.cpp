@@ -955,7 +955,7 @@ void YamlParser::parseFields(const std::vector<Field> &fields)
 }
 
 YamlParserException::YamlParserException(const YamlParser *p, const char *errorString)
-    : Exception(Error::Parse, "YAML parse error")
+    : Exception("YAML parse error")
 {
     bool isProblem = p->d->parser.problem;
     yaml_mark_t &mark = isProblem ? p->d->parser.problem_mark : p->d->event.start_mark;

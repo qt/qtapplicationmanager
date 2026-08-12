@@ -22,7 +22,7 @@ public:
 
 private:
     bool addVirtualFile(struct archive *ar, const QString &filename, const QByteArray &data);
-    void setError(Error errorCode, const QString &errorString);
+    void setError(const QString &errorString);
 
 private:
     PackageCreator *q;
@@ -31,7 +31,6 @@ private:
     QString m_sourcePath;
     bool m_failed = false;
     QAtomicInt m_canceled;
-    Error m_errorCode = Error::None;
     QString m_errorString;
 
     QByteArray m_digest;

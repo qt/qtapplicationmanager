@@ -22,7 +22,6 @@
 #include <QQmlContext>
 #include <QQmlInfo>
 
-#include "error.h"
 #include "exception.h"
 #include "logging.h"
 #include "qml-utilities.h"
@@ -106,7 +105,7 @@ IntentServer *IntentAMImplementation::createIntentServerAndClientInstance(Packag
                                      intentInfo->descriptions(),
                                      QUrl::fromLocalFile(package->info()->baseDir().absoluteFilePath(intentInfo->icon())),
                                      intentInfo->categories(), intentInfo->handleOnlyWhenRunning())) {
-            throw Exception(Error::Intents, "could not add intent %1 for package %2")
+            throw Exception("could not add intent %1 for package %2")
                 .arg(intentInfo->id()).arg(package->id());
         }
         qCDebug(LogSystem).nospace().noquote() << " ++ intent: " << intentInfo->id() << " [package: " << package->id() << "]";

@@ -36,7 +36,7 @@ private Q_SLOTS:
     void downloadProgressChanged(qint64 downloaded, qint64 total);
 
 private:
-    void setError(Error errorCode, const QString &errorString);
+    void setError(const QString &errorString);
     qint64 readTar(struct archive *ar, const void **archiveBuffer);
     void processMetaData(const QByteArray &metadata, QCryptographicHash &digest, bool isHeader) noexcept(false);
 
@@ -49,7 +49,6 @@ private:
     std::function<void(const QString &, QByteArrayView, QByteArrayView)> m_extendedAttributeCallback;
     bool m_failed = false;
     QAtomicInt m_canceled;
-    Error m_errorCode = Error::None;
     QString m_errorString;
 
     QEventLoop m_loop;

@@ -19,7 +19,6 @@
 #include "packagecreator.h"
 #include "packagecreator_p.h"
 #include "exception.h"
-#include "error.h"
 #include "installationreport.h"
 #include "qtyaml.h"
 
@@ -94,11 +93,6 @@ bool PackageCreator::wasCanceled() const
     return d->m_canceled != 0;
 }
 
-Error PackageCreator::errorCode() const
-{
-    return wasCanceled() ? Error::Canceled : (d->m_failed ? d->m_errorCode : Error::None);
-}
-
 QString PackageCreator::errorString() const
 {
     return wasCanceled() ? u"canceled"_s : (d->m_failed ? d->m_errorString : QString());
@@ -157,7 +151,7 @@ bool PackageCreatorPrivate::create()
 
         ar = archive_write_new();
         if (!ar)
-            throw Exception(Error::Archive, "[libarchive] could not create a new archive object");
+            throw Exception("[libarchive] could not create a new archive object");
         if (archive_write_set_format_pax_restricted(ar) != ARCHIVE_OK)
             throw ArchiveException(ar, "could not set the archive format to BSDTAR");
         if (archive_write_set_options(ar, "xattrheader=SCHILY") != ARCHIVE_OK) // stay compatible with gnu-tar
@@ -205,7 +199,7 @@ bool PackageCreatorPrivate::create()
             QFileInfo fi(m_sourcePath + file);
 
             if (!fi.exists())
-                throw Exception(Error::IO, "file not found: %1").arg(fi.absoluteFilePath());
+                throw Exception("file not found: %1").arg(fi.absoluteFilePath());
             allFilesSize += fi.size();
         }
 
@@ -216,7 +210,7 @@ bool PackageCreatorPrivate::create()
 
         for (const QString &file : std::as_const(allFiles)) {
             if (q->wasCanceled())
-                throw Exception(Error::Canceled);
+                throw Exception("canceled");
 
             // Name and mode for archive entry
 
@@ -241,14 +235,14 @@ bool PackageCreatorPrivate::create()
                 }
 #endif
             } else {
-                throw Exception(Error::Package, "inode '%1' is neither a directory or a file").arg(fi.filePath());
+                throw Exception("inode '%1' is neither a directory or a file").arg(fi.filePath());
             }
 
             // Add to archive
 
             archive_entry *entry = archive_entry_new();
             if (!entry)
-                throw Exception(Error::Archive, "[libarchive] could not create a new archive_entry object");
+                throw Exception("[libarchive] could not create a new archive_entry object");
 
             archive_entry_set_pathname_utf8(entry, qUtf8Printable(file));
             archive_entry_set_size(entry, static_cast<__LA_INT64_T>(fi.size()));
@@ -262,9 +256,9 @@ bool PackageCreatorPrivate::create()
                 ssize_t xattrListSize = ::listxattr(qPrintable(filePath), xattrList.data(), xattrList.size());
                 if (xattrListSize < 0) {
                     if (errno == ENOTSUP)
-                        throw Exception(Error::Archive, "the filesystem at '%1' does not support xattrs").arg(filePath);
+                        throw Exception("the filesystem at '%1' does not support xattrs").arg(filePath);
                     else if (errno == ERANGE)
-                        throw Exception(Error::Archive, "file '%1' has more than %2 bytes of xattr data").arg(filePath).arg(xattrList.size());
+                        throw Exception("file '%1' has more than %2 bytes of xattr data").arg(filePath).arg(xattrList.size());
                     else
                         throw Exception(errno, "cannot read xattrs of file '%1'").arg(filePath);
                 }
@@ -289,7 +283,7 @@ bool PackageCreatorPrivate::create()
                         digest);
                 }
 #else
-                throw Exception(Error::IO, "extended attributes are not supported on this platform");
+                throw Exception("extended attributes are not supported on this platform");
 #endif
             }
 
@@ -308,7 +302,7 @@ bool PackageCreatorPrivate::create()
                 qint64 fileSize = 0;
                 while (!f.atEnd()) {
                     if (q->wasCanceled())
-                        throw Exception(Error::Canceled);
+                        throw Exception("canceled");
 
                     qint64 bytesRead = f.read(buffer.data(), buffer.size());
                     if (bytesRead < 0)
@@ -322,7 +316,7 @@ bool PackageCreatorPrivate::create()
                 }
 
                 if (fileSize != fi.size())
-                    throw Exception(Error::Archive, "size mismatch for '%1' between stating (%2) and reading (%3)").arg(fi.filePath()).arg(fi.size()).arg(fileSize);
+                    throw Exception("size mismatch for '%1' between stating (%2) and reading (%3)").arg(fi.filePath()).arg(fi.size()).arg(fileSize);
 
                 packagedSize += fileSize;
             }
@@ -340,7 +334,7 @@ bool PackageCreatorPrivate::create()
         m_digest = digest.result();
         if (!m_report.digest().isEmpty()) {
             if (m_digest != m_report.digest())
-                throw Exception(Error::Package, "package digest mismatch (is %1, but should be %2)").arg(m_digest.toHex()).arg(m_report.digest().toHex());
+                throw Exception("package digest mismatch (is %1, but should be %2)").arg(m_digest.toHex()).arg(m_report.digest().toHex());
         }
 
         // Add the metadata footer
@@ -388,7 +382,7 @@ bool PackageCreatorPrivate::create()
 
     } catch (const Exception &e) {
         if (!q->wasCanceled())
-            setError(e.errorCode(), e.errorString());
+            setError(e.errorString());
 
         if (ar)
             archive_write_free(ar);
@@ -417,13 +411,11 @@ bool PackageCreatorPrivate::addVirtualFile(struct archive *ar, const QString &fi
     return result;
 }
 
-void PackageCreatorPrivate::setError(Error errorCode, const QString &errorString)
+void PackageCreatorPrivate::setError(const QString &errorString)
 {
-    m_failed = true;
-
     // only the first error is the one that counts!
-    if (m_errorCode == Error::None) {
-        m_errorCode = errorCode;
+    if (!m_failed) {
+        m_failed = true;
         m_errorString = errorString;
     }
 }

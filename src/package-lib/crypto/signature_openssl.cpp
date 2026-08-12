@@ -162,7 +162,7 @@ class OpenSslException : public Exception  // clazy:exclude=copyable-polymorphic
 {
 public:
     OpenSslException(const char *errorString)
-        : Exception(Error::Cryptography, errorString)
+        : Exception(errorString)
     {
         const char *data = nullptr;
         int flags = 0;

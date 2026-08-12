@@ -241,7 +241,7 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                          } else if (pkgInfo->m_applications.count() == 1) {
                              intentInfo->m_handlingApplicationId = pkgInfo->m_applications.constFirst()->id();
                          } else {
-                             throw Exception(Error::Parse, "a 'handlingApplicationId' field on intent %1 is needed if more than one application is defined")
+                             throw Exception("a 'handlingApplicationId' field on intent %1 is needed if more than one application is defined")
                                  .arg(intentInfo->m_id);
                          }
                      }
@@ -257,7 +257,7 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
         pkgInfo->validate();
         return pkgInfo.release();
     } catch (const Exception &e) {
-        throw Exception(e.errorCode(), "Failed to parse manifest file %1: %2")
+        throw Exception("Failed to parse manifest file %1: %2")
             .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : u"<stream>"_s, e.errorString());
     }
 }

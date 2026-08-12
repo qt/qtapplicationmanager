@@ -10,7 +10,6 @@
 
 #include <functional>
 
-#include <QtAppManCommon/error.h>
 #include <QtAppManPackage/qtappmanpackageglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QUrl)
@@ -42,7 +41,6 @@ public:
     bool hasFailed() const;
     bool wasCanceled() const;
 
-    Error errorCode() const;
     QString errorString() const;
 
 public Q_SLOTS:

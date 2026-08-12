@@ -11,7 +11,6 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QException>
 
-#include <QtAppManCommon/error.h>
 #include <QtAppManCommon/qtappmancommonglobal.h>
 
 QT_FORWARD_DECLARE_CLASS(QFile)
@@ -23,8 +22,6 @@ class Q_APPMANCOMMON_EXPORT Exception : public QException   // clazy:exclude=cop
 public:
     explicit Exception(const char *errorString) noexcept;
     explicit Exception(const QString &errorString) noexcept;
-    explicit Exception(Error errorCode, const char *errorString = nullptr) noexcept;
-    explicit Exception(Error errorCode, const QString &errorString) noexcept;
     explicit Exception(int _errno, const char *errorString) noexcept;
     explicit Exception(const QFileDevice &file, const char *errorString) noexcept;
 
@@ -35,7 +32,6 @@ public:
 
     ~Exception() noexcept override;
 
-    Error errorCode() const noexcept;
     QString errorString() const noexcept;
 
     void raise() const override;
@@ -79,7 +75,6 @@ public:
     const char *what() const noexcept override;
 
 protected:
-    Error m_errorCode;
     QString m_errorString;
 
 private:

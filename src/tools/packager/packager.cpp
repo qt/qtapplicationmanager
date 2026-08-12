@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
                     try {
                         docs = YamlParser::parseAllDocuments(md.first);
                     } catch (const Exception &e) {
-                        throw Exception(Error::IO, "in --extra-%1metadata%2 %3: %4")
+                        throw Exception("in --extra-%1metadata%2 %3: %4")
                                 .arg(isSigned ? "signed-" : "").arg(md.second.isEmpty() ? "": "-file")
                                 .arg(md.second.isEmpty() ? u"option"_s : md.second)
                                 .arg(e.errorString());

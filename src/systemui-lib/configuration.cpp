@@ -888,7 +888,7 @@ void ConfigurationPrivate::loadFromSource(const QByteArray &source, const QStrin
                  cd.watchdog = WatchdogConfiguration::fromYaml(yp, WatchdogConfiguration::SystemUI); } },
         });
     } catch (const Exception &e) {
-        throw Exception(e.errorCode(), "Failed to parse config file %1: %2")
+        throw Exception("Failed to parse config file %1: %2")
             .arg(!fileName.isEmpty() ? QDir().relativeFilePath(fileName) : u"<stream>"_s, e.errorString());
     }
 }

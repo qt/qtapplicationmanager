@@ -405,15 +405,15 @@ void validateIdForFilesystemUsage(const QString &id)  noexcept(false)
     static const int maxLength = 150;
 
     if (id.isEmpty())
-        throw Exception(Error::Parse, "must not be empty");
+        throw Exception("must not be empty");
 
     if (id.length() > maxLength)
-        throw Exception(Error::Parse, "the maximum length is %1 characters (found %2 characters)").arg(maxLength, id.length());
+        throw Exception("the maximum length is %1 characters (found %2 characters)").arg(maxLength, id.length());
 
     // '.' and '..' are path-traversal; '.foo' would create a hidden installation directory.
     // Reject all of them with one rule.
     if (id.startsWith(u'.'))
-        throw Exception(Error::Parse, "must not start with a dot");
+        throw Exception("must not start with a dot");
 
     // all characters need to be ASCII minus any filesystem special characters:
     bool spaceOnly = true;
@@ -421,14 +421,14 @@ void validateIdForFilesystemUsage(const QString &id)  noexcept(false)
     for (int pos = 0; pos < id.length(); ++pos) {
         ushort ch = id.at(pos).unicode();
         if ((ch < 0x20) || (ch > 0x7f) || strchr(forbiddenChars, ch & 0xff)) {
-            throw Exception(Error::Parse, "must consist of printable ASCII characters only, except any of \'%1'")
+            throw Exception("must consist of printable ASCII characters only, except any of \'%1'")
                     .arg(QString::fromLatin1(forbiddenChars));
         }
         if (spaceOnly)
             spaceOnly = QChar(ch).isSpace();
     }
     if (spaceOnly)
-        throw Exception(Error::Parse, "must not consist of only white-space characters");
+        throw Exception("must not consist of only white-space characters");
 }
 
 bool isDebuggerAttached(qint64 pid)

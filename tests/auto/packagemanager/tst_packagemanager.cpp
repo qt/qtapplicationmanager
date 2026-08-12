@@ -15,7 +15,6 @@
 #include "sudo.h"
 #include "logging.h"
 #include "utilities.h"
-#include "error.h"
 #include "private/packageutilities_p.h"
 #include "runtimefactory.h"
 #include "qmlinprocruntime.h"
@@ -888,7 +887,8 @@ void tst_PackageManager::cancelPackageInstallation()
         if (!m_startedSpy->isEmpty()) {
             QVERIFY(m_failedSpy->wait(spyTimeout));
             QCOMPARE(m_failedSpy->first()[0].toString(), taskId);
-            QCOMPARE(m_failedSpy->first()[1].toInt(), int(Error::Canceled));
+            QCOMPARE(m_failedSpy->first()[1].toInt(), 1); // frozen wire value for "canceled"
+            QCOMPARE(m_failedSpy->first()[2].toString(), u"canceled"_s);
         }
     } else {
         clearSignalSpies();

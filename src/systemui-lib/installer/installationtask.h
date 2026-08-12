@@ -67,9 +67,8 @@ private:
     std::unique_ptr<Package> m_tempPackageForAcknowledge;
     std::vector<std::unique_ptr<Application>> m_tempApplicationsForAcknowledge;
 
-    // changes to these 4 member variables are protected by m_mutex
+    // changes to these 3 member variables are protected by m_mutex
     PackageExtractor *m_extractor = nullptr;
-    bool m_canceled = false;
     bool m_installationAcknowledged = false;
     QWaitCondition m_installationAcknowledgeWaitCondition;
 

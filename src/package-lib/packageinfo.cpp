@@ -29,20 +29,20 @@ void PackageInfo::validate() const noexcept(false)
 {
     QString errorMsg;
     if (!isValidApplicationId(id(), &errorMsg))
-        throw Exception(Error::Parse, "the identifier (%1) is not a valid package-id: %2").arg(id()).arg(errorMsg);
+        throw Exception("the identifier (%1) is not a valid package-id: %2").arg(id()).arg(errorMsg);
 
     if (m_applications.isEmpty())
-        throw Exception(Error::Parse, "package contains no applications");
+        throw Exception("package contains no applications");
 
     for (const auto &app : m_applications) {
         if (!isValidApplicationId(app->id(), &errorMsg))
-            throw Exception(Error::Parse, "the identifier (%1) is not a valid application-id: %2").arg(app->id()).arg(errorMsg);
+            throw Exception("the identifier (%1) is not a valid application-id: %2").arg(app->id()).arg(errorMsg);
 
         if (app->codeFilePath().isEmpty())
-            throw Exception(Error::Parse, "the 'code' field must not be empty on application %1").arg(app->id());
+            throw Exception("the 'code' field must not be empty on application %1").arg(app->id());
 
         if (app->runtimeName().isEmpty())
-            throw Exception(Error::Parse, "the 'runtimeName' field must not be empty on application %1").arg(app->id());
+            throw Exception("the 'runtimeName' field must not be empty on application %1").arg(app->id());
     }
 }
 

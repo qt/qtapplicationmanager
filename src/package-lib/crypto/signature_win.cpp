@@ -20,7 +20,7 @@ class WinCryptException : public Exception  // clazy:exclude=copyable-polymorphi
 {
 public:
     WinCryptException(const char *errorString)
-        : Exception(Error::Cryptography, errorString)
+        : Exception(errorString)
     {
         if (auto err = ::GetLastError()) {
             LPWSTR msg = nullptr;

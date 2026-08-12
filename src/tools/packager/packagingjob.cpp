@@ -122,7 +122,7 @@ void PackagingJob::execute() noexcept(false)
     switch (m_mode) {
     case Create: {
         if (m_destinationName.isEmpty())
-            throw Exception(Error::Package, "no destination package name given");
+            throw Exception("no destination package name given");
 
         QFileInfo(m_destinationName).absoluteDir().mkpath(u"."_s);
 
@@ -134,7 +134,7 @@ void PackagingJob::execute() noexcept(false)
 
         QDir source(m_sourceDir);
         if (!source.exists())
-            throw Exception(Error::Package, "source %1 is not a directory").arg(m_sourceDir);
+            throw Exception("source %1 is not a directory").arg(m_sourceDir);
 
         // check metadata
         QString infoName = u"info.yaml"_s;
@@ -164,11 +164,11 @@ void PackagingJob::execute() noexcept(false)
         // check the package icon
         if (auto icon = package->icon(); !icon.isEmpty()) {
             if (!QFile::exists(source.absoluteFilePath(icon))) {
-                throw Exception(Error::Package, "missing the file referenced by the 'icon' field (%1)")
+                throw Exception("missing the file referenced by the 'icon' field (%1)")
                     .arg(icon);
             }
             if (QFileInfo(icon).path() != u'.')
-                throw Exception(Error::Package, "the icon must be located in the package's root directory");
+                throw Exception("the icon must be located in the package's root directory");
             report.addFile(icon);
         }
 
@@ -177,7 +177,7 @@ void PackagingJob::execute() noexcept(false)
         for (const auto *intent : intents) {
             const auto icon = intent->icon();
             if (!icon.isEmpty() && !QFile::exists(source.absoluteFilePath(icon))) {
-                throw Exception(Error::Package, "missing the file referenced by the 'icon' field for intent '%1' (%2)")
+                throw Exception("missing the file referenced by the 'icon' field for intent '%1' (%2)")
                     .arg(intent->id()).arg(icon);
             }
         }
@@ -185,18 +185,18 @@ void PackagingJob::execute() noexcept(false)
         // check applications
         const auto applications = package->applications();
         if (applications.isEmpty())
-            throw Exception(Error::Package, "no applications defined in package");
+            throw Exception("no applications defined in package");
         for (const auto *application : applications) {
             const auto code = application->codeFilePath();
             if (!code.startsWith(u":/"_s)) { // we just have to accept resource paths as is
                 if (!QFile::exists(source.absoluteFilePath(code))) {
-                    throw Exception(Error::Package, "missing the file referenced by the 'code' field for application '%1'")
+                    throw Exception("missing the file referenced by the 'code' field for application '%1'")
                         .arg(application->id());
                 }
             }
             const auto icon = application->icon();
             if (!icon.isEmpty() && !QFile::exists(source.absoluteFilePath(icon))) {
-                throw Exception(Error::Package, "missing the file referenced by the 'icon' field for application '%1' (%2)")
+                throw Exception("missing the file referenced by the 'icon' field for application '%1' (%2)")
                     .arg(application->id()).arg(icon);
             }
         }
@@ -224,7 +224,7 @@ void PackagingJob::execute() noexcept(false)
 
             // we sorted out sym-links, but just to be safe, we check the canonical path
             if (!entryPath.startsWith(canonicalSourcePath)) {
-                throw Exception(Error::Package, "file %1 is not inside the source directory %2")
+                throw Exception("file %1 is not inside the source directory %2")
                     .arg(entryInfo.filePath()).arg(canonicalSourcePath);
             }
 
@@ -232,7 +232,7 @@ void PackagingJob::execute() noexcept(false)
             entryPath = entryPath.mid(canonicalSourcePath.size() + 1);
 
             if (entryInfo.fileName().startsWith(u"--PACKAGE-"))
-                throw Exception(Error::Package, "file names starting with --PACKAGE- are reserved by the packager (found: %1)").arg(entryPath);
+                throw Exception("file names starting with --PACKAGE- are reserved by the packager (found: %1)").arg(entryPath);
 
             estimatedImageSize += (quint64(entryInfo.size()) + Ext2BlockSize - 1) / Ext2BlockSize;
 
@@ -240,7 +240,7 @@ void PackagingJob::execute() noexcept(false)
                 auto cmd = m_prePackageCmd.split(u" "_s);
                 cmd.append(entryInfo.absoluteFilePath());
                 if (QProcess::execute(cmd.first(), cmd.mid(1)) != 0)
-                    throw Exception(Error::Package, "failed to call pre-package-command for file: %1").arg(entryInfo.absoluteFilePath());
+                    throw Exception("failed to call pre-package-command for file: %1").arg(entryInfo.absoluteFilePath());
             }
 
             if (entryPath != infoName && entryPath != package->icon())
@@ -260,7 +260,7 @@ void PackagingJob::execute() noexcept(false)
         // finally create the package
         PackageCreator creator(source, &destination, report);
         if (!creator.create())
-            throw Exception(Error::Package, "could not create package %1: %2").arg(package->id()).arg(creator.errorString());
+            throw Exception("could not create package %1: %2").arg(package->id()).arg(creator.errorString());
         destination.commit();
 
         QVariantMap md = creator.metaData();
@@ -273,7 +273,7 @@ void PackagingJob::execute() noexcept(false)
     case StoreSign:
     case StoreVerify: {
         if (!QFile::exists(m_sourceName))
-            throw Exception(Error::Package, "package file %1 does not exist").arg(m_sourceName);
+            throw Exception("package file %1 does not exist").arg(m_sourceName);
 
         // read certificates
         QByteArrayList certificates;
@@ -298,12 +298,12 @@ void PackagingJob::execute() noexcept(false)
         // create temporary dir for extraction
         QTemporaryDir tmp;
         if (!tmp.isValid())
-            throw Exception(Error::Package, "could not create temporary directory %1").arg(tmp.path());
+            throw Exception("could not create temporary directory %1").arg(tmp.path());
 
         // extract source
         PackageExtractor extractor(QUrl::fromLocalFile(m_sourceName), tmp.path());
         if (!extractor.extract())
-            throw Exception(Error::Package, "could not extract package %1: %2").arg(m_sourceName).arg(extractor.errorString());
+            throw Exception("could not extract package %1: %2").arg(m_sourceName).arg(extractor.errorString());
 
         InstallationReport report = extractor.installationReport();
 
@@ -383,7 +383,7 @@ void PackagingJob::execute() noexcept(false)
 
         // create a signed package
         if (m_destinationName.isEmpty())
-            throw Exception(Error::Package, "no destination package name given");
+            throw Exception("no destination package name given");
 
         QSaveFile destination(m_destinationName);
         if (!destination.open(QIODevice::WriteOnly | QIODevice::Truncate))
@@ -392,7 +392,7 @@ void PackagingJob::execute() noexcept(false)
         PackageCreator creator(tmp.path(), &destination, report);
 
         if (certificates.size() != 1)
-            throw Exception(Error::Package, "cannot sign packages with more than one certificate");
+            throw Exception("cannot sign packages with more than one certificate");
 
         try {
             Certificate signer;
@@ -427,11 +427,11 @@ void PackagingJob::execute() noexcept(false)
                              "this package." << std::endl;
             }
         } catch (const Exception &e) {
-            throw Exception(Error::Package, "could not create signature: %1").arg(e.errorString());
+            throw Exception("could not create signature: %1").arg(e.errorString());
         }
 
         if (!creator.create())
-            throw Exception(Error::Package, "could not create package %1: %2").arg(m_destinationName).arg(creator.errorString());
+            throw Exception("could not create package %1: %2").arg(m_destinationName).arg(creator.errorString());
         destination.commit();
 
         QVariantMap md = creator.metaData();

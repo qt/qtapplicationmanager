@@ -140,25 +140,25 @@ void InstallationTask::checkDeveloperCertificate() const noexcept(false)
 {
     const auto cert = m_pm->developerCertificate();
     if (!cert.isValid())
-        throw Exception(Error::Package, "the development mode is set to 'application', but there is no developer certificate set");
+        throw Exception("the development mode is set to 'application', but there is no developer certificate set");
     if (!cert.matchPackageId(m_packageId)) {
-        throw Exception(Error::Package, "the package's id (%1) does not match the currently set developer certificate (%2)")
+        throw Exception("the package's id (%1) does not match the currently set developer certificate (%2)")
             .arg(m_packageId).arg(cert.packageIds());
     }
     if (!cert.matchApplicationIds(m_applicationIds)) {
-        throw Exception(Error::Package, "the package's application ids (%1) do not match the currently set developer certificate (%2)")
+        throw Exception("the package's application ids (%1) do not match the currently set developer certificate (%2)")
             .arg(m_applicationIds).arg(cert.applicationIds());
     }
     if (!cert.matchCapabilities(m_capabilities)) {
-        throw Exception(Error::Package, "the package's capabilities (%1) do not match the currently set developer certificate (%2)")
+        throw Exception("the package's capabilities (%1) do not match the currently set developer certificate (%2)")
             .arg(m_capabilities).arg(cert.capabilities());
     }
     if (!cert.matchCategories(m_categories)) {
-        throw Exception(Error::Package, "the package's categories (%1) do not match the currently set developer certificate (%2)")
+        throw Exception("the package's categories (%1) do not match the currently set developer certificate (%2)")
             .arg(m_categories).arg(cert.categories());
     }
     if (!cert.matchRuntimes(m_runtimes)) {
-        throw Exception(Error::Package, "the package's runtimes (%1) do not match the currently set developer certificate (%2)")
+        throw Exception("the package's runtimes (%1) do not match the currently set developer certificate (%2)")
             .arg(m_runtimes).arg(cert.runtimes());
     }
 }
@@ -176,7 +176,7 @@ void InstallationTask::execute()
         // protect m_canceled and changes to m_extractor
         QMutexLocker locker(&m_mutex);
         if (m_canceled)
-            throw Exception(Error::Canceled, "canceled");
+            throw Exception("canceled");
 
         m_extractor = new PackageExtractor(m_sourceUrl, QDir(extractionDir.path()));
         locker.unlock();
@@ -200,10 +200,10 @@ void InstallationTask::execute()
         });
 
         if (!m_extractor->extract())
-            throw Exception(m_extractor->errorCode(), m_extractor->errorString());
+            throw Exception(m_extractor->errorString());
 
         if (!m_foundInfo || !m_foundIcon)
-            throw Exception(Error::Package, "package did not contain a valid info.yaml and icon file");
+            throw Exception("package did not contain a valid info.yaml and icon file");
 
         if (m_pm->allowInstallationOfUnsignedPackages()) {
             if (origin() == Origin::ApplicationDeveloper)
@@ -214,7 +214,7 @@ void InstallationTask::execute()
             // Step 1: verify the store signature (optional, if in dev mode)
             if (hasStoreSignature) {
                 if (origin() == Origin::ApplicationDeveloper)
-                    throw Exception(Error::Package, "packages with store signatures cannot be installed via appman-controller when the development mode is set to 'application'");
+                    throw Exception("packages with store signatures cannot be installed via appman-controller when the development mode is set to 'application'");
 
                 // normal package from the store
                 QByteArray sigDigest = m_extractor->installationReport().digest();
@@ -242,17 +242,17 @@ void InstallationTask::execute()
                             (void) storeHwidSig.verify(m_extractor->installationReport().storeSignature(),
                                                        m_pm->caCertificatesCommon() + m_pm->caCertificatesStore());
                         } catch (const Exception &e) {
-                            throw Exception(Error::Package, "could not verify the package's store signature (with hardware-id): %1")
+                            throw Exception("could not verify the package's store signature (with hardware-id): %1")
                                 .arg(e.errorString());
                         }
                     } else {
-                        throw Exception(Error::Package, "could not verify the package's store signature: %1")
+                        throw Exception("could not verify the package's store signature: %1")
                             .arg(e.errorString());
                     }
                 }
             } else {
                 if (origin() == Origin::SystemUI)
-                    throw Exception(Error::Package, "packages without a store signature can only be installed via appman-controller in development mode");
+                    throw Exception("packages without a store signature can only be installed via appman-controller in development mode");
             }
 
             // Step 2: verify the developer signature (required)
@@ -283,20 +283,20 @@ void InstallationTask::execute()
                     result = devSig.verify(m_extractor->installationReport().developerSignature(),
                                            m_pm->caCertificatesCommon() + m_pm->caCertificatesDeveloper());
                 } catch (const Exception &e) {
-                    throw Exception(Error::Package, "could not verify the package's developer signature: %1")
+                    throw Exception("could not verify the package's developer signature: %1")
                         .arg(e.errorString());
                 }
 
                 if (origin() == Origin::ApplicationDeveloper) { // implies !hasStoreSignature (see step 1)
                     // checkDeveloperCertificate() above guarantees that a certificate is set
                     if (m_pm->developerCertificate() != result.signer())
-                        throw Exception(Error::Package, "the package's developer signature does not match the currently set developer certificate");
+                        throw Exception("the package's developer signature does not match the currently set developer certificate");
                 }
             } else {
                 if (hasStoreSignature)
-                    throw Exception(Error::Package, "cannot install packages with only a store signature");
+                    throw Exception("cannot install packages with only a store signature");
                 else
-                    throw Exception(Error::Package, "cannot install unsigned packages");
+                    throw Exception("cannot install unsigned packages");
             }
         }
 
@@ -310,7 +310,7 @@ void InstallationTask::execute()
 
         // this is the last cancellation point
         if (m_canceled)
-            throw Exception(Error::Canceled, "canceled");
+            throw Exception("canceled");
         locker.unlock();
 
         setState(Installing);
@@ -333,7 +333,7 @@ void InstallationTask::execute()
             qCWarning(LogInstaller) << "PackageManager rejected the installation of " << m_packageId;
 
     } catch (const Exception &e) {
-        setError(e.errorCode(), e.errorString());
+        setError(e.errorString());
 
         if (m_managerApproval) {
             // we need to call those ApplicationManager methods in the correct thread
@@ -362,18 +362,18 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
 
     if (m_extractedFileCount == 1) {
         if (file != u"info.yaml")
-            throw Exception(Error::Package, "info.yaml must be the first file in the package. Got %1")
+            throw Exception("info.yaml must be the first file in the package. Got %1")
                 .arg(file);
 
         m_package.reset(PackageInfo::fromManifest(m_extractor->destinationDirectory().absoluteFilePath(file)));
         if (m_package->id() != m_extractor->installationReport().packageId())
-            throw Exception(Error::Package, "the package identifiers in --PACKAGE-HEADER--' and info.yaml do not match");
+            throw Exception("the package identifiers in --PACKAGE-HEADER--' and info.yaml do not match");
 
         m_iconFileName = m_package->icon(); // store it separately as we will transfer m_package ownership later
         if (m_iconFileName.isEmpty())
             m_foundIcon = true;
         else if (QFileInfo(m_iconFileName).path() != u'.')
-            throw Exception(Error::Package, "the icon must be located in the package's root directory");
+            throw Exception("the icon must be located in the package's root directory");
 
         // copy all capabilites, app ids, categories and runtimes out from m_package, as we won't
         // have access to it anymore after the m_package ownership transfer later on
@@ -405,17 +405,16 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
         Q_ASSERT(!m_iconFileName.isEmpty());
 
         if (file != m_iconFileName)
-            throw Exception(Error::Package,
-                    "The package icon (as stated in info.yaml) must be the second file in the package."
+            throw Exception("The package icon (as stated in info.yaml) must be the second file in the package."
                     " Expected '%1', got '%2'").arg(m_iconFileName, file);
 
         QFile icon(m_extractor->destinationDirectory().absoluteFilePath(file));
         if (icon.size() > 1024*1024)
-            throw Exception(Error::Package, "the size of %1 is too large (max. 1MB)").arg(file);
+            throw Exception("the size of %1 is too large (max. 1MB)").arg(file);
 
         m_foundIcon = true;
     } else {
-        throw Exception(Error::Package, "Could not find info.yaml and the icon file at the beginning of the package.");
+        throw Exception("Could not find info.yaml and the icon file at the beginning of the package.");
     }
 
     if (m_foundIcon && m_foundInfo) {
@@ -427,7 +426,7 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
             doubleInstallation = PackageManager::instance()->isPackageInstallationActive(m_packageId);
         }, Qt::BlockingQueuedConnection);
         if (doubleInstallation)
-            throw Exception(Error::Package, "Cannot install the same package %1 multiple times in parallel").arg(m_packageId);
+            throw Exception("Cannot install the same package %1 multiple times in parallel").arg(m_packageId);
 
         QDir oldDestinationDirectory = m_extractor->destinationDirectory();
 
@@ -488,7 +487,7 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
             QThread::msleep(30);
 
         if (m_canceled || newPackage.isNull())
-            throw Exception(Error::Canceled, "canceled");
+            throw Exception("canceled");
     }
 }
 
@@ -539,7 +538,7 @@ void InstallationTask::finishInstallation() noexcept(false)
         // this package may have been installed earlier and the document directory may not have been removed
         if (!documentDirectory.cd(m_packageId)) {
             if (!documentDirCreator.create(documentDirectory.absoluteFilePath(m_packageId)))
-                throw Exception(Error::IO, "could not create the document directory %1").arg(documentDirectory.filePath(m_packageId));
+                throw Exception("could not create the document directory %1").arg(documentDirectory.filePath(m_packageId));
         }
     }
 
@@ -550,10 +549,10 @@ void InstallationTask::finishInstallation() noexcept(false)
 
     if (mode == Update) {
         if (!renameApplication.rename(m_applicationDir, ScopedRenamer::NamePlusToName | ScopedRenamer::NameToNameMinus))
-            throw Exception(Error::IO, "could not rename application directory %1+ to %1 (including a backup to %1-)").arg(m_applicationDir);
+            throw Exception("could not rename application directory %1+ to %1 (including a backup to %1-)").arg(m_applicationDir);
     } else {
         if (!renameApplication.rename(m_applicationDir, ScopedRenamer::NamePlusToName))
-            throw Exception(Error::IO, "could not rename application directory %1+ to %1").arg(m_applicationDir);
+            throw Exception("could not rename application directory %1+ to %1").arg(m_applicationDir);
     }
 
     // materialize the report atomically; if this throws, ~ScopedRenamer reverts the app-dir rename

@@ -381,7 +381,7 @@ void PackageManager::registerPackages()
     for (auto packageInfo : builtinPackages) {
         auto existingPackageInfos = pkgs.value(packageInfo->id());
         if (existingPackageInfos.first) {
-            throw Exception(Error::Package, "Found more than one built-in package with id '%1': here: %2 and there: %3")
+            throw Exception("Found more than one built-in package with id '%1': here: %2 and there: %3")
                     .arg(packageInfo->id())
                     .arg(existingPackageInfos.first->manifestPath())
                     .arg(packageInfo->manifestPath());
@@ -396,7 +396,7 @@ void PackageManager::registerPackages()
         if (existingPackageInfos.first) {
             if (existingPackageInfos.first->isBuiltIn()) { // update
                 if (existingPackageInfos.second) { // but there already is an update applied!?
-                    throw Exception(Error::Package, "Found more than one update for the built-in package with id '%1' here: %2 and there: %3")
+                    throw Exception("Found more than one update for the built-in package with id '%1' here: %2 and there: %3")
                             .arg(packageInfo->id())
                             .arg(existingPackageInfos.second->manifestPath())
                             .arg(packageInfo->manifestPath());
@@ -404,7 +404,7 @@ void PackageManager::registerPackages()
                 pkgs[packageInfo->id()] = std::make_pair(existingPackageInfos.first, packageInfo);
 
             } else {
-                throw Exception(Error::Package, "Found more than one installed package with the same id '%1' here: %2 and there: %3")
+                throw Exception("Found more than one installed package with the same id '%1' here: %2 and there: %3")
                         .arg(packageInfo->id())
                         .arg(existingPackageInfos.first->manifestPath())
                         .arg(packageInfo->manifestPath());
@@ -1199,7 +1199,7 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
                     if (finishedPackageInstall(pkg->id()))
                         continue;
                 }
-                throw Exception(Error::Package, "could not remove broken installation of package %1 from database").arg(pkg->id());
+                throw Exception("could not remove broken installation of package %1 from database").arg(pkg->id());
             }
         }
     }
@@ -1228,7 +1228,7 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
                 try {
                     removeRecursive(fi.absoluteFilePath());
                 } catch (const Exception &e) {
-                    throw Exception(Error::IO, "could not remove broken installation leftover: %1")
+                    throw Exception("could not remove broken installation leftover: %1")
                         .arg(e.errorString());
                 }
             }
@@ -1707,8 +1707,12 @@ void PackageManager::executeNextTask()
 void PackageManager::handleFailure(AsynchronousTask *task)
 {
 #if QT_CONFIG(am_installer)
-    qCDebug(LogInstaller) << "emit failed" << task->id() << task->errorCode() << task->errorString();
-    emit taskFailed(task->id(), int(task->errorCode()), task->errorString());
+    // Wire values of the removed Error enum (1=Canceled and 10=System). The errorCode argument only
+    // exists for backwards compatibility; it is documented as 1 for canceled and > 1 otherwise.
+    const int errorCode = task->wasCanceled() ? 1 : 10;
+
+    qCDebug(LogInstaller) << "emit failed" << task->id() << errorCode << task->errorString();
+    emit taskFailed(task->id(), errorCode, task->errorString());
 #else
     Q_UNUSED(task)
     Q_ASSERT_X(false, "PackageManager::handleFailure", "Installer is disabled");
@@ -1961,7 +1965,7 @@ bool PackageManager::validateDnsName(const QString &name, int minimalPartCount)
         // check if we have enough parts: e.g. "tld.company.app" would have 3 parts
         QStringList parts = name.split(u'.');
         if (parts.size() < minimalPartCount) {
-            throw Exception(Error::Parse, "the minimum amount of parts (subdomains) is %1 (found %2)")
+            throw Exception("the minimum amount of parts (subdomains) is %1 (found %2)")
                 .arg(minimalPartCount).arg(parts.size());
         }
 
@@ -1971,7 +1975,7 @@ bool PackageManager::validateDnsName(const QString &name, int minimalPartCount)
             qsizetype len = part.length();
 
             if (len < 1 || len > 63)
-                throw Exception(Error::Parse, "domain parts must consist of at least 1 and at most 63 characters (found %2 characters)").arg(len);
+                throw Exception("domain parts must consist of at least 1 and at most 63 characters (found %2 characters)").arg(len);
 
             for (qsizetype pos = 0; pos < len; ++pos) {
                 ushort ch = part.at(pos).unicode();
@@ -1982,7 +1986,7 @@ bool PackageManager::validateDnsName(const QString &name, int minimalPartCount)
                 bool isLower = (ch >= 'a' && ch <= 'z');
 
                 if ((isFirst || isLast || !isDash) && !isDigit && !isLower)
-                    throw Exception(Error::Parse, "domain parts must consist of only the characters '0-9', 'a-z', and '-' (which cannot be the first or last character)");
+                    throw Exception("domain parts must consist of only the characters '0-9', 'a-z', and '-' (which cannot be the first or last character)");
             }
         };
 

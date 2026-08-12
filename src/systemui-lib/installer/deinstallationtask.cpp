@@ -51,7 +51,7 @@ void DeinstallationTask::execute()
         auto package = PackageManager::instance()->package(packageId());
         if (!package) {
             // the package has already been deinstalled - nothing more to do here
-            throw Exception(Error::NotInstalled, "Cannot remove package %1 because it is not installed")
+            throw Exception("Cannot remove package %1 because it is not installed")
                     .arg(m_packageId);
         }
 
@@ -81,7 +81,7 @@ void DeinstallationTask::execute()
             QMutexLocker locker(&m_mutex);
             m_canBeCanceled = false;
             if (m_canceled)
-                throw Exception(Error::Canceled, "canceled");
+                throw Exception("canceled");
         }
 
         ScopedRenamer docDirRename;
@@ -90,13 +90,13 @@ void DeinstallationTask::execute()
         if (!m_keepDocuments && !m_documentPath.isEmpty()) {
             if (!docDirRename.rename(QDir(m_documentPath).absoluteFilePath(packageId()),
                                      ScopedRenamer::NameToNameMinus)) {
-                throw Exception(Error::IO, "could not rename %1 to %1-").arg(docDirRename.baseName());
+                throw Exception("could not rename %1 to %1-").arg(docDirRename.baseName());
             }
         }
 
         if (!appDirRename.rename(QDir(m_installationPath).absoluteFilePath(packageId()),
                                  ScopedRenamer::NameToNameMinus)) {
-            throw Exception(Error::IO, "could not rename %1 to %1-").arg(appDirRename.baseName());
+            throw Exception("could not rename %1 to %1-").arg(appDirRename.baseName());
         }
 
         docDirRename.take();
@@ -144,7 +144,7 @@ void DeinstallationTask::execute()
                 qCWarning(LogInstaller) << "PackageManager could not re-enable package" << m_packageId << "after a failed removal";
         }
 
-        setError(e.errorCode(), e.errorString());
+        setError(e.errorString());
     }
 }
 

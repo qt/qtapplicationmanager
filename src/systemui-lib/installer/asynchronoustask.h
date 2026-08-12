@@ -8,8 +8,8 @@
 
 #include <QtCore/QThread>
 #include <QtCore/QMutex>
+#include <QtCore/QAtomicInteger>
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
-#include <QtAppManCommon/error.h>
 
 
 QT_BEGIN_NAMESPACE_AM
@@ -51,11 +51,11 @@ public:
 
     Origin origin() const;
 
-    Error errorCode() const;
     QString errorString() const;
 
     virtual bool cancel();
     bool forceCancel(); // will always work in Queued state
+    bool wasCanceled() const;
 
     QString packageId() const; // convenience
 
@@ -67,7 +67,7 @@ Q_SIGNALS:
     void progress(qreal p);
 
 protected:
-    void setError(Error errorCode, const QString &errorString);
+    void setError(const QString &errorString);
     virtual void execute() = 0;
     void run() final;
 
@@ -78,8 +78,8 @@ protected:
     QString m_packageId;
     QString m_errorString;
     TaskState m_state = Queued;
-    Error m_errorCode = Error::None;
     Origin m_origin = Origin::ApplicationDeveloper;
+    QAtomicInteger<bool> m_canceled = false; // atomic for easy access in "busy" wait loops
 };
 
 

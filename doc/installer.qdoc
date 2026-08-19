@@ -86,14 +86,27 @@ signed packages.
 New in 6.11:
 \list
 \li Developer certificates can be bound to one or more specific package IDs, to prevent shadowing
-    or replacement of packages that are not owned by the developer. See \l {Binding Developer
-    Certificates to Package IDs}{below} for more information.
+    or replacement of packages that are not owned by the developer. See \l {Restricting Developer
+    Certificates}{below} for more information.
 \li Developer certificates need to have the \c decipherOnly bit set in the \e{Key Usage} X509
     extension, while App-Store certificates need to have the \c encipherOnly bit set. This ensures
     that developer and app-store certificates cannot be used interchangeably. The X509 format is not
     easily extensible, but these otherwise unused key-usage bits can easily be set in any tool used
     for creating certificates.
 \li Certificate Revocation Lists (CRLs) can be loaded to revoke developer or app-store certificates.
+\endlist
+
+New in 6.12:
+\list
+\li Developer certificates can be bound to application IDs, capabilities, categories and runtimes,
+    in addition to package IDs. Signing or installing a package that requests anything that is not
+    covered by the certificate fails. See \l {Restricting Developer Certificates}{below} for more
+    information.
+\li Every certificate states which set of restrictions it was issued for, in the form of a version.
+    Certificates older than the \l {minimum certificate version}{configured minimum version} are
+    rejected at install time. As that minimum defaults to the newest version the application manager
+    was built with, 6.10 and 6.11 certificates are \b not accepted anymore out of the box. See
+    \l {Certificate Versions}{below} for more information.
 \endlist
 
 \section2 Creating Developer Certificates
@@ -106,16 +119,19 @@ a certificate signing request (CSR) for their package:
 
 \badcode
 $ openssl req -new -nodes -newkey rsa:2048 -subj "/CN=Developer 1" \
-              -addext "subjectAltName=URI:qtam://packageid/my-package-id" \
+              -addext "subjectAltName=URI:qtam://version/6.12,\
+URI:qtam://packageid/my-package-id,URI:qtam://applicationid/my-package-id,\
+URI:qtam://category/*,URI:qtam://runtime/qml-launcher" \
               -keyout developer.key -out developer-req.csr
 \endcode
 
 Please note that the actual parameters like key size and subject name would depend on your PKI
 policy. In this example, a 2048-bit RSA key is created with the common name \e "Developer 1".
 
-The \c{subjectAltName} extension is used to bind the developer certificate to one or more specific
-package IDs, in this case \c my-package-id.
-See \l{Binding Developer Certificates to Package IDs}{below for more information}.
+The \c{subjectAltName} extension is used to bind the developer certificate to the package contents
+the developer is allowed to sign: here, the single package \c my-package-id, containing a single
+application of the same ID, using the \c qml-launcher runtime, with any category, but without any
+capability. See \l {Restricting Developer Certificates}{below for more information}.
 
 The \c developer-req.csr file would then be sent to the Developer CA for signing, while the
 \c developer.key file is kept private by the developer.
@@ -123,6 +139,10 @@ The \c developer-req.csr file would then be sent to the Developer CA for signing
 On the CA side, the CSR is then verified and signed to create the developer certificate. Please
 note that developer certificates need to have the \c decipherOnly bit set in the \e{Key Usage}
 X509 extension.
+
+The restrictions requested in the CSR are just that: a request. Only the CA's copy ends up in the
+signed certificate, so it is the CA's responsibility to verify them and to replace them with
+whatever the PKI policy grants this developer.
 
 \badcode
 $ openssl ca -batch -config dev-ca.conf -policy signing_policy -extensions signing_req \
@@ -138,30 +158,138 @@ P12 file, which is the format that the \l {Packager}{\c appman-packager} tool ex
 $ openssl pkcs12 -export -out developer.p12 -in developer.crt -inkey developer.key
 \endcode
 
-\section2 Binding Developer Certificates to Package IDs
+\section2 Restricting Developer Certificates
+\target Binding Developer Certificates to Package IDs
 
-Up to version 6.11, all developer certificates were treated equally, meaning that a developer
-could sign any package. From version 6.11 onwards, developer certificates can be
-bound to one or more specific package IDs, to prevent shadowing or replacement of packages
-that are not owned by the developer.
+Up to version 6.10, all developer certificates were treated equally, meaning that a developer could
+sign any package. Version 6.11 added package ID restrictions, to prevent shadowing or replacement of
+packages that are not owned by the developer. Version 6.12 added restrictions on application IDs,
+capabilities, categories and runtimes, so that a certificate can no longer be used to sign a package
+that grants itself capabilities or a runtime the developer was never given.
 
-This ID list is stored in the \c{subjectAltName} X.509v3 extension of the developer certificate as
-\c {URI:qtam://packageid/...} entries. This extension is conventionally used to store alternative
-domain names for HTTPS server certificates.
+These restrictions are stored in the \c{subjectAltName} X.509v3 extension of the developer
+certificate as \c{URI:qtam://<type>/<value>} entries. This extension is conventionally used to store
+alternative domain names for HTTPS server certificates. The following types are recognized:
 
-As with HTTPS certificates, you can use the \c{*} wildcard character to match multiple package
-IDs. For example, a developer certificate with the following \c{subjectAltName} extension:
-\badcode
-subjectAltName = URI:qtam://packageid/com.vendor.*, URI:qtam://packageid/io.qt.example
-\endcode
+\table
+\header
+  \li Type
+  \li Restricts
+  \li Since
+\row
+  \li \c packageid
+  \li The package's \c id.
+  \li 6.11
+\row
+  \li \c applicationid
+  \li The \c id of every application in the package.
+  \li 6.12
+\row
+  \li \c capability
+  \li Every capability requested by any application in the package.
+  \li 6.12
+\row
+  \li \c category
+  \li Every category of the package itself and of its applications.
+  \li 6.12
+\row
+  \li \c runtime
+  \li The \c runtime of every application in the package.
+  \li 6.12
+\endtable
 
-would allow the developer to create and sign packages with an ID starting with
-\c{com.vendor.}, as well as the specific package with the ID \c{io.qt.example}.
+A package is only accepted if \e every value it requests is matched by at least one entry of the
+corresponding type: a single unmatched capability, category, application ID or runtime is enough to
+fail the signing or the installation. Types that the package does not use at all - for example
+categories in a package that has none - do not need any entries.
 
-\note Adding this information is \b optional for developer certificates to retain backwards
-compatibility. However you are highly encouraged to add this information to your developer
-certificates to improve security. If you still need to issue an unrestricted developer certificate,
-you can use \c{URI:qtam://packageid/*} to explicitly allow all package IDs.
+As with HTTPS certificates, you can use the \c{*} wildcard character to match multiple values. For
+example, a developer certificate with these \c{subjectAltName} entries:
+
+\list
+  \li \c{URI:qtam://version/6.12}
+  \li \c{URI:qtam://packageid/com.vendor.*}
+  \li \c{URI:qtam://packageid/io.qt.example}
+  \li \c{URI:qtam://applicationid/com.vendor.*}
+  \li \c{URI:qtam://category/*}
+  \li \c{URI:qtam://runtime/qml-launcher}
+\endlist
+
+would allow the developer to create and sign packages with an ID starting with \c{com.vendor.}, as
+well as the specific package with the ID \c{io.qt.example}. Their applications' IDs all have to
+start with \c{com.vendor.} and they all have to use the \c qml-launcher runtime. Any category is
+allowed, but no capabilities at all, as there is no \c capability entry.
+
+Runtime entries are matched against the \c runtime field of the manifest as it is written, without
+resolving runtime aliases: a certificate bound to \c qml-launcher does not match a package
+requesting the \c qml runtime, and vice versa. Bind certificates to the actual runtime IDs
+(\c qml-launcher, \c qml-inprocess, or \c native) - the \c qml alias resolves to a different runtime
+depending on whether the application manager runs in single- or multi-process mode, so a certificate
+bound to \c qml would not confine the package to either of them.
+
+\note These restrictions are only enforced for certificate versions that carry them, so an
+unrestricted certificate is not the same thing as a certificate that omits the entries: see
+\l {Certificate Versions}{below}. If you need to issue an unrestricted 6.12 developer certificate,
+add an explicit \c{*} entry for every type.
+
+App-store certificates are not restricted this way, as a store-signed package has been vetted by the
+app store, which is expected to check the package's contents: any restriction entries on an
+app-store certificate are ignored. They do need a \c version entry, though.
+
+\section2 Certificate Versions
+
+The set of restrictions carried by certificates has changed over time, so every certificate states
+which set it was issued for, as a \c{URI:qtam://version/<x.y>} entry in its \c{subjectAltName}
+extension. This value is the application manager version in which the set of restrictions last
+changed: it is neither the version of the tooling that created the certificate, nor does it move
+with every release. A certificate issued while 6.14 is current still states \c 6.12, as long as the
+set of restrictions has not changed since then.
+
+Certificates that predate this mechanism are recognized by their contents:
+
+\table
+\header
+  \li Version
+  \li Recognized by
+  \li Enforced restrictions
+\row
+  \li \c 6.10
+  \li A missing or unexpected \e{Key Usage} extension.
+  \li None.
+\row
+  \li \c 6.11
+  \li A \e{Key Usage} extension matching a developer or app-store certificate, but no \c version
+      entry.
+  \li Package IDs.
+\row
+  \li \c 6.12
+  \li A \c{URI:qtam://version/6.12} entry.
+  \li Package IDs, application IDs, capabilities, categories and runtimes.
+\endtable
+
+Restrictions that a certificate's version does not know about are not enforced, because such a
+certificate simply does not carry the corresponding entries: a 6.11 developer certificate can sign a
+package requesting any capability. This is why the installer rejects any certificate - developer or
+app-store - that is older than the \l {minimum certificate version}{configured minimum version},
+which defaults to the newest version the application manager was built with. Since that default
+excludes 6.10 and 6.11 certificates, upgrading a device to 6.12 requires re-issuing them.
+Configuring a lower minimum re-enables the older certificates, together with their weaker
+guarantees.
+
+Everything a certificate's version is derived from - the \c version entry as well as the \e{Key
+Usage} extension - is asserted by the issuing CA and cannot be changed by the holder of the
+certificate.
+
+Changing the minimum version only affects new installations. Already installed packages were
+verified when they were installed and are not re-checked.
+
+\note A certificate with more than one \c version entry, or with an unparseable one, is rejected
+outright, independently of the configured minimum version.
+
+The \l {Packager}{\c appman-packager} tool warns when signing a package with a certificate that is
+older than the newest version the tool itself knows about, but still creates the package: the
+packager and the target device can run different application manager versions, so only the device
+can decide whether a certificate is acceptable.
 
 \section2 Developer Signing Packages
 

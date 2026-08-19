@@ -95,10 +95,10 @@ a developer certificate must be set using \c appman-controller:
 appman-controller set-developer-certificate developer.p12
 \endcode
 
-The certificate is a PKCS#12 file that encodes the package IDs the developer is authorized
-to work with, stored in the \c{subjectAltName} X.509v3 extension as
-\c{URI:qtam://packageid/...} entries. For details on creating certificates,
-see \l{Package Installation}.
+The certificate is a PKCS#12 file that encodes what the developer is authorized to work with -
+package IDs, and, as of 6.12, also application IDs, capabilities, categories and runtimes - stored
+in the \c{subjectAltName} X.509v3 extension as \c{URI:qtam://<type>/<value>} entries. For details on
+creating certificates, see \l{Package Installation}.
 
 The current developer certificate persists across application manager restarts; it is saved
 in the application manager's data directory. Clearing it is done with:
@@ -119,9 +119,9 @@ Once a developer certificate is set, the following restrictions apply when using
     \li \b{Installation task visibility}: Only installation tasks initiated through the
         development mode D-Bus interface are visible. System-initiated tasks are not accessible.
     \li \b{Developer-signed package installation}: Installing a package that carries only a
-        developer signature (without a store signature) requires the package ID to match the
-        currently set developer certificate, and the developer signature itself must have been
-        created with the same certificate.
+        developer signature (without a store signature) requires the package's contents to stay
+        within the bounds of the currently set developer certificate, and the developer signature
+        itself must have been created with the same certificate.
     \li \b{System-wide operations}: Operations that are not scoped to a specific package or
         application, such as taking a screenshot of the entire display, are not available.
         Application-specific variants of such operations remain accessible for matching

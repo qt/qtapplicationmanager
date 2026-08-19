@@ -175,10 +175,15 @@ The fields used for each item within the \c applications list are as follows:
     \li \c runtime
     \li string
     \li \e Required. A runtime ID, referencing a runtime plugin. Currently, \c qml,
-        \c qml-inprocess, and \c native are supported.
+        \c qml-inprocess, \c qml-launcher, and \c native are supported.
 
         For the QML runtimes, the \c code field needs to point to the main QML file, which should
         have an ApplicationManagerWindow as a root item.
+        The \c qml-inprocess runtime always runs the application within the System UI process,
+        whereas the \c qml-launcher runtime always starts a dedicated launcher process - this also
+        means that \c qml-launcher applications cannot be started at all when the application
+        manager is running in single-process mode. The \c qml runtime is an alias that resolves
+        to \c qml-launcher in multi-process mode and to \c qml-inprocess in single-process mode.
 
         For the native runtime, the \c code field can point to an arbitrary executable, which is
         executed via QProcess::start(). The application manager will run the application with the

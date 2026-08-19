@@ -125,6 +125,10 @@ AbstractRuntimeManager *AbstractRuntime::manager() const
     This property returns the \c id of the runtime that is executing the application. The \c id
     is a unique identifier for the runtime integration and can be used to reference it in other
     parts of the System UI or in configuration files.
+
+    \note Starting with version 6.12, alias runtime ids are resolved: an application using the
+          \c qml runtime will report \c qml-launcher in multi-process mode and \c qml-inprocess in
+          single-process mode.
 */
 QString AbstractRuntime::runtimeId() const
 {

@@ -34,6 +34,8 @@ CMakeUserPresets.json
 .qmlls.ini
 .clang*
 compile_commands.json
+.qtcreator
+.claude
 
 config.tests/*/*
 !config.tests/*/*[.]*

@@ -405,6 +405,12 @@ ui:
         \li This option can be used to specify options for runtimes, as a map of key-value pairs.
             The key is the runtime's name; the value is interpreted by the respective runtime
             implementation. For more information, see \l {Runtime Configuration}.
+            The keys can be actual runtime ids (e.g. \c qml-launcher or \c qml-inprocess) for
+            runtime-specific configuration, or \c qml for configuration that is shared between
+            both QML runtimes. A configuration specified under \c qml is used as a base for both
+            \c qml-launcher and \c qml-inprocess, and can be overridden by runtime-specific keys
+            (as with the config files themselves, list values are merged: see \l{Multiple Values}).
+
             There is one special key named \c{additionalLaunchers}: the value is an array of \c id
             strings, and all these ids are registered as custom runtimes. A corresponding
             \c{appman-launcher-<id>} executable is expected to be available when launching apps
@@ -440,6 +446,9 @@ ui:
             \endlist
             Approach 2 and 3 can be freely mixed, with the special wildcard ID \c{"*"} denoting
             "any container ID" or "any runtime ID".
+
+            These runtimes should be specified using actual runtime ids (e.g. \c qml-launcher), but
+            \c qml is also accepted and mapped to \c qml-launcher for backward compatibility.
 
             \note Values bigger than 10 are ignored, since this does not make sense and could also
                   potentially freeze your device if you have a container plugin where instantiation

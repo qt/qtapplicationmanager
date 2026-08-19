@@ -35,11 +35,16 @@ class Q_APPMANSYSTEMUI_EXPORT NativeRuntimeManager : public AbstractRuntimeManag
     Q_OBJECT
 public:
     explicit NativeRuntimeManager(QObject *parent = nullptr);
-    explicit NativeRuntimeManager(const QString &id, QObject *parent = nullptr);
+    explicit NativeRuntimeManager(const QString &id, const QString &launcherExtension,
+                                  QObject *parent = nullptr);
 
+    QString launcherExtension() const;
     bool supportsQuickLaunch() const override;
 
     AbstractRuntime *create(AbstractContainer *container, Application *app) override;
+
+private:
+    QString m_launcherExtension;
 };
 
 class Q_APPMANSYSTEMUI_EXPORT NativeRuntime : public AbstractRuntime

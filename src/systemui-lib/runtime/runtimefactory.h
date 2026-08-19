@@ -27,6 +27,7 @@ public:
     ~RuntimeFactory() override;
 
     QStringList runtimeIds() const;
+    QString resolveRuntimeId(const QString &id) const;
 
     AbstractRuntimeManager *manager(const QString &id);
     AbstractRuntime *create(AbstractContainer *container, Application *app);
@@ -37,6 +38,7 @@ public:
 
     bool registerRuntime(AbstractRuntimeManager *manager);
     bool registerRuntime(AbstractRuntimeManager *manager, const QString &identifier);
+    bool registerRuntimeAlias(const QString &alias, const QString &runtimeId);
 
 private:
     RuntimeFactory(QObject *parent = nullptr);
@@ -45,6 +47,7 @@ private:
     static RuntimeFactory *s_instance;
 
     QHash<QString, AbstractRuntimeManager *> m_runtimes;
+    QHash<QString, QString> m_aliases;  // alias -> canonical runtime id
 
     // To be passed to newly created runtimes
     bool m_slowAnimations{false};

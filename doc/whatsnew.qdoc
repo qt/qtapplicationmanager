@@ -10,14 +10,83 @@
 
 \section1 Qt ApplicationManager 6.12
 
+This release is mostly about security and quality-of-life improvements.
+
 \list
+\li Installations triggered by the System UI via \l{PackageManager::startPackageInstallation} always
+    require a valid store signature now: enabling the \l{Development Mode}{development mode} does
+    not relax this requirement anymore. Packages that only carry a developer signature can be
+    installed via the \c appman-controller tool.
+\li The \c qml runtime is a pure alias now: it resolves to the new \c qml-launcher runtime in
+    multi-process mode and to the existing \c qml-inprocess runtime in single-process mode. Both
+    can also be used explicitly in the \l{Manifest Definition}{manifest} - a prerequisite for
+    restricting a third-party package to multi-process mode via \c{runtime: qml-launcher}.
+    This also has \l{runtimes-configuration}{implications on the runtime configuration}.
+\li In addition to package IDs, third-party developer certificates can now be bound to application
+    IDs, capabilities, categories and runtimes, so that a certificate can no longer be used to sign
+    a package that grants itself capabilities the developer was never given. See
+    \l{Restricting Developer Certificates}.
+\li Certificates are versioned now, stating which set of restrictions they were issued for. The
+    installer rejects certificates that are older than the
+    \l{minimum certificate version}{configured minimum version}, which by default excludes all
+    pre-6.12 certificates. See \l{Certificate Versions}.
+\li POSIX extended attributes in packages need to be white-listed via
+    \l{allowed xattrs}{installer/allowedExtendedAttributes}. Installing a package that carries any
+    other extended attribute fails.
+\li As the external D-Bus interfaces are disabled by default since
+    \l{Qt ApplicationManager 6.11}{6.11}, the application manager's own D-Bus policy mechanism was
+    not particularly useful anymore and has been removed. Use the \c dbus-daemon configuration for
+    UID and method name restrictions; for operations that need capability checks, have the System UI
+    expose an intent, as described in \l{Calling Privileged System Operations}.
 \li The dated and deprecated Linux cgroup v1 support was removed, together with the
     memoryLowWarning and memoryLowCritical signals.
     As a replacement, explicit \l{Linux cgroup v2}{cgroup v2} support was added in form of the new
-    CGroupStatus type, which also includes support for \l{Linux Pressure Stall Information}
-    {pressure stall information}.
-
+    \l CGroupStatus type, which also includes support for \l{Linux Pressure Stall Information}
+    {pressure stall information}. Its companion \l SystemStatus type provides nearly the same API
+    for the system as a whole.
+\li Applications can be started in their own, on-demand created cgroup, using the new
+    \c createOwnGroupPerProcess option of the \l{Process Container}{process} and
+    \l{Bubblewrap Container}{bubblewrap} containers. Without it, all applications sharing a control
+    group are also accounted for together.
+\li The IntentServer got a new \l{IntentServer::intentRequestFilterFunction}
+    {intentRequestFilterFunction} hook: a JavaScript callback that can reject incoming intent
+    requests, or narrow down their candidates, after the static visibility and capability filters
+    have been applied.
+\li The debugging output of the intents sub-system was overhauled: messages now consistently carry
+    the request ID, the intent ID, and the requesting and handling applications. The \c am.intent
+    logging category was split into \c am.intent.server, \c am.intent.client and
+    \c am.intent.params.
+\li The configuration and manifest file caches were removed, as parsing these YAML files directly is
+    faster with the recent improvements to the YAML parser, than maintaining a cache. The
+    \c --no-cache and \c --clear-cache command line options are still accepted, but ignored.
 \endlist
+
+The security review of the code base continued in this release. Most of its outcome is internal
+hardening, but these changes may be interesting:
+
+\list
+\li Intent requests that need disambiguation now fail if the System UI does not handle the
+    \l{IntentServer::disambiguationRequest} signal. Before, an arbitrary candidate was chosen, which
+    allowed an application to potentially steal intents from another one.
+\li The \l{IntentObject::parameterMatch}{parameterMatch} regular expressions are implicitly anchored
+    now, and they are compiled once instead of on every request. Unanchored patterns were easy to
+    get wrong, as well as an unnecessary attack surface.
+\li In-process intent handlers do not see the requesting application's ID anymore, just like
+    multi-process handlers never did.
+\li Notifications are capped at 50 per application and 500 in total, dropping the oldest non-sticky
+    one on overflow. Notifications coming in via an external D-Bus have their application ID
+    prefixed with \c{:ext:}, as it is user supplied. This also makes the
+    \l{NotificationManager}{isSystemNotification} role trustworthy.
+\li Package and application IDs cannot start with a \c{.} anymore.
+\li The manifest of an installed package is protected against tampering now: its installation report
+    holds a SHA-256 digest of the \c info.yaml, and the report itself is written and read as a
+    root-owned file through the privileged helper.
+\li The \c extra and \c extraSigned meta-data that can be added to a package is capped at 1 MB.
+\li The privileged helper process was hardened throughout: recursive removals are restricted to
+    white-listed roots, bind-mount endpoints are resolved race-free, and all security-critical files
+    are read and written by the helper itself now.
+\endlist
+
 
 \section1 Qt ApplicationManager 6.11
 

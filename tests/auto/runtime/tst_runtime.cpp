@@ -3,6 +3,7 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <algorithm>
 #include <memory>
 
 #include <QtTest>
@@ -27,6 +28,7 @@ public:
 
 private Q_SLOTS:
     void factory();
+    void aliases();
 };
 
 class TestRuntimeManager;
@@ -147,6 +149,43 @@ void tst_Runtime::factory()
     r->stop(Am::NormalExit);
     QVERIFY(r->state() == Am::NotRunning);
     QVERIFY(!r->securityToken().isEmpty());
+}
+
+void tst_Runtime::aliases()
+{
+    std::unique_ptr<RuntimeFactory> rf { RuntimeFactory::instance() };
+    QVERIFY(rf);
+
+    QVERIFY(rf->registerRuntime(new TestRuntimeManager(u"foo"_s, QCoreApplication::instance())));
+
+    QVERIFY(!rf->registerRuntimeAlias({ }, u"foo"_s));       // empty alias
+    QVERIFY(!rf->registerRuntimeAlias(u"foo"_s, u"foo"_s));  // collides with a runtime id
+    QVERIFY(!rf->registerRuntimeAlias(u"bar"_s, u"baz"_s));  // aliased runtime is not registered
+    QVERIFY(rf->registerRuntimeAlias(u"bar"_s, u"foo"_s));
+    QVERIFY(!rf->registerRuntimeAlias(u"bar"_s, u"foo"_s));  // duplicate alias
+
+    // a runtime id cannot collide with an alias
+    TestRuntimeManager barManager(u"bar"_s, nullptr);
+    QVERIFY(!rf->registerRuntime(&barManager));
+
+    QCOMPARE(rf->resolveRuntimeId(u"bar"_s), u"foo"_s);
+    QCOMPARE(rf->resolveRuntimeId(u"foo"_s), u"foo"_s);
+    QCOMPARE(rf->resolveRuntimeId(u"baz"_s), u"baz"_s);
+
+    QVERIFY(rf->manager(u"foo"_s));
+    QCOMPARE(rf->manager(u"bar"_s), rf->manager(u"foo"_s));
+
+    QStringList ids = rf->runtimeIds();
+    std::sort(ids.begin(), ids.end());
+    QCOMPARE(ids, (QStringList { u"bar"_s, u"foo"_s }));
+
+    // configurations are keyed on canonical runtime ids only - alias keys are ignored
+    rf->setConfiguration({ { u"bar"_s, QVariantMap { { u"x"_s, 1 } } },
+                           { u"foo"_s, QVariantMap { { u"x"_s, 2 } } } });
+    QCOMPARE(rf->manager(u"bar"_s)->configuration().value(u"x"_s).toInt(), 2);
+
+    rf->setConfiguration({ { u"bar"_s, QVariantMap { { u"x"_s, 1 } } } });
+    QVERIFY(rf->manager(u"foo"_s)->configuration().isEmpty());
 }
 
 QTEST_GUILESS_MAIN(tst_Runtime)

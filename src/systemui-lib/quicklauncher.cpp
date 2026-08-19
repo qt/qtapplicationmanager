@@ -58,6 +58,7 @@ QuickLauncher::QuickLauncher(const QMap<std::pair<QString, QString>, int> &runti
     , m_failedStartLimit(qMax(0, failedStartLimit))
     , m_failedStartLimitIntervalSec(qMax(0, failedStartLimitIntervalSec))
 {
+    // entries are expected to be keyed on canonical runtime ids (see Main::setupQuickLauncher)
     auto findMaximum = [&runtimesPerContainer](const QuickLaunchEntry &qle) -> int {
         static const QString anyId = u"*"_s;
 
@@ -88,6 +89,8 @@ QuickLauncher::QuickLauncher(const QMap<std::pair<QString, QString>, int> &runti
 
         const QStringList allRuntimeIds = rf->runtimeIds();
         for (const QString &runtimeId : allRuntimeIds) {
+            if (rf->resolveRuntimeId(runtimeId) != runtimeId)
+                continue; // aliases share their canonical runtime's pool
             if (rf->manager(runtimeId)->inProcess())
                 continue;
 
@@ -285,12 +288,15 @@ std::pair<AbstractContainer *, AbstractRuntime *> QuickLauncher::take(const QStr
 {
     std::pair<AbstractContainer *, AbstractRuntime *> result(nullptr, nullptr);
 
+    // the pool is keyed on canonical runtime ids, but apps may reference an alias
+    const QString canonicalRuntimeId = RuntimeFactory::instance()->resolveRuntimeId(runtimeId);
+
     // 1st pass: find entry with matching container and runtime
     // 2nd pass: find entry with matching container and no runtime
     for (int pass = 1; pass <= 2; ++pass) {
         for (auto &entry : m_quickLaunchPool) {
             if (entry.m_containerId == containerId) {
-                if (((pass == 1) && (entry.m_runtimeId == runtimeId))
+                if (((pass == 1) && (entry.m_runtimeId == canonicalRuntimeId))
                         || ((pass == 2) && (entry.m_runtimeId.isEmpty()))) {
                     if (!entry.m_containersAndRuntimes.isEmpty()) {
                         result = entry.m_containersAndRuntimes.takeFirst();

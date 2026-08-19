@@ -466,15 +466,22 @@ void Main::setupRuntimesAndContainers(const Configuration *cfg)
 
     if (m_isSingleProcessMode) {
         RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager());
-        RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager(u"qml"_s));
+        RuntimeFactory::instance()->registerRuntimeAlias(u"qml"_s, u"qml-inprocess"_s);
     } else {
         RuntimeFactory::instance()->registerRuntime(new QmlInProcRuntimeManager());
 #if QT_CONFIG(am_multi_process)
         RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager());
-        RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(u"qml"_s));
+        RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(u"qml-launcher"_s, u"qml"_s));
+        RuntimeFactory::instance()->registerRuntimeAlias(u"qml"_s, u"qml-launcher"_s);
 
-        for (const QString &runtimeId : cfg->yaml.runtimes.additionalLaunchers)
-            RuntimeFactory::instance()->registerRuntime(new NativeRuntimeManager(runtimeId));
+        for (const QString &runtimeId : cfg->yaml.runtimes.additionalLaunchers) {
+            auto *nrm = new NativeRuntimeManager(runtimeId, runtimeId);
+            if (!RuntimeFactory::instance()->registerRuntime(nrm)) {
+                qCWarning(LogSystem) << "Could not register an additional runtime launcher with the id"
+                                     << runtimeId;
+                delete nrm;
+            }
+        }
 
         ContainerFactory::instance()->registerContainer(new ProcessContainerManager());
 #else
@@ -516,7 +523,20 @@ void Main::setupRuntimesAndContainers(const Configuration *cfg)
         }
     }
 
-    RuntimeFactory::instance()->setConfiguration(cfg->yaml.runtimes.configurations);
+    QVariantMap runtimeConfigurations = cfg->yaml.runtimes.configurations;
+    // configurations are keyed on canonical runtime ids, but the "qml" alias is still accepted
+    // as a shared base config for both qml-launcher and qml-inprocess.
+    const QVariantMap qmlConfiguration = runtimeConfigurations.take(u"qml"_s).toMap();
+    QVariantMap qmlLauncherConfiguration = qmlConfiguration;
+    QVariantMap qmlInProcessConfiguration = qmlConfiguration;
+
+    recursiveMergeVariantMap(qmlLauncherConfiguration, runtimeConfigurations.take(u"qml-launcher"_s).toMap());
+    recursiveMergeVariantMap(qmlInProcessConfiguration, runtimeConfigurations.take(u"qml-inprocess"_s).toMap());
+
+    runtimeConfigurations.insert(u"qml-launcher"_s, qmlLauncherConfiguration);
+    runtimeConfigurations.insert(u"qml-inprocess"_s, qmlInProcessConfiguration);
+
+    RuntimeFactory::instance()->setConfiguration(runtimeConfigurations);
 
     StartupTimer::instance()->checkpoint("after runtime registration");
 }
@@ -542,7 +562,7 @@ void Main::loadPackageDatabase(const Configuration *cfg) noexcept(false)
 
         for (const auto app : apps) {
             if (!RuntimeFactory::instance()->manager(app->runtimeName()))
-                qCWarning(LogSystem) << "Application" << app->id() << "uses an unknown runtime:" << app->runtimeName();
+                qCWarning(LogSystem) << "Application" << app->id() << "uses an unavailable runtime:" << app->runtimeName();
         }
     }
 
@@ -597,7 +617,24 @@ void Main::setupSingletons(const Configuration *cfg) noexcept(false)
 void Main::setupQuickLauncher(const Configuration *cfg)
 {
     if (!cfg->yaml.quicklaunch.runtimesPerContainer.isEmpty()) {
-        m_quickLauncher = QuickLauncher::createInstance(cfg->yaml.quicklaunch.runtimesPerContainer,
+        auto runtimesPerContainer = cfg->yaml.quicklaunch.runtimesPerContainer;
+        // entries are keyed on canonical runtime ids, but the "qml" key is still accepted
+        // for backwards compatibility and remapped to qml-launcher
+        const auto keys = runtimesPerContainer.keys();
+        for (const auto &key : keys) {
+            if (key.second != u"qml")
+                continue;
+            const int value = runtimesPerContainer.take(key);
+            const auto launcherKey = std::make_pair(key.first, u"qml-launcher"_s);
+            if (runtimesPerContainer.contains(launcherKey)) {
+                qCWarning(LogQuickLaunch).noquote().nospace()
+                    << "Ignoring the quick-launch entry for " << key.first << "/qml because "
+                    << key.first << "/qml-launcher is configured as well";
+            } else {
+                runtimesPerContainer.insert(launcherKey, value);
+            }
+        }
+        m_quickLauncher = QuickLauncher::createInstance(runtimesPerContainer,
                                                         cfg->yaml.quicklaunch.idleLoad,
                                                         cfg->yaml.quicklaunch.failedStartLimit,
                                                         int(cfg->yaml.quicklaunch.failedStartLimitIntervalSec.count()));

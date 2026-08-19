@@ -45,7 +45,7 @@ QT_BEGIN_NAMESPACE_AM
 NativeRuntime::NativeRuntime(AbstractContainer *container, Application *app, NativeRuntimeManager *manager)
     : AbstractRuntime(container, app, manager)
     , m_isQuickLauncher(app == nullptr)
-    , m_startedViaLauncher(manager->identifier() != u"native")
+    , m_startedViaLauncher(!manager->launcherExtension().isEmpty())
     , m_dbusApplicationInterface(DBusContextAdaptor::create<ApplicationInterfaceAdaptor>(this))
     , m_dbusRuntimeInterface(DBusContextAdaptor::create<RuntimeInterfaceAdaptor>(this))
     , m_dbusNotificationInterface(DBusContextAdaptor::create<NotificationInterfaceAdaptor>(this))
@@ -139,7 +139,8 @@ bool NativeRuntime::initialize()
                 possibleLocations.append(QString::fromLocal8Bit(path));
         }
 
-        const QString launcherName = u"/appman-launcher-"_s + manager()->identifier();
+        const QString launcherName = u"/appman-launcher-"_s
+                                     + static_cast<NativeRuntimeManager *>(manager())->launcherExtension();
         for (const QString &possibleLocation : std::as_const(possibleLocations)) {
             QFileInfo fi(possibleLocation + launcherName);
 
@@ -572,16 +573,23 @@ void NativeRuntime::setSlowAnimations(bool slow)
 }
 
 NativeRuntimeManager::NativeRuntimeManager(QObject *parent)
-    : NativeRuntimeManager(u"native"_s, parent)
+    : NativeRuntimeManager(u"native"_s, { }, parent)
 { }
 
-NativeRuntimeManager::NativeRuntimeManager(const QString &id, QObject *parent)
+NativeRuntimeManager::NativeRuntimeManager(const QString &id, const QString &launcherExtension,
+                                           QObject *parent)
     : AbstractRuntimeManager(id, parent)
+    , m_launcherExtension(launcherExtension)
 { }
+
+QString NativeRuntimeManager::launcherExtension() const
+{
+    return m_launcherExtension;
+}
 
 bool NativeRuntimeManager::supportsQuickLaunch() const
 {
-    return identifier() != u"native";
+    return !m_launcherExtension.isEmpty();
 }
 
 AbstractRuntime *NativeRuntimeManager::create(AbstractContainer *container, Application *app)

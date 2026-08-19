@@ -107,6 +107,10 @@ single-process mode by passing \c --force-single-process on the command line. Th
 the same runtime behavior as described above. Even when running the application manager in
 multi-process mode it does not necessarily mean that QML applications get a dedicated process: if
 they use the \c qml-inprocess runtime they will execute in-process within the System UI.
+Applications using the \c qml-launcher runtime always require a dedicated process though and
+consequently cannot be started at all in single-process mode. The \c qml runtime is an alias that
+resolves to either \c qml-launcher (in multi-process mode) or \c qml-inprocess (in single-process
+mode).
 
 
 \section1 Application Lifetime

@@ -38,12 +38,17 @@ RuntimeFactory::~RuntimeFactory()
 
 QStringList RuntimeFactory::runtimeIds() const
 {
-    return m_runtimes.keys();
+    return m_runtimes.keys() + m_aliases.keys();
+}
+
+QString RuntimeFactory::resolveRuntimeId(const QString &id) const
+{
+    return m_aliases.value(id, id);
 }
 
 AbstractRuntimeManager *RuntimeFactory::manager(const QString &id)
 {
-    return m_runtimes.value(id);
+    return m_runtimes.value(resolveRuntimeId(id));
 }
 
 AbstractRuntime *RuntimeFactory::create(AbstractContainer *container, Application *app)
@@ -82,6 +87,7 @@ AbstractRuntime *RuntimeFactory::createQuickLauncher(AbstractContainer *containe
 
 void RuntimeFactory::setConfiguration(const QVariantMap &configuration)
 {
+    // deliberately not resolving aliases here: configurations are keyed on canonical ids only
     for (auto it = m_runtimes.cbegin(); it != m_runtimes.cend(); ++it)
         it.value()->setConfiguration(configuration.value(it.key()).toMap());
 }
@@ -98,8 +104,10 @@ bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager)
 
 bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager, const QString &identifier)
 {
-    if (!manager || identifier.isEmpty() || m_runtimes.contains(identifier))
+    if (!manager || identifier.isEmpty() || m_runtimes.contains(identifier)
+            || m_aliases.contains(identifier)) {
         return false;
+    }
     m_runtimes.insert(identifier, manager);
     manager->setParent(this);
     static bool once = false;
@@ -108,6 +116,17 @@ bool RuntimeFactory::registerRuntime(AbstractRuntimeManager *manager, const QStr
         once = true;
     }
     qCDebug(LogSystem).noquote() << " *" << identifier;
+    return true;
+}
+
+bool RuntimeFactory::registerRuntimeAlias(const QString &alias, const QString &runtimeId)
+{
+    if (alias.isEmpty() || m_runtimes.contains(alias) || m_aliases.contains(alias)
+            || !m_runtimes.contains(runtimeId)) {
+        return false;
+    }
+    m_aliases.insert(alias, runtimeId);
+    qCDebug(LogSystem).noquote() << " *" << alias << "(alias for" << runtimeId + u')';
     return true;
 }
 

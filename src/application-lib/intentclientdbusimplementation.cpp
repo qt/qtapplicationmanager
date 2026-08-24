@@ -16,7 +16,7 @@
 #include "intentclientdbusimplementation.h"
 #include "intenthandler.h"
 
-#include "intentinterface_interface.h"
+#include "intentinterface_interface_p.h"
 
 using namespace Qt::StringLiterals;
 

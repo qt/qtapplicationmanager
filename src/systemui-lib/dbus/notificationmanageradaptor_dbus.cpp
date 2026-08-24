@@ -13,7 +13,7 @@
 #include "applicationmanager.h"
 #include "abstractruntime.h"
 #include "notificationmanager.h"
-#include "notifications_adaptor.h"
+#include "notifications_adaptor_p.h"
 
 // This is the official org.freedesktop.Notifications notification interface that can optionally be
 // started on an external session bus to allow middleware to send notifications.

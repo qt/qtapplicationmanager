@@ -29,9 +29,9 @@
 #include "unix-utilities.h"
 #include "systemd.h"
 
-#include "runtimeinterface_adaptor.h"
-#include "applicationinterface_adaptor.h"
-#include "notificationinterface_adaptor.h"
+#include "runtimeinterface_adaptor_p.h"
+#include "applicationinterface_adaptor_p.h"
+#include "notificationinterface_adaptor_p.h"
 
 using namespace Qt::StringLiterals;
 

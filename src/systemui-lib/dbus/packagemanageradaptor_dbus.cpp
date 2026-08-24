@@ -7,7 +7,7 @@
 #include "application.h"
 #include "package.h"
 #include "packagemanager.h"
-#include "packagemanager_adaptor.h"
+#include "packagemanager_adaptor_p.h"
 #include "applicationmanager.h"
 #include "exception.h"
 #include "signature.h"

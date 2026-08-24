@@ -16,10 +16,10 @@
 #  include <QDBusAbstractAdaptor>
 #  include <QDBusServer>
 #  include "dbuscontextadaptor.h"
-#  include "applicationmanager_adaptor.h"
-#  include "packagemanager_adaptor.h"
-#  include "windowmanager_adaptor.h"
-#  include "notifications_adaptor.h"
+#  include "applicationmanager_adaptor_p.h"
+#  include "packagemanager_adaptor_p.h"
+#  include "windowmanager_adaptor_p.h"
+#  include "notifications_adaptor_p.h"
 #endif
 
 #include <QFile>

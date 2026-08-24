@@ -10,7 +10,7 @@
 
 #include "dbuscontextadaptor.h"
 #include "applicationmanager.h"
-#include "applicationmanager_adaptor.h"
+#include "applicationmanager_adaptor_p.h"
 #include "packagemanager.h"
 #include "exception.h"
 #include "logging.h"

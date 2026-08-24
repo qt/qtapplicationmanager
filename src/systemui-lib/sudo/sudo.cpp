@@ -42,8 +42,8 @@ using namespace Qt::StringLiterals;
 #    include <QtDBus/QDBusPendingReply>
 #    include <QtDBus/QDBusUnixFileDescriptor>
 #    include "dbus-utilities.h"
-#    include "sudo_adaptor.h"
-#    include "sudo_interface.h"
+#    include "sudo_adaptor_p.h"
+#    include "sudo_interface_p.h"
 #  endif
 
 #  include <fcntl.h>

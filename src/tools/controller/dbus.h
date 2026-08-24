@@ -9,8 +9,8 @@
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/exception.h>
 
-#include "applicationmanager_interface.h"
-#include "packagemanager_interface.h"
+#include "applicationmanager_interface_p.h"
+#include "packagemanager_interface_p.h"
 
 QT_BEGIN_NAMESPACE_AM
 

@@ -1502,7 +1502,7 @@ void ApplicationManager::addApplication(ApplicationInfo *appInfo, Package *packa
             this, [this, app]() {
         emitDataChanged(app, QVector<int> { AMRoles::IsBlocked });
     });
-    connect(app, &Application::bulkChange,
+    connect(app, &Application::stateChanged,
             this, [this, app]() {
         emitDataChanged(app);
     });

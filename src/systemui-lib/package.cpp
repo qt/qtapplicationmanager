@@ -215,22 +215,24 @@ QUrl Package::icon() const
     if (info()->icon().isEmpty())
         return { };
 
-    QDir dir;
+    return QUrl::fromLocalFile(baseDir().absoluteFilePath(info()->icon()));
+}
+
+QDir Package::baseDir() const
+{
+    const QString path = info()->baseDir().absolutePath();
+
     switch (state()) {
     default:
     case Installed:
-        dir = info()->baseDir(); // clazy:exclude=qt6-deprecated-api-fixes
-        break;
-    case BeingInstalled:
-    case BeingUpdated:
+    case BeingUpdated:   // the old content stays in place until the task commits
+        return QDir(path);
+    case BeingInstalled: // no old content: it only exists in the extraction directory
+        return QDir(path + u'+');
     case BeingDowngraded:
-        dir.setPath(info()->baseDir().absolutePath() + u'+');
-        break;
     case BeingRemoved:
-        dir.setPath(info()->baseDir().absolutePath() + u'-');
-        break;
+        return QDir(path + u'-');
     }
-    return QUrl::fromLocalFile(dir.absoluteFilePath(info()->icon()));
 }
 
 void Package::setState(State state)
@@ -238,6 +240,8 @@ void Package::setState(State state)
     if (m_state != state) {
         m_state = state;
         emit stateChanged(m_state);
+        // baseDir() and everything derived from it depend on the state
+        emit bulkChange();
     }
 }
 

@@ -322,9 +322,8 @@ Application::Application(ApplicationInfo *info, Package *package)
     });
 
     connect(package, &Package::stateChanged, this, [this]() {
-        emit stateChanged(state());
+        emit stateChanged();
     });
-    connect(package, &Package::bulkChange, this, &Application::bulkChange);
 }
 
 bool Application::start(const QString &documentUrl)
@@ -399,7 +398,7 @@ QUrl Application::icon() const
     if (info()->icon().isEmpty())
         return { };
 
-    return QUrl::fromLocalFile(packageInfo()->baseDir().absoluteFilePath(info()->icon()));
+    return QUrl::fromLocalFile(package()->baseDir().absoluteFilePath(info()->icon()));
 }
 
 QStringList Application::supportedMimeTypes() const
@@ -457,17 +456,7 @@ bool Application::supportsApplicationInterface() const
 
 QString Application::codeDir() const
 {
-    switch (package()->state()) {
-    default:
-    case Package::Installed:
-        return packageInfo()->baseDir().absolutePath();
-    case Package::BeingInstalled:
-    case Package::BeingUpdated:
-    case Package::BeingDowngraded:
-        return packageInfo()->baseDir().absolutePath() + u'+';
-    case Package::BeingRemoved:
-        return packageInfo()->baseDir().absolutePath() + u'-';
-    }
+    return package()->baseDir().absolutePath();
 }
 
 QString Application::version() const

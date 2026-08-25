@@ -227,6 +227,17 @@ TestCase {
 
         taskStateChangedSpy.clear()
 
+        var pkg = PackageManager.package("other-test-pkg")
+
+        // record where the app's files are on every state change
+        var codeDirs = []
+        function captureCodeDir(state) {
+            var app = ApplicationManager.application("other-test-app")
+            if (app)
+                codeDirs.push({ state: state, codeDir: app.codeDir })
+        }
+        pkg.stateChanged.connect(captureCodeDir)
+
         var id = PackageManager.startPackageInstallation("file:" + packageDir + "other-test.ampkg")
         taskRequestingInstallationAcknowledgeSpy.wait(spyTimeout);
         compare(taskRequestingInstallationAcknowledgeSpy.count, 1);
@@ -235,7 +246,6 @@ TestCase {
         PackageManager.acknowledgePackageInstallation(id);
 
         taskFinishedSpy.wait(spyTimeout);
-        var pkg = PackageManager.package("other-test-pkg")
         compare(pkg.version, "other");
         taskFinishedSpy.clear();
         applicationChangedSpy.clear();
@@ -248,10 +258,27 @@ TestCase {
         compare(taskFinishedSpy.count, 1);
         taskFinishedSpy.clear();
 
-        compare(applicationChangedSpy.count, 3);
+        // blocked, state -> BeingDowngraded, state -> Installed, unblocked
+        compare(applicationChangedSpy.count, 4);
         compare(applicationChangedSpy.signalArguments[0][0], "other-test-app");
         compare(applicationChangedSpy.signalArguments[0][1], ["isBlocked"]);
+        compare(applicationChangedSpy.signalArguments[1][1], []);
         compare(applicationChangedSpy.signalArguments[2][1], []);
+        compare(applicationChangedSpy.signalArguments[3][1], ["isBlocked"]);
+
+        pkg.stateChanged.disconnect(captureCodeDir)
+
+        compare(codeDirs.length, 4)
+        compare(codeDirs[0].state, PackageObject.BeingUpdated)
+        compare(codeDirs[1].state, PackageObject.Installed)
+        compare(codeDirs[2].state, PackageObject.BeingDowngraded)
+        compare(codeDirs[3].state, PackageObject.Installed)
+
+        // an update leaves the built-in content in place, so it keeps its unsuffixed directory
+        verify(!codeDirs[0].codeDir.endsWith("+"))
+        compare(codeDirs[0].codeDir, codeDirs[3].codeDir)
+        // the installed update is renamed away while it is being downgraded
+        compare(codeDirs[2].codeDir, codeDirs[1].codeDir + "-")
 
         verify(!pkg.blocked)
         compare(pkg.version, "v1");

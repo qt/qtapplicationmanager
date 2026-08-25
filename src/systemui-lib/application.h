@@ -33,13 +33,15 @@ class Package;
 class Q_APPMANSYSTEMUI_EXPORT Application : public QObject
 {
     Q_OBJECT
+    // ApplicationInfo is fixed for this object's lifetime (an update re-creates the object):
+    // only icon and codeDir can change, as they also depend on the package's state.
     Q_PROPERTY(QString id READ id CONSTANT FINAL)
-    Q_PROPERTY(QString name READ name NOTIFY bulkChange FINAL)
-    Q_PROPERTY(QVariantMap names READ names NOTIFY bulkChange FINAL)
-    Q_PROPERTY(QString description READ description NOTIFY bulkChange FINAL)
-    Q_PROPERTY(QVariantMap descriptions READ descriptions NOTIFY bulkChange FINAL)
-    Q_PROPERTY(QStringList categories READ categories NOTIFY bulkChange FINAL)
-    Q_PROPERTY(QUrl icon READ icon NOTIFY bulkChange FINAL)
+    Q_PROPERTY(QString name READ name CONSTANT FINAL)
+    Q_PROPERTY(QVariantMap names READ names CONSTANT FINAL)
+    Q_PROPERTY(QString description READ description CONSTANT FINAL)
+    Q_PROPERTY(QVariantMap descriptions READ descriptions CONSTANT FINAL)
+    Q_PROPERTY(QStringList categories READ categories CONSTANT FINAL)
+    Q_PROPERTY(QUrl icon READ icon NOTIFY stateChanged FINAL)
     Q_PROPERTY(QString runtimeName READ runtimeName CONSTANT FINAL)
     Q_PROPERTY(QVariantMap runtimeParameters READ runtimeParameters CONSTANT FINAL)
     Q_PROPERTY(QStringList capabilities READ capabilities CONSTANT FINAL)
@@ -50,7 +52,7 @@ class Q_APPMANSYSTEMUI_EXPORT Application : public QObject
     Q_PROPERTY(QString securityToken READ securityToken NOTIFY runtimeChanged FINAL)
     Q_PROPERTY(int lastExitCode READ lastExitCode NOTIFY lastExitCodeChanged FINAL)
     Q_PROPERTY(QtAM::Am::ExitStatus lastExitStatus READ lastExitStatus NOTIFY lastExitStatusChanged FINAL)
-    Q_PROPERTY(QString codeDir READ codeDir NOTIFY bulkChange FINAL)
+    Q_PROPERTY(QString codeDir READ codeDir NOTIFY stateChanged FINAL)
     Q_PROPERTY(QtAM::Am::RunState runState READ runState NOTIFY runStateChanged FINAL)
     Q_PROPERTY(QtAM::Package *package READ package CONSTANT FINAL)
 
@@ -125,12 +127,11 @@ public:
     void setCurrentRuntime(AbstractRuntime *runtime);
 
 Q_SIGNALS:
-    void bulkChange();
     void runtimeChanged();
     void lastExitCodeChanged();
     void lastExitStatusChanged();
     void activated();
-    void stateChanged(QtAM::Application::State state);
+    void stateChanged();
     void runStateChanged(QtAM::Am::RunState state);
     void blockedChanged(bool blocked);
 

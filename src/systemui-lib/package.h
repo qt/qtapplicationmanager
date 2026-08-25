@@ -9,6 +9,7 @@
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
 #include <QtAppManPackage/packageinfo.h>
 #include <QtAppManSystemUI/application.h>
+#include <QtCore/QDir>
 #include <QtCore/QUrl>
 #include <QtCore/QString>
 #include <QtCore/QAtomicInt>
@@ -61,6 +62,9 @@ public:
 
     State state() const { return m_state; }
     qreal progress() const { return m_progress; }
+
+    // the base directory, including the '+' or '-' suffix while being installed or removed
+    QDir baseDir() const;
 
     void setState(State state);
     void setProgress(qreal progress);

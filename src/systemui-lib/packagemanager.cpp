@@ -437,6 +437,10 @@ Package *PackageManager::registerPackage(PackageInfo *packageInfo, PackageInfo *
 
     QQmlEngine::setObjectOwnership(package, QQmlEngine::CppOwnership);
 
+    connect(package, &Package::bulkChange, this, [this, package]() {
+        emitDataChanged(package);
+    });
+
     if (currentlyBeingInstalled) {
         Q_ASSERT(package->isBlocked());
 
@@ -1838,7 +1842,6 @@ bool PackageManager::finishedPackageInstall(const QString &id)
         package->setProgress(0);
         emitDataChanged(package);
         package->unblock();
-        emit package->bulkChange(); // not ideal, but icon and codeDir have changed
         break;
     }
 

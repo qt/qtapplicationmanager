@@ -171,6 +171,12 @@ modules:
       This gives you readable backtraces for crashes on Windows, but also increases the binary size
       slightly. For debug builds, this option is enabled by default.
       Settings this to \c no disables building and linking against \c stackwalker.
+\row
+  \li \c{suid-hardened}
+  \target cmake-suid-hardened
+  \li If set to \c yes, the application manager will exit immediately when started suid-root and
+      its parent process not being the init/systemd process. Please see the
+      \l{Qt ApplicationManager 6.8.5}{6.8.5 change-log} for more information.
 \endtable
 
 \section2 The Hardware ID

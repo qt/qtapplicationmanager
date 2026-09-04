@@ -5,6 +5,7 @@
 // Qt-Security score:critical reason:data-parser
 
 #include <optional>
+#include <cerrno>
 
 #include <QStringList>
 #include <QThread>
@@ -337,8 +338,19 @@ void PackageExtractorPrivate::extract()
                 if (packageEntryType == PackageEntry_Dir) {
                     QString entryName = entryPath.section(u'/', -1, -1);
 
-                    if ((entryName != u".") && !entryDir.mkdir(entryName))
-                        throw Exception("could not create directory '%1'").arg(entryDir.filePath(entryName));
+                    if (entryName.isEmpty())
+                        throw Exception("invalid archive entry '%1': empty directory name").arg(entryPath);
+
+                    if (entryName != u".") {
+#if defined(Q_OS_UNIX)
+                        errno = 0;
+                        if (!entryDir.mkdir(entryName))
+                            throw Exception(errno, "could not create directory '%1'").arg(entryDir.filePath(entryName));
+#else
+                        if (!entryDir.mkdir(entryName))
+                            throw Exception("could not create directory '%1'").arg(entryDir.filePath(entryName));
+#endif
+                    }
 
                     if (m_report.includeExtendedAttributes())
                         extractExtendedAttributes();

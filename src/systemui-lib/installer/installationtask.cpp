@@ -8,6 +8,7 @@
 #include <QMessageAuthenticationCode>
 #include <QPointer>
 #include <QStandardPaths>
+#include <QStorageInfo>
 
 #include "logging.h"
 #include "packagemanager_p.h"
@@ -364,6 +365,13 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
         if (file != u"info.yaml")
             throw Exception("info.yaml must be the first file in the package. Got %1")
                 .arg(file);
+
+        const quint64 spaceNeeded = m_extractor->installationReport().diskSpaceUsed();
+        const qint64 spaceAvailable = QStorageInfo(m_installationPath).bytesAvailable();
+        if (spaceNeeded && (spaceAvailable >= 0) && (quint64(spaceAvailable) < spaceNeeded)) {
+            throw Exception("not enough space left in %1: the package needs %2 bytes, but only %3 bytes are available")
+                .arg(m_installationPath).arg(spaceNeeded).arg(spaceAvailable);
+        }
 
         m_package.reset(PackageInfo::fromManifest(m_extractor->destinationDirectory().absoluteFilePath(file)));
         if (m_package->id() != m_extractor->installationReport().packageId())

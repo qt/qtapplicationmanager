@@ -29,9 +29,15 @@
 #include "unix-utilities.h"
 #include "systemd.h"
 
-#include "runtimeinterface_adaptor_p.h"
-#include "applicationinterface_adaptor_p.h"
-#include "notificationinterface_adaptor_p.h"
+#if QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#  include "runtimeinterface_adaptor.h"
+#  include "applicationinterface_adaptor.h"
+#  include "notificationinterface_adaptor.h"
+#else
+#  include "runtimeinterface_adaptor_p.h"
+#  include "applicationinterface_adaptor_p.h"
+#  include "notificationinterface_adaptor_p.h"
+#endif
 
 using namespace Qt::StringLiterals;
 

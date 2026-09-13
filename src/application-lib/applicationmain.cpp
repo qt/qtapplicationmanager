@@ -22,9 +22,15 @@
 #endif
 #include "dbus-utilities.h"
 #include "qml-utilities.h"
-#include "applicationinterface_interface_p.h"
-#include "runtimeinterface_interface_p.h"
-#include "notificationinterface_interface_p.h"
+#if QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#  include "applicationinterface_interface.h"
+#  include "runtimeinterface_interface.h"
+#  include "notificationinterface_interface.h"
+#else
+#  include "applicationinterface_interface_p.h"
+#  include "runtimeinterface_interface_p.h"
+#  include "notificationinterface_interface_p.h"
+#endif
 #include "intentclientdbusimplementation.h"
 #include "intentclient.h"
 #include "dbusnotificationimpl.h"

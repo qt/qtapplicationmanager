@@ -16,7 +16,11 @@
 #include "intentclientdbusimplementation.h"
 #include "intenthandler.h"
 
-#include "intentinterface_interface_p.h"
+#if QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#  include "intentinterface_interface.h"
+#else
+#  include "intentinterface_interface_p.h"
+#endif
 
 using namespace Qt::StringLiterals;
 

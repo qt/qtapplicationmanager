@@ -61,7 +61,7 @@ SPDX-License-Identifier = "BSD-2-Clause"
 [[annotations]]
 path = ["src/3rdparty/libbacktrace/**"]
 precedence = "closest"
-SPDX-FileCopyrightText = "Copyright (C) 2012-2022 Free Software Foundation, Inc."
+SPDX-FileCopyrightText = "Copyright (C) 2012-2026 Free Software Foundation, Inc."
 SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]

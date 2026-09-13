@@ -11,7 +11,11 @@
 #  include <QDBusPendingCallWatcher>
 #  include <QDBusPendingReply>
 
-#  include "intentinterface_adaptor_p.h"
+#  if QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#    include "intentinterface_adaptor.h"
+#  else
+#    include "intentinterface_adaptor_p.h"
+#  endif
 #  include "dbus-utilities.h"
 #  include "nativeruntime.h"
 #endif

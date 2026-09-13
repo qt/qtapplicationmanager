@@ -1,7 +1,13 @@
 // Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include "notificationinterface_adaptor_p.h"
+#include <QtCore/qglobal.h>
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#  include "notificationinterface_adaptor.h"
+#else
+#  include "notificationinterface_adaptor_p.h"
+#endif
 #include "notificationmanager.h"
 #include "application.h"
 #include "nativeruntime.h"

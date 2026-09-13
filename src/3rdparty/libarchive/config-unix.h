@@ -119,10 +119,10 @@
 /* #undef ARCHIVE_CRYPTO_SHA512_WIN */
 
 /* Version number of bsdcpio */
-#define BSDCPIO_VERSION_STRING "3.1.2"
+#define BSDCPIO_VERSION_STRING "3.8.9"
 
 /* Version number of bsdtar */
-#define BSDTAR_VERSION_STRING "3.1.2"
+#define BSDTAR_VERSION_STRING "3.8.9"
 
 /* Define to 1 if you have the `acl_create_entry' function. */
 /* #undef HAVE_ACL_CREATE_ENTRY */
@@ -906,7 +906,7 @@
 #define LIBARCHIVE_VERSION_NUMBER "3001002"
 
 /* Version number of libarchive */
-#define LIBARCHIVE_VERSION_STRING "3.1.2"
+#define LIBARCHIVE_VERSION_STRING "3.8.9"
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -937,7 +937,7 @@
 #define PACKAGE_NAME "libarchive"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libarchive 3.1.2"
+#define PACKAGE_STRING "libarchive 3.8.9"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libarchive"
@@ -946,7 +946,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.1.2"
+#define PACKAGE_VERSION "3.8.9"
 
 /* Define to 1 if PCRE_STATIC needs to be defined. */
 /* #undef PCRE_STATIC */
@@ -986,7 +986,7 @@
 
 
 /* Version number of package */
-#define VERSION "3.1.2"
+#define VERSION "3.8.9"
 
 /* Define to '0x0500' for Windows 2000 APIs. */
 /* #undef WINVER */

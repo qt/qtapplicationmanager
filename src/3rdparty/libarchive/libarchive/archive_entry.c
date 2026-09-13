@@ -1562,16 +1562,20 @@ void
 archive_entry_copy_mac_metadata(struct archive_entry *entry,
     const void *p, size_t s)
 {
-  free(entry->mac_metadata);
+	void *metadata;
+
   if (p == NULL || s == 0) {
+		free(entry->mac_metadata);
     entry->mac_metadata = NULL;
     entry->mac_metadata_size = 0;
   } else {
-    entry->mac_metadata_size = s;
-    entry->mac_metadata = malloc(s);
-    if (entry->mac_metadata == NULL)
+		metadata = malloc(s);
+		if (metadata == NULL)
       abort();
-    memcpy(entry->mac_metadata, p, s);
+		memcpy(metadata, p, s);
+		free(entry->mac_metadata);
+		entry->mac_metadata = metadata;
+		entry->mac_metadata_size = s;
   }
 }
 

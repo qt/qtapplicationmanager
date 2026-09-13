@@ -1,3 +1,107 @@
+Jul 28, 2026: libarchive 3.8.9 released
+
+Jun 23, 2026: libarchive 3.8.8 released
+
+Apr 13, 2026: libarchive 3.8.7 released
+
+Mar 10, 2026: libarchive 3.8.6 released
+
+Jan 05, 2026: libarchive 3.8.5 released
+
+Dec 01, 2025: libarchive 3.8.4 released
+
+Nov 17, 2025: libarchive 3.8.3 released
+
+Oct 15, 2025: libarchive 3.8.2 released
+
+Jun 01, 2025: libarchive 3.8.1 released
+
+May 20, 2025: libarchive 3.8.0 released
+
+Mar 30, 2025: libarchive 3.7.9 released
+
+Mar 20, 2025: libarchive 3.7.8 released
+
+Oct 13, 2024: libarchive 3.7.7 released
+
+Sep 23, 2024: libarchive 3.7.6 released
+
+Sep 13, 2024: libarchive 3.7.5 released
+
+Apr 26, 2024: libarchive 3.7.4 released
+
+Apr 08, 2024: libarchive 3.7.3 released
+
+Sep 12, 2023: libarchive 3.7.2 released
+
+Jul 29, 2023: libarchive 3.7.1 released
+
+Jul 18, 2023: libarchive 3.7.0 released
+
+Jul 14, 2023: bsdunzip port from FreeBSD
+
+Dec 07, 2022: libarchive 3.6.2 released
+
+Apr 08, 2022: libarchive 3.6.1 released
+
+Feb 09, 2022: libarchive 3.6.0 released
+
+Feb 08, 2022: libarchive 3.5.3 released
+
+Aug 22, 2021: libarchive 3.5.2 released
+
+Dec 26, 2020: libarchive 3.5.1 released
+
+Dec 01, 2020: libarchive 3.5.0 released
+
+Oct 14, 2020: Support for system extended attributes
+
+May 20, 2020: libarchive 3.4.3 released
+
+Apr 30, 2020: Support for pzstd compressed files
+
+Apr 16, 2020: Support for RHT.security.selinux tar extended attribute
+
+Feb 11, 2020: libarchive 3.4.2 released
+
+Jan 23, 2020: Important fixes for writing XAR archives
+
+Jan 20, 2020: New tar option: --safe-writes (atomical file extraction)
+
+Jan 03, 2020: Support mbed TLS (PolarSSL) as optional crypto provider
+
+Dec 30, 2019: libarchive 3.4.1 released
+
+Dec 11, 2019: New pax write option "xattrhdr"
+
+Nov 17, 2019: Unicode filename support for reading lha/lzh archives
+
+Jun 11, 2019: libarchive 3.4.0 released
+
+May 18, 2019: Fixes for reading Android APK and JAR archives
+
+Apr 16, 2019: Support for non-recursive list and extract
+
+Apr 14, 2019: New tar option: --exclude-vcs
+
+Mar 27, 2019: Support for file and directory symlinks on Windows
+
+Mar 12, 2019: Important fixes for storing file attributes and flags
+
+Jan 20, 2019: Support for xz, lzma, ppmd8 and bzip2 decompression in ZIP files
+
+Oct 06, 2018: RAR 5.0 reader
+
+Sep 03, 2018: libarchive 3.3.3 released
+
+Jul 19, 2018: Avoid super-linear slowdown on malformed mtree files
+
+Jan 27, 2018: Many fixes for building with Visual Studio
+
+Oct 19, 2017: NO_OVERWRITE doesn't change existing directory attributes
+
+Aug 12, 2017: New support for Zstandard read and write filters
+
 Jul 09, 2017: libarchive 3.3.2 released
 
 Mar 16, 2017: NFSv4 ACL support for Linux (librichacl)

@@ -7,7 +7,11 @@
 #include "application.h"
 #include "package.h"
 #include "packagemanager.h"
-#include "packagemanager_adaptor_p.h"
+#if QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#  include "packagemanager_adaptor.h"
+#else
+#  include "packagemanager_adaptor_p.h"
+#endif
 #include "applicationmanager.h"
 #include "exception.h"
 #include "signature.h"

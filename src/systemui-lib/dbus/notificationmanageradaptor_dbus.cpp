@@ -13,7 +13,11 @@
 #include "applicationmanager.h"
 #include "abstractruntime.h"
 #include "notificationmanager.h"
-#include "notifications_adaptor_p.h"
+#if QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#  include "notifications_adaptor.h"
+#else
+#  include "notifications_adaptor_p.h"
+#endif
 
 // This is the official org.freedesktop.Notifications notification interface that can optionally be
 // started on an external session bus to allow middleware to send notifications.

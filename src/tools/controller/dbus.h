@@ -9,8 +9,13 @@
 #include <QtAppManCommon/global.h>
 #include <QtAppManCommon/exception.h>
 
-#include "applicationmanager_interface_p.h"
-#include "packagemanager_interface_p.h"
+#if QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#  include "applicationmanager_interface.h"
+#  include "packagemanager_interface.h"
+#else
+#  include "applicationmanager_interface_p.h"
+#  include "packagemanager_interface_p.h"
+#endif
 
 QT_BEGIN_NAMESPACE_AM
 

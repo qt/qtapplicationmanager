@@ -10,7 +10,11 @@
 
 #include "dbuscontextadaptor.h"
 #include "applicationmanager.h"
-#include "applicationmanager_adaptor_p.h"
+#if QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
+#  include "applicationmanager_adaptor.h"
+#else
+#  include "applicationmanager_adaptor_p.h"
+#endif
 #include "packagemanager.h"
 #include "exception.h"
 #include "logging.h"

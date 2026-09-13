@@ -7,7 +7,7 @@ command-line tools that use the libarchive library.
 
 ## Questions?  Issues?
 
-* http://www.libarchive.org is the home for ongoing
+* https://www.libarchive.org is the home for ongoing
   libarchive development, including documentation,
   and links to the libarchive mailing lists.
 * To report an issue, use the issue tracker at
@@ -23,6 +23,7 @@ This distribution bundle includes the following major components:
 * **tar**: the 'bsdtar' program is a full-featured 'tar' implementation built on libarchive
 * **cpio**: the 'bsdcpio' program is a different interface to essentially the same functionality
 * **cat**: the 'bsdcat' program is a simple replacement tool for zcat, bzcat, xzcat, and such
+* **unzip**: the 'bsdunzip' program is a simple replacement tool for Info-ZIP's unzip
 * **examples**: Some small example programs that you may find useful.
 * **examples/minitar**: a compact sample demonstrating use of libarchive.
 * **contrib**:  Various items sent to me by third parties; please contact the authors with any questions.
@@ -36,9 +37,13 @@ The top-level directory contains the following information files:
 * **CMakeLists.txt** - input for "cmake" build tool, see INSTALL
 * **configure** - configuration script, see INSTALL for details.  If your copy of the source lacks a `configure` script, you can try to construct it by running the script in `build/autogen.sh` (or use `cmake`).
 
-The following files in the top-level directory are used by the 'configure' script:
-* `Makefile.am`, `aclocal.m4`, `configure.ac` - used to build this distribution, only needed by maintainers
-* `Makefile.in`, `config.h.in` - templates used by configure script
+The following files in the top-level directory are related to the 'configure' script and are only needed by maintainers:
+
+* `configure.ac` - used (by autoconf) to build the configure script and related files
+* `Makefile.am` - used (by automake) to generate Makefile.in
+* `aclocal.m4` - auto-generated file (created by aclocal) used to build the configure script
+* `Makefile.in` - auto-generated template (created by automake) used by the configure script to create Makefile
+* `config.h.in` - auto-generated template (created by autoheader) used by the configure script to create config.h
 
 ## Documentation
 
@@ -70,7 +75,8 @@ know about any errors or omissions you find.
 
 ## Supported Formats
 
-Currently, the library automatically detects and reads the following fomats:
+Currently, the library automatically detects and reads the following formats:
+
   * Old V7 tar archives
   * POSIX ustar
   * GNU tar format (including GNU long filenames, long link names, and sparse files)
@@ -78,19 +84,22 @@ Currently, the library automatically detects and reads the following fomats:
   * POSIX pax interchange format
   * POSIX octet-oriented cpio
   * SVR4 ASCII cpio
-  * POSIX octet-oriented cpio
   * Binary cpio (big-endian or little-endian)
+  * PWB binary cpio
   * ISO9660 CD-ROM images (with optional Rockridge or Joliet extensions)
   * ZIP archives (with uncompressed or "deflate" compressed entries, including support for encrypted Zip archives)
+  * ZIPX archives (with support for bzip2, zstd, ppmd8, lzma and xz compressed entries)
   * GNU and BSD 'ar' archives
   * 'mtree' format
-  * 7-Zip archives
+  * 7-Zip archives (including archives that use zstandard compression)
   * Microsoft CAB format
   * LHA and LZH archives
-  * RAR archives (with some limitations due to RAR's proprietary status)
+  * RAR and RAR 5.0 archives (with some limitations due to RAR's proprietary status)
+  * WARC archives
   * XAR archives
 
 The library also detects and handles any of the following before evaluating the archive:
+
   * uuencoded files
   * files with RPM wrapper
   * gzip compression
@@ -99,8 +108,10 @@ The library also detects and handles any of the following before evaluating the 
   * lzma, lzip, and xz compression
   * lz4 compression
   * lzop compression
+  * zstandard compression
 
 The library can create archives in any of the following formats:
+
   * POSIX ustar
   * POSIX pax interchange format
   * "restricted" pax format, which will create ustar archives except for
@@ -109,22 +120,29 @@ The library can create archives in any of the following formats:
   * Old V7 tar format
   * POSIX octet-oriented cpio
   * SVR4 "newc" cpio
+  * Binary cpio (little-endian)
+  * PWB binary cpio
   * shar archives
   * ZIP archives (with uncompressed or "deflate" compressed entries)
+  * ZIPX archives (with bzip2, zstd, lzma or xz compressed entries)
   * GNU and BSD 'ar' archives
   * 'mtree' format
   * ISO9660 format
-  * 7-Zip archives
+  * 7-Zip archives (including archives that use zstandard compression)
+  * WARC archives
   * XAR archives
 
 When creating archives, the result can be filtered with any of the following:
+
   * uuencode
+  * base64
   * gzip compression
   * bzip2 compression
   * compress/LZW compression
   * lzma, lzip, and xz compression
   * lz4 compression
   * lzop compression
+  * zstandard compression
 
 ## Notes about the Library Design
 
@@ -159,7 +177,7 @@ questions we are asked about libarchive:
 
 * On read, compression and format are always detected automatically.
 
-* The same API is used for all formats; in particular, it's very
+* The same API is used for all formats; it should be very
   easy for software using libarchive to transparently handle
   any of libarchive's archiving formats.
 
@@ -176,11 +194,22 @@ questions we are asked about libarchive:
   libraries.  This also reduces the size of statically-linked
   binaries in environments where that matters.
 
-* The library is generally _thread safe_ depending on the platform:
+* The library is generally _thread-safe_ depending on the platform:
   it does not define any global variables of its own.  However, some
   platforms do not provide fully thread-safe versions of key C library
   functions.  On those platforms, libarchive will use the non-thread-safe
   functions.  Patches to improve this are of great interest to us.
+
+* The function `archive_write_disk_header()` is _not_ thread safe on
+  POSIX machines and could lead to security issue resulting in world
+  writeable directories.  Thus it must be mutexed by the calling code.
+  This is due to calling `umask(oldumask = umask(0))`, which sets the
+  umask for the whole process to 0 for a short time frame.
+  In case other thread calls the same function in parallel, it might
+  get interrupted by it and cause the executable to use umask=0 for the
+  remaining execution.
+  This will then lead to implicitly created directories to have 777
+  permissions without sticky bit.
 
 * In particular, libarchive's modules to read or write a directory
   tree do use `chdir()` to optimize the directory traversals.  This
@@ -188,7 +217,7 @@ questions we are asked about libarchive:
   multiple threads.  Of course, those modules are completely
   optional and you can use the rest of libarchive without them.
 
-* The library is _not_ thread aware, however.  It does no locking
+* The library is _not_ thread-aware, however.  It does no locking
   or thread management of any kind.  If you create a libarchive
   object and need to access it from multiple threads, you will
   need to provide your own locking.
@@ -219,4 +248,3 @@ questions we are asked about libarchive:
   appropriate.  It has many advantages over other tar formats
   (including the legacy GNU tar format) and is widely supported by
   current tar implementations.
-

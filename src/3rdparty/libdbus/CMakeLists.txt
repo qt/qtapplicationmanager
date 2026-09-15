@@ -162,3 +162,25 @@ qt_install(TARGETS BundledLibDBus
     LIBRARY DESTINATION "${INSTALL_LIBDIR}/qtapplicationmanager"
     ARCHIVE DESTINATION "${INSTALL_LIBDIR}/qtapplicationmanager"
 )
+
+# The library is not created via qt_internal_add_3rdparty_library, so it has to be
+# registered in the SBOM manually.
+if(QT_GENERATE_SBOM)
+    set(sbom_args "")
+    qt_get_cmake_configurations(configs)
+    foreach(config IN LISTS configs)
+        _qt_internal_sbom_append_multi_config_aware_single_arg_option(RUNTIME_PATH
+            "${INSTALL_BINDIR}/qtapplicationmanager" "${config}" sbom_args)
+        _qt_internal_sbom_append_multi_config_aware_single_arg_option(LIBRARY_PATH
+            "${INSTALL_LIBDIR}/qtapplicationmanager" "${config}" sbom_args)
+        _qt_internal_sbom_append_multi_config_aware_single_arg_option(ARCHIVE_PATH
+            "${INSTALL_LIBDIR}/qtapplicationmanager" "${config}" sbom_args)
+    endforeach()
+
+    qt_internal_add_sbom(BundledLibDBus
+        SBOM_ENTITY_TYPE QT_THIRD_PARTY_MODULE
+        ATTRIBUTION_FILE_DIR_PATHS
+            .
+        ${sbom_args}
+    )
+endif()

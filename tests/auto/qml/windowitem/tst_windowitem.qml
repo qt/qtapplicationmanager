@@ -282,6 +282,8 @@ Item {
                 window.setWindowProperty("requestedWidth", width);
                 window.setWindowProperty("requestedHeight", height);
 
+                AmTest.aboutToBlock();
+
                 // these tryCompares already confirm the resize round-trip fully converged, so no
                 // additional settle is needed before the next iteration
                 tryCompare(window, "size", Qt.size(width,height), spyTimeout);
@@ -405,6 +407,8 @@ Item {
             compare(secondWindow.contentState, WindowObject.SurfaceWithContent);
 
             secondWindow.close();
+
+            AmTest.aboutToBlock();
 
             tryCompare(secondWindow, "contentState", WindowObject.NoSurface, spyTimeout);
             tryCompare(app, "runState", Am.NotRunning, spyTimeout);

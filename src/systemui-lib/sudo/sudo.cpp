@@ -564,51 +564,77 @@ static T checkDBusReply(QDBusPendingReply<T> &&reply, const char *operation)
 #endif // QT_CONFIG(am_multi_process)
 
 /*! \internal
-    Verify \a fileOrDir resolves to a path at or below one of \a allowedRoots. The target's parent
-    is canonicalized (it must exist; the target itself may be a dangling symlink we are about to
-    delete), so symlinks anywhere above the leaf cannot smuggle the operation outside an allowed
-    root. Until the allowed roots have been set, every removal is rejected (fail-closed).
+    Remove \a fileOrDir if it resolves to a path at or below one of \a allowedRoots. The target's
+    parent is canonicalized (it must exist; the target itself may be a dangling symlink we are
+    about to delete), so symlinks anywhere above the leaf cannot smuggle the operation outside an
+    allowed root. The removal then runs relative to that canonical parent, opened once, so the
+    policy and the walker act on the same entry. Until the allowed roots have been set, every
+    removal is rejected (fail-closed).
 
     In QT_BUILD_INTERNAL builds a non-empty \a testPrefix implicitly allows anything beneath it: the
     test-cleanup callers operate inside their temp prefix and never set real roots. This branch is
     compiled out of production builds, where setTestRootPathPrefix() itself is rejected.
 */
-static void checkRemoveRecursiveAllowed(const QString &fileOrDir,
-                                        const std::optional<QStringList> &allowedRoots,
-                                        const std::optional<QString> &testPrefix)
+static void removeRecursiveIfAllowed(const QString &fileOrDir,
+                                     const std::optional<QStringList> &allowedRoots,
+                                     const std::optional<QString> &testPrefix)
 {
-    // Canonicalize the parent (resolves symlinked ancestors) but keep the leaf literal: safeRemove
-    // deletes the named entry, not its symlink target, and the leaf may be a dangling symlink that
-    // canonicalFilePath() would resolve to "".
-    const QFileInfo fi(fileOrDir);
-    const QString canonicalParent = fi.dir().canonicalPath();
-    if (canonicalParent.isEmpty())
-        throw Exception("removeRecursive target has no resolvable parent: %1").arg(fileOrDir);
-    const QString canonicalTarget = QDir::cleanPath(canonicalParent + u'/' + fi.fileName());
+    // Same normalization as removeRecursively(): a trailing slash must not make the policy judge
+    // the symlink's target while the removal unlinks the symlink itself.
+    const auto dirAndEntry = sanitizeAsDirAndEntry(fileOrDir);
+    if (!dirAndEntry)
+        throw Exception("removeRecursive target does not name a removable entry: %1").arg(fileOrDir);
 
-    const auto isUnder = [&canonicalTarget](const QString &root) {
+    const auto &[dir, entry] = *dirAndEntry;
+
+    const QString canonicalDir = QFileInfo(dir).canonicalFilePath();
+    if (canonicalDir.isEmpty())
+        throw Exception("removeRecursive target has no resolvable parent: %1").arg(fileOrDir);
+    const QString canonicalEntry = QDir::cleanPath(canonicalDir + u'/' + entry);
+
+    const auto isUnder = [&canonicalEntry](const QString &root) {
         const QString canonicalRoot = QFileInfo(root).canonicalFilePath();
         return !canonicalRoot.isEmpty()
-               && ((canonicalTarget == canonicalRoot)
-                   || canonicalTarget.startsWith(canonicalRoot + u'/'));
+               && ((canonicalEntry == canonicalRoot)
+                   || canonicalEntry.startsWith(canonicalRoot + u'/'));
     };
 
+    bool allowed = false;
 #if defined(QT_BUILD_INTERNAL)
     if (testPrefix && !testPrefix->isEmpty() && isUnder(*testPrefix))
-        return;
+        allowed = true;
 #else
     Q_UNUSED(testPrefix)
 #endif
-
-    if (!allowedRoots)
-        throw Exception("removeRecursive called before setAllowedRemoveRecursiveRoots");
-
-    for (const QString &root : *allowedRoots) {
-        if (isUnder(root))
-            return;
+    if (!allowed) {
+        if (!allowedRoots)
+            throw Exception("removeRecursive called before setAllowedRemoveRecursiveRoots");
+        for (const QString &root : *allowedRoots) {
+            if (isUnder(root)) {
+                allowed = true;
+                break;
+            }
+        }
     }
-    throw Exception("removeRecursive target (%1) escapes all allowed roots (%2)")
-        .arg(fileOrDir).arg(*allowedRoots);
+    if (!allowed) {
+        throw Exception("removeRecursive target (%1) escapes all allowed roots (%2)")
+            .arg(fileOrDir).arg(*allowedRoots);
+    }
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    // Open the approved canonical parent once and remove relative to it: the walker never resolves
+    // any component of the path again. (Swapping an ancestor between canonicalFilePath() and this
+    // open would need write access to an appman-owned directory.) Only Linux has the root helper.
+    Unix::Fd dirFd { qt_safe_open(QFile::encodeName(canonicalDir).constData(),
+                                  O_RDONLY | O_DIRECTORY | O_CLOEXEC) };
+    if (!dirFd)
+        throw Exception(errno, "could not open the parent directory of %1").arg(canonicalEntry);
+    if (!removeRecursively(dirFd.get(), QFile::encodeName(entry)))
+        throw Exception(errno, "could not recursively remove %1").arg(canonicalEntry);
+#else
+    if (!removeRecursively(canonicalEntry))
+        throw Exception(errno, "could not recursively remove %1").arg(canonicalEntry);
+#endif
 }
 
 /*! \internal
@@ -617,9 +643,7 @@ static void checkRemoveRecursiveAllowed(const QString &fileOrDir,
 void SudoClient::removeRecursive(const QString &fileOrDir)
 {
     if (d->isFallback) {
-        checkRemoveRecursiveAllowed(fileOrDir, d->allowedRemoveRoots, d->testPrefix);
-        if (!recursiveOperation(fileOrDir, safeRemove))
-            throw Exception(errno, "could not recursively remove %1").arg(fileOrDir);
+        removeRecursiveIfAllowed(fileOrDir, d->allowedRemoveRoots, d->testPrefix);
         return;
     }
 #if QT_CONFIG(am_multi_process)
@@ -1068,9 +1092,7 @@ std::pair<quint64, quint64> SudoServer::saveSessionKey(int fd)
 void SudoServer::removeRecursive(const QString &fileOrDir)
 {
     try {
-        checkRemoveRecursiveAllowed(fileOrDir, m_allowedRemoveRoots, m_testPrefix);
-        if (!recursiveOperation(fileOrDir, safeRemove))
-            throw Exception(errno, "could not recursively remove %1").arg(fileOrDir);
+        removeRecursiveIfAllowed(fileOrDir, m_allowedRemoveRoots, m_testPrefix);
     } catchExceptionAsDBusError()
 }
 

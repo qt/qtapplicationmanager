@@ -6,7 +6,6 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
-#include <QDirIterator>
 #include <QCoreApplication>
 #include <QNetworkInterface>
 #include <QPluginLoader>
@@ -20,6 +19,8 @@
 
 #if defined(Q_OS_UNIX)
 #  include <unistd.h>
+#  include <fcntl.h>
+#  include <sys/stat.h>
 #  include <QtCore/private/qcore_unix_p.h>
 #endif
 #if defined(Q_OS_LINUX)
@@ -35,6 +36,8 @@
 #endif
 
 #include <memory>
+#include <optional>
+#include <vector>
 
 using namespace Qt::StringLiterals;
 
@@ -100,29 +103,6 @@ YamlFormat checkYamlFormat(const QVector<QVariant> &docs, int numberOfDocuments,
                 .arg(StringifyTypeAndVersion(actualFormatTypeAndVersion).string());
     }
     return actualFormatTypeAndVersion;
-}
-
-bool safeRemove(const QString &path, RecursiveOperationType type)
-{
-   static const QFileDevice::Permissions ownerAccess =
-           QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner |
-           QFileDevice::ReadUser  | QFileDevice::WriteUser  | QFileDevice::ExeUser;
-
-   switch (type) {
-   case RecursiveOperationType::EnterDirectory:
-       // make sure we can unlink the directory's contents
-       return QFile::setPermissions(path, ownerAccess);
-
-   case RecursiveOperationType::LeaveDirectory: {
-        // QDir cannot delete the directory it is pointing to
-       QDir dir(path);
-       QString dirName = dir.dirName();
-       return dir.cdUp() && dir.rmdir(dirName);
-   }
-   case RecursiveOperationType::File:
-       return QFile::remove(path);
-   }
-   return false;
 }
 
 bool isPidFileSystemSupported() noexcept
@@ -251,46 +231,184 @@ qreal slowAnimationSpeed()
     return 0.2f;
 }
 
-bool recursiveOperation(const QString &path, const std::function<bool (const QString &, RecursiveOperationType)> &operation)
+std::optional<std::tuple<QString, QString>> sanitizeAsDirAndEntry(const QString &path)
 {
-    if (path.isEmpty() || !operation)
-        return false;
+    QString p = path;
+    while (p.endsWith(u'/'))
+        p.chop(1);
+    const qsizetype slash = p.lastIndexOf(u'/');
+    QString entry = p.mid(slash + 1);
+    if (entry.isEmpty() || (entry == u".") || (entry == u"..")) // "", "/", ".", ".."
+        return std::nullopt;
+    QString dir = (slash < 0) ? u"."_s : ((slash == 0) ? u"/"_s : p.left(slash));
+    return std::make_tuple(std::move(dir), std::move(entry));
+}
 
-    QFileInfo pathInfo(path);
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 
-    // isDir() follows symlinks, so guard against attacker-controlled symlink-to-dir redirection
-    if (pathInfo.isDir() && !pathInfo.isSymLink()) {
-        if (!operation(path, RecursiveOperationType::EnterDirectory))
-            return false;
+// Opens the directory entry below dirFd for reading. The owner may lack the r bit (e.g. 0300
+// or 0000): on EACCES, add rwx and retry. Returns an invalid fd with errno set on failure;
+// ELOOP/ENOTDIR mean the entry is not a directory (anymore).
+static Unix::Fd openDirectory(int dirFd, const char *entry)
+{
+    int fd = -1;
+    QT_EINTR_LOOP(fd, ::openat(dirFd, entry, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
+    if ((fd >= 0) || (errno != EACCES))
+        return Unix::Fd(fd);
 
-        QDirIterator dit(path, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
-        while (dit.hasNext()) {
-            dit.next();
-            QFileInfo ditInfo = dit.fileInfo();
-
-            if (ditInfo.isDir()) {
-                if (!recursiveOperation(ditInfo.filePath(), operation))
-                    return false;
-            } else {
-                if (!operation(ditInfo.filePath(), RecursiveOperationType::File))
-                    return false;
-            }
-        }
-        return operation(path, RecursiveOperationType::LeaveDirectory);
-    } else {
-        return operation(path, RecursiveOperationType::File);
+    // Pin the directory with O_PATH (needs no permission on it), chmod it through its /proc link
+    // and re-open through the pinned fd: no name is looked up twice, so nothing can be swapped in.
+    // glibc before 2.32 returns ENOTSUP for fchmodat(AT_SYMLINK_NOFOLLOW). Newer versions emulate
+    // it through /proc exactly like this. Doing it ourselves drops the libc dependency and lets us
+    // re-open through the pinned fd instead of by name.
+    int pathFd = -1;
+    QT_EINTR_LOOP(pathFd, ::openat(dirFd, entry, O_PATH | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
+    Unix::Fd pinned(pathFd);
+    if (!pinned)
+        return { };
+    struct ::stat st { };
+    if (::fstat(pinned.get(), &st) != 0)
+        return { };
+    if (!S_ISDIR(st.st_mode)) {
+        errno = ENOTDIR;
+        return { };
     }
+    std::array<char, 32> procPath { };
+    ::snprintf(procPath.data(), procPath.size(), "/proc/self/fd/%d", pinned.get());
+    // Just 'r' would be enough for openat to succeed, but we need 'rwx' anyway for the subsequent
+    // removal of the directory contents, so we just do it in one step here.
+    if (::chmod(procPath.data(), (st.st_mode & ~S_IFMT) | S_IRWXU) != 0) {
+        errno = EACCES; // not the owner, or no /proc: report the original failure
+        return { };
+    }
+    QT_EINTR_LOOP(fd, ::openat(pinned.get(), ".", O_RDONLY | O_DIRECTORY | O_CLOEXEC));
+    return Unix::Fd(fd);
 }
 
-bool recursiveOperation(const QByteArray &path, const std::function<bool (const QString &, RecursiveOperationType)> &operation)
+// Path-based walks would implicitly limit the recursion depth due to PATH_MAX, but our
+// fd-relative walk can not, so we need to bound it explicitly.
+static constexpr int MaxDirectoryDepth = 512;
+
+static int removeDirectoryContents(const Unix::Fd &dirFd, dev_t rootDev, int depth);
+
+// Removes the entry inside dirFd, recursively if it is a directory. Returns 0 or an errno.
+static int removeEntry(int dirFd, const char *entry, std::optional<dev_t> rootDev, int depth)
 {
-    return recursiveOperation(QString::fromLocal8Bit(path), operation);
+    struct ::stat st { };
+    if (::fstatat(dirFd, entry, &st, AT_SYMLINK_NOFOLLOW) != 0)
+        return errno;
+    // regular file, symlink (also dangling), socket, ...: unlinkat() never follows
+    if (!S_ISDIR(st.st_mode))
+        return (::unlinkat(dirFd, entry, 0) == 0) ? 0 : errno;
+
+    Unix::Fd dir = openDirectory(dirFd, entry);
+    if (!dir) {
+        // swapped for a symlink or a non-directory since fstatat(): unlink the entry itself
+        if ((errno == ELOOP) || (errno == ENOTDIR))
+            return (::unlinkat(dirFd, entry, 0) == 0) ? 0 : errno;
+        return errno;
+    }
+    if (int e = removeDirectoryContents(dir, rootDev.value_or(st.st_dev), depth); e != 0)
+        return e;
+    return (::unlinkat(dirFd, entry, AT_REMOVEDIR) == 0) ? 0 : errno;
 }
 
-bool recursiveOperation(const QDir &path, const std::function<bool (const QString &, RecursiveOperationType)> &operation)
+// Empties the directory behind dirFd (opened with O_DIRECTORY | O_NOFOLLOW), but does not remove
+// it. All decisions are made on descriptors, never on re-resolved paths. Returns 0 or an errno.
+static int removeDirectoryContents(const Unix::Fd &dirFd, dev_t rootDev, int depth)
 {
-    return recursiveOperation(path.absolutePath(), operation);
+    if (depth >= MaxDirectoryDepth)
+        return ENAMETOOLONG;
+
+    struct ::stat st { };
+    if (::fstat(dirFd.get(), &st) != 0) // is the directory accessible?
+        return errno;
+    if (st.st_dev != rootDev) // are we still on the same filesystem?
+        return EXDEV;
+    // The owner needs wx on the directory to unlink entries.
+    // This complements the openDirectory() logic above for cases where we were able to open
+    // the directory ('r' bit set) but we're now lacking 'wx'.
+    if ((st.st_mode & (S_IWUSR | S_IXUSR)) != (S_IWUSR | S_IXUSR)) {
+        if (::fchmod(dirFd.get(), (st.st_mode & ~S_IFMT) | S_IRWXU) != 0)
+            return errno;
+    }
+
+    // snapshot the names first: unlinking while readdir() is running is unspecified by POSIX
+    QList<QByteArray> names;
+    {
+        Unix::Dir dir(dirFd.duplicate());
+        if (!dir)
+            return errno;
+        auto optionalNames = dir.entryNames();
+        if (!optionalNames)
+            return errno;
+        names = *optionalNames;
+    }
+
+    for (const QByteArray &name : std::as_const(names)) {
+        int e = removeEntry(dirFd.get(), name.constData(), rootDev, depth + 1);
+        // an entry that vanished in the meantime (e.g. concurrent cleanup) is fine with us
+        if ((e != 0) && (e != ENOENT))
+            return e;
+    }
+    return 0;
 }
+
+bool removeRecursively(int dirFd, const QByteArray &entry)
+{
+    if (entry.isEmpty() || entry.contains('/') || (entry == ".") || (entry == "..")) {
+        errno = EINVAL;
+        return false;
+    }
+    errno = removeEntry(dirFd, entry.constData(), std::nullopt, 0);
+    return errno == 0;
+}
+
+bool removeRecursively(const QString &path)
+{
+    const auto dirAndEntry = sanitizeAsDirAndEntry(path);
+    if (!dirAndEntry) {
+        errno = EINVAL;
+        return false;
+    }
+    const auto &[dir, entry] = *dirAndEntry;
+
+    // resolve the parent once (following symlinks above the dir, like any path-taking API) and
+    // act on the entry relative to it
+    int e = 0;
+    {
+        Unix::Fd dirFd { qt_safe_open(QFile::encodeName(dir).constData(),
+                                      O_RDONLY | O_DIRECTORY | O_CLOEXEC) };
+        if (!dirFd)
+            return false;
+        e = removeEntry(dirFd.get(), QFile::encodeName(entry).constData(), std::nullopt, 0);
+    }
+    errno = e;
+    return e == 0;
+}
+
+#else // !Q_OS_LINUX || Q_OS_ANDROID
+
+bool removeRecursively(const QString &path)
+{
+    if (!sanitizeAsDirAndEntry(path)) {
+        errno = EINVAL;
+        return false;
+    }
+    // no privileged helper on these platforms; QDir also copes with Windows' read-only attribute
+    QFileInfo fi(path);
+    if (!fi.exists() && !fi.isSymLink()) {
+        errno = ENOENT;
+        return false;
+    }
+    const bool ok = (fi.isDir() && !fi.isSymLink()) ? QDir(path).removeRecursively()
+                                                    : QFile::remove(path);
+    if (!ok)
+        errno = EIO; // QDir and QFile do not report why
+    return ok;
+}
+
+#endif // Q_OS_LINUX && !Q_OS_ANDROID
 
 QVector<QObject *> loadPlugins_helper(const char *type, const QStringList &files, const char *iid) noexcept(false)
 {

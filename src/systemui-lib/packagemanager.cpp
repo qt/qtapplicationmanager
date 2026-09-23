@@ -928,7 +928,7 @@ void PackageManager::removeRecursive(const QString &path) noexcept(false)
     if (d->useSudoForDirectoryRemoval) {
         SudoClient::instance()->removeRecursive(path);
     } else {
-        if (!recursiveOperation(path, safeRemove))
+        if (!removeRecursively(path))
             throw Exception(errno, "could not recursively remove %1").arg(path);
     }
 }

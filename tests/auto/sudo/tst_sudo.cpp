@@ -14,6 +14,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <cerrno>
 #include <optional>
 
 #ifndef SYS_open_tree
@@ -83,6 +84,14 @@ private Q_SLOTS:
     void setInstanceIdSecondCallSameValueOk();
     void setInstanceIdSecondCallDifferentValueThrows();
     void removeRecursive();
+    void removeRecursiveSymlinkRoot();
+    void removeRecursiveDanglingSymlinks();
+    void removeRecursiveRestrictedDirectory_data();
+    void removeRecursiveRestrictedDirectory();
+    void removeRecursiveSymlinkRootTrailingSlash();
+    void removeRecursiveInvalidLeaf();
+    void removeRecursiveMissing();
+    void removeRecursiveTooDeep();
     void removeRecursiveOutsideTestPrefixRejected();
     void setAllowedRemoveRootsSecondCallDifferentValueThrows();
 
@@ -572,7 +581,7 @@ void tst_Sudo::removeRecursive()
 #endif
 
     QVERIFY(QFileInfo::exists(tree));
-    m_sudo->removeRecursive(tree);
+    QVERIFY_THROWS_NO_EXCEPTION(m_sudo->removeRecursive(tree));
 
     QVERIFY(!QFileInfo::exists(tree));
 #if defined(Q_OS_UNIX)
@@ -580,6 +589,170 @@ void tst_Sudo::removeRecursive()
     QVERIFY2(QFileInfo::exists(externalDirKeep),
              "removeRecursive must not follow a directory symlink out of the tree");
 #endif
+}
+
+// A symlink handed in as the root is unlinked, never followed into its target.
+void tst_Sudo::removeRecursiveSymlinkRoot()
+{
+    QTemporaryDir externalDir;
+    QVERIFY(externalDir.isValid());
+    const QString keep = externalDir.path() + u"/keep.txt"_s;
+    QVERIFY(QFile(keep).open(QIODevice::WriteOnly));
+
+    const QString link = m_testRoot.path() + u"/link-root"_s;
+    QVERIFY(QFile::link(externalDir.path(), link));
+    QVERIFY(QFileInfo(link).isSymLink());
+
+    QVERIFY_THROWS_NO_EXCEPTION(m_sudo->removeRecursive(link));
+
+    QVERIFY(!QFileInfo(link).isSymLink());
+    QVERIFY(!QFileInfo::exists(link));
+    QVERIFY2(QFileInfo::exists(keep), "removeRecursive must not follow a symlink root");
+}
+
+// Dangling symlinks, inside the tree and as the root, are plain unlinks.
+void tst_Sudo::removeRecursiveDanglingSymlinks()
+{
+    const QString tree = m_testRoot.path() + u"/dangling-tree"_s;
+    QVERIFY(QDir().mkpath(tree));
+    QVERIFY(QFile::link(u"/nonexistent/target"_s, tree + u"/dangling"_s));
+    QVERIFY(QFileInfo(tree + u"/dangling"_s).isSymLink());
+
+    const QString rootLink = m_testRoot.path() + u"/dangling-root"_s;
+    QVERIFY(QFile::link(u"/nonexistent/target"_s, rootLink));
+    QVERIFY(QFileInfo(rootLink).isSymLink());
+
+    QVERIFY_THROWS_NO_EXCEPTION(m_sudo->removeRecursive(tree));
+    QVERIFY(!QFileInfo::exists(tree));
+
+    QVERIFY_THROWS_NO_EXCEPTION(m_sudo->removeRecursive(rootLink));
+    QVERIFY(!QFileInfo(rootLink).isSymLink());
+}
+
+void tst_Sudo::removeRecursiveRestrictedDirectory_data()
+{
+    QTest::addColumn<int>("mode");
+    QTest::addColumn<bool>("atRoot");
+
+    QTest::newRow("sub-0500")  << 0500 << false;
+    QTest::newRow("sub-0300")  << 0300 << false;
+    QTest::newRow("sub-0000")  << 0000 << false;
+    QTest::newRow("root-0500") << 0500 << true;
+    QTest::newRow("root-0300") << 0300 << true;
+    QTest::newRow("root-0000") << 0000 << true;
+}
+
+// Directories the owner cannot read, write or search are still emptied and removed, both below
+// the root and as the root itself. Without the r bit the walker cannot even open them for
+// listing, so it has to fix up the mode first.
+void tst_Sudo::removeRecursiveRestrictedDirectory()
+{
+    QFETCH(int, mode);
+    QFETCH(bool, atRoot);
+
+    const QString tree = m_testRoot.path() + u"/restricted-tree"_s;
+    const QString restricted = atRoot ? tree : (tree + u"/sub"_s);
+    QVERIFY(QDir().mkpath(restricted));
+    QVERIFY(QFile(restricted + u"/file.txt"_s).open(QIODevice::WriteOnly));
+    QCOMPARE(::chmod(QFile::encodeName(restricted).constData(), mode_t(mode)), 0);
+
+    QVERIFY_THROWS_NO_EXCEPTION(m_sudo->removeRecursive(tree));
+    QVERIFY(!QFileInfo::exists(tree));
+}
+
+// A trailing slash forces a directory lookup in the kernel, which follows a symlink root even
+// with O_NOFOLLOW. removeRecursively() strips it, and the sudo policy has to judge the very same
+// entry: a link inside the prefix is unlinked (never its target), and a link outside pointing
+// inside is rejected instead of being approved by its target and then unlinked outside every root.
+void tst_Sudo::removeRecursiveSymlinkRootTrailingSlash()
+{
+    QTemporaryDir externalDir;
+    QVERIFY(externalDir.isValid());
+    const QString keep = externalDir.path() + u"/keep.txt"_s;
+    QVERIFY(QFile(keep).open(QIODevice::WriteOnly));
+
+    const QString link = m_testRoot.path() + u"/link-root-slash"_s;
+    QVERIFY(QFile::link(externalDir.path(), link));
+    QVERIFY(removeRecursively(link + u"//"_s));
+    QVERIFY(!QFileInfo(link).isSymLink());
+    QVERIFY2(QFileInfo::exists(keep),
+             "a trailing slash must not make removeRecursively follow a symlink root");
+
+    const QString sudoLink = m_testRoot.path() + u"/link-root-slash-sudo"_s;
+    QVERIFY(QFile::link(externalDir.path(), sudoLink));
+    QVERIFY_THROWS_NO_EXCEPTION(m_sudo->removeRecursive(sudoLink + u"/"_s));
+    QVERIFY(!QFileInfo(sudoLink).isSymLink());
+    QVERIFY2(QFileInfo::exists(keep), "the sudo policy must judge and unlink the link itself");
+
+    const QString inward = externalDir.path() + u"/link-inward"_s;
+    QVERIFY(QFile::link(m_testRoot.path(), inward));
+    QVERIFY_THROWS_EXCEPTION(Exception, m_sudo->removeRecursive(inward + u"/"_s));
+    QVERIFY2(QFileInfo(inward).isSymLink(),
+             "a link outside the roots must not be unlinked just because its target is inside");
+    QVERIFY(QFileInfo::exists(m_testRoot.path()));
+}
+
+// A "." or ".." leaf is rejected instead of being resolved to whatever it happens to point at.
+void tst_Sudo::removeRecursiveInvalidLeaf()
+{
+    const QString tree = m_testRoot.path() + u"/leaf-tree"_s;
+    QVERIFY(QDir().mkpath(tree));
+
+    bool ok = removeRecursively(tree + u"/."_s);
+    int e = errno; // QVERIFY may touch errno, so capture right after the call
+    QVERIFY(!ok);
+    QCOMPARE(e, EINVAL);
+
+    ok = removeRecursively(tree + u"/.."_s);
+    e = errno;
+    QVERIFY(!ok);
+    QCOMPARE(e, EINVAL);
+
+    QVERIFY(QFileInfo::exists(tree));
+    QVERIFY(QFileInfo::exists(m_testRoot.path()));
+}
+
+// Missing and empty paths fail with a meaningful errno instead of being silently accepted.
+void tst_Sudo::removeRecursiveMissing()
+{
+    bool ok = removeRecursively(QString());
+    int e = errno; // QVERIFY may touch errno, so capture right after the call
+    QVERIFY(!ok);
+    QCOMPARE(e, EINVAL);
+
+    const QString missing = m_testRoot.path() + u"/does-not-exist"_s;
+    ok = removeRecursively(missing);
+    e = errno;
+    QVERIFY(!ok);
+    QCOMPARE(e, ENOENT);
+
+    QVERIFY_THROWS_EXCEPTION(Exception, m_sudo->removeRecursive(missing));
+}
+
+// The fd-relative walk cannot be bounded by PATH_MAX, so it bounds its recursion depth itself
+// instead of running out of stack or fds. An over-deep tree fails with ENAMETOOLONG and is left
+// in place.
+void tst_Sudo::removeRecursiveTooDeep()
+{
+    const QString tree = m_testRoot.path() + u"/deep-tree"_s;
+    QVERIFY(QDir().mkpath(tree));
+
+    // build the chain with mkdirat(), since the resulting path would exceed PATH_MAX
+    Unix::Fd cur { ::open(QFile::encodeName(tree).constData(), O_RDONLY | O_DIRECTORY | O_CLOEXEC) };
+    QVERIFY(cur);
+    for (int i = 0; i < (1024 + 10); ++i) {
+        QCOMPARE(::mkdirat(cur.get(), "d", 0700), 0);
+        Unix::Fd next { ::openat(cur.get(), "d", O_RDONLY | O_DIRECTORY | O_CLOEXEC) };
+        QVERIFY(next);
+        cur = std::move(next);
+    }
+    cur.reset();
+
+    const bool ok = removeRecursively(tree);
+    const int e = errno;
+    QVERIFY(!ok);
+    QCOMPARE(e, ENAMETOOLONG);
+    QVERIFY(QFileInfo::exists(tree));
 }
 
 // removeRecursive is confined to the allowed roots (none set here) or, in developer builds,

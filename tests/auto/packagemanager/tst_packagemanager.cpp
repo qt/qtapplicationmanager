@@ -302,7 +302,7 @@ void tst_PackageManager::cleanup()
     }
 
     clearSignalSpies();
-    recursiveOperation(pathTo(Internal0), safeRemove);
+    removeRecursively(pathTo(Internal0));
 }
 
 void tst_PackageManager::packageInstallation_data()

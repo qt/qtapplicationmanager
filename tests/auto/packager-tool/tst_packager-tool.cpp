@@ -178,8 +178,8 @@ void tst_PackagerTool::initTestCase()
 
 void tst_PackagerTool::cleanupTestCase()
 {
-    recursiveOperation(pathTo("internal-0"), safeRemove);
-    recursiveOperation(pathTo("documents-0"), safeRemove);
+    removeRecursively(pathTo("internal-0"));
+    removeRecursively(pathTo("documents-0"));
 
     QDir dir(m_workDir.path());
     QStringList fileNames = dir.entryList(QDir::Files);

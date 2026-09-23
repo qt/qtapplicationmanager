@@ -96,6 +96,9 @@ PackageManagerAdaptor::PackageManagerAdaptor(QObject *parent)
 PackageManagerAdaptor::~PackageManagerAdaptor()
 { }
 
+// Property getters: Qt sets the D-Bus context for property reads since 6.11, so the same access
+// checks and error replies as for methods work here.
+
 bool PackageManagerAdaptor::installationEnabled() const
 {
     return PackageManager::instance()->installationEnabled();
@@ -103,12 +106,19 @@ bool PackageManagerAdaptor::installationEnabled() const
 
 bool PackageManagerAdaptor::allowInstallationOfUnsignedPackages() const
 {
-    return PackageManager::instance()->allowInstallationOfUnsignedPackages();
+    try {
+        checkDBusAccess();
+        checkDevelopmentModeSystem();
+
+        return PackageManager::instance()->allowInstallationOfUnsignedPackages();
+
+    } catchExceptionAsDBusError({})
 }
 
 int PackageManagerAdaptor::count() const
 {
-    return PackageManager::instance()->count();
+    // packageIds() already does the access checks and the filtering
+    return int(const_cast<PackageManagerAdaptor *>(this)->packageIds().size());
 }
 
 QString PackageManagerAdaptor::developmentMode() const
@@ -123,7 +133,13 @@ QDBusVariant PackageManagerAdaptor::developerCertificate() const
 
 QString PackageManagerAdaptor::hardwareId() const
 {
-    return PackageManager::instance()->hardwareId();
+    try {
+        checkDBusAccess();
+        checkDevelopmentModeSystem();
+
+        return PackageManager::instance()->hardwareId();
+
+    } catchExceptionAsDBusError({})
 }
 
 QString PackageManagerAdaptor::architecture() const
@@ -133,7 +149,13 @@ QString PackageManagerAdaptor::architecture() const
 
 QVariantMap PackageManagerAdaptor::installationLocation() const
 {
-    return PackageManager::instance()->installationLocation();
+    try {
+        checkDBusAccess();
+        checkDevelopmentModeSystem();
+
+        return PackageManager::instance()->installationLocation();
+
+    } catchExceptionAsDBusError({})
 }
 
 bool PackageManagerAdaptor::ready() const
@@ -143,7 +165,13 @@ bool PackageManagerAdaptor::ready() const
 
 QVariantMap PackageManagerAdaptor::documentLocation() const
 {
-    return PackageManager::instance()->documentLocation();
+    try {
+        checkDBusAccess();
+        checkDevelopmentModeSystem();
+
+        return PackageManager::instance()->documentLocation();
+
+    } catchExceptionAsDBusError({})
 }
 
 QStringList PackageManagerAdaptor::packageIds()

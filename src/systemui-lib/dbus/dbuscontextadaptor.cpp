@@ -29,8 +29,11 @@ QDBusContext *QtAM::DBusContextAdaptor::dbusContextFor(const QDBusAbstractAdapto
 
 void DBusContextAdaptor::sendErrorReply(const QDBusAbstractAdaptor *adaptor, const QString &errorString)
 {
-    if (auto *ctxt = dbusContextFor(adaptor))
-        ctxt->sendErrorReply(QDBusError::Failed, errorString);
+    if (auto *ctxt = dbusContextFor(adaptor)) {
+        // Properties.GetAll runs all getters for a single message: only one error can be sent
+        if (ctxt->calledFromDBus() && !ctxt->isDelayedReply())
+            ctxt->sendErrorReply(QDBusError::Failed, errorString);
+    }
 }
 
 QT_END_NAMESPACE_AM

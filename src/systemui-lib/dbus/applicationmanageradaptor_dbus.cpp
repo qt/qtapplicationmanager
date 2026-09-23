@@ -16,6 +16,7 @@
 #  include "applicationmanager_adaptor_p.h"
 #endif
 #include "packagemanager.h"
+#include "globalruntimeconfiguration.h"
 #include "exception.h"
 #include "logging.h"
 #include "intentclient.h"
@@ -58,9 +59,13 @@ ApplicationManagerAdaptor::ApplicationManagerAdaptor(QObject *parent)
 ApplicationManagerAdaptor::~ApplicationManagerAdaptor()
 { }
 
+// Property getters: Qt sets the D-Bus context for property reads since 6.11, so the same access
+// checks and error replies as for methods work here.
+
 int ApplicationManagerAdaptor::count() const
 {
-    return ApplicationManager::instance()->count();
+    // applicationIds() already does the access checks and the filtering
+    return int(const_cast<ApplicationManagerAdaptor *>(this)->applicationIds().size());
 }
 
 bool ApplicationManagerAdaptor::dummy() const
@@ -70,22 +75,52 @@ bool ApplicationManagerAdaptor::dummy() const
 
 bool ApplicationManagerAdaptor::securityChecksEnabled() const
 {
-    return ApplicationManager::instance()->securityChecksEnabled();
+    try {
+        checkDBusAccess();
+        checkDevelopmentModeSystem();
+
+        return ApplicationManager::instance()->securityChecksEnabled();
+
+    } catchExceptionAsDBusError({})
 }
 
 bool ApplicationManagerAdaptor::singleProcess() const
 {
-    return ApplicationManager::instance()->isSingleProcess();
+    try {
+        checkDBusAccess();
+        checkDevelopmentModeSystem();
+
+        return ApplicationManager::instance()->isSingleProcess();
+
+    } catchExceptionAsDBusError({})
 }
 
 QVariantMap ApplicationManagerAdaptor::systemProperties() const
 {
-    return convertToDBusVariant(ApplicationManager::instance()->systemProperties()).toMap();
+    try {
+        checkDBusAccess();
+
+        // application developers only get to see what their applications would see
+        bool publicOnly = isDevelopmentModeBus(this)
+                          && (PackageManager::instance()->developmentMode()
+                              == PackageManager::DevelopmentMode::Application);
+        const QVariantMap map = publicOnly
+                ? GlobalRuntimeConfiguration::instance().systemPropertiesForThirdPartyApps
+                : ApplicationManager::instance()->systemProperties();
+        return convertToDBusVariant(map).toMap();
+
+    } catchExceptionAsDBusError({})
 }
 
 bool ApplicationManagerAdaptor::windowManagerCompositorReady() const
 {
-    return ApplicationManager::instance()->isWindowManagerCompositorReady();
+    try {
+        checkDBusAccess();
+        checkDevelopmentModeSystem();
+
+        return ApplicationManager::instance()->isWindowManagerCompositorReady();
+
+    } catchExceptionAsDBusError({})
 }
 
 QStringList ApplicationManagerAdaptor::applicationIds()

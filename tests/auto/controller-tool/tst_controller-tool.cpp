@@ -8,6 +8,7 @@
 #include <QString>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QtDBus>
 
 #include "applicationmanager.h"
 #include "packagemanager.h"
@@ -17,6 +18,7 @@
 #include "utilities.h"
 #include "qml-utilities.h"
 #include "qtyaml.h"
+#include "dbus-utilities.h"
 #include <QtAppManSystemUI/configuration.h>
 #include "../devmode.h"
 #include "../error-checking.h"
@@ -47,6 +49,7 @@ private Q_SLOTS:
     void startStop();
     void injectIntent();
     void developerCertificate();
+    void developmentModeProperties();
 
 private:
     int m_spyTimeout;
@@ -433,6 +436,168 @@ void tst_ControllerTool::developerCertificate()
             showDevelopmentMode(out);
             QVERIFY(out.value(u"developerCertificate"_s).isNull());
         }
+    }
+}
+
+// The controller has no command to read the ApplicationManager's D-Bus properties, so this talks
+// to the development-mode P2P bus directly.
+void tst_ControllerTool::developmentModeProperties()
+{
+    // find the bus address the same way the controller does: via the instance info file that
+    // belongs to the live lock file of our instance id
+    QString rtPath = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+    if (rtPath.isEmpty())
+        rtPath = QDir::tempPath();
+    QDir rtDir(rtPath + u"/qtapplicationmanager"_s);
+    QString address;
+    const auto lockFiles = rtDir.entryList({ u"controller-test-id-*.lock"_s }, QDir::Files);
+    for (const QString &lockFile : lockFiles) {
+        QLockFile testLock(rtDir.absoluteFilePath(lockFile));
+        testLock.setStaleLockTime(0);
+        if (testLock.tryLock(0)) {
+            testLock.unlock(); // stale lock of a crashed run
+            continue;
+        }
+        QFile infof(rtDir.absoluteFilePath(lockFile.chopped(5) + u".json"_s));
+        QVERIFY2(infof.open(QIODevice::ReadOnly), qPrintable(infof.errorString()));
+        const auto info = QJsonDocument::fromJson(infof.readAll()).toVariant().toMap();
+        address = info.value(u"dbus"_s).toMap().value(u"io.qt.ApplicationManager"_s).toString();
+    }
+    QVERIFY2(address.startsWith(u"p2p:"), qPrintable(address));
+
+    QDBusConnection conn = QDBusConnection::connectToPeer(address.mid(4), u"devmode-test"_s);
+    QVERIFY2(conn.isConnected(), qPrintable(conn.lastError().message()));
+    auto cleanup = qScopeGuard([] { QDBusConnection::disconnectFromPeer(u"devmode-test"_s); });
+
+    // the server side lives in this process, so a blocking call would deadlock
+    auto call = [&](const QString &path, const QString &method, const QStringList &args) {
+        auto msg = QDBusMessage::createMethodCall({ }, path, u"org.freedesktop.DBus.Properties"_s,
+                                                  method);
+        for (const auto &arg : args)
+            msg << arg;
+        QDBusPendingCall pending = conn.asyncCall(msg);
+        QDBusPendingCallWatcher watcher(pending);
+        QSignalSpy finishedSpy(&watcher, &QDBusPendingCallWatcher::finished);
+        return finishedSpy.wait(m_spyTimeout) ? pending.reply() : QDBusMessage();
+    };
+    auto getAm = [&](const char *name) {
+        return call(u"/ApplicationManager"_s, u"Get"_s,
+                    { u"io.qt.ApplicationManager"_s, QString::fromLatin1(name) });
+    };
+    auto getPm = [&](const char *name) {
+        return call(u"/PackageManager"_s, u"Get"_s,
+                    { u"io.qt.PackageManager"_s, QString::fromLatin1(name) });
+    };
+    auto isError = [](const QDBusMessage &reply) {
+        return reply.type() == QDBusMessage::ErrorMessage;
+    };
+    auto value = [](const QDBusMessage &reply) {
+        return (reply.type() == QDBusMessage::ReplyMessage)
+                ? convertFromDBusVariant(reply.arguments().value(0)) : QVariant();
+    };
+    // Qt < 6.11 does not set a QDBusContext for property reads, so the getters cannot send an
+    // error reply and a denied read comes back as the default value of the property's type
+    constexpr bool errorRepliesForProperties = (QT_VERSION >= QT_VERSION_CHECK(6, 11, 0));
+    auto isDenied = [&](const QDBusMessage &reply) {
+        if (errorRepliesForProperties)
+            return isError(reply);
+        if (reply.type() != QDBusMessage::ReplyMessage)
+            return false;
+        const QVariant v = value(reply);
+        switch (v.typeId()) {
+        case QMetaType::Bool:        return !v.toBool();
+        case QMetaType::Int:         return v.toInt() == 0;
+        case QMetaType::QString:     return v.toString().isEmpty();
+        case QMetaType::QVariantMap: return v.toMap().isEmpty();
+        default:                     return false;
+        }
+    };
+
+    auto *am = ApplicationManager::instance();
+    auto *pm = PackageManager::instance();
+    const QString narrowCert = QString::fromLatin1(AM_TESTDATA_DIR "certificates/dev-certs/dev-narrow.p12");
+
+    // open for everyone, regardless of mode and certificate
+    auto checkOpenProperties = [&](const QString &expectedDevMode) {
+        QCOMPARE(value(getAm("dummy")).toBool(), am->isDummy());
+        QCOMPARE(value(getPm("installationEnabled")).toBool(), pm->installationEnabled());
+        QCOMPARE(value(getPm("developmentMode")).toString(), expectedDevMode);
+        QCOMPARE(value(getPm("architecture")).toString(), pm->architecture());
+        QCOMPARE(value(getPm("ready")).toBool(), pm->isReady());
+        QCOMPARE(value(getPm("developerCertificate")), pm->developerCertificate().toVariant());
+    };
+    // for system developers only
+    auto checkSystemPropertiesDenied = [&]() {
+        for (const char *name : { "singleProcess", "securityChecksEnabled", "windowManagerCompositorReady" })
+            QVERIFY2(isDenied(getAm(name)), name);
+        for (const char *name : { "allowInstallationOfUnsignedPackages", "hardwareId",
+                                  "installationLocation", "documentLocation" }) {
+            QVERIFY2(isDenied(getPm(name)), name);
+        }
+    };
+
+    // system mode: everything is accessible and systemProperties is the complete set
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::System);
+
+        checkOpenProperties(u"System"_s);
+        QCOMPARE(value(getAm("count")).toInt(), am->count());
+        QCOMPARE(value(getPm("count")).toInt(), pm->count());
+        QCOMPARE(value(getAm("singleProcess")).toBool(), am->isSingleProcess());
+        QCOMPARE(value(getAm("securityChecksEnabled")).toBool(), am->securityChecksEnabled());
+        QCOMPARE(value(getAm("windowManagerCompositorReady")).toBool(), am->isWindowManagerCompositorReady());
+        QCOMPARE(value(getPm("allowInstallationOfUnsignedPackages")).toBool(), pm->allowInstallationOfUnsignedPackages());
+        QCOMPARE(value(getPm("hardwareId")).toString(), pm->hardwareId());
+        QCOMPARE(value(getPm("installationLocation")).toMap().value(u"path"_s),
+                 pm->installationLocation().value(u"path"_s));
+        QCOMPARE(value(getPm("documentLocation")).toMap().value(u"path"_s),
+                 pm->documentLocation().value(u"path"_s));
+
+        const QVariantMap sysProps = value(getAm("systemProperties")).toMap();
+        QCOMPARE(sysProps.value(u"aPublic"_s).toString(), u"public"_s);
+        QCOMPARE(sysProps.value(u"aProtected"_s).toString(), u"protected"_s);
+        QCOMPARE(sysProps.value(u"aPrivate"_s).toString(), u"private"_s);
+    }
+
+    // application mode without a certificate: only the open properties are accessible
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::Application);
+
+        checkOpenProperties(u"Application"_s);
+        checkSystemPropertiesDenied();
+        QVERIFY(isDenied(getAm("count")));
+        QVERIFY(isDenied(getPm("count")));
+        QVERIFY(isDenied(getAm("systemProperties")));
+
+        // GetAll runs all getters on one message: this must result in exactly one error reply
+        // (or a plain reply with default values, if error replies are not possible) and must
+        // not break the connection
+        QCOMPARE(isError(call(u"/ApplicationManager"_s, u"GetAll"_s, { u"io.qt.ApplicationManager"_s })),
+                 errorRepliesForProperties);
+        QCOMPARE(isError(call(u"/PackageManager"_s, u"GetAll"_s, { u"io.qt.PackageManager"_s })),
+                 errorRepliesForProperties);
+        checkOpenProperties(u"Application"_s);
+    }
+
+    // application mode with a certificate: the counts are scoped to the certificate (the narrow
+    // one is bound to test-pkg, which is not installed), systemProperties is reduced to the
+    // public set and the system-wide properties stay inaccessible
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::Application, false, narrowCert, "password");
+        QVERIFY(pm->developerCertificate().isValid());
+
+        checkOpenProperties(u"Application"_s);
+        checkSystemPropertiesDenied();
+        QCOMPARE(value(getAm("count")).toInt(), 0);
+        QCOMPARE(value(getPm("count")).toInt(), 0);
+        const QStringList sans = value(getPm("developerCertificate")).toMap()
+                                     .value(u"subjectAlternativeNames"_s).toStringList();
+        QVERIFY2(sans.contains(u"qtam://packageid/test-pkg"_s), qPrintable(sans.join(u',')));
+
+        const QVariantMap sysProps = value(getAm("systemProperties")).toMap();
+        QCOMPARE(sysProps.value(u"aPublic"_s).toString(), u"public"_s);
+        QVERIFY(!sysProps.contains(u"aProtected"_s));
+        QVERIFY(!sysProps.contains(u"aPrivate"_s));
     }
 }
 

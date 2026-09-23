@@ -19,5 +19,14 @@ installer:
     scope: store
     role: issuer
 
+# used to check the filtering of systemProperties on the development-mode bus
+systemProperties:
+  public:
+    aPublic: "public"
+  protected:
+    aProtected: "protected"
+  private:
+    aPrivate: "private"
+
 ui:
   mainQml: "${CONFIG_DIR}/system-ui.qml"

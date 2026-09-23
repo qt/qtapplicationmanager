@@ -201,6 +201,20 @@ qint64 PackageExtractorPrivate::readTar(struct archive *ar, const void **archive
     }
 }
 
+// Only clean relative paths are accepted. Together with the extractor refusing symlink entries and
+// all callers extracting into a freshly created directory, this guarantees that every component of
+// an accepted path names a directory created by this very extraction: no symlink can redirect the
+// path-based operations below.
+static void checkEntryPath(const QString &entryPath) noexcept(false)
+{
+    const QList<QStringView> components = QStringView { entryPath }.split(u'/');
+
+    if (entryPath.startsWith(u'/') || entryPath.contains(u'\\') || components.contains(QStringView(u"..")))
+        throw Exception("invalid archive entry '%1': pointing outside of extraction directory").arg(entryPath);
+    if (components.contains(QStringView()) || components.contains(QStringView(u".")))
+        throw Exception("invalid archive entry '%1': empty or '.' path component").arg(entryPath);
+}
+
 void PackageExtractorPrivate::extract()
 {
     struct archive *ar = nullptr;
@@ -329,35 +343,23 @@ void PackageExtractorPrivate::extract()
                 Q_FALLTHROUGH();
 
             case PackageEntry_File: {
+                checkEntryPath(entryPath);
+
                 // get the directory, where the new entry will be created
                 QDir entryDir(QString(m_destinationPath + entryPath).section(u'/', 0, -2));
                 if (!entryDir.exists())
                     throw Exception(Error::Package, "invalid archive entry '%1': parent directory is missing").arg(entryPath);
 
-                QString entryCanonicalPath = entryDir.canonicalPath() + u'/';
-                QString baseCanonicalPath = QDir(m_destinationPath).canonicalPath() + u'/';
-
-                // security check: make sure that entryCanonicalPath is NOT outside of baseCanonicalPath
-                if (!entryCanonicalPath.startsWith(baseCanonicalPath))
-                    throw Exception(Error::Package, "invalid archive entry '%1': pointing outside of extraction directory").arg(entryPath);
-
                 if (packageEntryType == PackageEntry_Dir) {
-                    QString entryName = entryPath.section(u'/', -1, -1);
-
-                    if (entryName.isEmpty())
-                        throw Exception(Error::IO, "invalid archive entry '%1': empty directory name").arg(entryPath);
-
-                    if (entryName != u".") {
+                    const QString entryName = entryPath.section(u'/', -1, -1);
 #if defined(Q_OS_UNIX)
-                        errno = 0;
-                        if (!entryDir.mkdir(entryName))
-                            throw Exception(errno, "could not create directory '%1'").arg(entryDir.filePath(entryName));
+                    errno = 0;
+                    if (!entryDir.mkdir(entryName))
+                        throw Exception(errno, "could not create directory '%1'").arg(entryDir.filePath(entryName));
 #else
-                        if (!entryDir.mkdir(entryName))
-                            throw Exception(Error::IO, "could not create directory '%1'").arg(entryDir.filePath(entryName));
+                    if (!entryDir.mkdir(entryName))
+                        throw Exception(Error::IO, "could not create directory '%1'").arg(entryDir.filePath(entryName));
 #endif
-                    }
-
                     if (m_report.includeExtendedAttributes())
                         extractExtendedAttributes();
 
@@ -365,17 +367,19 @@ void PackageExtractorPrivate::extract()
 
                 } else { // PackageEntry_File
                     f.setFileName(m_destinationPath + entryPath);
+                    QFile::OpenMode openMode = QFile::WriteOnly | QFile::NewOnly;
 
                     if (m_report.includeExtendedAttributes()) {
 #if defined(Q_OS_LINUX)
                         // we need to mknod first, otherwise "security.*" xattrs don't work correctly
                         if (::mknod(qPrintable(f.fileName()), S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP, 0) != 0)
                             throw Exception(errno, "could not create inode for file '%1'").arg(f.fileName());
+                        openMode = QFile::WriteOnly; // the inode exists now
 #endif
                         extractExtendedAttributes();
                     }
 
-                    if (!f.open(QFile::WriteOnly | QFile::Truncate))
+                    if (!f.open(openMode))
                         throw Exception(f, "could not create file");
 
                     if (entryMode & S_IEXEC)

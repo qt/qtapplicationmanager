@@ -15,6 +15,9 @@
 #  include <fcntl.h>
 #  include <errno.h>
 #endif
+#if defined(Q_OS_LINUX)
+#  include <sys/xattr.h>
+#endif
 
 #include "global.h"
 #include "packagecreator.h"
@@ -44,6 +47,13 @@ private Q_SLOTS:
 
     void extractAndVerify_data();
     void extractAndVerify();
+
+    void nestedDirectories();
+    void invalidEntryPath_data();
+    void invalidEntryPath();
+    void duplicateEntry();
+    void symlinkBypass();
+    void extendedAttributes();
 
     void oversizedHeader();
 
@@ -181,6 +191,196 @@ void tst_PackageExtractor::extractAndVerify()
     reportEntries.sort();
     entries.sort();
     QCOMPARE(reportEntries, entries);
+}
+
+static void createFile(const QString &path, const QByteArray &content = "x")
+{
+    QFile f(path);
+    QVERIFY2(f.open(QIODevice::WriteOnly), qPrintable(path + u": "_s + f.errorString()));
+    QCOMPARE(f.write(content), qint64(content.size()));
+}
+
+static QByteArray readFile(const QString &path)
+{
+    QFile f(path);
+    QVERIFY2(f.open(QIODevice::ReadOnly), qPrintable(path + u": "_s + f.errorString()));
+    return f.readAll();
+}
+
+// Builds a package containing exactly the given entries. PackageCreator only needs them to exist
+// relative to sourceDir, so this can produce entry names that no sane packager would.
+static std::unique_ptr<QTemporaryFile> createPackage(const QDir &sourceDir, const QStringList &entries,
+                                                     bool extendedAttributes = false)
+{
+    InstallationReport report(u"com.pelagicore.test"_s);
+    report.addFiles(entries);
+    report.setDiskSpaceUsed(1);
+    report.setIncludeExtendedAttributes(extendedAttributes);
+
+    auto package = std::make_unique<QTemporaryFile>();
+    QVERIFY(package->open());
+    PackageCreator creator(sourceDir, package.get(), report);
+    QVERIFY2(creator.create(), qPrintable(creator.errorString()));
+    package->close();
+    return package;
+}
+
+void tst_PackageExtractor::nestedDirectories()
+{
+    QTemporaryDir sourceDir;
+    QVERIFY(sourceDir.isValid());
+    QDir src(sourceDir.path());
+    QVERIFY(src.mkpath(u"sub/deeper"_s));
+    createFile(src.filePath(u"sub/file"_s), "one");
+    createFile(src.filePath(u"sub/deeper/file"_s), "two");
+    QVERIFY(QFile::setPermissions(src.filePath(u"sub/deeper/file"_s),
+                                  QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner));
+
+    const QStringList entries { u"sub"_s, u"sub/file"_s, u"sub/deeper"_s, u"sub/deeper/file"_s };
+    auto package = createPackage(src, entries);
+    PackageExtractor extractor(QUrl::fromLocalFile(package->fileName()), m_extractDir->path());
+    QVERIFY2(extractor.extract(), qPrintable(extractor.errorString()));
+
+    QDir dest(m_extractDir->path());
+    QVERIFY(QFileInfo(dest.filePath(u"sub/deeper"_s)).isDir());
+    QCOMPARE(readFile(dest.filePath(u"sub/file"_s)), "one"_ba);
+    QCOMPARE(readFile(dest.filePath(u"sub/deeper/file"_s)), "two"_ba);
+#if defined(Q_OS_UNIX)
+    QVERIFY(!QFileInfo(dest.filePath(u"sub/file"_s)).isExecutable());
+    QVERIFY(QFileInfo(dest.filePath(u"sub/deeper/file"_s)).isExecutable());
+#endif
+
+    QStringList reportEntries = extractor.installationReport().files();
+    QStringList expectedEntries = entries;
+    reportEntries.sort();
+    expectedEntries.sort();
+    QCOMPARE(reportEntries, expectedEntries);
+}
+
+void tst_PackageExtractor::invalidEntryPath_data()
+{
+    QTest::addColumn<QStringList>("entries");
+    QTest::addColumn<QString>("errorString");
+
+    const QString outside = u"~invalid archive entry .*: pointing outside of extraction directory"_s;
+    const QString malformed = u"~invalid archive entry .*: empty or '\\.' path component"_s;
+
+    QTest::newRow("dotdot")          << QStringList { u"../outside"_s } << outside;
+    QTest::newRow("dotdot-nested")   << QStringList { u"sub"_s, u"sub/../../outside"_s } << outside;
+    QTest::newRow("absolute")        << QStringList { u"/file"_s } << outside;
+#if !defined(Q_OS_WIN)
+    QTest::newRow("backslash")       << QStringList { u"sub\\file"_s } << outside;
+#endif
+    QTest::newRow("empty-component") << QStringList { u"sub"_s, u"sub//file"_s } << malformed;
+    QTest::newRow("dot-prefix")      << QStringList { u"./file"_s } << malformed;
+    QTest::newRow("dot-component")   << QStringList { u"sub"_s, u"sub/./file"_s } << malformed;
+}
+
+void tst_PackageExtractor::invalidEntryPath()
+{
+    QFETCH(QStringList, entries);
+    QFETCH(QString, errorString);
+
+    // all the entry names above resolve to existing files relative to src/
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    QDir src(tmp.filePath(u"src"_s));
+    QVERIFY(src.mkpath(u"sub"_s));
+    createFile(tmp.filePath(u"outside"_s));
+    createFile(src.filePath(u"file"_s));
+    createFile(src.filePath(u"sub/file"_s));
+#if !defined(Q_OS_WIN)
+    createFile(src.filePath(u"sub\\file"_s));
+#endif
+
+    auto package = createPackage(src, entries);
+    PackageExtractor extractor(QUrl::fromLocalFile(package->fileName()), m_extractDir->path());
+    QVERIFY(!extractor.extract());
+    QVERIFY(!extractor.wasCanceled());
+    QT_AM_CHECK_ERRORSTRING(extractor.errorString(), errorString);
+
+    // a leading "sub" directory entry is legitimately created, but no file may have been written
+    QStringList files;
+    for (QDirIterator it(m_extractDir->path(), QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); it.hasNext(); )
+        files << it.next();
+    QVERIFY2(files.isEmpty(), qPrintable(files.join(u' ')));
+}
+
+void tst_PackageExtractor::duplicateEntry()
+{
+    QTemporaryDir sourceDir;
+    QVERIFY(sourceDir.isValid());
+    createFile(sourceDir.filePath(u"file"_s));
+
+    auto package = createPackage(QDir(sourceDir.path()), { u"file"_s, u"file"_s });
+    PackageExtractor extractor(QUrl::fromLocalFile(package->fileName()), m_extractDir->path());
+    QVERIFY(!extractor.extract());
+    QT_AM_CHECK_ERRORSTRING(extractor.errorString(), u"~could not create file .*[Ff]ile exists"_s);
+}
+
+// The former canonicalPath() check accepted this entry: its parent directory resolves back into
+// the extraction directory through the symlink. Lexically it points outside and must be rejected.
+void tst_PackageExtractor::symlinkBypass()
+{
+#if !defined(Q_OS_UNIX)
+    QSKIP("No symlink support on this platform");
+#else
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    QDir src(tmp.filePath(u"src"_s));
+    QVERIFY(src.mkpath(u"."_s));
+    QVERIFY(QDir(tmp.path()).mkdir(u"link"_s));
+    createFile(tmp.filePath(u"link/evil"_s));
+
+    QDir extractDir(m_extractDir->path());
+    QVERIFY(extractDir.mkdir(u"dest"_s));
+    QVERIFY(QFile::link(extractDir.filePath(u"dest"_s), extractDir.filePath(u"link"_s)));
+
+    auto package = createPackage(src, { u"../link/evil"_s });
+    PackageExtractor extractor(QUrl::fromLocalFile(package->fileName()), extractDir.filePath(u"dest"_s));
+    QVERIFY(!extractor.extract());
+    QT_AM_CHECK_ERRORSTRING(extractor.errorString(),
+                            u"~invalid archive entry .*: pointing outside of extraction directory"_s);
+    QVERIFY(QDir(extractDir.filePath(u"dest"_s)).isEmpty());
+#endif
+}
+
+void tst_PackageExtractor::extendedAttributes()
+{
+#if !defined(Q_OS_LINUX)
+    QSKIP("Extended attributes are only supported on Linux");
+#else
+    QTemporaryDir sourceDir;
+    QVERIFY(sourceDir.isValid());
+    QDir src(sourceDir.path());
+    QVERIFY(src.mkdir(u"sub"_s));
+    createFile(src.filePath(u"sub/file"_s), "content");
+
+    // user.* attributes need no privileges, but not every filesystem supports them. Anything else
+    // already present (e.g. security.selinux) could not be recreated by the unprivileged extractor.
+    for (const QString &path : { src.filePath(u"sub"_s), src.filePath(u"sub/file"_s) }) {
+        const QByteArray localPath = QFile::encodeName(path);
+        if (::setxattr(localPath.constData(), "user.am-test", "value", 5, 0) != 0)
+            QSKIP("The filesystem does not support user extended attributes");
+        char names[256];
+        const ssize_t size = ::listxattr(localPath.constData(), names, sizeof(names));
+        if ((size < 0) || (QByteArray(names, size) != QByteArray("user.am-test\0", 13)))
+            QSKIP("The source files have extended attributes beyond the test's control");
+    }
+
+    auto package = createPackage(src, { u"sub"_s, u"sub/file"_s }, true /*extendedAttributes*/);
+    PackageExtractor extractor(QUrl::fromLocalFile(package->fileName()), m_extractDir->path());
+    QVERIFY2(extractor.extract(), qPrintable(extractor.errorString()));
+
+    QDir dest(m_extractDir->path());
+    QCOMPARE(readFile(dest.filePath(u"sub/file"_s)), "content"_ba);
+    for (const QString &path : { dest.filePath(u"sub"_s), dest.filePath(u"sub/file"_s) }) {
+        char value[16];
+        const ssize_t size = ::getxattr(QFile::encodeName(path).constData(), "user.am-test", value, sizeof(value));
+        QCOMPARE(size, ssize_t(5));
+        QCOMPARE(QByteArray(value, 5), "value"_ba);
+    }
+#endif
 }
 
 void tst_PackageExtractor::oversizedHeader()

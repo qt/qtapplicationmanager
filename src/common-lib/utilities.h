@@ -6,9 +6,10 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
-#include <functional>
 #include <memory>
+#include <optional>
 #include <utility>
+#include <tuple>
 
 #include <QtCore/QVector>
 #include <QtCore/QByteArray>
@@ -77,32 +78,33 @@ inline QString toAbsoluteFilePath(const QString &path, const QString &baseDir = 
 */
 Q_APPMANCOMMON_EXPORT void recursiveMergeVariantMap(QVariantMap &into, const QVariantMap &from);
 
-enum class RecursiveOperationType
-{
-    EnterDirectory,
-    LeaveDirectory,
-    File
-};
+/*! \internal
+    Normalizes \a path for removeRecursively(): trailing slashes are dropped and the result is
+    split into the parent directory and the leaf entry name. Returns \c std::nullopt for an empty
+    path, the filesystem root and a \c . or \c .. leaf, none of which name a removable entry.
+*/
+Q_APPMANCOMMON_EXPORT std::optional<std::tuple<QString, QString>> sanitizeAsDirAndEntry(const QString &path);
 
 /*! \internal
+    Deletes \a path and everything below it, without ever following a symlink: a symlink at
+    \a path itself (or anywhere inside) is unlinked, not followed. On Unix, the parent directory
+    is resolved once and the whole walk is done relative to verified directory descriptors, so a
+    concurrent swap of a directory for a symlink cannot redirect it. The walk stops with EXDEV at
+    anything on another device (mounts, but also btrfs subvolumes) and leaves the tree partially
+    removed in that case. Paths rejected by sanitizeAsDirAndEntry() fail with EINVAL.
 
-    Recursively iterates over the file-system tree at \a path and calls the
-    functor \a operation for each entry.
+    Returns \c false with \c errno set by the failing syscall.
+*/
+Q_APPMANCOMMON_EXPORT bool removeRecursively(const QString &path);
 
-    \c path is always the file-path to the current entry. For files, \a
-    operation will only be called once (\c{type == File}), whereas for
-    directories, the functor will be triggered twice: once when entering the
-    directory (\c{type == EnterDirectory}) and once when all sub-directories
-    and files have been processed (\c{type == LeaveDirectory}).
- */
-Q_APPMANCOMMON_EXPORT bool recursiveOperation(const QString &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
-
-// convenience
-Q_APPMANCOMMON_EXPORT bool recursiveOperation(const QByteArray &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
-Q_APPMANCOMMON_EXPORT bool recursiveOperation(const QDir &path, const std::function<bool(const QString &, RecursiveOperationType)> &operation);
-
-// makes files and directories writable, then deletes them
-Q_APPMANCOMMON_EXPORT bool safeRemove(const QString &path, RecursiveOperationType type);
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+/*! \internal
+    Same as removeRecursively(const QString &), but for the single \a entry inside the
+    already opened directory \a dirFd, so the caller can validate that directory before
+    anything is resolved or deleted.
+*/
+Q_APPMANCOMMON_EXPORT bool removeRecursively(int dirFd, const QByteArray &entry);
+#endif
 
 Q_APPMANCOMMON_EXPORT qint64 getParentPid(qint64 pid);
 Q_APPMANCOMMON_EXPORT size_t getProcessName(qint64 pid, char *buffer, size_t bufferSize);

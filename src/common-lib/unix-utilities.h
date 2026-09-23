@@ -14,11 +14,15 @@
 #  include <QtCore/qbasicatomic.h>
 #  include <QtCore/QByteArray>
 #  include <QtCore/QSet>
+#  include <QtCore/QList>
 
+#  include <optional>
+#  include <utility>
 #  include <vector>
 
 #  include <sys/types.h>
 #  include <sys/param.h>
+#  include <dirent.h>
 
 struct passwd;
 struct group;
@@ -167,12 +171,9 @@ public:
     ~Fd() { reset(); }
     int get() const { return m_fd; }
     int release() { return m_fd.fetchAndStoreOrdered(-1); }
-    void reset(int newFd = -1)
-    {
-        int oldFd = m_fd.fetchAndStoreOrdered(newFd);
-        if ((oldFd >= 0) && (oldFd != newFd))
-            closeImpl(oldFd);
-    }
+    void reset(int newFd = -1);
+    // dup() with FD_CLOEXEC set; an invalid Fd on failure, with errno set
+    [[nodiscard]] Fd duplicate() const;
 
     explicit operator bool() const { return m_fd != -1; }
     explicit operator int() const { return m_fd; }
@@ -187,8 +188,28 @@ public:
 
 private:
     QBasicAtomicInt m_fd = -1;
+};
 
-    static void closeImpl(int fd);
+
+class Q_APPMANCOMMON_EXPORT Dir
+{
+public:
+    Dir() = default;
+    explicit Dir(Fd &&fd); // takes ownership!
+    Dir(const Dir &) = delete;
+    Dir(Dir &&mv) noexcept : m_dir(std::exchange(mv.m_dir, nullptr)) { }
+    ~Dir();
+
+    Dir &operator=(const Dir &) = delete;
+    Dir &operator=(Dir &&mv) noexcept;
+
+    explicit operator bool() const { return m_dir != nullptr; }
+
+    // All entry names except "." and "..". Returns std::nullopt with errno set on error.
+    [[nodiscard]] std::optional<QList<QByteArray>> entryNames();
+
+private:
+    DIR *m_dir = nullptr;
 };
 
 } // namespace Unix

@@ -116,11 +116,11 @@ void tst_ControllerTool::initTestCase()
 
     try {
         if (auto idir = m_config->yaml.applications.installationDir; !idir.isEmpty()) {
-            recursiveOperation(idir, safeRemove);
+            removeRecursively(idir);
             QVERIFY(QDir::root().mkpath(idir));
         }
         if (auto ddir = m_config->yaml.applications.documentDir; !ddir.isEmpty()) {
-            recursiveOperation(ddir, safeRemove);
+            removeRecursively(ddir);
             QVERIFY(QDir::root().mkpath(ddir));
         }
 

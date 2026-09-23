@@ -14,6 +14,8 @@
 
 #  include <array>
 #  include <cerrno>
+#  include <cstring>
+#  include <utility>
 #  include <unistd.h>
 #  include <pwd.h>
 #  include <grp.h>
@@ -310,9 +312,70 @@ Group::Group(const struct ::group *gr)
 ///////////////////////////////////////////////////////////////////////
 
 
-void Fd::closeImpl(int fd)
+void Fd::reset(int newFd)
 {
-    qt_safe_close(fd);
+    int oldFd = m_fd.fetchAndStoreOrdered(newFd);
+    if ((oldFd >= 0) && (oldFd != newFd))
+        qt_safe_close(oldFd);
+}
+
+Fd Fd::duplicate() const
+{
+    return Fd(qt_safe_dup(m_fd));
+}
+
+
+///////////////////////////////////////////////////////////////////////
+// Dir
+///////////////////////////////////////////////////////////////////////
+
+
+Dir::Dir(Fd &&fd)
+{
+    int rawFd = fd.release();
+    if (rawFd < 0)
+        return; // keep errno from whatever produced the invalid Fd
+
+    m_dir = ::fdopendir(rawFd);
+    if (!m_dir) {
+        int e = errno;
+        qt_safe_close(rawFd); // fdopendir() leaves the fd open on failure
+        errno = e;
+    }
+}
+
+Dir::~Dir()
+{
+    if (m_dir)
+        ::closedir(m_dir);
+}
+
+Dir &Dir::operator=(Dir &&mv) noexcept
+{
+    if (this != &mv) {
+        if (m_dir)
+            ::closedir(m_dir);
+        m_dir = std::exchange(mv.m_dir, nullptr);
+    }
+    return *this;
+}
+
+std::optional<QList<QByteArray>> Dir::entryNames()
+{
+    if (!m_dir) {
+        errno = EBADF;
+        return std::nullopt;
+    }
+
+    QList<QByteArray> names;
+    errno = 0;
+    while (struct ::dirent *de = ::readdir(m_dir)) {
+        if ((::strcmp(de->d_name, ".") != 0) && (::strcmp(de->d_name, "..") != 0))
+            names.emplace_back(de->d_name);
+    }
+    if (errno != 0) // readdir() returns nullptr both at the end of the stream and on error
+        return std::nullopt;
+    return names;
 }
 
 } // namespace Unix

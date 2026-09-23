@@ -90,7 +90,7 @@ public:
     ~TemporaryDir()
     {
         if (autoRemove())
-            recursiveOperation(path(), safeRemove);
+            removeRecursively(path());
     }
 private:
     Q_DISABLE_COPY_MOVE(TemporaryDir)

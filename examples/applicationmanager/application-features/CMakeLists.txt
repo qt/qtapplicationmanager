@@ -39,7 +39,7 @@ add_subdirectory(apps/Twins)
 add_subdirectory(apps/Compositor)
 add_subdirectory(apps/Crash)
 add_subdirectory(apps/Glitches)
-if(QT_FEATURE_am_multi_process)
+if(QT_FEATURE_am_multi_process AND TARGET Qt::Widgets)
     add_subdirectory(apps/Widgets)
 endif()
 

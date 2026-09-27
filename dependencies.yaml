@@ -9,7 +9,7 @@ dependencies:
     ref: 3ac3e1d6612d8bccbd96adaa73692b75c9bf0c2a
     required: false
   ../qthttpserver:
-    ref: 5c953d6540992a4db729ea7fa65338bf2570e131
+    ref: b9b95d5ef79f88948c6f5f6f91742cbeea8cea1e
     required: false
   ../qttools:
     ref: 613a6fbf0a7998010ab2fda260b64066d66a021d

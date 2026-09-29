@@ -361,7 +361,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
         .msg_name    = (struct ::sockaddr *) &sa,
         .msg_namelen = saLen,
         .msg_iov     = iov.data(),
-        .msg_iovlen  = iovLen,
+        .msg_iovlen  = static_cast<decltype(::msghdr::msg_iovlen)>(iovLen), // MUSL uses int
         .msg_control = nullptr,
         .msg_controllen = 0,
         .msg_flags   = 0,

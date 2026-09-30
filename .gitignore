@@ -1,9 +1,6 @@
 *.o
 *.a
 *.prl
-*~
-*.orig
-*.bak
 *.obj
 moc_*
 qrc_*
@@ -62,3 +59,7 @@ examples/applicationmanager/custom-appman/custom-appman
 tests/qml/crash/apps/tld.test.crash/terminator2/Terminator/
 examples/applicationmanager/fancyapps/apps/crash/Terminator/
 examples/applicationmanager/fancyapps/apps/widgets/widgets
+
+*~
+*.bak
+*.orig

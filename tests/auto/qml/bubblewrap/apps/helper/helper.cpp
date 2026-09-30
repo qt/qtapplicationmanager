@@ -5,6 +5,8 @@
 #include <QtCore/QFile>
 #include "helper.h"
 
+using namespace Qt::StringLiterals;
+
 Helper::Helper(QObject *parent)
     : QObject{parent}
 {}
@@ -29,7 +31,7 @@ QString Helper::readFile(const QString &path)
 
 bool Helper::canWrite(const QString &dirPath)
 {
-    const QString testFile = dirPath + u"/qt-am-bwrap-write-test";
+    const QString testFile = dirPath + u"/qt-am-bwrap-write-test"_s;
     QFile f(testFile);
     if (!f.open(QIODevice::WriteOnly))
         return false;

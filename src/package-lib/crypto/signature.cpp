@@ -172,8 +172,8 @@ void SignaturePrivate::checkSignerCertificate(const Certificate &signer)
     if (requiredKeyUsages && (certVersion >= QVersionNumber(6, 11))) {
         if (signer.keyUsages() != requiredKeyUsages) {
             throw Exception("Key usage mismatch on certificate: expected 0x%1, but got 0x%2")
-                .arg(requiredKeyUsages.toInt(), 3, 16, u'0')
-                .arg(signer.keyUsages().toInt(), 3, 16, u'0');
+                .arg(requiredKeyUsages.toInt(), 3, 16, QChar(u'0'))
+                .arg(signer.keyUsages().toInt(), 3, 16, QChar(u'0'));
         }
     }
 }

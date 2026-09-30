@@ -24,7 +24,7 @@ void ToolApplicationBase::setName(const char *name)
 {
     // This needs to run before the QCoreApplication c'tor and we use the comma operator in
     // our derived class' c'tor to achieve that.
-    QCoreApplication::setApplicationName(u"Qt ApplicationManager " + QString::fromLatin1(name));
+    QCoreApplication::setApplicationName(u"Qt ApplicationManager "_s + QString::fromLatin1(name));
     QCoreApplication::setOrganizationName(u"QtProject"_s);
     QCoreApplication::setOrganizationDomain(u"qt-project.org"_s);
     QCoreApplication::setApplicationVersion(QStringLiteral(QT_AM_VERSION_STR));
@@ -66,7 +66,7 @@ uint ToolApplicationBase::parse(QCommandLineParser &clp)
 
     const QString descriptionTemplate =
         u"\n"_s + QCoreApplication::applicationName()
-        + u"%1\n\nSee also https://doc.qt.io/QtApplicationManager/" + m_toolName + u".html";
+        + u"%1\n\nSee also https://doc.qt.io/QtApplicationManager/"_s + m_toolName + u".html"_s;
 
 
     if (!clp.positionalArguments().isEmpty()) {
@@ -91,12 +91,12 @@ uint ToolApplicationBase::parse(QCommandLineParser &clp)
     for (const auto &[command, name, description] : std::as_const(m_commands))
         longestName = std::max(longestName, qstrlen(name));
     for (const auto &[command, name, description] : std::as_const(m_commands)) {
-        commandsDescriptions += u"  " + QString::fromLatin1(name)
+        commandsDescriptions += u"  "_s + QString::fromLatin1(name)
                                 + QString(1 + qsizetype(longestName - qstrlen(name)), u' ')
                                 + QString::fromLatin1(description) + u'\n';
     }
-    commandsDescriptions += u"\nMore information about each command can be obtained by running\n  "
-                            + m_toolName + u" <command> --help";
+    commandsDescriptions += u"\nMore information about each command can be obtained by running\n  "_s
+                            + m_toolName + u" <command> --help"_s;
 
     clp.setApplicationDescription(descriptionTemplate.arg(commandsDescriptions));
     if (clp.isSet(u"help"_s))
@@ -143,7 +143,7 @@ QString ToolApplicationBase::parsePasswordOption(const QString &option, const QS
         return readPasswordFromFile(f);
 #endif
     } else if (option == u"stdin"_s) {
-        return readPasswordFromConsole(hint + u": ");
+        return readPasswordFromConsole(hint + u": "_s);
     } else {
         throw Exception("Unknown password format. Needs to be in the form "
                         "pass:<password>, env:<envvar>, file:<path>, fd:<number> or stdin. "

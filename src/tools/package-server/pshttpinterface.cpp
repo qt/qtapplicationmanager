@@ -5,7 +5,9 @@
 #include <cstdio>
 
 #include <QHttpServer>
-#include <QHttpServerConfiguration>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 11, 0)
+#  include <QHttpServerConfiguration>
+#endif
 #include <QTcpServer>
 #include <QJsonArray>
 #include <QJsonObject>

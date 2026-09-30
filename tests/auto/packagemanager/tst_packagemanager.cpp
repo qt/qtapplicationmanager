@@ -425,7 +425,7 @@ void tst_PackageManager::packageInstallation()
 
         // install (or update) the package
 
-        QString url = AM_TESTDATA_DIR u"packages/" + (pass == 1 ? packageName : updatePackageName);
+        QString url = AM_TESTDATA_DIR u"packages/"_s + (pass == 1 ? packageName : updatePackageName);
 
         // dev-signed packages can only be installed via the controller origin
         QString taskId = devSigned ? startDevPackageInstallation(url)

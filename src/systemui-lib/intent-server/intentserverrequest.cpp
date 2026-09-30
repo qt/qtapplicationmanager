@@ -12,7 +12,7 @@ QT_BEGIN_NAMESPACE_AM
 IntentServerRequest::IntentServerRequest(const QString &requestingApplicationId, const QString &intentId,
                                          const QVector<Intent *> &potentialIntents,
                                          const QVariantMap &parameters, bool broadcast)
-    : m_id(QUuid::createUuid())
+    : m_id(QUuid::createUuidV7())
     , m_state(State::ReceivedRequest)
     , m_broadcast(broadcast)
     , m_intentId(intentId)

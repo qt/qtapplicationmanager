@@ -212,12 +212,6 @@ dbus_bool_t   _dbus_string_append_len            (DBusString        *str,
                                                   const char        *buffer,
                                                   int                len);
 DBUS_PRIVATE_EXPORT
-dbus_bool_t   _dbus_string_append_int            (DBusString        *str,
-                                                  long               value);
-DBUS_PRIVATE_EXPORT
-dbus_bool_t   _dbus_string_append_uint           (DBusString        *str,
-                                                  unsigned long      value);
-DBUS_PRIVATE_EXPORT
 dbus_bool_t   _dbus_string_append_byte           (DBusString        *str,
                                                   unsigned char      byte);
 DBUS_PRIVATE_EXPORT

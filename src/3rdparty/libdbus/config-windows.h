@@ -3,7 +3,7 @@
 #ifndef _DBUS_CONFIG_H
 #define _DBUS_CONFIG_H
 
-#define VERSION "1.15.9"
+#define VERSION "1.15.12"
 
 /* On Windows, we expect to be using msvcrt.dll-compatible printf
  * (%I64u instead of %llu) unless otherwise specified. This must be

@@ -566,18 +566,8 @@ _dbus_keyring_reload (DBusKeyring *keyring,
       i = 0;
       while (i < n_keys)
         {
-          if (!_dbus_string_append_int (&contents,
-                                        keys[i].id))
-            goto nomem;
-
-          if (!_dbus_string_append_byte (&contents, ' '))
-            goto nomem;
-
-          if (!_dbus_string_append_printf (&contents, "%" DBUS_INT64_MODIFIER "d",
-                                           keys[i].creation_time))
-            goto nomem;
-
-          if (!_dbus_string_append_byte (&contents, ' '))
+          if (!_dbus_string_append_printf (&contents, "%d %" DBUS_INT64_MODIFIER "d ",
+                                           keys[i].id, keys[i].creation_time))
             goto nomem;
 
           if (!_dbus_string_hex_encode (&keys[i].secret, 0,

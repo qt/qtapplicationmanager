@@ -299,11 +299,11 @@ _dbus_assert_error_xor_bool (const DBusError *error,
  * This is based on C11 max_align_t, but falls back to DBusBasicValue for
  * older C standards.
  */
-// #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
-// typedef max_align_t dbus_max_align_t;
-// #else
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) && !defined(_WIN32)
+typedef max_align_t dbus_max_align_t;
+#else
 typedef DBusBasicValue dbus_max_align_t;
-// #endif
+#endif
 
 DBUS_PRIVATE_EXPORT
 char*       _dbus_strdup                (const char  *str);

@@ -670,13 +670,7 @@ sha1_handle_first_client_response (DBusAuth         *auth,
                           &tmp2, _dbus_string_get_length (&tmp2)))
     goto out;
 
-  if (!_dbus_string_append (&tmp2, " "))
-    goto out;
-
-  if (!_dbus_string_append_int (&tmp2, auth->cookie_id))
-    goto out;
-
-  if (!_dbus_string_append (&tmp2, " "))
+  if (!_dbus_string_append_printf (&tmp2, " %d ", auth->cookie_id))
     goto out;  
   
   if (!_dbus_generate_random_bytes (&tmp, N_CHALLENGE_BYTES, &error))

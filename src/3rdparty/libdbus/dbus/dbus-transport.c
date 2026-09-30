@@ -32,7 +32,6 @@
 #include "dbus-auth.h"
 #include "dbus-address.h"
 #include "dbus-credentials.h"
-//#include "dbus-mainloop.h"
 #include "dbus-message.h"
 #ifdef DBUS_ENABLE_EMBEDDED_TESTS
 #include "dbus-server-debug-pipe.h"

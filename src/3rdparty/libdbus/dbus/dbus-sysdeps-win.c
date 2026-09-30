@@ -2759,7 +2759,7 @@ static const char *cDBusDaemonMutex = "DBusDaemonMutex";
 static const char *cDBusDaemonAddressInfo = "DBusDaemonAddressInfo";
 
 /* custom command line parameter for autolaunching daemon */
-static const char *autolaunch_custom_command_line_parameter = "";
+static const char *autolaunch_custom_command_line_parameter = NULL;
 
 /**
  * Set command line parameters for the dbus daemon to start

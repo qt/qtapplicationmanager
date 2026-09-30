@@ -3403,7 +3403,8 @@ reply_handler_timeout (void *data)
  * @param pending_return return location for a #DBusPendingCall
  * object, or #NULL if connection is disconnected or when you try to
  * send Unix file descriptors on a connection that does not support
- * them.
+ * them. The caller owns this reference, and is responsible for calling
+ * dbus_pending_call_unref() when it is no longer needed.
  * @param timeout_milliseconds timeout in milliseconds, -1 (or
  *  #DBUS_TIMEOUT_USE_DEFAULT) for default or #DBUS_TIMEOUT_INFINITE for no
  *  timeout

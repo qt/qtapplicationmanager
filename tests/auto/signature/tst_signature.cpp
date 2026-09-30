@@ -534,16 +534,16 @@ void tst_Signature::verifyCertHuge()
 
     QStringList allPackageIds;
     for (int i = 1; i <= 100; ++i)
-        allPackageIds << u"pkg-huge-%1"_s.arg(i, 3, 10, u'0');
+        allPackageIds << u"pkg-huge-%1"_s.arg(i, 3, 10, QChar(u'0'));
     QStringList allApplicationIds;
     for (int i = 1; i <= 100; ++i)
-        allApplicationIds << u"app-huge-%1"_s.arg(i, 3, 10, u'0');
+        allApplicationIds << u"app-huge-%1"_s.arg(i, 3, 10, QChar(u'0'));
     QStringList allCapabilities;
     for (int i = 1; i <= 1000; ++i)
-        allCapabilities << u"cap-huge-%1"_s.arg(i, 4, 10, u'0');
+        allCapabilities << u"cap-huge-%1"_s.arg(i, 4, 10, QChar(u'0'));
     QStringList allCategories;
     for (int i = 1; i <= 200; ++i)
-        allCategories << u"cat-huge-%1"_s.arg(i, 3, 10, u'0');
+        allCategories << u"cat-huge-%1"_s.arg(i, 3, 10, QChar(u'0'));
 
     QByteArray hash("foo");
     Signature s(hash);

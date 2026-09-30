@@ -971,7 +971,7 @@ YamlParserException::YamlParserException(const YamlParser *p, const char *errorS
     if (isProblem)
         m_errorString.append(u": %1"_s.arg(QString::fromUtf8(p->d->parser.problem)));
     if (!context.isEmpty())
-        m_errorString.append(u"\n %1\n %2^"_s.arg(context, QString(contextPos, u' ')));
+        m_errorString.append(u"\n %1\n %2^"_s.arg(context, QString(contextPos, QChar(u' '))));
 }
 
 

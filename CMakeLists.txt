@@ -11,14 +11,6 @@ project(QtApplicationManager
     LANGUAGES CXX C
 )
 
-set(QT_NO_INTERNAL_COMPATIBILITY_FUNCTIONS TRUE)
-add_compile_definitions(
-    "QT_ENABLE_STRICT_MODE_UP_TO=QT_VERSION_CHECK(6,11,0)"
-    "QT_NO_SINGLE_ARGUMENT_QHASH_OVERLOAD=1"
-    "QT_NO_QPAIR=1"
-    "QT_LEAN_HEADERS=1"
-)
-
 # populate the platform check variables
 find_package(Qt6 ${PROJECT_VERSION} CONFIG REQUIRED COMPONENTS BuildInternals)
 
@@ -51,7 +43,22 @@ find_package(Qt6 ${PROJECT_VERSION} QUIET CONFIG OPTIONAL_COMPONENTS
 )
 
 if (${Qt6_VERSION} VERSION_LESS "${MIN_QT_VERSION}")
-    message(FATAL_ERROR "Qt ${MIN_QT_VERSION} or newer is required for building version ${PROJECT_VERSION} of the QtApplicationManager")
+    if (${Qt6_VERSION} VERSION_GREATER_EQUAL "6.8.0")
+        message(WARNING "Qt 6.8 is not officially supported due to potentially incompatible Wayland changes - continuing anyway ...")
+    else()
+        message(FATAL_ERROR "Qt ${MIN_QT_VERSION} or newer is required for building version ${PROJECT_VERSION} of the QtApplicationManager")
+    endif()
+endif()
+
+set(QT_NO_INTERNAL_COMPATIBILITY_FUNCTIONS TRUE)
+add_compile_definitions(
+    "QT_ENABLE_STRICT_MODE_UP_TO=QT_VERSION_CHECK(6,11,0)"
+    "QT_NO_SINGLE_ARGUMENT_QHASH_OVERLOAD=1"
+    "QT_LEAN_HEADERS=1"
+)
+
+if(${Qt6_VERSION} VERSION_GREATER_EQUAL "6.9.0")
+    add_compile_definitions("QT_NO_QPAIR=1")
 endif()
 
 include(src/systemui-lib/Qt6AppManSystemUIPrivateMacros.cmake)

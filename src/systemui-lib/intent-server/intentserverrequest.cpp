@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include "intentserverrequest.h"
+#include "utilities.h"
 
 using namespace Qt::StringLiterals;
 
@@ -12,7 +13,7 @@ QT_BEGIN_NAMESPACE_AM
 IntentServerRequest::IntentServerRequest(const QString &requestingApplicationId, const QString &intentId,
                                          const QVector<Intent *> &potentialIntents,
                                          const QVariantMap &parameters, bool broadcast)
-    : m_id(QUuid::createUuidV7())
+    : m_id(createUuidV7())
     , m_state(State::ReceivedRequest)
     , m_broadcast(broadcast)
     , m_intentId(intentId)

@@ -148,6 +148,9 @@ Q_APPMANCOMMON_EXPORT QString testRootPathPrefix();
 // on non-Linux platforms or older kernels. Cached after the first call.
 Q_APPMANCOMMON_EXPORT bool isPidFileSystemSupported() noexcept;
 
+// Qt 6.8 does not provide QUuid::createUuidV7(), so we provide our own implementation.
+Q_APPMANCOMMON_EXPORT QUuid createUuidV7() noexcept;
+
 QT_END_NAMESPACE_AM
 
 #endif // UTILITIES_H

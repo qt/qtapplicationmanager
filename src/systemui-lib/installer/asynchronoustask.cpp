@@ -7,6 +7,7 @@
 
 #include "qtappmansystemuiglobal.h"
 #include "asynchronoustask.h"
+#include "utilities.h"
 
 using namespace Qt::StringLiterals;
 
@@ -14,7 +15,7 @@ QT_BEGIN_NAMESPACE_AM
 
 AsynchronousTask::AsynchronousTask(Origin origin, QObject *parent)
     : QThread(parent)
-    , m_id(QUuid::createUuidV7().toString())
+    , m_id(createUuidV7().toString())
     , m_origin(origin)
 {
     static int once = qRegisterMetaType<AsynchronousTask::TaskState>();

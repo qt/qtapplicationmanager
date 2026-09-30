@@ -5,6 +5,7 @@
 #ifndef APPMANGLOBAL_H
 #define APPMANGLOBAL_H
 
+#include <QtCore/QtVersionChecks>
 #include <QtAppManCommon/qtappmancommon-config.h>
 
 #define QT_BEGIN_NAMESPACE_AM  namespace QtAM {
@@ -15,6 +16,10 @@
 QT_BEGIN_NAMESPACE_AM
 // make sure the namespace exists
 QT_END_NAMESPACE_AM
+
+#if defined(QT_DEPRECATED) && (QT_VERSION < QT_VERSION_CHECK(6, 9, 0))
+# define QT_DEPRECATED_VERSION_X_6_12(text) // missing in 6.8
+#endif
 
 #if defined(QT_STATIC)
 #  if !defined(AM_COMPILING_APPMAN) && !defined(AM_COMPILING_LAUNCHER) && !defined(QT_TESTCASE_BUILDDIR)

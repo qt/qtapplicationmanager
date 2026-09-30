@@ -53,6 +53,20 @@ public:
         return *this;
     }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
+    Exception &arg(const char *str) noexcept
+    {
+        m_errorString = m_errorString.arg(QString::fromUtf8(str));
+        return *this;
+    }
+
+    Exception &arg(QByteArrayView bav) noexcept
+    {
+        m_errorString = m_errorString.arg(QString::fromUtf8(bav.constData()));
+        return *this;
+    }
+#endif
+
     // this will generate compiler errors if there's no suitable QString::arg(const C &) overload
     template <typename C> typename std::enable_if_t<QtPrivate::IsSequentialContainer<C>::Value, Exception> &
     arg(const C &c) noexcept

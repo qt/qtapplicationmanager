@@ -13,6 +13,10 @@
 #include <QQmlContext>
 #include <QQmlEngine>
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
+#  include <QRandomGenerator>
+#endif
+
 #include "utilities.h"
 #include "unix-utilities.h"
 #include "exception.h"
@@ -652,4 +656,38 @@ QString testRootPathPrefix()
 }
 #endif
 
+QUuid createUuidV7() noexcept
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+    return QUuid::createUuidV7();
+#else
+    auto tp = std::chrono::system_clock::now();
+
+    QUuid result;
+
+    using namespace std::chrono;
+    const nanoseconds nsecSinceEpoch = tp.time_since_epoch();
+    const auto msecSinceEpoch = floor<milliseconds>(nsecSinceEpoch);
+    const quint64 frac = (nsecSinceEpoch - msecSinceEpoch).count();
+    // Lower 48 bits of the timestamp
+    const quint64 msecs = quint64(msecSinceEpoch.count()) & 0xffffffffffff;
+    result.data1 = uint(msecs >> 16);
+    result.data2 = ushort(msecs);
+    // rand_a: use a 12-bit sub-millisecond timestamp for additional monotonicity
+    // https://datatracker.ietf.org/doc/html/rfc9562#monotonicity_counters (Method 3)
+
+    // "frac" is a number between 0 and 999,999, so the lowest 20 bits
+    // should be roughly random. Use the high 12 of those for additional
+    // monotonicity.
+    result.data3 = frac >> 8;
+    result.data3 &= 0x0FFF;
+    result.data3 |= ushort(7) << 12;
+
+    // rand_b: 62 bits of random data (64 - 2 bits for the variant)
+    const quint64 random = QRandomGenerator::system()->generate64();
+    memcpy(result.data4, &random, sizeof(quint64));
+    result.data4[0] = (result.data4[0] & 0x3F) | 0x80; // UV_DCE
+    return result;
+#endif
+}
 QT_END_NAMESPACE_AM

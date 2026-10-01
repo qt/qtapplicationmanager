@@ -65,7 +65,7 @@ QString DBusApplicationInterfaceImpl::version() const
 
 void DBusApplicationInterfaceImpl::acknowledgeQuit()
 {
-    QCoreApplication::instance()->quit();
+    QCoreApplication::instance()->exit(0);
 }
 
 QVariantMap DBusApplicationInterfaceImpl::systemProperties() const

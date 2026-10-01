@@ -10,6 +10,7 @@
 #include <sys/mount.h>
 #include <sys/syscall.h>
 #include <sys/wait.h>
+#include <sys/xattr.h>
 #include <sched.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -33,6 +34,7 @@
 
 #include "utilities.h"
 #include "unix-utilities.h"
+#include "dbus-utilities.h"
 #include "exception.h"
 #include "sudo.h"
 
@@ -94,6 +96,10 @@ private Q_SLOTS:
     void removeRecursiveTooDeep();
     void removeRecursiveOutsideTestPrefixRejected();
     void setAllowedRemoveRootsSecondCallDifferentValueThrows();
+
+    // order matters: the first one needs the xattr policy to be unset
+    void setExtendedAttributeBeforePolicyRejected();
+    void setExtendedAttributePolicy();
 
     void bindMount_data();
     void bindMount();
@@ -780,6 +786,124 @@ void tst_Sudo::setAllowedRemoveRootsSecondCallDifferentValueThrows()
                              m_sudo->setAllowedRemoveRecursiveRoots({ m_testRoot.path() + u"/other"_s }));
 }
 
+// Returns the error message of setExtendedAttribute(), or a null string on success.
+static QString setXattrError(SudoClient *sudo, const QString &file, const QByteArray &name)
+{
+    try {
+        sudo->setExtendedAttribute(file, name, "value");
+    } catch (const Exception &e) {
+        return e.errorString();
+    }
+    return { };
+}
+
+// Without a policy there is nothing a caller may set: the helper fails closed.
+void tst_Sudo::setExtendedAttributeBeforePolicyRejected()
+{
+    const QString file = m_testRoot.path() + u"/xattr-no-policy"_s;
+    QVERIFY(QFile(file).open(QIODevice::WriteOnly));
+
+    const QString error = setXattrError(m_sudo, file, "user.am-test");
+    QVERIFY2(error.contains(u"before setAllowedExtendedAttributes"_s), qPrintable(error));
+    QCOMPARE(::getxattr(QFile::encodeName(file).constData(), "user.am-test", nullptr, 0), ssize_t(-1));
+}
+
+// The policy maps directories to allowed attribute names; the most specific directory wins. The
+// target is judged by where it really is: parent symlinks and ".." are resolved, leaf symlinks are
+// refused.
+void tst_Sudo::setExtendedAttributePolicy()
+{
+    const QString root = m_testRoot.path() + u"/xattr"_s;
+    const QString allowed = root + u"/allowed"_s;
+    const QString nested = allowed + u"/nested"_s;
+    const QString outside = root + u"/outside"_s;
+    QVERIFY(QDir().mkpath(nested));
+    QVERIFY(QDir().mkpath(outside));
+    for (const QString &file : { allowed + u"/file"_s, nested + u"/file"_s, outside + u"/file"_s })
+        QVERIFY(QFile(file).open(QIODevice::WriteOnly));
+    QVERIFY(QFile::link(outside, allowed + u"/dirlink"_s));
+    QVERIFY(QFile::link(allowed + u"/file"_s, allowed + u"/filelink"_s));
+    QVERIFY(QDir().mkpath(allowed + u"/sub"_s));
+    QVERIFY(QFile::link(allowed + u"/sub"_s, allowed + u"/inlink"_s)); // stays inside of allowed
+
+    // not every filesystem supports user.* attributes
+    if (::setxattr(QFile::encodeName(allowed + u"/file"_s).constData(), "user.am-probe", "x", 1, 0) != 0)
+        QSKIP("the filesystem of the test directory does not support user extended attributes");
+
+    // does not exist when the policy is set, like a directory on a filesystem that is mounted late
+    const QString late = root + u"/late"_s;
+
+    // different spellings of one directory: conflicting lists are ambiguous, identical ones are fine
+    const QString conflict = root + u"/conflict"_s;
+    const QString same = root + u"/same"_s;
+
+    const QMap<QString, QStringList> policy {
+        { allowed, { u"user.am-allowed"_s } },
+        { nested, { } },
+        { late, { u"user.am-late"_s } },
+        { conflict, { u"user.am-a"_s } },
+        { conflict + u"/."_s, { u"user.am-b"_s } },
+        { same, { u"user.am-same"_s } },
+        { same + u"/."_s, { u"user.am-same"_s } },
+    };
+    QVERIFY_THROWS_NO_EXCEPTION(m_sudo->setAllowedExtendedAttributes(policy));
+    QVERIFY_THROWS_NO_EXCEPTION(m_sudo->setAllowedExtendedAttributes(policy)); // same value -> no-op
+    QVERIFY_THROWS_EXCEPTION(Exception, m_sudo->setAllowedExtendedAttributes({ { allowed, { } } }));
+
+    // allowed name below an allowed directory, for a file and for the directory itself
+    QCOMPARE(setXattrError(m_sudo, allowed + u"/file"_s, "user.am-allowed"), QString());
+    QCOMPARE(setXattrError(m_sudo, allowed, "user.am-allowed"), QString());
+    char value[16];
+    QCOMPARE(::getxattr(QFile::encodeName(allowed + u"/file"_s).constData(), "user.am-allowed", value, sizeof(value)),
+             ssize_t(5));
+    QCOMPARE(QByteArray(value, 5), "value"_ba);
+
+    // directories are resolved when used, not when the policy is set
+    QVERIFY(QDir().mkpath(late));
+    QVERIFY(QFile(late + u"/file"_s).open(QIODevice::WriteOnly));
+    QCOMPARE(setXattrError(m_sudo, late + u"/file"_s, "user.am-late"), QString());
+    QVERIFY2(setXattrError(m_sudo, late + u"/file"_s, "user.am-allowed").contains(u"not allowed"_s),
+             "name of another directory");
+
+    // name not in the list
+    QVERIFY2(setXattrError(m_sudo, allowed + u"/file"_s, "user.am-other").contains(u"not allowed"_s),
+             "unlisted attribute name");
+    // the nested entry with an empty list overrides its parent's
+    QVERIFY2(setXattrError(m_sudo, nested + u"/file"_s, "user.am-allowed").contains(u"not allowed"_s),
+             "nested directory without names");
+    // nothing outside of the listed directories
+    QVERIFY2(setXattrError(m_sudo, outside + u"/file"_s, "user.am-allowed").contains(u"not below"_s),
+             "outside of all directories");
+    // a parent symlink must not smuggle a path in or out
+    QVERIFY2(setXattrError(m_sudo, allowed + u"/dirlink/file"_s, "user.am-allowed").contains(u"not below"_s),
+             "parent symlink");
+    QVERIFY2(setXattrError(m_sudo, allowed + u"/../outside/file"_s, "user.am-allowed").contains(u"not below"_s),
+             "dot-dot");
+    // a symlink as the target itself is not followed
+    QVERIFY(!setXattrError(m_sudo, allowed + u"/filelink"_s, "user.am-allowed").isEmpty());
+    QCOMPARE(::lgetxattr(QFile::encodeName(allowed + u"/filelink"_s).constData(), "user.am-allowed", nullptr, 0),
+             ssize_t(-1));
+    // ... not even when a trailing slash, '.' or '..' would make the kernel follow it
+    for (const QString &spelling : { u"/inlink/"_s, u"/inlink//"_s, u"/inlink/."_s, u"/inlink/./"_s,
+                                     u"/inlink/../inlink/."_s, u"/sub/."_s, u"/sub/.."_s }) {
+        QVERIFY2(!setXattrError(m_sudo, allowed + spelling, "user.am-allowed").isEmpty(),
+                 qPrintable(spelling));
+    }
+    QCOMPARE(::getxattr(QFile::encodeName(allowed + u"/sub"_s).constData(), "user.am-allowed", nullptr, 0),
+             ssize_t(-1));
+    // ... but a trailing slash on a real directory is fine
+    QCOMPARE(setXattrError(m_sudo, allowed + u"/sub/"_s, "user.am-allowed"), QString());
+
+    // one directory listed twice
+    for (const QString &dir : { conflict, same }) {
+        QVERIFY(QDir().mkpath(dir));
+        QVERIFY(QFile(dir + u"/file"_s).open(QIODevice::WriteOnly));
+    }
+    QVERIFY2(setXattrError(m_sudo, conflict + u"/file"_s, "user.am-a").contains(u"multiple times"_s),
+             "conflicting lists for one directory");
+    QCOMPARE(setXattrError(m_sudo, same + u"/file"_s, "user.am-same"), QString());
+}
+
 void tst_Sudo::skipIfNoBindMount()
 {
     if (m_sudo->isFallbackImplementation())
@@ -1064,6 +1188,8 @@ static tst_Sudo *tstSudo = nullptr;
 
 int main(int argc, char **argv)
 {
+    registerDBusTypes();
+
     try {
         Sudo::forkServer(Sudo::DropPrivilegesRegainable);
         tst_Sudo::startedSudoServer = true;

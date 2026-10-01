@@ -124,8 +124,6 @@ public:
     void loadCertificates(const QList<CaCertificate> &caCertificates, const QStringList &crls = { });
     void setMinimumCertificateVersion(const QVersionNumber &version);
     void setAllowedInstallationURLs(const QStringList &allowedURLs);
-    void setAllowedExtendedAttributes(const QStringList &allowedExtendedAttributes);
-    QStringList allowedExtendedAttributes() const;
 
     void lockConfiguration();
     bool isConfigurationLocked() const;

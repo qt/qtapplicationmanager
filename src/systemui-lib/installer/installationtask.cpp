@@ -185,12 +185,8 @@ void InstallationTask::execute()
         connect(m_extractor, &PackageExtractor::progress, this, &AsynchronousTask::progress);
 
         m_extractor->setFileExtractedCallback([this](const QString &f) { checkExtractedFile(f); });
-        m_extractor->setExtendedAttributeCallback([this](const QString &f, QByteArrayView name, QByteArrayView value) {
-            const auto allowedXAttrs = m_pm->allowedExtendedAttributes();
-            if (!allowedXAttrs.contains(QString::fromUtf8(name))) {
-                throw Exception("could not set extended attribute '%1' on file '%2': attribute is not allowed by configuration")
-                        .arg(name).arg(f);
-            }
+        m_extractor->setExtendedAttributeCallback([](const QString &f, QByteArrayView name, QByteArrayView value) {
+            // the allowed attribute names are enforced by sudo
             try {
                 SudoClient::instance()->setExtendedAttribute(f, name.toByteArray(), value.toByteArray());
             } catch (const Exception &e) {

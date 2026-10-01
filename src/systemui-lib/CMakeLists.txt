@@ -125,8 +125,12 @@ if(QT_FEATURE_am_multi_process)
             dbus/notificationinterfaceadaptor_dbus.cpp
         DBUS_INTERFACE_SOURCES
             ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.sudo.xml
+        DBUS_INTERFACE_FLAGS
+            -i dbus-utilities.h
         DBUS_ADAPTOR_SOURCES
             ${CMAKE_CURRENT_SOURCE_DIR}/../dbus-interfaces/io.qt.applicationmanager.sudo.xml
+        DBUS_ADAPTOR_FLAGS
+            -i dbus-utilities.h
     )
 
     if(NOT TARGET Wayland::Server)

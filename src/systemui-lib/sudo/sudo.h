@@ -11,6 +11,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QByteArray>
 #include <QtCore/QFile>
+#include <QtCore/QMap>
 #include <QtCore/QPointer>
 #include <QtCore/QStandardPaths>
 #include <qplatformdefs.h>
@@ -73,6 +74,7 @@ public:
     void setAllowedRemoveRecursiveRoots(const QStringList &roots);
     void bindMountFileSystem(const QString &source, const QString &target, bool readOnly,
                              int namespacePidFd);
+    void setAllowedExtendedAttributes(const QMap<QString, QStringList> &dirsToAttrNames);
     void setExtendedAttribute(const QString &file, const QByteArray &attrName,
                               const QByteArray &attrValue);
 

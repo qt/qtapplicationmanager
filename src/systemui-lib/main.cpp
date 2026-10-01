@@ -127,6 +127,8 @@ int &Main::preConstructor(int &argc, char **argv, InitFlags initFlags)
     }
 #endif
 
+    registerDBusTypes(); // this needs to be done before the potential fork below
+
     if (initFlags & InitFlag::InitializeLogging) {
         Logging::initialize(argc, argv);
         StartupTimer::instance()->checkpoint("after logging initialization");
@@ -609,7 +611,6 @@ void Main::setupSingletons(const Configuration *cfg) noexcept(false)
     }(cfg->yaml.flags.developmentMode);
     m_packageManager->setDevelopmentMode(pmDevMode);
     m_packageManager->setAllowedInstallationURLs(cfg->yaml.installer.allowedURLs);
-    m_packageManager->setAllowedExtendedAttributes(cfg->yaml.installer.allowedExtendedAttributes);
 
     m_applicationManager->setSystemProperties(m_systemProperties.at(SP_SystemUi));
     m_applicationManager->setContainerSelectionConfiguration(cfg->yaml.containers.selection);
@@ -656,9 +657,11 @@ void Main::setupInstaller(const Configuration *cfg) noexcept(false)
 #if QT_CONFIG(am_installer)
     // make sure the installation and document dirs are valid
     Q_ASSERT(!cfg->yaml.applications.installationDir.isEmpty());
-    const auto instPath = QDir(cfg->yaml.applications.installationDir).canonicalPath();
-    const auto docPath = cfg->yaml.applications.documentDir.isEmpty()
-                             ? QString { } : QDir(cfg->yaml.applications.documentDir).canonicalPath();
+    // Do not take the canonical path here, as the installationDirMountPoint may not yet be mounted
+    QString instPath = QDir::cleanPath(QDir(cfg->yaml.applications.installationDir).absolutePath()) + u'/';
+    QString docPath;
+    if (!cfg->yaml.applications.documentDir.isEmpty())
+        docPath = QDir::cleanPath(QDir(cfg->yaml.applications.documentDir).absolutePath()) + u'/';
 
     if (!docPath.isEmpty() && (instPath.startsWith(docPath) || docPath.startsWith(instPath)))
         throw Exception("either installationDir or documentDir cannot be a sub-directory of the other");
@@ -666,6 +669,7 @@ void Main::setupInstaller(const Configuration *cfg) noexcept(false)
 #  if defined(Q_OS_LINUX)
     // make sure that a typo in the config does not wipe out system directories
     static const QVector<QString> fhsPaths = {
+        u"//"_s,
         u"/bin/"_s,
         u"/boot/"_s,
         u"/dev/"_s,
@@ -722,6 +726,19 @@ void Main::setupInstaller(const Configuration *cfg) noexcept(false)
         if (!cfg->yaml.installer.minimumCertificateVersion.isNull())
             m_packageManager->setMinimumCertificateVersion(cfg->yaml.installer.minimumCertificateVersion);
     }
+
+    // Tell Sudo about the only roots removeRecursive() is ever asked to operate on. This is a
+    // set-once policy enforced on the sudo-helper side.
+    QStringList allowedRemoveRoots;
+    allowedRemoveRoots << instPath;
+    if (!docPath.isEmpty())
+        allowedRemoveRoots << docPath;
+    SudoClient::instance()->setAllowedRemoveRecursiveRoots(allowedRemoveRoots);
+
+    // Tell Sudo about the only directories and attribute names setExtendedAttribute() is ever asked
+    // to operate on. This is a set-once policy enforced on the sudo-helper side.
+    SudoClient::instance()->setAllowedExtendedAttributes(
+        {{ instPath, cfg->yaml.installer.allowedExtendedAttributes }});
 
     m_packageManager->enableInstaller();
 

@@ -15,6 +15,12 @@
       <arg name="useNamespacePidFd" type="b" direction="in"/>
       <arg name="namespacePidFd" type="h" direction="in"/>
     </method>
+    <!-- set-once: maps a directory to the attribute names (as) setExtendedAttribute may set below it -->
+    <method name="setAllowedExtendedAttributes">
+      <arg name="allowed" type="a{sas}" direction="in"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QtAM::QMap_QString_QStringList"/>
+      <!-- qdbusxml2cpp still generates code that uses Q_ARG and that cannot deal with commas -->
+    </method>
     <method name="setExtendedAttribute">
       <arg name="file" type="s" direction="in"/>
       <arg name="attrName" type="ay" direction="in"/>

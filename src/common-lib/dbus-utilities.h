@@ -16,6 +16,9 @@ QT_FORWARD_DECLARE_CLASS(QDBusConnection)
 
 QT_BEGIN_NAMESPACE_AM
 
+// qdbusxml2cpp still generates code that uses Q_ARG and that cannot deal with commas
+using QMap_QString_QStringList = QMap<QString, QStringList>;
+
 Q_APPMANCOMMON_EXPORT QVariant convertToDBusVariant(const QVariant &variant);
 
 Q_APPMANCOMMON_EXPORT QVariant convertFromDBusVariant(const QVariant &variant);

@@ -303,6 +303,7 @@ void registerDBusTypes()
     static bool once = false;
     if (!once) {
         qDBusRegisterMetaType<QMap<QString, QDBusUnixFileDescriptor>>();
+        qDBusRegisterMetaType<QMap<QString, QStringList>>();
         qDBusRegisterMetaType<DBusInvalid>();
         qDBusRegisterMetaType<DBusNull>();
         qDBusRegisterMetaType<DBusUrl>();

@@ -62,6 +62,8 @@ ApplicationMain::ApplicationMain(int &argc, char **argv) noexcept
         qCritical("ERROR: only one instance of ApplicationMain is allowed");
     s_instance = this;
 
+    registerDBusTypes();
+
     NotificationImpl::setFactory([this](Notification *notification, const QString &) {
         return new DBusNotificationImpl(notification, this);
     });

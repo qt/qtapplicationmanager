@@ -706,6 +706,106 @@ void SudoClient::bindMountFileSystem(const QString &source, const QString &targe
     throw Exception("The sudo-helper process is not available.");
 }
 
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+
+/*! \internal
+    Set the extended attribute \a attrName on \a file, if the \a allowed map permits it: \a file has
+    to resolve to a path at or below one of the map's directories, and \a attrName has to be listed
+    for the most specific of those directories (so a nested entry with an empty list denies
+    everything below it). Until the map has been set, every call is rejected.
+
+    \a file is opened once, relative to its parent directory, with O_PATH | O_NOFOLLOW: the kernel
+    resolves all parent symlinks, the entry itself must not be one, and /proc/self/fd/N then tells
+    us where the descriptor really points.
+    Both the policy decision and setxattr() act on that descriptor, so nothing is resolved a
+    second time.
+*/
+static void setExtendedAttributeIfAllowed(const QString &file, const QByteArray &attrName,
+                                          const QByteArray &attrValue,
+                                          const std::optional<QMap<QString, QStringList>> &allowed)
+{
+    if (!allowed)
+        throw Exception("setExtendedAttribute called before setAllowedExtendedAttributes");
+
+    // O_NOFOLLOW only covers the last path component, so a trailing slash, '.' or '..' would make
+    // the kernel follow a symlink there: split off a real entry name and open it relative to its
+    // parent, as removeRecursiveIfAllowed() does
+    const auto dirAndEntry = sanitizeAsDirAndEntry(file);
+    if (!dirAndEntry)
+        throw Exception("'%1' does not name a file or directory entry").arg(file);
+    const auto &[dir, entry] = *dirAndEntry;
+
+    Unix::Fd dirFd { qt_safe_open(QFile::encodeName(dir).constData(), O_PATH | O_DIRECTORY | O_CLOEXEC) };
+    if (!dirFd)
+        throw Exception(errno, "could not open the parent directory of '%1'").arg(file);
+    Unix::Fd fd { qt_safe_openat(dirFd.get(), QFile::encodeName(entry).constData(),
+                                 O_PATH | O_NOFOLLOW | O_CLOEXEC) };
+    if (!fd)
+        throw Exception(errno, "could not open '%1' for setting an extended attribute").arg(file);
+
+    struct ::stat st { };
+    if (::fstat(fd.get(), &st) != 0)
+        throw Exception(errno, "could not stat '%1'").arg(file);
+    if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+        throw Exception("'%1' is neither a regular file nor a directory").arg(file);
+
+    const QByteArray procPath = "/proc/self/fd/" + QByteArray::number(fd.get());
+    std::array<char, 8 * PATH_MAX> target { };
+    const ssize_t targetLen = ::readlink(procPath.constData(), target.data(), target.size() - 1);
+    if (targetLen <= 0)
+        throw Exception(errno, "could not resolve '%1'").arg(file);
+    if (size_t(targetLen) >= (target.size() - 1)) // readlink() silently truncates
+        throw Exception("the resolved path of '%1' is too long").arg(file);
+    const QString canonicalFile = QFile::decodeName(QByteArray(target.data(), targetLen));
+
+    // the most specific (i.e. longest) matching directory decides
+    std::optional<QStringList> allowedNames;
+    QString allowedRoot;
+    bool ambiguous = false;
+    for (const auto &[root, names] : allowed->asKeyValueRange()) {
+        const QString canonicalRoot = QFileInfo(root).canonicalFilePath();
+        if (canonicalRoot.isEmpty())
+            continue;
+        const bool isUnder = (canonicalFile == canonicalRoot)
+                             || canonicalFile.startsWith(canonicalRoot + u'/');
+        if (!isUnder)
+            continue;
+        if (!allowedNames || (canonicalRoot.size() > allowedRoot.size())) {
+            allowedNames = names;
+            allowedRoot = canonicalRoot;
+            ambiguous = false;
+        } else if ((canonicalRoot.size() == allowedRoot.size()) && (names != *allowedNames)) {
+            ambiguous = true; // two spellings of the same directory with different lists
+        }
+    }
+    if (!allowedNames)
+        throw Exception("'%1' is not below any directory that allows extended attributes").arg(canonicalFile);
+    if (ambiguous)
+        throw Exception("directory '%1' is listed multiple times with different attribute names").arg(allowedRoot);
+    if (!allowedNames->contains(QString::fromUtf8(attrName)))
+        throw Exception("attribute '%1' is not allowed below '%2'").arg(attrName).arg(allowedRoot);
+
+    if (::setxattr(procPath.constData(), attrName.constData(), attrValue.constData(), attrValue.size(), 0) != 0)
+        throw Exception(errno, "could not set extended attribute '%1' on '%2'").arg(attrName).arg(canonicalFile);
+}
+
+#endif // Q_OS_LINUX && !Q_OS_ANDROID
+
+/*! \internal
+    Set-once call restricting setExtendedAttribute() to files below one of the map's directories
+    and to the attribute names listed for that directory.
+*/
+void SudoClient::setAllowedExtendedAttributes(const QMap<QString, QStringList> &dirsToAttrNames)
+{
+    if (d->allowedXattrs && (*d->allowedXattrs != dirsToAttrNames))
+        throw Exception("setAllowedExtendedAttributes was already called with a different value");
+    d->allowedXattrs = dirsToAttrNames;
+#if QT_CONFIG(am_multi_process)
+    if (!d->isFallback && d->iface)
+        checkDBusReply<void>(d->iface->setAllowedExtendedAttributes(dirsToAttrNames), __func__);
+#endif
+}
+
 /*! \internal
     In fallback mode (no root helper), this runs in-process.
 */
@@ -713,8 +813,7 @@ void SudoClient::setExtendedAttribute(const QString &file, const QByteArray &att
 {
     if (d->isFallback) {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-        if (::setxattr(qPrintable(file), attrName.constData(), attrValue.constData(), attrValue.size(), 0) != 0)
-            throw Exception(errno, "could not set extended attribute '%1' on file '%2'").arg(attrName).arg(file);
+        setExtendedAttributeIfAllowed(file, attrName, attrValue, d->allowedXattrs);
         return;
 #else
         throw Exception("Extended attributes are not supported on this platform");
@@ -1307,12 +1406,20 @@ void SudoServer::bindMountFileSystem(const QString &source, const QString &targe
     } catchExceptionAsDBusError()
 }
 
+void SudoServer::setAllowedExtendedAttributes(const QMap<QString, QStringList> &dirsToAttrNames)
+{
+    try {
+        if (m_allowedXattrs && (*m_allowedXattrs != dirsToAttrNames))
+            throw Exception("setAllowedExtendedAttributes was already called with a different value");
+        m_allowedXattrs = dirsToAttrNames;
+    } catchExceptionAsDBusError()
+}
+
 void SudoServer::setExtendedAttribute(const QString &file, const QByteArray &attrName,
                                       const QByteArray &attrValue)
 {
     try {
-        if (::setxattr(qPrintable(file), attrName.constData(), attrValue.constData(), attrValue.size(), 0) != 0)
-            throw Exception(errno, "could not set extended attribute '%1' on file '%2'").arg(attrName).arg(file);
+        setExtendedAttributeIfAllowed(file, attrName, attrValue, m_allowedXattrs);
     } catchExceptionAsDBusError()
 }
 

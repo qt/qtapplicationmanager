@@ -126,6 +126,16 @@ void InstallationReport::setIncludeExtendedAttributes(bool b)
     m_includeExtendedAttributes = b;
 }
 
+int InstallationReport::packageFormatVersion() const
+{
+    return m_packageFormatVersion;
+}
+
+void InstallationReport::setPackageFormatVersion(int version)
+{
+    m_packageFormatVersion = version;
+}
+
 QStringList InstallationReport::files() const
 {
     return m_files;

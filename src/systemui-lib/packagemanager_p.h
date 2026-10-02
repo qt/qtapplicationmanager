@@ -34,6 +34,7 @@ public:
     Certificate developerCertificate;
     QByteArray developerSignature;
     bool allowInstallationOfUnsignedPackages = false;
+    int minimumPackageFormatVersion = 0;
     bool useSudoForDirectoryRemoval = false;
     QStringList allowedInstallationURLs;
     bool configurationIsLocked = false;

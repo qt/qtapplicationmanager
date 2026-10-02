@@ -71,17 +71,69 @@ All of package data, as well as important meta-data is protected by a SHA256 dig
 has two purposes: it protects against transmission errors, and the package signing is done by
 encrypting this checksum.
 
-The actual calculation of this checksum is done as follows:
-\list
-  \li For every file that is not a \c{--PACKAGE-*} meta-data file, the complete content is added to
-      the digest. Afterwards the following UTF-8 encoded string is also added to the digest: \c {
-      "F/<file size in bytes>/<file path>"} (e.g. the file \c{foo/test.qml} with a size of 250 bytes
-      would generate \c{F/250/foo/test.qml})
-  \li For every directory, the following UTF-8 encoded string is added to the digest: \c {
-      "D/0/<directory path>"} (e.g. the directory \c{foo/images} would generate \c{D/0/foo/images})
-\endlist
+The algorithm is selected by the \c formatVersion field of the \c{--PACKAGE-HEADER--}: version
+\c 3 uses the algorithm described in the first section below, versions \c 1 and \c 2 use the
+legacy algorithm described in the second section.
 
 The generated digest is put into the \c{--PACKAGE-FOOTER--} as a 32-byte hex-encoded string.
+
+\section2 Format version 3
+
+The digest input is a single byte stream that is unambiguous to parse from left to right: every
+variable-length field is preceded by its length, and every other field has a fixed width.
+Different packages therefore can never produce the same byte stream. All values are written
+with \c QDataStream, using the stream version \c Qt_6_7 (big endian). The stream consists of the
+following parts, in this order:
+
+\badcode
+stream  := TAG header entry*
+TAG     := "AM" 0x00 "PKG3" 0x00
+header  := 'H' QVariant(QVariantMap)
+entry   := 'E' type QString(path) quint64(size) ('X' bytes(name) bytes(value))* [ 'C' <size bytes> ]
+type    := 'F' | 'D'
+bytes   := quint32(length) <length bytes>
+\endcode
+
+\list
+  \li \c TAG is the 8 bytes \c{41 4D 00 50 4B 47 33 00}. It is the first thing hashed.
+  \li \c 'H', \c 'E', \c 'X', \c 'C' and \c type are single \c quint8 values.
+  \li \c header is a \c QVariantMap with the following four entries: \c formatVersion (the
+      integer \c 3), \c packageId (string), \c extendedAttributes (bool; \c false if absent in the
+      header) and \c extraSigned (map; empty if absent in the header). All other header fields
+      (e.g. \c extra and \c diskSpaceUsed) are not part of the digest.
+  \li There is one \c entry for every file and directory, in the order they appear in the archive
+      (excluding the \c{--PACKAGE-*} meta-data files). \c type is \c 'F' for files and \c 'D' for
+      directories, \c path is the path (normalized to Unicode normalization form C, without a
+      trailing slash) and \c size is the size of the file content in bytes (always \c 0 for
+      directories).
+  \li If extended attributes are included in the package (\c extendedAttributes in the header),
+      then every attribute of the entry is added as \c 'X', \c name and \c value in the order they
+      appear in the archive.
+  \li The \c 'C' section, containing exactly \c size bytes of the file's content, is only present
+      for files.
+\endlist
+
+\section2 Format versions 1 and 2 (legacy)
+
+\note This algorithm does not guarantee that different packages generate different digests. It is
+      only supported to be able to verify existing packages, and should not be used for new
+      packages. The \c installer/minimumPackageFormatVersion configuration option controls
+      whether such packages are accepted.
+
+\list
+  \li If the \c extraSigned field is present in the header, it is converted to a QVariantMap and
+      serialized with QDataStream (using the Qt 6.7 data stream version), and the result is added
+      to the digest.
+  \li For every file that is not a \c{--PACKAGE-*} meta-data file, the extended attributes (if
+      included in the package) are added to the digest, each as the UTF-8 encoded string \c
+      {"XATTR/<name>/<value>"}. Then the complete content is added to the digest. Afterwards the
+      following UTF-8 encoded string is also added to the digest: \c {
+      "F/<file size in bytes>/<file path>"} (e.g. the file \c{foo/test.qml} with a size of 250 bytes
+      would generate \c{F/250/foo/test.qml})
+  \li For every directory, the extended attributes (if included in the package) and then the
+      following UTF-8 encoded string is added to the digest: \c {
+      "D/0/<directory path>"} (e.g. the directory \c{foo/images} would generate \c{D/0/foo/images})
+\endlist
 
 \section1 The Signing Algorithm
 
@@ -119,7 +171,9 @@ document) are as follows:
 \row
     \li \c formatVersion
     \li int
-    \li \e Required. Currently always \c 2.
+    \li \e Required. For footers always \c 2. For headers \c 3 (see \l{The Checksum Algorithm}) or
+        \c 2. Packages with the legacy header version \c 1 can still be read, but no longer be
+        created.
 \row
     \li \c formatType
     \li string

@@ -66,6 +66,12 @@ package installations.
             This option can for example be used to setup the correct file permissions or add IMA
             file signatures.
 
+        \c{--format-version}: The \l{The Checksum Algorithm}{package format version} to create.
+            The default is the latest version supported by this tool. Only choose an older version
+            (2) for packages that need to be installed on devices that run an application manager
+            without support for the latest version. The installer may refuse older versions, see
+            \l{minimum package format version}{installer/minimumPackageFormatVersion}.
+
         All of the extra-meta-data options are merged together, so all options can be used together
         and each option can also be given multiple times. The signed fields are added to the
         package's digest, so that they cannot be changed once the package has been signed. The

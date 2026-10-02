@@ -16,6 +16,7 @@ class PackagingJob
 {
 public:
     static PackagingJob *create(const QString &destinationName, const QString &sourceDir,
+                                int formatVersion,
                                 const QVariantMap &extraMetaData = QVariantMap(),
                                 const QVariantMap &extraSignedMetaData = QVariantMap(),
                                 bool includeExtendedAttributes = false, const QString &prePackageCmd = QString(),
@@ -55,6 +56,7 @@ private:
     bool m_includeExtendedAttributes = false;
     QString m_prePackageCmd;
     bool m_asJson = false;
+    int m_formatVersion = 0; // create only
 
     QString m_sourceName;
     QString m_destinationName; // create and signing only

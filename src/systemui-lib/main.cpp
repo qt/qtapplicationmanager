@@ -725,6 +725,8 @@ void Main::setupInstaller(const Configuration *cfg) noexcept(false)
                                            cfg->yaml.installer.certificateRevocationLists);
         if (!cfg->yaml.installer.minimumCertificateVersion.isNull())
             m_packageManager->setMinimumCertificateVersion(cfg->yaml.installer.minimumCertificateVersion);
+        if (cfg->yaml.installer.minimumPackageFormatVersion)
+            m_packageManager->setMinimumPackageFormatVersion(cfg->yaml.installer.minimumPackageFormatVersion);
     }
 
     // Tell Sudo about the only roots removeRecursive() is ever asked to operate on. This is a

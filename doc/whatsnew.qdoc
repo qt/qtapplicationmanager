@@ -87,6 +87,16 @@ hardening, but these changes may be interesting:
     are read and written by the helper itself now.
 \endlist
 
+\section2 Qt ApplicationManager 6.12.1
+\list
+\li Packages have a new format version 3 with a more robust digest (see
+    \l{The Checksum Algorithm}). \c appman-packager can create both versions via
+    \c{--format-version}, and the installer can be told which format versions to accept via
+    \l{minimum package format version}{installer/minimumPackageFormatVersion}. Both the packager and
+    the installer still default to the old format version in the 6.12 releases, but this will
+    change with Qt 6.13.
+\endlist
+
 
 \section1 Qt ApplicationManager 6.11
 

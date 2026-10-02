@@ -24,6 +24,7 @@
 #include "packageextractor.h"
 #include "installationreport.h"
 #include "packageutilities.h"
+#include "private/packageutilities_p.h"
 #include "utilities.h"
 #include "unix-utilities.h"
 
@@ -54,6 +55,14 @@ private Q_SLOTS:
     void duplicateEntry();
     void symlinkBypass();
     void extendedAttributes();
+
+    void createAndExtractDigest_data();
+    void createAndExtractDigest();
+    void legacyDigestCollision();
+    void digestV3Injective();
+    void digestV3Header();
+    void digestKnownAnswers_data();
+    void digestKnownAnswers();
 
     void oversizedHeader();
 
@@ -380,6 +389,240 @@ void tst_PackageExtractor::extendedAttributes()
         QCOMPARE(QByteArray(value, 5), "value"_ba);
     }
 #endif
+}
+
+void tst_PackageExtractor::createAndExtractDigest_data()
+{
+    QTest::addColumn<int>("formatVersion");
+
+    QTest::newRow("legacy") << 2;
+    QTest::newRow("injective") << 3;
+}
+
+void tst_PackageExtractor::createAndExtractDigest()
+{
+    QFETCH(int, formatVersion);
+
+    QTemporaryDir sourceDir;
+    QVERIFY(sourceDir.isValid());
+    QDir src(sourceDir.path());
+    QVERIFY(src.mkdir(u"sub"_s));
+    createFile(src.filePath(u"sub/file"_s), "content");
+    createFile(src.filePath(u"empty"_s), "");
+
+    InstallationReport report(u"com.pelagicore.test"_s);
+    report.addFiles({ u"empty"_s, u"sub"_s, u"sub/file"_s });
+    report.setDiskSpaceUsed(1);
+    report.setPackageFormatVersion(formatVersion);
+    report.setExtraSignedMetaData({
+        { u"a"_s, 1 },
+        { u"b"_s, QVariantList { 1.5, u"x"_s, true, QVariant::fromValue(nullptr) } },
+        { u"c"_s, QVariantMap { { u"d"_s, 2.0 }, { u"e"_s, u""_s } } }
+    });
+
+    QTemporaryFile package;
+    QVERIFY(package.open());
+    PackageCreator creator(src, &package, report);
+    QVERIFY2(creator.create(), qPrintable(creator.errorString()));
+    package.close();
+    QVERIFY(!creator.createdDigest().isEmpty());
+
+    PackageExtractor extractor(QUrl::fromLocalFile(package.fileName()), m_extractDir->path());
+    QVERIFY2(extractor.extract(), qPrintable(extractor.errorString()));
+    QCOMPARE(extractor.installationReport().packageFormatVersion(), formatVersion);
+    QCOMPARE(extractor.installationReport().digest(), creator.createdDigest());
+    QCOMPARE(extractor.installationReport().extraSignedMetaData().size(), 3);
+
+    // re-creating from the extracted report needs to reproduce the digest and the format version
+    QTemporaryFile package2;
+    QVERIFY(package2.open());
+    PackageCreator creator2(QDir(m_extractDir->path()), &package2, extractor.installationReport());
+    QVERIFY2(creator2.create(), qPrintable(creator2.errorString()));
+    QCOMPARE(creator2.createdDigest(), creator.createdDigest());
+}
+
+// An absent extraSigned adds nothing to a legacy digest and the file data is not framed, so a
+// file that looks like a serialized extraSigned can be swapped for a real extraSigned header.
+void tst_PackageExtractor::legacyDigestCollision()
+{
+    // foo's content: QVariant(QVariantMap { "k": <string> }) as written by QDataStream, where the
+    // string's last 8 bytes are the "F/<size>/foo" descriptor that follows foo in the digest
+    constexpr int fillerUnits = 8;
+    QByteArray foo;
+    {
+        QDataStream ds(&foo, QDataStream::WriteOnly);
+        ds.setVersion(QDataStream::Qt_6_7);
+        ds << quint32(8) << qint8(0) << quint32(1) << u"k"_s << quint32(10) << qint8(0);
+    }
+    const qint64 fooSize = foo.size() + 4 + fillerUnits * 2;
+    const QByteArray descriptor = "F/" + QByteArray::number(fooSize) + "/foo";
+    QCOMPARE(descriptor.size() % 2, 0);
+    {
+        QDataStream ds(&foo, QDataStream::Append);
+        ds << quint32(fillerUnits * 2 + descriptor.size());
+    }
+    for (int i = 0; i < fillerUnits; ++i) {
+        foo.append(char(0x4e));
+        foo.append(char(i));
+    }
+    QCOMPARE(foo.size(), fooSize);
+    const QByteArray bar = "the payload";
+
+    QString tail;
+    const QByteArray tailBytes = foo.last(fillerUnits * 2) + descriptor;
+    for (int i = 0; i < tailBytes.size(); i += 2)
+        tail += QChar((uchar(tailBytes.at(i)) << 8) | uchar(tailBytes.at(i + 1)));
+    const QVariantMap forgedHeader { { u"extraSigned"_s, QVariantMap { { u"k"_s, tail } } } };
+
+    auto digestOf = [&](int version, const QVariantMap &header, bool withFoo) {
+        PackageDigest d(version);
+        QVERIFY_THROWS_NO_EXCEPTION({
+            d.addHeader(header);
+            if (withFoo) {
+                d.beginEntry(u"foo"_s, false, foo.size());
+                d.addContent(foo);
+                d.endEntry(foo.size());
+            }
+            d.beginEntry(u"bar"_s, false, bar.size());
+            d.addContent(bar);
+            d.endEntry(bar.size());
+        });
+        return d.result();
+    };
+
+    QCOMPARE(digestOf(2, forgedHeader, false), digestOf(2, { }, true));
+    QCOMPARE_NE(digestOf(3, forgedHeader, false), digestOf(3, { }, true));
+}
+
+void tst_PackageExtractor::digestV3Injective()
+{
+    auto digestOf = [](std::function<void(PackageDigest &)> f, int version = 3) {
+        PackageDigest d(version);
+        QVERIFY_THROWS_NO_EXCEPTION({
+            d.addHeader({ { u"packageId"_s, u"com.pelagicore.test"_s } });
+            f(d);
+        });
+        return d.result();
+    };
+    auto file = [](PackageDigest &d, const QString &path, const QByteArray &content,
+                   const QList<std::pair<QByteArray, QByteArray>> &xattrs = { }) {
+        d.beginEntry(path, false, content.size());
+        for (const auto &[name, value] : xattrs)
+            d.addXattr(name, value);
+        d.addContent(content);
+        d.endEntry(content.size());
+    };
+
+    // xattr name/value boundary
+    auto xattrSplit = [&](const QByteArray &name, const QByteArray &value) {
+        return [=](PackageDigest &d) { file(d, u"f"_s, "x", { { name, value } }); };
+    };
+    QCOMPARE(digestOf(xattrSplit("user.a/b", "c"), 2), digestOf(xattrSplit("user.a", "b/c"), 2));
+    QCOMPARE_NE(digestOf(xattrSplit("user.a/b", "c")), digestOf(xattrSplit("user.a", "b/c")));
+
+    // one xattr whose value looks like another one
+    auto twoXattrs = [&](PackageDigest &d) { file(d, u"f"_s, "x", { { "user.a", "x" }, { "user.b", "y" } }); };
+    auto oneXattr = [&](PackageDigest &d) { file(d, u"f"_s, "x", { { "user.a", "xXATTR/user.b/y" } }); };
+    QCOMPARE(digestOf(twoXattrs, 2), digestOf(oneXattr, 2));
+    QCOMPARE_NE(digestOf(twoXattrs), digestOf(oneXattr));
+
+    // file boundary: two files vs. one file that contains the first and the second's data
+    auto twoFiles = [&](PackageDigest &d) { file(d, u"a"_s, "1"); file(d, u"b"_s, "2"); };
+    auto mergedFile = [&](PackageDigest &d) { file(d, u"b"_s, "1F/1/a2"); };
+    QCOMPARE_NE(digestOf(twoFiles), digestOf(mergedFile));
+
+    // entry types, paths and sizes are part of the digest
+    auto asFile = [&](PackageDigest &d) { file(d, u"a"_s, ""); };
+    auto asDir = [&](PackageDigest &d) { d.beginEntry(u"a"_s, true, 0); d.endEntry(0); };
+    QCOMPARE_NE(digestOf(asFile), digestOf(asDir));
+    QCOMPARE_NE(digestOf(asFile), digestOf([&](PackageDigest &d) { file(d, u"b"_s, ""); }));
+
+    // an entry whose data doesn't match its declared size is an error
+    PackageDigest d(3);
+    QVERIFY_THROWS_NO_EXCEPTION(d.beginEntry(u"a"_s, false, 3));
+    d.addContent("12");
+    QVERIFY_THROWS_EXCEPTION(Exception, d.endEntry(3));
+}
+
+void tst_PackageExtractor::digestV3Header()
+{
+    auto digestOf = [](const QVariantMap &header, int version = 3) {
+        PackageDigest d(version);
+        QVERIFY_THROWS_NO_EXCEPTION(d.addHeader(header));
+        return d.result();
+    };
+
+    const QVariantMap base {
+        { u"packageId"_s, u"com.pelagicore.test"_s },
+        { u"diskSpaceUsed"_s, 1000 },
+        { u"extra"_s, QVariantMap { { u"x"_s, 1 } } },
+        { u"extraSigned"_s, QVariantMap { { u"y"_s, 2 } } }
+    };
+    auto with = [&](const QString &key, const QVariant &value) {
+        QVariantMap m = base;
+        m.insert(key, value);
+        return m;
+    };
+
+    // signed
+    QCOMPARE_NE(digestOf(base), digestOf(with(u"packageId"_s, u"com.pelagicore.other"_s)));
+    QCOMPARE_NE(digestOf(base), digestOf(with(u"extendedAttributes"_s, true)));
+    QCOMPARE_NE(digestOf(base), digestOf(with(u"extraSigned"_s, QVariantMap { { u"y"_s, 3 } })));
+    QCOMPARE_NE(digestOf(base), digestOf(with(u"extraSigned"_s, QVariantMap { { u"y"_s, u"2"_s } })));
+    QCOMPARE_NE(digestOf(base), digestOf(with(u"extraSigned"_s, QVariantMap { { u"z"_s, 2 } })));
+    QCOMPARE_NE(digestOf(base), digestOf(with(u"extraSigned"_s, QVariantMap { })));
+
+    // not signed: these are hints that a store server may rewrite
+    QCOMPARE(digestOf(base), digestOf(with(u"diskSpaceUsed"_s, 5)));
+    QCOMPARE(digestOf(base), digestOf(with(u"extra"_s, QVariantMap { { u"x"_s, 2 } })));
+
+    // absent, null and empty extraSigned are the same thing
+    QVariantMap noExtraSigned = base;
+    noExtraSigned.remove(u"extraSigned"_s);
+    QCOMPARE(digestOf(noExtraSigned), digestOf(with(u"extraSigned"_s, QVariantMap { })));
+    QCOMPARE(digestOf(noExtraSigned), digestOf(with(u"extraSigned"_s, QVariant::fromValue(nullptr))));
+    PackageDigest invalid(3);
+    QVERIFY_THROWS_EXCEPTION(Exception, invalid.addHeader(with(u"extraSigned"_s, u"foo"_s)));
+
+    // the algorithm doesn't depend on the order in which the map was filled
+    QCOMPARE(digestOf(with(u"extraSigned"_s, QVariantMap { { u"a"_s, 1 }, { u"b"_s, 2 } })),
+             digestOf(with(u"extraSigned"_s, QVariantMap { { u"b"_s, 2 }, { u"a"_s, 1 } })));
+
+    // known answer test: this must never change
+    QCOMPARE(digestOf(base).toHex(), "92ab91cda23e8ca958e8bcde03d698cb99d286fd28d6e48ee11a090c32a395ed"_ba);
+}
+
+// The expected values were calculated by an independent implementation. Neither of them must ever
+// change, as that would invalidate the signatures of all existing packages.
+void tst_PackageExtractor::digestKnownAnswers_data()
+{
+    QTest::addColumn<int>("formatVersion");
+    QTest::addColumn<QByteArray>("digest");
+
+    QTest::newRow("legacy") << 2 << "f2ef7476a96adf4ff8415aba8ca49167bbe12bf170bde559d13c0ecd1983312d"_ba;
+    QTest::newRow("injective") << 3 << "5f8366925f2482475c55aa2800d766703510ec9395aff5cfa9caaae3c665d76c"_ba;
+}
+
+void tst_PackageExtractor::digestKnownAnswers()
+{
+    QFETCH(int, formatVersion);
+    QFETCH(QByteArray, digest);
+
+    PackageDigest d(formatVersion);
+    QVERIFY_THROWS_NO_EXCEPTION({
+        d.addHeader({ { u"packageId"_s, u"com.pelagicore.test"_s },
+                      { u"extendedAttributes"_s, true },
+                      { u"extraSigned"_s, QVariantMap { { u"y"_s, 2 } } } });
+
+        d.beginEntry(u"sub"_s, true, 0);
+        d.endEntry(0);
+
+        d.beginEntry(u"sub/f"_s, false, 5);
+        d.addXattr("user.a", "v");
+        d.addContent("hello");
+        d.endEntry(5);
+    });
+    QCOMPARE(d.result().toHex(), digest);
 }
 
 void tst_PackageExtractor::oversizedHeader()

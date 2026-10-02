@@ -10,15 +10,16 @@
 #include <QNetworkReply>
 #include <QEventLoop>
 
+#include <optional>
+
 #include <archive.h>
 
 #include <QtAppManPackage/packageextractor.h>
 #include <QtAppManPackage/installationreport.h>
 
-QT_FORWARD_DECLARE_CLASS(QCryptographicHash)
-
 QT_BEGIN_NAMESPACE_AM
 
+class PackageDigest;
 
 class Q_APPMANPACKAGE_EXPORT PackageExtractorPrivate : public QObject
 {
@@ -38,7 +39,7 @@ private Q_SLOTS:
 private:
     void setError(const QString &errorString);
     qint64 readTar(struct archive *ar, const void **archiveBuffer);
-    void processMetaData(const QByteArray &metadata, QCryptographicHash &digest, bool isHeader) noexcept(false);
+    void processMetaData(const QByteArray &metadata, std::optional<PackageDigest> &digest, bool isHeader) noexcept(false);
 
 private:
     PackageExtractor *q;

@@ -38,6 +38,7 @@ static const int Ext2BlockSize = 1024;
 
 
 PackagingJob *PackagingJob::create(const QString &destinationName, const QString &sourceDir,
+                                   int formatVersion,
                                    const QVariantMap &extraMetaData,
                                    const QVariantMap &extraSignedMetaData,
                                    bool includeExtendedAttributes, const QString &prePackageCmd,
@@ -45,6 +46,7 @@ PackagingJob *PackagingJob::create(const QString &destinationName, const QString
 {
     auto *p = new PackagingJob();
     p->m_mode = Create;
+    p->m_formatVersion = formatVersion;
     p->m_includeExtendedAttributes = includeExtendedAttributes;
     p->m_prePackageCmd = prePackageCmd;
     p->m_asJson = asJson;
@@ -159,6 +161,7 @@ void PackagingJob::execute() noexcept(false)
         // build report
         InstallationReport report(package->id());
         report.setIncludeExtendedAttributes(m_includeExtendedAttributes);
+        report.setPackageFormatVersion(m_formatVersion);
         report.addFile(infoName);
 
         // check the package icon

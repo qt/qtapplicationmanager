@@ -3,6 +3,8 @@
 // Copyright (C) 2018 Pelagicore AG
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
+#include <algorithm>
+
 #include <QStringList>
 #include <QAtomicInt>
 #include <QDir>
@@ -133,11 +135,19 @@ bool PackageCreatorPrivate::create()
         if (m_report.packageId().isNull())
             throw Exception("package identifier is null");
 
-        QCryptographicHash digest(QCryptographicHash::Sha256);
+        if ((m_report.packageFormatVersion() < 1)
+                || (m_report.packageFormatVersion() > InstallationReport::LatestPackageFormatVersion)) {
+            throw Exception("invalid package format version %1").arg(m_report.packageFormatVersion());
+        }
+
+        // formatVersion 1 is read-only: we always write 2 instead
+        const int formatVersion = std::max(2, m_report.packageFormatVersion());
+
+        PackageDigest digest(formatVersion);
 
         QVariantMap headerFormat {
             { u"formatType"_s, u"am-package-header"_s },
-            { u"formatVersion"_s, 2 }
+            { u"formatVersion"_s, formatVersion }
         };
 
         m_metaData = QVariantMap {
@@ -151,7 +161,7 @@ bool PackageCreatorPrivate::create()
         if (m_report.includeExtendedAttributes())
             m_metaData[u"extendedAttributes"_s] = true;
 
-        PackageUtilities::addHeaderDataToDigest(m_metaData, digest);
+        digest.addHeader(m_metaData);
 
         emit q->progress(0);
 
@@ -255,6 +265,8 @@ bool PackageCreatorPrivate::create()
             archive_entry_set_mode(entry, mode);
             archive_entry_xattr_clear(entry);
 
+            digest.beginEntry(file, (packageEntryType == PackageEntry_Dir), fi.size());
+
             if (m_report.includeExtendedAttributes()) {
 #if defined(Q_OS_LINUX)
                 QByteArray xattrList;
@@ -283,10 +295,7 @@ bool PackageCreatorPrivate::create()
 
                     archive_entry_xattr_add_entry(entry, xattrName.constData(), xattrValue.constData(), xattrValueSize);
 
-                    PackageUtilities::addExtendedAttributeToDigest(
-                        xattrName,
-                        QByteArrayView(xattrValue).sliced(0, xattrValueSize),
-                        digest);
+                    digest.addXattr(xattrName, QByteArrayView(xattrValue).sliced(0, xattrValueSize));
                 }
 #else
                 throw Exception(Error::IO, "extended attributes are not supported on this platform");
@@ -318,7 +327,7 @@ bool PackageCreatorPrivate::create()
                     if (archive_write_data(ar, buffer.data(), static_cast<size_t>(bytesRead)) == -1)
                         throw ArchiveException(ar, "could not write to archive");
 
-                    digest.addData({ buffer.data(), qsizetype(bytesRead) });
+                    digest.addContent({ buffer.data(), qsizetype(bytesRead) });
                 }
 
                 if (fileSize != fi.size())
@@ -327,8 +336,7 @@ bool PackageCreatorPrivate::create()
                 packagedSize += fileSize;
             }
 
-            // Just to be on the safe side, we also add the file's meta-data to the digest
-            PackageUtilities::addFileMetadataToDigest(file, fi, digest);
+            digest.endEntry(fi.size());
 
             int progress = allFilesSize ? int(packagedSize * 100 / allFilesSize) : 0;
             if (progress != lastProgress ) {

@@ -9,21 +9,45 @@
 #include <QtAppManPackage/qtappmanpackageglobal.h>
 #include <QtAppManCommon/exception.h>
 #include <QVariantMap>
+#include <QCryptographicHash>
 
 struct archive;
-QT_FORWARD_DECLARE_CLASS(QFileInfo)
-QT_FORWARD_DECLARE_CLASS(QCryptographicHash)
 
 QT_BEGIN_NAMESPACE_AM
 
-namespace PackageUtilities
+// Calculates the package digest. The package's header formatVersion selects the algorithm:
+// 1 and 2 use the legacy algorithm (not injective, kept to verify existing packages), 3 uses the
+// injective one. Usage per package: addHeader(), then for every entry beginEntry(), addXattr()*,
+// addContent()*, endEntry(), finally result().
+class Q_APPMANPACKAGE_EXPORT PackageDigest
 {
-void addFileMetadataToDigest(const QString &entryFilePath, const QFileInfo &fi, QCryptographicHash &digest);
-void addExtendedAttributeToDigest(QByteArrayView name, QByteArrayView value, QCryptographicHash &digest);
-void addHeaderDataToDigest(const QVariantMap &header, QCryptographicHash &digest) noexcept(false);
+public:
+    explicit PackageDigest(int formatVersion);
 
-// key == field name, value == type to choose correct hashing algorithm
-extern const QVariantMap headerDataForDigest;
+    int formatVersion() const;
+    bool isLegacy() const;
+
+    void addHeader(const QVariantMap &header) noexcept(false);
+
+    void beginEntry(const QString &path, bool isDir, qint64 size) noexcept(false);
+    void addXattr(QByteArrayView name, QByteArrayView value);
+    void addContent(QByteArrayView data);
+    void endEntry(qint64 actualSize) noexcept(false);
+
+    QByteArray result();
+
+private:
+    void startContent();
+
+    QCryptographicHash m_hash { QCryptographicHash::Sha256 };
+    int m_formatVersion;
+
+    bool m_inEntry = false;
+    bool m_contentStarted = false;
+    bool m_entryIsDir = false;
+    QString m_entryPath;
+    qint64 m_entrySize = 0;
+    qint64 m_contentSize = 0;
 };
 
 enum PackageEntryType {

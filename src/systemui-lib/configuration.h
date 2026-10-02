@@ -70,6 +70,7 @@ struct Q_APPMANSYSTEMUI_EXPORT ConfigurationData
         QStringList allowedURLs;
         QVersionNumber minimumCertificateVersion; // null means "the version this build was compiled with"
         QStringList allowedExtendedAttributes;
+        int minimumPackageFormatVersion = 0; // 0 means "the version this build was compiled with"
     } installer;
 
     struct {

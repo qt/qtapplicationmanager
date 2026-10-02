@@ -123,6 +123,8 @@ public:
     QString architecture() const;
     void loadCertificates(const QList<CaCertificate> &caCertificates, const QStringList &crls = { });
     void setMinimumCertificateVersion(const QVersionNumber &version);
+    int minimumPackageFormatVersion() const;
+    void setMinimumPackageFormatVersion(int version);
     void setAllowedInstallationURLs(const QStringList &allowedURLs);
 
     void lockConfiguration();

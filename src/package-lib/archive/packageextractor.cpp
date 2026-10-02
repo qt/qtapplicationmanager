@@ -247,7 +247,8 @@ void PackageExtractorPrivate::extract()
         QByteArray header;
         QByteArray footer;
 
-        QCryptographicHash digest(QCryptographicHash::Sha256);
+        // the header selects the digest algorithm, so this is created in processMetaData()
+        std::optional<PackageDigest> digest;
 
         // Iterate over all entries in the archive
         for (bool finished = false; !finished; ) {
@@ -330,7 +331,7 @@ void PackageExtractorPrivate::extract()
                             .arg(xattrName).arg(entryPath);
                     }
 
-                    PackageUtilities::addExtendedAttributeToDigest(xattrName, xattrValue, digest);
+                    digest->addXattr(xattrName, xattrValue);
                 }
 #endif
             };
@@ -349,6 +350,9 @@ void PackageExtractorPrivate::extract()
                 QDir entryDir(QString(m_destinationPath + entryPath).section(u'/', 0, -2));
                 if (!entryDir.exists())
                     throw Exception(Error::Package, "invalid archive entry '%1': parent directory is missing").arg(entryPath);
+
+                digest->beginEntry(entryPath, (packageEntryType == PackageEntry_Dir),
+                                   qint64(archive_entry_size(entry)));
 
                 if (packageEntryType == PackageEntry_Dir) {
                     const QString entryName = entryPath.section(u'/', -1, -1);
@@ -430,7 +434,7 @@ void PackageExtractorPrivate::extract()
 
                     switch (packageEntryType) {
                     case PackageEntry_File:
-                        digest.addData({ buffer, qsizetype(bytesRead) });
+                        digest->addContent({ buffer, qsizetype(bytesRead) });
                         if (manifestDigest)
                             manifestDigest->addData({ buffer, qsizetype(bytesRead) });
 
@@ -469,8 +473,8 @@ void PackageExtractorPrivate::extract()
                 Q_FALLTHROUGH();
 
             case PackageEntry_Dir: {
-                // Just to be on the safe side, we also add the file's meta-data to the digest
-                PackageUtilities::addFileMetadataToDigest(entryPath, QFileInfo(m_destinationPath + entryPath), digest);
+                digest->endEntry((packageEntryType == PackageEntry_Dir)
+                                 ? 0 : QFileInfo(m_destinationPath + entryPath).size());
 
                 // Finally call the user's code to post-process whatever was extracted right now
                 if (m_fileExtractedCallback)
@@ -503,7 +507,7 @@ void PackageExtractorPrivate::extract()
     m_loop.quit();
 }
 
-void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCryptographicHash &digest,
+void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, std::optional<PackageDigest> &digest,
                                               bool isHeader) noexcept(false)
 {
     QVector<QVariant> docs;
@@ -517,8 +521,11 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
     const QString formatType = isHeader ? u"am-package-header"_s : u"am-package-footer"_s;
     int formatVersion = 0;
     try {
-        formatVersion = checkYamlFormat(docs, -2 /*at least 2 docs*/, { { formatType, 2 },
-                                                                        { formatType, 1 } }).second;
+        // header version 3 selects the injective digest; the footer format didn't change
+        QVector<YamlFormat> supportedFormats { { formatType, 2 }, { formatType, 1 } };
+        if (isHeader)
+            supportedFormats.prepend({ formatType, InstallationReport::LatestPackageFormatVersion });
+        formatVersion = checkYamlFormat(docs, -2 /*at least 2 docs*/, supportedFormats).second;
     } catch (const Exception &e) {
         throw Exception(Error::Package, "metadata has an invalid format specification: %1").arg(e.errorString());
     }
@@ -543,7 +550,10 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
         m_report.setExtraSignedMetaData(map.value(u"extraSigned"_s).toMap());
         m_report.setIncludeExtendedAttributes(map.value(u"extendedAttributes"_s).toBool());
 
-        PackageUtilities::addHeaderDataToDigest(map, digest);
+        m_report.setPackageFormatVersion(formatVersion);
+
+        digest.emplace(formatVersion);
+        digest->addHeader(map);
 
     } else { // footer(s)
         for (int i = 2; i < docs.size(); ++i)
@@ -555,7 +565,10 @@ void PackageExtractorPrivate::processMetaData(const QByteArray &metadata, QCrypt
             throw Exception(Error::Package, "metadata is missing the digest field");
         m_report.setDigest(packageDigest);
 
-        QByteArray calculatedDigest = digest.result();
+        if (!digest)
+            throw Exception("the package has no header");
+
+        QByteArray calculatedDigest = digest->result();
         if (calculatedDigest != packageDigest)
             throw Exception(Error::Package, "package digest mismatch (is %1, but should be %2").arg(calculatedDigest.toHex()).arg(packageDigest.toHex());
 

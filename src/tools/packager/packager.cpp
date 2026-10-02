@@ -18,6 +18,7 @@
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/qtyaml.h>
 #include <QtAppManCommon/utilities.h>
+#include <QtAppManPackage/installationreport.h>
 #include <QtAppManPackage/packageutilities.h>
 #include "packagingjob.h"
 #include "../shared/toolapplication.h"
@@ -63,6 +64,8 @@ int main(int argc, char *argv[])
             break;
 
         case CreatePackage: {
+            constexpr int LatestFormatVersion = InstallationReport::LatestPackageFormatVersion;
+
             clp.addOption({ u"verbose"_s, u"Dump the package's meta-data header and footer information to stdout."_s });
             clp.addOption({ u"json"_s,    u"Output in JSON format instead of YAML."_s });
             clp.addOption({{ u"extra-metadata"_s,      u"m"_s }, u"Add extra meta-data to the package, supplied on the command line."_s, u"yaml-snippet"_s });
@@ -71,12 +74,21 @@ int main(int argc, char *argv[])
             clp.addOption({{ u"extra-signed-metadata-file"_s, u"S"_s }, u"Add extra, digitally signed, meta-data to the package, read from file."_s, u"yaml-file"_s });
             clp.addOption({{ u"include-extended-attributes"_s, u"x"_s }, u"Include xattrs on files and directories, if available."_s });
             clp.addOption({{ u"pre-package-command"_s, u"p"_s }, u"Calls this command on each packaged file, before it gets packaged (split on whitespace, no shell-style quoting)."_s , u"command"_s });
+            clp.addOption({ u"format-version"_s, u"The package format version, between 2 and %1. Only use an older version if you need to support older application-manager versions."_s.arg(LatestFormatVersion),
+                            u"version"_s, QString::number(InstallationReport::DefaultPackageFormatVersion) });
             clp.addPositionalArgument(u"package"_s,          u"The file name of the created package."_s);
             clp.addPositionalArgument(u"source-directory"_s, u"The package's content root directory."_s);
             clp.process(tool);
 
             if (clp.positionalArguments().size() != 3)
                 clp.showHelp(1);
+
+            bool formatVersionOk = false;
+            const int formatVersion = clp.value(u"format-version"_s).toInt(&formatVersionOk);
+            if (!formatVersionOk || (formatVersion < 2) || (formatVersion > LatestFormatVersion)) {
+                throw Exception("Invalid --format-version %1: needs to be between 2 and %2")
+                    .arg(clp.value(u"format-version"_s)).arg(LatestFormatVersion);
+            }
 
             auto parseYamlMetada = [](const QStringList &metadataSnippets, const QStringList &metadataFiles, bool isSigned) -> QVariantMap {
                 QVariantMap result;
@@ -121,6 +133,7 @@ int main(int argc, char *argv[])
 
             p.reset(PackagingJob::create(clp.positionalArguments().at(1),
                                          clp.positionalArguments().at(2),
+                                         formatVersion,
                                          extraMetaDataMap,
                                          extraSignedMetaDataMap,
                                          clp.isSet(u"include-extended-attributes"_s),

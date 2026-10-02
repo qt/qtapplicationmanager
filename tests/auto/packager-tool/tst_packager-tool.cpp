@@ -57,6 +57,7 @@ private Q_SLOTS:
     void passwordOptions();
     void yamlToJson();
     void extraMetadata();
+    void formatVersion();
 
 private:
     QString pathTo(const char *file)
@@ -164,6 +165,9 @@ void tst_PackagerTool::initTestCase()
     };
 
     QVERIFY_THROWS_NO_EXCEPTION(m_pm->loadCertificates(caCerts, m_crlFiles));
+
+    QCOMPARE(m_pm->minimumPackageFormatVersion(), InstallationReport::DefaultMinimumPackageFormatVersion);
+
     m_devPassword   = u"password"_s;
     m_storePassword = u"password"_s;
 
@@ -404,6 +408,67 @@ void tst_PackagerTool::test()
         QVERIFY(dst.open(QFile::ReadOnly));
         QCOMPARE(src.readAll(), dst.readAll());
     }
+}
+
+// Package format version 3 (injective digest): create, sign, verify and install, and make sure the
+// installer can be told to refuse the legacy format.
+void tst_PackagerTool::formatVersion()
+{
+    QTemporaryDir tmp;
+    createInfoYaml(tmp);
+    createIconPng(tmp);
+    createIconPng(tmp, u"app-"_s);
+    createIconPng(tmp, u"intent-"_s);
+    createCode(tmp);
+
+    {
+        PackagerTool p({ u"create-package"_s, u"--format-version"_s, u"4"_s, pathTo("v4.ampkg"), tmp.path() });
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("--format-version"), p.stdErr.constData());
+    }
+
+    for (const char *version : { "2", "3" }) {
+        const QString name = u"v"_s + QLatin1String(version);
+        PackagerTool create({ u"create-package"_s, u"--format-version"_s, QLatin1String(version),
+                              pathTo(qPrintable(name + u".ampkg"_s)), tmp.path() });
+        QVERIFY2(create.call(), create.failure.constData());
+
+        PackagerTool devSign({ u"dev-sign-package"_s, pathTo(qPrintable(name + u".ampkg"_s)),
+                               pathTo(qPrintable(name + u".dev-signed.ampkg"_s)),
+                               m_devCertificate, u"--password"_s, u"pass:"_s + m_devPassword });
+        QVERIFY2(devSign.call(), devSign.failure.constData());
+
+        PackagerTool storeSign({ u"store-sign-package"_s, pathTo(qPrintable(name + u".dev-signed.ampkg"_s)),
+                                 pathTo(qPrintable(name + u".store-signed.ampkg"_s)),
+                                 m_storeCertificate, u"--password"_s, u"pass:"_s + m_storePassword,
+                                 u"--hardware-id"_s, m_hardwareId });
+        QVERIFY2(storeSign.call(), storeSign.failure.constData());
+
+        QStringList crlArgs;
+        for (const QString &crl : std::as_const(m_crlFiles))
+            crlArgs << u"--crl"_s << crl;
+
+        PackagerTool devVerify(QStringList { u"dev-verify-package"_s,
+                                             pathTo(qPrintable(name + u".store-signed.ampkg"_s)) }
+                               + m_commonCaFiles + m_devCaFiles + crlArgs);
+        QVERIFY2(devVerify.call(), devVerify.failure.constData());
+
+        PackagerTool storeVerify(QStringList { u"store-verify-package"_s,
+                                               pathTo(qPrintable(name + u".store-signed.ampkg"_s)) }
+                                 + m_commonCaFiles + m_storeCaFiles + QStringList { m_hardwareId } + crlArgs);
+        QVERIFY2(storeVerify.call(), storeVerify.failure.constData());
+    }
+
+    m_pm->setMinimumPackageFormatVersion(InstallationReport::LatestPackageFormatVersion);
+    failToInstallPackage(pathTo("v2.dev-signed.ampkg"), u"older than the configured minimum"_s);
+    installPackage(pathTo("v3.dev-signed.ampkg"));
+    m_pm->setMinimumPackageFormatVersion(2);
+    installPackage(pathTo("v2.dev-signed.ampkg"));
+    m_pm->setMinimumPackageFormatVersion(InstallationReport::DefaultMinimumPackageFormatVersion);
+
+    QDir checkDir(pathTo("internal-0"));
+    QVERIFY(checkDir.cd(u"test-pkg"_s));
+    QVERIFY(checkDir.exists(u"test.qml"_s));
 }
 
 void tst_PackagerTool::expired()

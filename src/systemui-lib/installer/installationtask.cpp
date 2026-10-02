@@ -206,6 +206,13 @@ void InstallationTask::execute()
             if (origin() == Origin::ApplicationDeveloper)
                 checkDeveloperCertificate();
         } else {
+            // the digest only protects the package if it is covered by a signature
+            if (m_extractor->installationReport().packageFormatVersion() < m_pm->minimumPackageFormatVersion()) {
+                throw Exception("the package format version %1 is older than the configured minimum of %2")
+                    .arg(m_extractor->installationReport().packageFormatVersion())
+                    .arg(m_pm->minimumPackageFormatVersion());
+            }
+
             bool hasStoreSignature = !m_extractor->installationReport().storeSignature().isEmpty();
 
             // Step 1: verify the store signature (optional, if in dev mode)

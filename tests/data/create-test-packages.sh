@@ -108,6 +108,15 @@ packager store-sign-package --verbose "$dst/test-dev-signed.ampkg" "$dst/test-st
 info "Store-verify dev package"
 packager store-verify-package --verbose "$dst/test-store-dev-signed.ampkg" certificates/store-ca/store-ca.crt certificates/root-ca/root-ca.crt "foobar"
 
+info "Create package with the legacy format version 2"
+packager create-package --format-version 2 "$dst/test-legacy.ampkg" "$src"
+
+info "Dev-sign legacy package"
+packager dev-sign-package --verbose "$dst/test-legacy.ampkg" "$dst/test-legacy-dev-signed.ampkg" certificates/dev-certs/dev-1.p12 password
+
+info "Store-sign legacy dev package"
+packager store-sign-package --verbose "$dst/test-legacy-dev-signed.ampkg" "$dst/test-legacy-store-dev-signed.ampkg" certificates/store-certs/store.p12 password "foobar"
+
 info "Create package with extra meta-data"
 cat >"$tmp/exmd" <<EOT
 array:
@@ -212,7 +221,7 @@ echo "invalid" >"$dst/test-invalid-format.ampkg"
 
 info "Create a package with an invalid formatVersion header field"
 mv "$src"/--PACKAGE-HEADER--{,.orig}
-sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" 's/formatVersion: 2/formatVersion: X/'
+sed <"$src/--PACKAGE-HEADER--.orig" >"$src/--PACKAGE-HEADER--" 's/formatVersion: [0-9]*/formatVersion: X/'
 tar -C "$src" -cf "$dst/test-invalid-header-formatversion.ampkg" -- --PACKAGE-HEADER-- info.yaml icon.png test --PACKAGE-FOOTER--
 mv "$src"/--PACKAGE-HEADER--{.orig,}
 

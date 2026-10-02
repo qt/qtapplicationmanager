@@ -42,6 +42,7 @@
 #endif
 
 #include <QSettings>
+#include <algorithm>
 #include <memory>
 #include <signature.h>
 
@@ -912,6 +913,19 @@ void PackageManager::setMinimumCertificateVersion(const QVersionNumber &version)
     if (isConfigurationLocked())
         return;
     d->minimumCertificateVersion = version;
+}
+
+int PackageManager::minimumPackageFormatVersion() const
+{
+    return d->minimumPackageFormatVersion ? d->minimumPackageFormatVersion
+                                          : InstallationReport::DefaultMinimumPackageFormatVersion;
+}
+
+void PackageManager::setMinimumPackageFormatVersion(int version)
+{
+    if (isConfigurationLocked())
+        return;
+    d->minimumPackageFormatVersion = std::clamp(version, 1, InstallationReport::LatestPackageFormatVersion);
 }
 
 void PackageManager::removeRecursive(const QString &path) noexcept(false)

@@ -268,6 +268,9 @@ void tst_PackageManager::initTestCase()
     // no CRLs set on purpose to test verification without CRLs at all
     QVERIFY_THROWS_NO_EXCEPTION(m_pm->loadCertificates(caCerts));
 
+    // the "legacy-format" test package uses the package format version 2
+    m_pm->setMinimumPackageFormatVersion(2);
+
     // we do not require valid store signatures for this test run
     m_pm->setDevelopmentMode(PackageManager::DevelopmentMode::System);
 
@@ -352,6 +355,9 @@ void tst_PackageManager::packageInstallation_data()
     QTest::newRow("store-dev-signed") \
             << "test-store-dev-signed.ampkg" << ""
             << false << true << true << false << nomd << "";
+    QTest::newRow("legacy-format") \
+            << "test-legacy-store-dev-signed.ampkg" << ""
+            << false << true << true << false << nomd << "";
     QTest::newRow("extra-metadata") \
             << "test-extra.ampkg" << ""
             << false << false << true << false << extramd << "";
@@ -363,7 +369,7 @@ void tst_PackageManager::packageInstallation_data()
             << false << false << false << false << nomd << "The package icon (as stated in info.yaml) must be the second file in the package. Expected 'icon.png', got 'test'";
     QTest::newRow("invalid-header-format") \
             << "test-invalid-header-formatversion.ampkg" << ""
-            << false << false << false << false << nomd << "metadata has an invalid format specification: wrong header: expected type 'am-package-header', version '2' or type 'am-package-header', version '1', but instead got type 'am-package-header', version '0'";
+            << false << false << false << false << nomd << "metadata has an invalid format specification: wrong header: expected type 'am-package-header', version '3' or type 'am-package-header', version '2' or type 'am-package-header', version '1', but instead got type 'am-package-header', version '0'";
     QTest::newRow("invalid-header-diskspaceused") \
             << "test-invalid-header-diskspaceused.ampkg" << ""
             << false << false << false << false << nomd << "metadata has an invalid diskSpaceUsed field (0)";

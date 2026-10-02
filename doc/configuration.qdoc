@@ -501,6 +501,22 @@ ui:
             default re-enables support for older, less restrictive certificates and is a security
             risk. For more details, see the \l {Public Key Infrastructure} {Installer documentation}.
     \row
+        \li [\c installer/minimumPackageFormatVersion]
+        \li int
+        \target minimum package format version
+        \li The minimum package format version (the \c formatVersion field in the package header)
+            that the installer will accept when verifying packages. Packages with an older format
+            are rejected at install time. Older formats use a package digest that is weaker than
+            the current one (see \l{The Checksum Algorithm}), so the signature on such a package
+            protects less. Packages that are installed without verifying their signatures
+            (see \l{allow-unsigned-packages}{\c flags/allowUnsignedPackages}) are not checked.
+            The valid range is 1 to the latest format version that this application manager
+            supports. If not set, will default to that latest version starting with Qt 6.13, which
+            means that packages created with an older \c appman-packager might have to be recreated,
+            or that this setting has to be lowered to the format version of the oldest package that
+            needs to stay installable. In the Qt 6.12 releases, it defaults to 1, so that all
+            existing packages stay installable. Lowering it below the default is a security risk.
+    \row
         \li [\c installer/allowedURLs]
         \li list<string>
         \target allowed installation urls

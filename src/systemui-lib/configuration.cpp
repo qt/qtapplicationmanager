@@ -29,6 +29,7 @@
 #include "sudo.h"
 #include "utilities.h"
 #include "cacertificate.h"
+#include "installationreport.h"
 #include "configuration.h"
 #include "configuration_p.h"
 
@@ -448,6 +449,7 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(installer.allowedURLs);
     MERGE_FIELD(installer.minimumCertificateVersion);
     MERGE_FIELD(installer.allowedExtendedAttributes);
+    MERGE_FIELD(installer.minimumPackageFormatVersion);
     MERGE_FIELD(dbus.registrations);
     MERGE_FIELD(quicklaunch.idleLoad);
     MERGE_FIELD(quicklaunch.runtimesPerContainer);
@@ -636,6 +638,8 @@ void ConfigurationPrivate::loadFromSource(const QByteArray &source, const QStrin
                           cd.installer.allowedURLs = yp.parseStringOrStringList(); } },
                      { "allowedExtendedAttributes", false, YamlParser::Scalar | YamlParser::List, [&]() {
                           cd.installer.allowedExtendedAttributes = yp.parseStringOrStringList(); } },
+                     { "minimumPackageFormatVersion", false, YamlParser::Scalar, [&]() {
+                          cd.installer.minimumPackageFormatVersion = yp.parseInt(1, InstallationReport::LatestPackageFormatVersion); } },
                      { "certificateRevocationLists", false, YamlParser::Scalar, [&]() {
                           cd.installer.certificateRevocationLists = yp.parseStringOrStringList(); } },
                      { "minimumCertificateVersion", false, YamlParser::Scalar, [&]() {

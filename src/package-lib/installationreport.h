@@ -47,6 +47,20 @@ public:
     bool includeExtendedAttributes() const;
     void setIncludeExtendedAttributes(bool b);
 
+    // the package header's formatVersion: this selects the digest algorithm; not serialized
+    static constexpr int LatestPackageFormatVersion = 3;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 13, 0)
+    static constexpr int DefaultPackageFormatVersion = LatestPackageFormatVersion;
+    static constexpr int DefaultMinimumPackageFormatVersion = LatestPackageFormatVersion;
+#else
+    // The 6.12 LTS releases need to keep creating and accepting packages that older application
+    // managers can handle, as the version 3 digest was introduced only in the 6.12.1 release.
+    static constexpr int DefaultPackageFormatVersion = 2;
+    static constexpr int DefaultMinimumPackageFormatVersion = 1;
+#endif
+    int packageFormatVersion() const;
+    void setPackageFormatVersion(int version);
+
     QStringList files() const;
     void addFile(const QString &file);
     void addFiles(const QStringList &files);
@@ -67,6 +81,7 @@ private:
     QVariantMap m_extraMetaData;
     QVariantMap m_extraSignedMetaData;
     bool m_includeExtendedAttributes = false;
+    int m_packageFormatVersion = DefaultPackageFormatVersion;
 };
 
 QT_END_NAMESPACE_AM

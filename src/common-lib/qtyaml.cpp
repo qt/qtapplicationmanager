@@ -69,7 +69,7 @@ public:
             throw std::exception();
     }
     void emitVariant(const QVariant &value) noexcept(false);
-    void emitScalar(const QByteArray &ba, bool quoting = false) noexcept(false);
+    void emitScalar(const QByteArray &ba, bool quoting = false, const char *tag = nullptr) noexcept(false);
 
 private:
     YamlVersion m_version;
@@ -82,16 +82,16 @@ YamlEmitterPrivate::YamlEmitterPrivate(YamlVersion version, YamlEmitter::Style s
     , m_style(style)
 { }
 
-void YamlEmitterPrivate::emitScalar(const QByteArray &ba, bool quoting)
+void YamlEmitterPrivate::emitScalar(const QByteArray &ba, bool quoting, const char *tag)
 {
     yaml_event_t event;
     throwOnError(yaml_scalar_event_initialize(&event,
                                               nullptr,
-                                              nullptr,
+                                              tag ? reinterpret_cast<const yaml_char_t *>(tag) : nullptr,
                                               reinterpret_cast<const yaml_char_t *>(ba.constData()),
                                               int(ba.size()),
-                                              1,
-                                              1,
+                                              tag ? 0 : 1,
+                                              tag ? 0 : 1,
                                               quoting ? YAML_SINGLE_QUOTED_SCALAR_STYLE
                                                       : YAML_ANY_SCALAR_STYLE));
     throwOnError(yaml_emitter_emit(&m_emitter, &event));
@@ -118,7 +118,8 @@ void YamlEmitterPrivate::emitVariant(const QVariant &value)
         emitScalar(QByteArray::number(value.toULongLong()));
         break;
     case QMetaType::Double:
-        emitScalar(QByteArray::number(value.toDouble()));
+        emitScalar(QByteArray::number(value.toDouble(), 'g', QLocale::FloatingPointShortest),
+                   false, "tag:yaml.org,2002:float");
         break;
     default:
     case QMetaType::QString:

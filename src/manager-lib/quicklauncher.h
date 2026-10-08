@@ -11,6 +11,8 @@
 #include <QtCore/QVector>
 #include <QtAppManCommon/global.h>
 
+QT_FORWARD_DECLARE_CLASS(QChronoTimer)
+
 QT_BEGIN_NAMESPACE_AM
 
 class AbstractContainer;
@@ -38,9 +40,6 @@ public Q_SLOTS:
 Q_SIGNALS:
     void shutDownFinished();
 
-protected:
-    void timerEvent(QTimerEvent *te) override;
-
 private:
     QuickLauncher(const QMap<std::pair<QString, QString>, int> &runtimesPerContainer,
                   qreal idleLoad, int failedStartLimit, int failedStartLimitIntervalSec,
@@ -49,7 +48,7 @@ private:
     QuickLauncher &operator=(const QuickLauncher &);
     static QuickLauncher *s_instance;
 
-    void triggerRebuild(int delay = 0);
+    void triggerRebuild();
     void removeEntry(AbstractContainer *container, AbstractRuntime *runtime);
     void checkFailedStarts();
 
@@ -67,9 +66,8 @@ private:
     };
 
     QVector<QuickLaunchEntry> m_quickLaunchPool;
-    int m_idleTimerId = 0;
-    CpuReader *m_idleCpu = nullptr;
-    bool m_isIdle = false;
+    QChronoTimer *m_rebuildTimer;
+    CpuReader *m_idleCpu;
     qreal m_idleThreshold;
     bool m_shuttingDown = false;
     int m_failedStartLimit;

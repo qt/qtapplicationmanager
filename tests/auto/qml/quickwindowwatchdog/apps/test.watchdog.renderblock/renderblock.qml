@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 import QtQuick
+import QtQuick.Window
 import QtApplicationManager.Application
 
 // Renders normally for a moment (so the window is being watched and is mid-frame), then
@@ -30,8 +31,11 @@ ApplicationManagerWindow {
 
     // beforeSynchronizing has already set the render state to non-Idle by the time this fires,
     // so blocking here reliably leaves the window stuck in a render state.
-    onBeforeRendering: {
-        if (win.blockNow)
-            while (true) ; // block the render thread forever
+    Connections {
+        target: win.contentItem.Window.window
+        function onBeforeRendering() {
+            if (win.blockNow)
+                while (true) ; // block the render thread forever
+        }
     }
 }

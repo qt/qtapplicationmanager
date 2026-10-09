@@ -27,6 +27,9 @@
 #  include <dlfcn.h>
 #  include <sys/socket.h>
 #  include "utilities.h"
+#  ifndef SO_PEERPIDFD
+#    define SO_PEERPIDFD 77
+#  endif
 #endif
 #include "logging.h"
 #include "dbus-utilities.h"
@@ -396,12 +399,10 @@ std::pair<qint64, Unix::Fd> getDBusPeerPidAndFd(const QDBusConnection &conn)
         if (::getsockopt(socketFd, SOL_SOCKET, SO_PEERCRED, &ucred, &ucredSize) == 0) {
             int pidfd = -1;
 
-#if defined(SO_PEERPIDFD)
             if (isPidFileSystemSupported()) {
                 socklen_t pidfdSize = sizeof(pidfd);
                 ::getsockopt(socketFd, SOL_SOCKET, SO_PEERPIDFD, &pidfd, &pidfdSize);
             }
-#endif
             return { ucred.pid, Unix::Fd(pidfd) };
         }
     }

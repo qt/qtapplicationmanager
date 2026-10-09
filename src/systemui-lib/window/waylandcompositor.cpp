@@ -17,6 +17,9 @@
 
 #if defined(Q_OS_LINUX)
 #  include <sys/socket.h>
+#  ifndef SO_PEERPIDFD
+#    define SO_PEERPIDFD 77
+#  endif
 #endif
 
 #include "logging.h"
@@ -230,7 +233,7 @@ Unix::Fd WaylandCompositor::clientProcessFd(QWaylandClient *client)
     // non-Linux, pre-6.9 kernels, or if the syscall fails. The kernel pins the pidfd to the
     // peer at connect time, so a subsequent inode comparison is race-free.
 
-#if defined(Q_OS_LINUX) && defined(SO_PEERPIDFD)
+#if defined(Q_OS_LINUX)
     if (!client || !isPidFileSystemSupported())
         return { };
     int sockFd = ::wl_client_get_fd(client->client());

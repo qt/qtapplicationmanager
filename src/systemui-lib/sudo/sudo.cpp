@@ -23,6 +23,7 @@
 #include "exception.h"
 
 #include <cerrno>
+#include <iostream>
 #include <memory>
 
 using namespace Qt::StringLiterals;
@@ -336,7 +337,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
                 // We accept exactly one verified connection and refuse every later one: once the real
                 // main process is connected there is never a second legitimate peer.
                 if (sudoAdaptor) {
-                    qCCritical(LogSystem) << "sudo-helper refused an additional P2P connection";
+                    std::cerr << "ERROR: sudo-helper refused an additional P2P connection\n";
                     ::_exit(4);
                 }
 
@@ -357,12 +358,12 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
                 }
 
                 if (!verified) {
-                    qCCritical(LogSystem) << "sudo-helper rejected a P2P connection from pid" << peerPid;
+                    std::cerr << "ERROR: sudo-helper rejected a P2P connection from pid " << peerPid << "\n";
                     ::_exit(4);
                 }
 
                 if (!QDBusConnection(connection).registerObject(u"/Sudo"_s, sudoServer, QDBusConnection::ExportAdaptors)) {
-                    qCCritical(LogSystem) << "sudo-helper could not register the /Sudo object";
+                    std::cerr << "ERROR: sudo-helper could not register the /Sudo object\n";
                     ::_exit(4);
                 }
             });
@@ -375,7 +376,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
 
             ::_exit(app.exec());
         } catch (const Exception &e) {
-            qCCritical(LogSystem) << "Failed to start sudo helper:" << e.what();
+            std::cerr << "ERROR: Failed to start sudo helper: " << e.what() << "\n";
             ::_exit(1);
         }
         // This point in the sudo-helper process should never be reached

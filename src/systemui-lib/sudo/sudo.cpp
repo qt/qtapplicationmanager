@@ -230,6 +230,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
             qCCritical(LogSystem) << "Running as root is not recommended! Please use "
                                      "--setuid=<user>[:<group>]*, set $AM_SETUID or use "
                                      "sudo to run as an unprivileged user";
+            return fallbackServer();
         }
     } else {
         try {

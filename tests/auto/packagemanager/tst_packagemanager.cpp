@@ -24,6 +24,9 @@
 #include "../error-checking.h"
 #include "../devmode.h"
 
+#ifdef Q_OS_LINUX
+#  include <unistd.h>
+#endif
 
 using namespace Qt::StringLiterals;
 
@@ -804,6 +807,9 @@ void tst_PackageManager::simulateErrorConditions()
 {
 #ifndef Q_OS_LINUX
     QSKIP("Only tested on Linux");
+#else
+    if (::getuid() == 0)
+        QSKIP("Cannot simulate unreadable directories as root");
 #endif
 
     QFETCH(bool, testUpdate);

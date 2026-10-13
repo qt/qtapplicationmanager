@@ -369,13 +369,14 @@ void InstallationTask::checkExtractedFile(const QString &file) noexcept(false)
             throw Exception("info.yaml must be the first file in the package. Got %1")
                 .arg(file);
 
+#if !defined(Q_OS_QNX) // QNX is lacking an implementation for QStorageInfo
         const quint64 spaceNeeded = m_extractor->installationReport().diskSpaceUsed();
         const qint64 spaceAvailable = QStorageInfo(m_installationPath).bytesAvailable();
         if (spaceNeeded && (spaceAvailable >= 0) && (quint64(spaceAvailable) < spaceNeeded)) {
             throw Exception("not enough space left in %1: the package needs %2 bytes, but only %3 bytes are available")
                 .arg(m_installationPath).arg(spaceNeeded).arg(spaceAvailable);
         }
-
+#endif
         m_package.reset(PackageInfo::fromManifest(m_extractor->destinationDirectory().absoluteFilePath(file)));
         if (m_package->id() != m_extractor->installationReport().packageId())
             throw Exception("the package identifiers in --PACKAGE-HEADER--' and info.yaml do not match");

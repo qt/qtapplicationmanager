@@ -1,0 +1,10 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'test.winmap.translucent'
+name:
+  en: 'Translucent Window'
+applications:
+- id:      'test.winmap.translucent'
+  code:    'translucent.qml'
+  runtime: 'qml'

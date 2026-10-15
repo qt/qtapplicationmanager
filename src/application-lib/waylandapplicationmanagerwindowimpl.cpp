@@ -39,8 +39,9 @@ WaylandApplicationManagerWindowImpl::WaylandApplicationManagerWindowImpl(Applica
     : ApplicationManagerWindowImpl(window)
     , m_applicationMain(applicationMain)
     , m_qwindow(new AMQuickWindowQmlImpl(window))
+    , m_premultiplyColor(QSGRendererInterface::isApiRhiBased(m_qwindow->rendererInterface()->graphicsApi()))
 {
-    m_color = qUnpremultiply(m_qwindow->color().rgba64());
+    m_color = m_premultiplyColor ? qUnpremultiply(m_qwindow->color().rgba64()) : m_qwindow->color();
 
     QObject::connect(m_qwindow, &AMQuickWindowQmlImpl::windowTitleChanged,
                      window, &ApplicationManagerWindow::titleChanged);
@@ -144,8 +145,6 @@ void WaylandApplicationManagerWindowImpl::classBegin()
     m_qwindow->setWidth(1024);
     m_qwindow->setHeight(768);
     m_qwindow->setVisible(true);
-
-    m_qwindow->create(); // force allocation of platform resources
 }
 
 void WaylandApplicationManagerWindowImpl::componentComplete()
@@ -356,7 +355,7 @@ void WaylandApplicationManagerWindowImpl::setColor(const QColor &c)
 {
     if (m_qwindow) {
         m_color = c; // qUnpremultiply(qPremultiply(...)) introduces rounding errors
-        m_qwindow->setColor(qPremultiply(c.rgba64()));
+        m_qwindow->setColor(m_premultiplyColor ? qPremultiply(c.rgba64()) : c);
     }
 }
 

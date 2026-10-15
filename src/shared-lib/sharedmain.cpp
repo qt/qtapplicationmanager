@@ -32,6 +32,7 @@
 #include "dbus-utilities.h"
 #include "exception.h"
 #include "startuptimer.h"
+#include "transparenthugepages.h"
 #include "unixsignalhandler.h"
 #include "watchdog.h"
 
@@ -98,6 +99,8 @@ void SharedMain::initialize()
     if (!qEnvironmentVariableIsSet("XDG_RUNTIME_DIR"))
         setenv("XDG_RUNTIME_DIR", QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toLocal8Bit(), 1);
 #endif
+
+    TransparentHugePages::checkState();
 
     ensureLibDBusIsAvailable();
 }

@@ -25,6 +25,7 @@ qt_internal_add_module(AppManSharedPrivate
         sharedmain.cpp sharedmain.h
         startuptimer.cpp startuptimer.h
         systemstatus.cpp systemstatus.h
+        transparenthugepages.cpp transparenthugepages.h
         watchdog.cpp watchdog.h watchdog_p.h
 
         intent-client/intentclient.cpp intent-client/intentclient.h

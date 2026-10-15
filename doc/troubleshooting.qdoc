@@ -32,6 +32,8 @@ solve them.
         \li \l{My applications are crashing immediately within the application manager. What are some possible solutions?}
     \row
         \li \l{Why does the appman-controller not see any of my appman instances?}
+    \row
+        \li \l{How can I reduce RAM usage?}
 \endtable
 
 \target ts-cmake-wayland
@@ -149,5 +151,55 @@ else
   exit 2
 fi
 \endcode
+
+
+\section1 How can I reduce RAM usage?
+
+\section2 Transparent Huge Pages
+
+If the Linux kernel has transparent huge pages (THP) enabled system-wide (\c always in
+\c{/sys/kernel/mm/transparent_hugepage/enabled}), anonymous memory is backed by 2 MB pages instead
+of 4 KB pages whenever possible. A partially used heap then occupies a lot more physical RAM than it
+actually needs. Since every application in multi-process mode is a separate process, this overhead
+adds up quickly.
+
+You can change the THP policy for the application manager processes by setting the environment
+variable \c AM_TRANSPARENT_HUGE_PAGES to one of these values:
+
+\table
+    \header
+        \li Value
+        \li Description
+    \row
+        \li \c disable
+        \li Disables THP completely for this process.
+    \row
+        \li \c madvise
+        \li Disables THP, except for memory regions that explicitly request huge pages via
+            \c{madvise(MADV_HUGEPAGE)}. This requires Linux 6.18 or newer.
+    \row
+        \li \c enable
+        \li Resets the policy, so that the system-wide setting applies again. Use this to undo a
+            \c disable or \c madvise inherited from a parent process.
+\endtable
+
+The policy is inherited by all child processes, so setting the variable when starting the System UI
+also covers all applications started by it. If you only want to change the policy for the
+applications, but not for the System UI, set the variable for specific runtimes via their
+\c environmentVariables in the \l{Runtime Configuration}{runtime configuration} instead.
+
+\note The variable is evaluated very early on process startup: it has to be set in the environment
+of the System UI process itself and has no effect when set from within the System UI's
+configuration files. For applications, it is only evaluated by the QML launcher and by native
+applications built on top of the application manager libraries.
+
+If a policy was requested, the resulting state is logged in the \c am.system logging category,
+together with a warning if the policy could not be applied. You can also check the state of any
+process via the \c THP_enabled field in \c{/proc/<pid>/status}, and the amount of memory backed by
+huge pages via the \c AnonHugePages field in \c{/proc/<pid>/smaps_rollup}.
+
+If you are using systemd 260 or newer, its \c MemoryTHP service setting provides similar
+functionality, but a policy set this way cannot be reset by the processes in that service.
+
 
 */

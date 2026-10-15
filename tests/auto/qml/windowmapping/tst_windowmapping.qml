@@ -343,6 +343,14 @@ TestCase {
         compare(img.pixel(60,40), Qt.color("cyan"));
     }
 
+    function test_window_translucent() {
+        ApplicationManager.application("test.winmap.translucent").start();
+        tryCompare(WindowManager, "count", 1, spyTimeout);
+        compare(topChrome.window.contentState, WindowObject.SurfaceWithContent);
+        const c = grabImage(topChrome.Window.contentItem).pixel(50, 50);
+        verify(c.r > 0.7 && c.r < 0.8 && c.g > 0.45 && c.g < 0.55 && c.b > 0.45 && c.b < 0.55);
+    }
+
     // Exercises SystemFrameTimerImpl, which is the FrameTimer backend used when a FrameTimer is
     // pointed at a WindowObject (as opposed to a plain QQuickWindow). The WindowObject is an
     // InProcessWindow in single-process mode and a WaylandWindow in multi-process mode, so this

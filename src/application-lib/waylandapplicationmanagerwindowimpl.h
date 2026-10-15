@@ -75,6 +75,7 @@ public:
 private:
     QPointer<ApplicationMain> m_applicationMain;
     QPointer<AMQuickWindowQmlImpl> m_qwindow;
+    const bool m_premultiplyColor; // RHI clears with the raw color; QPainter (software) premultiplies itself
     QColor m_color;
 };
 

@@ -220,8 +220,8 @@ static const char *demangleSymbol(const char *mangled)
     return mangled;
 }
 
-// this will make it run before all other static constructor functions
-static void initBacktrace() __attribute__((constructor(101)));
+// this will make it run before all other static constructor functions, but after our thp handler
+static void initBacktrace() __attribute__((constructor(102)));
 
 
 #  elif defined(Q_OS_WINDOWS) && defined(Q_CC_MSVC)

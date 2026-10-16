@@ -36,6 +36,7 @@ struct PKCS12;
 struct PKCS7;
 struct STACK_OF_GENERAL_NAME;
 struct STACK_OF_X509;
+struct STACK_OF_X509_NOT_OWNING;
 struct X509;
 struct X509_CRL;
 struct X509_NAME;
@@ -68,6 +69,7 @@ static QT_AM_LIBCRYPTO_FUNCTION(EVP_sha256, const EVP_MD *(*)(), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(GENERAL_NAME_free, void (*)(GENERAL_NAME *));
 static QT_AM_LIBCRYPTO_FUNCTION(GENERAL_NAME_get0_value, void *(*)(const GENERAL_NAME *, int *), 0);
 static QT_AM_LIBCRYPTO_FUNCTION(OBJ_obj2txt, int(*)(char *, int, const ASN1_OBJECT *, int), -1);
+static QT_AM_LIBCRYPTO_FUNCTION(OPENSSL_sk_free, void (*)(OPENSSL_STACK *st));
 static QT_AM_LIBCRYPTO_FUNCTION(OPENSSL_sk_num, int (*)(const OPENSSL_STACK *), 0);
 static QT_AM_LIBCRYPTO_FUNCTION(OPENSSL_sk_pop_free, void (*)(OPENSSL_STACK *st, void (*func) (void *)));
 static QT_AM_LIBCRYPTO_FUNCTION(OPENSSL_sk_value, void *(*)(const OPENSSL_STACK *, int), nullptr);
@@ -78,7 +80,7 @@ static QT_AM_LIBCRYPTO_FUNCTION(PKCS12_free, void(*)(PKCS12 *));
 static QT_AM_LIBCRYPTO_FUNCTION(PKCS12_parse, int (*)(PKCS12 *, const char *, EVP_PKEY **, X509 **, STACK_OF_X509 **ca), 0);
 static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_final, int (*)(PKCS7 *, BIO *, int), 0);
 static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_free, void(*)(PKCS7 *));
-static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_get0_signers, STACK_OF_X509 * (*)(PKCS7 *, STACK_OF_X509 *, int), nullptr);
+static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_get0_signers, STACK_OF_X509_NOT_OWNING * (*)(PKCS7 *, STACK_OF_X509 *, int), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_sign, PKCS7 *(*)(X509 *, EVP_PKEY *, STACK_OF_X509 *, BIO *, int), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_sign_add_signer, void *(*)(PKCS7 *, X509 *, EVP_PKEY *, const EVP_MD *, int), nullptr);
 static QT_AM_LIBCRYPTO_FUNCTION(PKCS7_verify, int (*)(PKCS7 *, STACK_OF_X509 *, X509_STORE *, BIO *, BIO *, int), 0);
@@ -149,6 +151,9 @@ struct OpenSslDeleter {
             am_OPENSSL_sk_pop_free(reinterpret_cast<OPENSSL_STACK *>(stackOfX509),
                                    reinterpret_cast<void (*)(void *)>(fp));
         }
+    }
+    inline void operator()(STACK_OF_X509_NOT_OWNING *stackOfX509) {
+        am_OPENSSL_sk_free(reinterpret_cast<OPENSSL_STACK *>(stackOfX509));
     }
     inline void operator()(char *memory)
     { am_CRYPTO_free(memory, __FILE__, __LINE__); }
@@ -480,7 +485,7 @@ Signature::VerificationResult SignaturePrivate::verify(const QByteArray &signatu
             throw OpenSslException("Failed to verify signature");
     }
 
-    OpenSslPointer<STACK_OF_X509> signers { am_PKCS7_get0_signers(signature.get(), nullptr, 0x08 /*PKCS7_NOCHAIN*/) };
+    OpenSslPointer<STACK_OF_X509_NOT_OWNING> signers { am_PKCS7_get0_signers(signature.get(), nullptr, 0x08 /*PKCS7_NOCHAIN*/) };
     if (!signers || am_OPENSSL_sk_num(reinterpret_cast<OPENSSL_STACK *>(signers.get())) != 1)
         throw Exception("The PKCS#7 signature does not contain exactly one signer");
 

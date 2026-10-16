@@ -868,6 +868,11 @@ static std::pair<QString, QMultiHash<QString, int>> runningInstanceIds()
     QDir rtDir(rtPath);
     if (!rtDir.cd(u"qtapplicationmanager"_s))
         return { rtDir.path(), result };
+    if (!QFileInfo(rtDir.path()).isExecutable()) {
+        std::cerr << "WARNING: Runtime directory is missing the search (x) permission: "
+                  << qPrintable(rtDir.path()) << std::endl;
+        return { rtDir.path(), result };
+    }
 
     const QString suffix = u".lock"_s;
     QDirIterator dit(rtDir.path(), { u'*' + suffix });
@@ -880,13 +885,24 @@ static std::pair<QString, QMultiHash<QString, int>> runningInstanceIds()
             int counter = QStringView { name }.sliced(dashPos + 1).toInt(&counterOk);
             if (counterOk) {
                 QLockFile testLock(path);
-                if (testLock.tryLock(0))
+                if (testLock.tryLock(0)) {
                     testLock.unlock(); // stale lock
-                else if (testLock.error() != QLockFile::LockFailedError) {
-                    std::cerr << "WARNING: unrecoverable, stale lock file: " << qPrintable(path)
-                              << std::endl;
                 } else {
-                    result.insert(name.left(dashPos), counter);
+                    const auto lockError = testLock.error();
+                    switch (lockError) {
+                    case QLockFile::LockFailedError:
+                        result.insert(name.left(dashPos), counter);
+                        break;
+                    case QLockFile::PermissionError:
+                    case QLockFile::UnknownError:
+                        std::cerr << "WARNING: "
+                                  << ((lockError == QLockFile::PermissionError) ? "Permission"
+                                                                                : "Unknown")
+                                  << " error on lock file: " << qPrintable(path) << std::endl;
+                        break;
+                    default:
+                        break;
+                    }
                 }
             }
         }

@@ -176,7 +176,8 @@ qreal SystemStatus::cpuLoad() const
 /*! \qmlproperty int SystemStatus::cpuCores
     \readonly
 
-    The number of physical CPU cores installed on the system.
+    The number of logical CPUs (including SMT threads) available to this process. On Linux, this
+    respects the process's CPU affinity mask.
 */
 int SystemStatus::cpuCores() const
 {

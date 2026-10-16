@@ -112,7 +112,8 @@ qreal CpuStatus::cpuLoad() const
     \qmlproperty int CpuStatus::cpuCores
     \readonly
 
-    The number of physical CPU cores that are installed on the system.
+    The number of logical CPUs (including SMT threads) available to this process. On Linux, this
+    respects the process's CPU affinity mask.
 */
 int CpuStatus::cpuCores() const
 {
@@ -147,11 +148,13 @@ qreal CpuStatusPrivate::read()
         m_statFile.seek(0);
         const QByteArray buffer = m_statFile.readAll();
 
+        // first line: "cpu  user nice system idle iowait irq softirq steal guest guest_nice"
+        // guest and guest_nice are already accounted for in user and nice
         qsizetype pos = 0;
         qint64 total = 0;
         QVector<qint64> values;
 
-        while (pos < buffer.size() && values.size() < 4) {
+        while ((pos < buffer.size()) && (values.size() < 8) && (buffer.at(pos) != '\n')) {
             if (!::isdigit(buffer.at(pos))) {
                 ++pos;
                 continue;
@@ -163,13 +166,13 @@ qreal CpuStatusPrivate::read()
                                    10); // check missing for over-/underflow
             values << val;
             total += val;
-            pos = qsizetype(endPtr - buffer.constData() + 1);
+            pos = qsizetype(endPtr - buffer.constData());
         }
 
         if (values.size() < 4)
             return { };
 
-        qint64 idle = values.at(3);
+        qint64 idle = values.at(3) + values.value(4); // idle + iowait
         return { { total, idle } };
 
 #elif defined(Q_OS_WIN)
@@ -211,7 +214,7 @@ qreal CpuStatusPrivate::read()
         }
         ::vm_deallocate(::mach_task_self(),
                         reinterpret_cast<::vm_address_t>(cpuLoadInfo),
-                        cpuLoadInfoCount);
+                        cpuLoadInfoCount * sizeof(::integer_t));
 
         return { { total, idle } };
 
@@ -229,7 +232,9 @@ qreal CpuStatusPrivate::read()
     if (total == m_lastTotal) // this can happen in unit tests: prevent division by zero
         return { };
 
-    qreal newLoad = qreal(1) - (qreal(idle - m_lastIdle) / qreal(total - m_lastTotal));
+    // clamp: counters of CPUs going offline drop out of the sums
+    qreal newLoad = std::clamp(qreal(1) - (qreal(idle - m_lastIdle) / qreal(total - m_lastTotal)),
+                               qreal(0), qreal(1));
 
     m_lastIdle = idle;
     m_lastTotal = total;

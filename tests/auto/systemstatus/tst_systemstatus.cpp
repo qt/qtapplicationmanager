@@ -56,15 +56,16 @@ void tst_SystemStatus::initTestCase()
 
 void tst_SystemStatus::cpuStatus()
 {
-    // Parse the first line of /proc/stat: "cpu  user nice system idle ..."
-    // CpuStatus reads the first 4 numbers, sums them as total, treats index 3 as idle.
+    // Parse the first line of /proc/stat: "cpu  user nice system idle iowait irq softirq steal ..."
+    // CpuStatus sums the first 8 numbers as total, treats idle + iowait as idle.
     QFile f(u":/root/proc/stat"_s);
     QVERIFY(f.open(QIODevice::ReadOnly));
     const auto parts = f.readLine().simplified().split(' ');
-    QVERIFY(parts.size() >= 5 && parts[0] == "cpu");
-    const qint64 idle  = parts[4].toLongLong();
-    const qint64 total = parts[1].toLongLong() + parts[2].toLongLong()
-                         + parts[3].toLongLong() + idle;
+    QVERIFY((parts.size() >= 9) && (parts[0] == "cpu"));
+    const qint64 idle  = parts[4].toLongLong() + parts[5].toLongLong();
+    qint64 total = 0;
+    for (int i = 1; i <= 8; ++i)
+        total += parts[i].toLongLong();
 
     CpuStatus cpu;
     // Constructor read: lastIdle=0, lastTotal=0 -> load = 1 - idle/total
@@ -418,10 +419,11 @@ void tst_SystemStatus::systemStatus()
     QFile cpuFile(u":/root/proc/stat"_s);
     QVERIFY(cpuFile.open(QIODevice::ReadOnly));
     const auto parts = cpuFile.readLine().simplified().split(' ');
-    QVERIFY(parts.size() >= 5 && parts[0] == "cpu");
-    const qint64 idle  = parts[4].toLongLong();
-    const qint64 total = parts[1].toLongLong() + parts[2].toLongLong()
-                         + parts[3].toLongLong() + idle;
+    QVERIFY((parts.size() >= 9) && (parts[0] == "cpu"));
+    const qint64 idle  = parts[4].toLongLong() + parts[5].toLongLong();
+    qint64 total = 0;
+    for (int i = 1; i <= 8; ++i)
+        total += parts[i].toLongLong();
 
     QFile memFile(u":/root/proc/meminfo"_s);
     QVERIFY(memFile.open(QIODevice::ReadOnly));

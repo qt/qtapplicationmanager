@@ -1,0 +1,11 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'stop-two-windows'
+name:
+  en: 'Stop Two Windows'
+
+applications:
+- id:      'stop-two-windows'
+  code:    'stop-two-windows.qml'
+  runtime: 'qml'

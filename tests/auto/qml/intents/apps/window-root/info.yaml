@@ -1,0 +1,15 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'window-root'
+name:
+  en: 'Window Root'
+
+applications:
+- id:      'window-root'
+  code:    'window-root.qml'
+  runtime: 'qml'
+
+intents:
+- id: foreground
+  handleOnlyWhenRunning: true

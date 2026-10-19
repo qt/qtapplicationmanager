@@ -405,6 +405,111 @@ TestCase {
     }
 
 
+    property int startupTimeout: 5000 * AmTest.timeoutFactor
+    property bool broadcastOnWindowAdded: false
+    property var acksReceived: []
+    property int runStateOnWindowAdded: -1
+    property string stopOn: ""
+
+    // A System UI that reacts to a new window by broadcasting a 'handleOnlyWhenRunning' intent
+    // to the app must not have that intent dropped.
+    Connections {
+        target: WindowManager
+        function onWindowAdded(window) {
+            if (testCase.broadcastOnWindowAdded) {
+                testCase.runStateOnWindowAdded = window.application.runState
+                IntentClient.broadcastIntentRequest("foreground", { "appId": window.application.id })
+            }
+            if (testCase.stopOn === "windowAdded")
+                ApplicationManager.stopApplication(window.application.id)
+        }
+    }
+
+    Connections {
+        target: ApplicationManager
+        function onApplicationRunStateChanged(id, runState) {
+            if ((testCase.stopOn === "running") && (runState === Am.Running))
+                ApplicationManager.stopApplication(id)
+        }
+    }
+
+    IntentServerHandler {
+        intentIds: [ "foreground-ack" ]
+        visibility: IntentObject.Public
+        onRequestReceived: (request) => {
+            testCase.acksReceived.push(request.parameters.from)
+        }
+    }
+
+    SignalSpy {
+        id: destroyedSpy
+        target: AmTest
+        signalName: "objectDestroyed"
+    }
+
+    function stopAllApplicationsAndWait() {
+        ApplicationManager.stopAllApplications()
+        tryVerify(() => {
+            for (let i = 0; i < ApplicationManager.count; ++i) {
+                if (ApplicationManager.application(i).runState !== Am.NotRunning)
+                    return false
+            }
+            return true
+        }, startupTimeout)
+        tryCompare(WindowManager, "count", 0, startupTimeout)
+    }
+
+    function test_broadcastOnWindowAdded_data() {
+        return [
+            { tag: "window-root", appId: "window-root" },
+            { tag: "window-root-slow", appId: "window-root-slow" },
+            { tag: "item-root", appId: "item-root" },
+        ]
+    }
+
+    function test_broadcastOnWindowAdded(data) {
+        acksReceived = []
+        runStateOnWindowAdded = -1
+        broadcastOnWindowAdded = true
+
+        verify(ApplicationManager.startApplication(data.appId))
+        tryVerify(() => { return runStateOnWindowAdded !== -1 }, startupTimeout)
+        compare(runStateOnWindowAdded, Am.Running)
+
+        tryVerify(() => { return acksReceived.join() === data.appId }, startupTimeout,
+                  "broadcast sent from onWindowAdded was not delivered")
+
+        broadcastOnWindowAdded = false
+        stopAllApplicationsAndWait()
+    }
+
+    // Stopping the app while the held back windows are announced must not leak the app's objects
+    function test_stopWhileAnnouncing_data() {
+        return [
+            { tag: "running-one-window", appId: "stop-one-window", stopOn: "running" },
+            { tag: "running-two-windows", appId: "stop-two-windows", stopOn: "running" },
+            { tag: "windowAdded-one-window", appId: "stop-one-window", stopOn: "windowAdded" },
+            { tag: "windowAdded-two-windows", appId: "stop-two-windows", stopOn: "windowAdded" },
+        ]
+    }
+
+    function test_stopWhileAnnouncing(data) {
+        if (!ApplicationManager.singleProcess)
+            skip("the in-process runtime is only used in single-process mode")
+
+        destroyedSpy.clear()
+        stopOn = data.stopOn
+
+        verify(ApplicationManager.startApplication(data.appId))
+        tryCompare(destroyedSpy, "count", 1, startupTimeout)
+        tryCompare(ApplicationManager.application(data.appId), "runState", Am.NotRunning,
+                   startupTimeout)
+
+        stopOn = ""
+        stopAllApplicationsAndWait()
+    }
+
+
     function test_zbroadcast() { // 'z' to make it run as the last test
         let am = ApplicationManager
         const timeout = 5000 * AmTest.timeoutFactor

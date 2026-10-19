@@ -1,0 +1,15 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'item-root'
+name:
+  en: 'Item Root'
+
+applications:
+- id:      'item-root'
+  code:    'item-root.qml'
+  runtime: 'qml'
+
+intents:
+- id: foreground
+  handleOnlyWhenRunning: true

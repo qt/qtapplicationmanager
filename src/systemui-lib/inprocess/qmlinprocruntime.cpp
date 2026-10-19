@@ -26,16 +26,29 @@
 #include "utilities.h"
 #include "qml-utilities.h"
 
-using namespace std::chrono_literals;
 using namespace Qt::StringLiterals;
 
 
 QT_BEGIN_NAMESPACE_AM
 
+class InProcessIncubator : public QQmlIncubator
+{
+public:
+    explicit InProcessIncubator(QmlInProcRuntime *runtime)
+        : m_runtime(runtime)
+    { }
+
+protected:
+    void statusChanged(Status status) override { m_runtime->incubationStatusChanged(status); }
+
+private:
+    QmlInProcRuntime *m_runtime;
+};
 
 QmlInProcRuntime::QmlInProcRuntime(Application *app, QmlInProcRuntimeManager *manager)
     : AbstractRuntime(nullptr, app, manager)
     , m_applicationInterfaceImpl(new QmlInProcApplicationInterfaceImpl(this))
+    , m_incubator(new InProcessIncubator(this))
 {
     static bool once = false;
     if (!once) {
@@ -98,7 +111,9 @@ bool QmlInProcRuntime::start()
                                                               << m_app->info()->absoluteCodeFilePath()
                                                               << ":\n" << m_componentErrorString;
                 finish(3, Am::NormalExit);
-            } else if (status == QQmlComponent::Ready) {
+            } else if ((status == QQmlComponent::Ready) && (state() == Am::StartingUp)) {
+                // loadUrl() can report Ready synchronously while we are still NotRunning: this
+                // case is handled in start()
                 incubate();
             }
         });
@@ -146,21 +161,31 @@ bool QmlInProcRuntime::start()
 
         emit signaler()->aboutToStart(this);
         setState(Am::StartingUp);
+
+        // a cached component is already Ready when loadUrl() returns
+        if (m_component->isReady())
+            QMetaObject::invokeMethod(this, &QmlInProcRuntime::incubate, Qt::QueuedConnection);
         return true;
     }
     case QQmlComponent::Ready: // already loaded and ready to go
         emit signaler()->aboutToStart(this);
         setState(Am::StartingUp);
 
-        incubate();
+        QMetaObject::invokeMethod(this, &QmlInProcRuntime::incubate, Qt::QueuedConnection);
         return true;
     }
     Q_ASSERT(false);
     return false;
 }
 
+// Without an incubation controller, create() finishes synchronously and the app reaches Running
+// from within. start() therefore always calls this function queued, so the app never completes
+// its startup from within start().
 void QmlInProcRuntime::incubate()
 {
+    if (state() != Am::StartingUp) // stopped while the queued call was pending
+        return;
+
     // We are running each application in its own, separate Qml context.
     // This way, we can export a unique runtime-tag to this context to then later
     // determine at runtime which application is currently active.
@@ -171,54 +196,64 @@ void QmlInProcRuntime::incubate()
         return;
     }
 
-    m_component->create(m_incubator, appContext, nullptr);
+    m_incubator->clear();
+    m_component->create(*m_incubator, appContext, nullptr);
+}
 
-    // QQmlIncubator has no signal for when it's done, so we have to poll via a timer
-    if (!m_incubationTimer) {
-        m_incubationTimer = new QTimer(this);
-        m_incubationTimer->setInterval(16ms);
+void QmlInProcRuntime::incubationStatusChanged(QQmlIncubator::Status status)
+{
+    if (status == QQmlIncubator::Error) {
+        const auto errors = m_incubator->errors();
+        QStringList strErrors;
+        for (const auto &e : errors)
+            strErrors << e.toString();
+        qCCritical(LogQmlRuntime) << "Failed to load component:" << m_app->info()->absoluteCodeFilePath()
+                                  << ":\n *" << strErrors.join(u"\n *");
+        releaseUnannouncedSurfaces();
+        finish(3, Am::NormalExit);
+    } else if (status == QQmlIncubator::Ready) {
+        // stop() aborts the incubation while StartingUp, so Ready cannot arrive in any other state
+        QObject *obj = m_incubator->object();
+        Q_ASSERT(obj);
+        Q_ASSERT(state() == Am::StartingUp);
 
-        connect(m_incubationTimer, &QTimer::timeout, this, [this]() {
-            if (m_incubator.isError()) {
-                const auto errors = m_incubator.errors();
-                QStringList strErrors;
-                for (const auto &e : errors)
-                    strErrors << e.toString();
-                qCCritical(LogQmlRuntime) << "Failed to load component:" << m_app->info()->absoluteCodeFilePath()
-                                          << ":\n *" << strErrors.join(u"\n *");
-                finish(3, Am::NormalExit);
-            } else if (m_incubator.isReady()) {
-                auto *obj = m_incubator.object();
-                Q_ASSERT(obj);
+        if (state() != Am::StartingUp) { // better be safe than sorry
+            delete obj;
+            return;
+        }
 
-                if (state() == Am::ShuttingDown) {
-                    delete obj;
-                } else {
-                    if (!qobject_cast<ApplicationManagerWindow *>(obj)) {
-                        QQuickItem *item = qobject_cast<QQuickItem *>(obj);
-                        if (item) {
-                            auto surfaceItem = new InProcessSurfaceItem;
-                            item->setParentItem(surfaceItem);
-                            addSurfaceItem(QSharedPointer<InProcessSurfaceItem>(surfaceItem));
-                        }
-                    }
-                    m_rootObject = obj;
-                    setState(Am::Running);
-
-                    if (!m_document.isEmpty())
-                        openDocument(m_document, QString());
-                }
-            } else {
-                return; // wait for the next timer tick
+        if (!qobject_cast<ApplicationManagerWindow *>(obj)) {
+            QQuickItem *item = qobject_cast<QQuickItem *>(obj);
+            if (item) {
+                auto surfaceItem = new InProcessSurfaceItem;
+                item->setParentItem(surfaceItem);
+                addSurfaceItem(QSharedPointer<InProcessSurfaceItem>(surfaceItem));
             }
-            // cleanup regardless if we succeeded or failed
-            m_incubator.clear();
-            m_incubationTimer->stop();
-            m_incubationTimer->deleteLater();
-            m_incubationTimer = nullptr;
-        });
+        }
+        m_rootObject = obj;
+        setState(Am::Running);
+
+        // Announce the surfaces that were held back by addSurfaceItem() while starting up.
+        // The System UI may stop the app from within a runStateChanged or windowAdded handler.
+        const auto surfaces = m_surfaces; // copy, as m_surfaces may be modified
+        for (const auto &surface : surfaces) {
+            if (state() == Am::Running)
+                emit signaler()->inProcessSurfaceItemReady(this, surface);
+            else
+                onSurfaceItemReleased(surface.data()); // never announced, so never released
+        }
+
+        if ((state() == Am::Running) && !m_document.isEmpty())
+            openDocument(m_document, QString());
     }
-    m_incubationTimer->start();
+}
+
+// Surfaces added while StartingUp were never announced, so they will never be released
+void QmlInProcRuntime::releaseUnannouncedSurfaces()
+{
+    const auto surfaces = m_surfaces;
+    for (const auto &surface : surfaces)
+        onSurfaceItemReleased(surface.data());
 }
 
 void QmlInProcRuntime::stop(Am::ExitStatus exitStatus)
@@ -235,14 +270,10 @@ void QmlInProcRuntime::stop(Am::ExitStatus exitStatus)
             delete m_component;
             m_component = nullptr;
         } else {
-            // the incubation finished, but the incubationTimer didn't fire yet
-            if (m_incubator.isReady() && m_incubator.object())
-                delete m_incubator.object();
-            // cancel any active incubations
-            m_incubator.clear();
-            if (m_incubationTimer)
-                m_incubationTimer->stop();
+            // cancel any active incubation
+            m_incubator->clear();
         }
+        releaseUnannouncedSurfaces();
         finish(exitStatus);
         return;
 
@@ -407,7 +438,10 @@ void QmlInProcRuntime::addSurfaceItem(const QSharedPointer<InProcessSurfaceItem>
                 onSurfaceItemReleased(surfacePtr);
             });
         }
-        emit signaler()->inProcessSurfaceItemReady(this, surface);
+        // The System UI may react to a new window by sending intents to the app, which are only
+        // delivered once the app is Running. Surfaces are announced when that state is reached.
+        if (state() == Am::Running)
+            emit signaler()->inProcessSurfaceItemReady(this, surface);
     }
 }
 

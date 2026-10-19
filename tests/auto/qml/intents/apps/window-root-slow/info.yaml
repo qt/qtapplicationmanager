@@ -1,0 +1,15 @@
+formatVersion: 1
+formatType: am-package
+---
+id:      'window-root-slow'
+name:
+  en: 'Window Root Slow'
+
+applications:
+- id:      'window-root-slow'
+  code:    'window-root-slow.qml'
+  runtime: 'qml'
+
+intents:
+- id: foreground
+  handleOnlyWhenRunning: true

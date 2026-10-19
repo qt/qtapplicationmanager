@@ -6,6 +6,8 @@
 #ifndef QMLINPROCRUNTIME_H
 #define QMLINPROCRUNTIME_H
 
+#include <memory>
+
 #include <QtAppManSystemUI/abstractruntime.h>
 
 #include <QtCore/QSharedPointer>
@@ -13,12 +15,12 @@
 
 QT_FORWARD_DECLARE_CLASS(QQmlContext)
 QT_FORWARD_DECLARE_CLASS(QQmlComponent)
-QT_FORWARD_DECLARE_CLASS(QTimer)
 
 QT_BEGIN_NAMESPACE_AM
 
 class ApplicationInterfaceImpl;
 class InProcessSurfaceItem;
+class InProcessIncubator;
 
 class Q_APPMANSYSTEMUI_EXPORT QmlInProcRuntimeManager : public AbstractRuntimeManager
 {
@@ -58,6 +60,7 @@ private:
     void finish(QtAM::Am::ExitStatus status);
     void finish(int exitCode, QtAM::Am::ExitStatus status);
     void onSurfaceItemReleased(QtAM::InProcessSurfaceItem *surface);
+    void releaseUnannouncedSurfaces();
 
 private:
     static const char *s_runtimeKey;
@@ -70,6 +73,7 @@ private:
     void addImportPaths(const QStringList &importPaths, const QString &baseDir);
 
     void incubate();
+    void incubationStatusChanged(QQmlIncubator::Status status);
 
     // used by QmlInProcApplicationManagerWindowImpl to register surfaceItems
     void addSurfaceItem(const QSharedPointer<InProcessSurfaceItem> &surface);
@@ -78,13 +82,13 @@ private:
     QList<QSharedPointer<InProcessSurfaceItem>> m_surfaces;
     QQmlComponent *m_component = nullptr;
     QString m_componentErrorString;
-    QQmlIncubator m_incubator;
-    QTimer *m_incubationTimer = nullptr;
+    std::unique_ptr<InProcessIncubator> m_incubator;
     bool m_allWindowsClosed = false;
     QMap<QString, QString> m_applicationExtraDirs;
 
     friend class QmlInProcApplicationManagerWindowImpl; // for emitting signals on behalf of this class in onComplete
     friend class QmlInProcApplicationInterfaceImpl; // for handling the quit() signal
+    friend class InProcessIncubator; // for calling incubationStatusChanged
 };
 
 QT_END_NAMESPACE_AM

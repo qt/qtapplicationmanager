@@ -32,6 +32,15 @@ TestCase {
         verify(ApplicationManager.application("intents2.1"))
         if (!ApplicationManager.singleProcess)
             verify(ApplicationManager.application("cannot-start"))
+
+        // Starting the handler apps on demand can exceed the short startApplication timeout
+        // configured for the timeout tests. test_zbroadcast covers starting on demand.
+        verify(ApplicationManager.startApplication("intents1"))
+        verify(ApplicationManager.startApplication("intents2.1"))
+        tryVerify(() => {
+            return (ApplicationManager.applicationRunState("intents1") === Am.Running)
+                && (ApplicationManager.applicationRunState("intents2.1") === Am.Running)
+        }, startupTimeout)
     }
 
     SignalSpy {
@@ -447,18 +456,6 @@ TestCase {
         signalName: "objectDestroyed"
     }
 
-    function stopAllApplicationsAndWait() {
-        ApplicationManager.stopAllApplications()
-        tryVerify(() => {
-            for (let i = 0; i < ApplicationManager.count; ++i) {
-                if (ApplicationManager.application(i).runState !== Am.NotRunning)
-                    return false
-            }
-            return true
-        }, startupTimeout)
-        tryCompare(WindowManager, "count", 0, startupTimeout)
-    }
-
     function test_broadcastOnWindowAdded_data() {
         return [
             { tag: "window-root", appId: "window-root" },
@@ -480,7 +477,8 @@ TestCase {
                   "broadcast sent from onWindowAdded was not delivered")
 
         broadcastOnWindowAdded = false
-        stopAllApplicationsAndWait()
+        ApplicationManager.stopApplication(data.appId)
+        tryCompare(ApplicationManager.application(data.appId), "runState", Am.NotRunning, startupTimeout)
     }
 
     // Stopping the app while the held back windows are announced must not leak the app's objects
@@ -506,9 +504,9 @@ TestCase {
                    startupTimeout)
 
         stopOn = ""
-        stopAllApplicationsAndWait()
+        ApplicationManager.stopApplication(data.appId)
+        tryCompare(ApplicationManager.application(data.appId), "runState", Am.NotRunning, startupTimeout)
     }
-
 
     function test_zbroadcast() { // 'z' to make it run as the last test
         let am = ApplicationManager

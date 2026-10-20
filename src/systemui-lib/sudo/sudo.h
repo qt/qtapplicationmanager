@@ -59,6 +59,8 @@ public:
     static void forkServer(DropPrivileges dropPrivileges) noexcept(false);
     static void startServer() noexcept(false);
     static void fallbackServer() noexcept(false);
+
+    static bool forkServerWasCalled();
 };
 
 

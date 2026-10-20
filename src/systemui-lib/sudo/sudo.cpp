@@ -151,14 +151,34 @@ QT_BEGIN_NAMESPACE_AM
 static Unix::Fd s_sudoAddressPipe; // clazy:exclude=non-pod-global-static
 #endif
 
+static bool isForkServerPending()
+{
+#if QT_CONFIG(am_multi_process)
+    return bool(s_sudoAddressPipe);
+#else
+    return false;
+#endif
+}
+
+
+static bool s_forkServerCalled = false;
+
+bool Sudo::forkServerWasCalled()
+{
+    return s_forkServerCalled;
+}
+
 
 void Sudo::fallbackServer()
 {
     if (SudoClient::instance()) {
         if (!SudoClient::instance()->isFallbackImplementation())
-            throw Exception("Sudo::fallbackServer was called after Sudo::forkServer");
+            throw Exception("Sudo::fallbackServer was called after Sudo::startServer");
         return;
     }
+
+    if (isForkServerPending())
+        throw Exception("Sudo::fallbackServer was called after Sudo::forkServer");
 
     auto *d = new SudoClientPrivate;
     d->isFallback = true;
@@ -175,6 +195,11 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
             throw Exception("Sudo::forkServer was called after Sudo::fallbackServer");
         return;
     }
+
+    if (isForkServerPending())
+        throw Exception("Sudo::forkServer was called a second time before Sudo::startServer");
+
+    s_forkServerCalled = true;
 
 #if defined(Q_OS_UNIX)
     uid_t realUid = Unix::User::currentId();

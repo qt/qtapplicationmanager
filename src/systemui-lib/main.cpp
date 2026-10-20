@@ -133,11 +133,13 @@ int &Main::preConstructor(int &argc, char **argv, InitFlags initFlags)
         Logging::initialize(argc, argv);
         StartupTimer::instance()->checkpoint("after logging initialization");
     }
-    if (initFlags & InitFlag::ForkSudoServer) {
-        Sudo::forkServer(Sudo::DropPrivilegesPermanently);
-        StartupTimer::instance()->checkpoint("after sudo server fork");
-    } else {
-        Sudo::fallbackServer();
+    if (!Sudo::forkServerWasCalled()) {
+        if (initFlags & InitFlag::ForkSudoServer) {
+            Sudo::forkServer(Sudo::DropPrivilegesPermanently);
+            StartupTimer::instance()->checkpoint("after sudo server fork");
+        } else {
+            Sudo::fallbackServer();
+        }
     }
     return argc;
 }

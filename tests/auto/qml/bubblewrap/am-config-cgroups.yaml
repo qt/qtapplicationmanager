@@ -11,7 +11,7 @@ ui:
 runtimes:
   qml:
     quitTime: 10000  # coin can be VERY slow
-    importPaths: [ '${CONFIG_DIR}/apps/helper' ]
+    importPaths: [ 'apps/helper' ]
 
 flags:
   developmentMode: true

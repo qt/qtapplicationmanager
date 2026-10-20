@@ -4,12 +4,9 @@ formatType: am-configuration
 applications:
   builtinAppsManifestDir: "${CONFIG_DIR}/apps"
 
-# Workaround for a crash in the mesa software renderer (llvmpipe)
 runtimes:
   qml:
-    environmentVariables:
-      QT_QUICK_BACKEND: "software"
-    importPaths: [ '${CONFIG_DIR}/apps/slowanimhelper' ]
+    importPaths: [ 'apps/slowanimhelper' ]
 
 # the slow-animations test loads the helper module in the System UI too, to check the System-UI
 # side of the slowAnimations machinery (the app side is checked via the runtime importPaths above)

@@ -73,6 +73,13 @@ instructions:
     - type: EnvironmentVariable
       variableName: AM_NO_CRASH_HANDLER
       variableValue: 1
+    - type: EnvironmentVariable
+      variableName: QT_WAYLAND_HARDWARE_INTEGRATION
+      variableValue: linux-dmabuf-v1
+      enable_if:
+        condition: property
+        property: target.os
+        equals_value: Linux
     - type: Rename
       sourcePath: "{{.SourceDir}}/coin/axivion/ci_config_common.json"
       targetPath: "{{.Env.HOME}}/axivion/ci_config_common.json"

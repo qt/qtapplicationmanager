@@ -127,7 +127,7 @@ int &Main::preConstructor(int &argc, char **argv, InitFlags initFlags)
     }
 #endif
 
-    registerDBusTypes(); // this needs to be done before the potential fork below
+    registerDBusTypes();
 
     if (initFlags & InitFlag::InitializeLogging) {
         Logging::initialize(argc, argv);

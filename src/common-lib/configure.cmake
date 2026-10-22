@@ -118,6 +118,7 @@ qt_feature_definition("am-has-hardware-id" "QT_AM_HARDWARE_ID" VALUE "\"${INPUT_
 qt_feature("am-widgets-support" PUBLIC
     LABEL "Enable support for Qt widgets"
     CONDITION TARGET Qt::Widgets
+    AUTODETECT OFF
     ENABLE INPUT_widgets_support STREQUAL 'yes'
     DISABLE INPUT_widgets_support STREQUAL 'no'
 )

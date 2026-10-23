@@ -634,13 +634,23 @@ void tst_PackageManager::developerCertificate()
         QCOMPARE(certChangedSpy.count(), 2);
     }
 
-    // the "other" certificate is not bound to any package id and must be rejected
+    // the "other" certificate is issued by an untrusted CA and must be rejected
     {
         const QByteArray otherP12 = readCert(AM_TESTDATA_DIR u"certificates/other-certs/other.p12"_s);
         QVERIFY(!otherP12.isEmpty());
 
         DevMode devMode(PackageManager::DevelopmentMode::Application);
         QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDeveloperCertificate(otherP12, "password"));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+    }
+
+    // a trusted certificate that is not bound to any package id must be rejected
+    {
+        const QByteArray noPkgIdP12 = readCert(AM_TESTDATA_DIR u"certificates/dev-certs/dev-nopkgid.p12"_s);
+        QVERIFY(!noPkgIdP12.isEmpty());
+
+        DevMode devMode(PackageManager::DevelopmentMode::Application);
+        QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDeveloperCertificate(noPkgIdP12, "password"));
         QVERIFY(!m_pm->developerCertificate().isValid());
     }
 
@@ -665,10 +675,13 @@ void tst_PackageManager::developmentToken()
     };
     QByteArray narrowToken;
     QByteArray otherToken;
+    QByteArray noPkgIdToken;
     QVERIFY_THROWS_NO_EXCEPTION(narrowToken = createToken(AM_TESTDATA_DIR u"certificates/dev-certs/dev-narrow.p12"_s));
     QVERIFY_THROWS_NO_EXCEPTION(otherToken = createToken(AM_TESTDATA_DIR u"certificates/other-certs/other.p12"_s));
+    QVERIFY_THROWS_NO_EXCEPTION(noPkgIdToken = createToken(AM_TESTDATA_DIR u"certificates/dev-certs/dev-nopkgid.p12"_s));
     QVERIFY(!narrowToken.isEmpty());
     QVERIFY(!otherToken.isEmpty());
+    QVERIFY(!noPkgIdToken.isEmpty());
 
     QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     const QString iniFile = dataDir.absoluteFilePath(u"development-mode.ini"_s);
@@ -696,6 +709,10 @@ void tst_PackageManager::developmentToken()
 
         // a token from an untrusted CA is rejected
         QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDevelopmentToken(otherToken));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+
+        // a token from a trusted cert that is not bound to a package id is rejected
+        QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDevelopmentToken(noPkgIdToken));
         QVERIFY(!m_pm->developerCertificate().isValid());
 
         // a valid, package-bound token works and is persisted

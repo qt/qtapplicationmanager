@@ -1,0 +1,33 @@
+HOME            = .
+RANDFILE        = $ENV::HOME/.rnd
+
+####################################################################
+[ req ]
+prompt              = no
+distinguished_name  = dev_nopkgid_distinguished_name
+req_extensions      = dev_nopkgid_req_extensions
+string_mask         = utf8only
+
+####################################################################
+[ dev_nopkgid_distinguished_name ]
+C = DE
+O = No-pkgid Developer
+CN = No-pkgid Developer
+emailAddress = nopkgid@developer.com
+
+####################################################################
+[ dev_nopkgid_req_extensions ]
+
+subjectKeyIdentifier= hash
+basicConstraints    = CA:FALSE
+keyUsage            = nonRepudiation, digitalSignature, keyEncipherment, decipherOnly
+subjectAltName      = @dev_nopkgid_restrictions
+
+####################################################################
+# A valid 6.12 developer certificate that is not bound to any package id.
+[ dev_nopkgid_restrictions ]
+URI.1 = "qtam://applicationid/*"
+URI.2 = "qtam://category/*"
+URI.3 = "qtam://capability/*"
+URI.4 = "qtam://runtime/*"
+URI.5 = "qtam://version/6.12"

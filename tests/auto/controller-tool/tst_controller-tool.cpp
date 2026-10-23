@@ -470,8 +470,12 @@ void tst_ControllerTool::developmentToken()
     QString otherToken;
     QVERIFY_THROWS_NO_EXCEPTION(narrowToken = createTokenFile(u"narrow.token"_s, narrowCert));
     QVERIFY_THROWS_NO_EXCEPTION(otherToken = createTokenFile(u"other.token"_s, otherCert));
+    QString noPkgIdToken;
+    QVERIFY_THROWS_NO_EXCEPTION(noPkgIdToken = createTokenFile(u"nopkgid.token"_s,
+        QString::fromLatin1(AM_TESTDATA_DIR "certificates/dev-certs/dev-nopkgid.p12")));
     QVERIFY(!narrowToken.isEmpty());
     QVERIFY(!otherToken.isEmpty());
+    QVERIFY(!noPkgIdToken.isEmpty());
 
     QFile garbage(tmp.filePath(u"garbage.token"_s));
     QVERIFY(garbage.open(QIODevice::WriteOnly));
@@ -524,6 +528,12 @@ void tst_ControllerTool::developmentToken()
         {
             ControllerTool ctrl({ u"set-development-token"_s, otherToken });
             QVERIFY(!ctrl.call());
+        }
+        // a token from a trusted cert that is not bound to a package id is rejected
+        {
+            ControllerTool ctrl({ u"set-development-token"_s, noPkgIdToken });
+            QVERIFY(!ctrl.call());
+            QVERIFY2(ctrl.stdErr.contains("not bound to package IDs"), ctrl.stdErr.constData());
         }
         // a token from the trusted developer CA is accepted
         {

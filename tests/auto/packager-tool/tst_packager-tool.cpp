@@ -769,6 +769,14 @@ void tst_PackagerTool::developmentToken()
         QVERIFY(!p.call());
         QVERIFY2(p.stdErr.contains("Could not open the certificate file"), p.stdErr.constData());
     }
+    // certificates that are not bound to a package id are rejected
+    {
+        PackagerTool p(QStringList { u"create-development-token"_s,
+                                     AM_TESTDATA_DIR u"certificates/dev-certs/dev-nopkgid.p12"_s } + pwArgs);
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("not bound to package IDs"), p.stdErr.constData());
+        QVERIFY(p.stdOut.isEmpty());
+    }
     // legacy certificates without a version are rejected
     {
         PackagerTool p(QStringList { u"create-development-token"_s,

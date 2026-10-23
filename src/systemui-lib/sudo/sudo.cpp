@@ -108,6 +108,7 @@ extern "C" {
 #endif
 
 #ifndef MOUNT_ATTR_SIZE_VER0
+#  include <linux/types.h>
 #  define MOUNT_ATTR_SIZE_VER0 32
 struct mount_attr {
     __u64 attr_set;

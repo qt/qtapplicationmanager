@@ -47,7 +47,8 @@ _appman-controller()
     cur="${COMP_WORDS[COMP_CWORD]}"
     commands="start-application debug-application stop-application stop-all-applications list-applications \
 show-application list-packages show-package install-package remove-package list-installation-tasks \
-cancel-installation-task show-installation-location list-instances inject-intent-request"
+cancel-installation-task show-installation-location list-instances inject-intent-request set-development-token \
+show-development-mode"
     opts="-h -v --help --help-all --instance-id --version"
 
     if [[ ${cur} == -* ]] ; then
@@ -70,7 +71,7 @@ cancel-installation-task show-installation-location list-instances inject-intent
                 local apps="$($(expand_tilde ${COMP_WORDS[0]}) list-applications 2> /dev/null)"
                 COMPREPLY=( $(compgen -W "${apps}" -- ${cur}) )
                 ;;
-            install-package)
+            install-package|set-development-token)
                 COMPREPLY=( $(compgen -f -- ${cur}) )
                 ;;
             cancel-installation-task)
@@ -99,7 +100,8 @@ _appman-packager()
     local cur commands opts createopts pos args
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
-    commands="create-package dev-sign-package dev-verify-package store-sign-package store-verify-package yaml-to-json"
+    commands="create-package dev-sign-package dev-verify-package store-sign-package store-verify-package \
+create-development-token yaml-to-json"
     opts="-h -v --help --help-all --verbose --version"
     createopts="-m -M -s -S --extra-metadata --extra-metadata-file --extra-signed-metadata \
 --extra-signed-metadata-file --json"
@@ -128,7 +130,7 @@ _appman-packager()
             dev-sign-package|store-sign-package)
                 [ ${pos} -lt 5 ] && file=1
                 ;;
-            dev-verify-package|store-verify-package|yaml-to-json)
+            dev-verify-package|store-verify-package|create-development-token|yaml-to-json)
                 file=1
                 ;;
             esac

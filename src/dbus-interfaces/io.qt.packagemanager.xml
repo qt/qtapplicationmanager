@@ -130,6 +130,8 @@
       <arg type="b" direction="out"/>
       <arg name="name" type="s" direction="in"/>
     </method>
+    <!-- If pkcs12Data is the fixed moniker "am-dev-token-v1", pkcs12Password holds a development
+         mode token (see appman-packager create-development-token) instead of a password. -->
     <method name="setDeveloperCertificate">
       <arg type="b" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QByteArray"/>

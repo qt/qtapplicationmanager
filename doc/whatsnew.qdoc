@@ -95,6 +95,12 @@ hardening, but these changes may be interesting:
     \l{minimum package format version}{installer/minimumPackageFormatVersion}. Both the packager and
     the installer still default to the old format version in the 6.12 releases, but this will
     change with Qt 6.13.
+\li In order to avoid sending the developer's private key and its password to the device when
+    enabling the application development mode, a development mode token can now be created on the
+    development machine via \c{appman-packager create-development-token} and then set on the
+    device via \c{appman-controller set-development-token}. The old
+    \c{appman-controller set-developer-certificate} command is deprecated. See
+    \l{Setting the Development Mode Token}.
 \endlist
 
 

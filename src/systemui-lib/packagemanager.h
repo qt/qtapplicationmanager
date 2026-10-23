@@ -115,6 +115,7 @@ public:
     void setDevelopmentMode(DevelopmentMode mode);
     Certificate developerCertificate() const;
     void setDeveloperCertificate(const QByteArray &pkcs12Data, const QByteArray &pkcs12Password) ;
+    void setDevelopmentToken(const QByteArray &token);
     bool allowInstallationOfUnsignedPackages() const;
     void setAllowInstallationOfUnsignedPackages(bool enable);
     void setUseSudoForDirectoryRemoval(bool enable);
@@ -216,6 +217,7 @@ private:
     QByteArrayList certificateRevocationLists() const;
     QHash<QByteArray, Signature::CertificateRole> certificateRoles() const;
     QVersionNumber minimumCertificateVersion() const;
+    Certificate verifyDevelopmentToken(const QByteArray &token) const noexcept(false);
 
     // this honors the useSudoForDirectoryRemoval flag
     void removeRecursive(const QString &path) noexcept(false);

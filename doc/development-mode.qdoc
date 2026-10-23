@@ -86,13 +86,27 @@ covered by a developer certificate loaded at runtime. This mode is designed for 
 developers who should only be able to manage their own packages on the device, without
 gaining access to system packages or other developers' packages.
 
-\section2 Setting the Developer Certificate
+\section2 Setting the Development Mode Token
 
 Before using any package- or application-specific operations in application mode,
-a developer certificate must be set using \c appman-controller:
+a development mode token must be created on the development machine and then set on the
+device. The token is a signature, created with the developer certificate, so the private key and
+its password never leave the development machine:
 
 \badcode
-appman-controller set-developer-certificate developer.p12
+# On the development machine
+appman-packager create-development-token developer.p12 -o developer.token
+
+# On the device
+appman-controller set-development-token developer.token
+\endcode
+
+Both tools can also use the standard streams (\c{create-development-token} writes to \c stdout
+without \c{-o}, and \c{set-development-token} reads from \c stdin if the file name is \c{-}), which
+allows to pipe the token to the device:
+
+\badcode
+appman-packager create-development-token developer.p12 | ssh device appman-controller set-development-token -
 \endcode
 
 The certificate is a PKCS#12 file that encodes what the developer is authorized to work with -
@@ -100,12 +114,15 @@ package IDs, and, as of 6.12, also application IDs, capabilities, categories and
 in the \c{subjectAltName} X.509v3 extension as \c{URI:qtam://<type>/<value>} entries. For details on
 creating certificates, see \l{Package Installation}.
 
-The current developer certificate persists across application manager restarts; it is saved
-in the application manager's data directory. Clearing it is done with:
+The current token persists across application manager restarts; it is saved in the application
+manager's data directory. Clearing it is done with:
 
 \badcode
-appman-controller set-developer-certificate --clear
+appman-controller set-development-token --clear
 \endcode
+
+\note The older \c{appman-controller set-developer-certificate} command, which sends the PKCS#12
+      file and its password to the application manager, is deprecated.
 
 \section2 Access Restrictions
 
@@ -136,12 +153,15 @@ On the development machine:
 \badcode
 # Sign the package with the developer's own certificate
 appman-packager dev-sign-package myapp.ampkg myapp.dev-signed.ampkg developer.p12
+
+# One time only: create the development mode token (and copy it to the device)
+appman-packager create-development-token developer.p12 -o developer.token
 \endcode
 
 On the device:
 \badcode
-# One time only: set the developer certificate in the running application manager
-appman-controller set-developer-certificate developer.p12
+# One time only: set the development mode token in the running application manager
+appman-controller set-development-token developer.token
 
 # Install the developer-signed package
 appman-controller install-package myapp.dev-signed.ampkg

@@ -14,6 +14,7 @@ qt_internal_add_module(AppManPackagePrivate
         yamlpackagescanner.cpp yamlpackagescanner.h
 
         crypto/certificate.h crypto/certificate.cpp
+        crypto/developmenttoken.h
         crypto/signature.cpp crypto/signature.h crypto/signature_p.h
     PUBLIC_LIBRARIES
         Qt::Core

@@ -15,6 +15,7 @@
 #include "applicationmanager.h"
 #include "exception.h"
 #include "signature.h"
+#include "developmenttoken.h"
 #include "logging.h"
 #include "adaptorchecks_dbus.h"
 
@@ -328,11 +329,19 @@ bool PackageManagerAdaptor::setDeveloperCertificate(const QByteArray &pkcs12Data
     try {
         checkDBusAccessNoCertificateNeeded();
 
+        // the moniker flags the new calling convention: the second argument is a token
+        const bool isToken = (pkcs12Data == DevelopmentToken::dbusMoniker());
         try {
-            PackageManager::instance()->setDeveloperCertificate(pkcs12Data, pkcs12Password);
+            if (isToken)
+                PackageManager::instance()->setDevelopmentToken(pkcs12Password);
+            else
+                PackageManager::instance()->setDeveloperCertificate(pkcs12Data, pkcs12Password);
             return true;
         } catch (const Exception &e) {
-            throw Exception("Failed to set developer certificate: %1").arg(e.errorString());
+            if (isToken)
+                throw Exception("Failed to set development token: %1").arg(e.errorString());
+            else
+                throw Exception("Failed to set developer certificate: %1").arg(e.errorString());
         }
     } catchExceptionAsDBusError({})
 }

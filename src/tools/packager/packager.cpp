@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 // Qt-Security score:critical reason:data-parser
 
+#include <cstdio>
 #include <iostream>
 #include <memory>
 
@@ -11,15 +12,19 @@
 #include <QCommandLineParser>
 #include <QStringList>
 #include <QFile>
+#include <QSaveFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QDebug>
 
+#include <QtAppManCommon/console.h>
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/qtyaml.h>
 #include <QtAppManCommon/utilities.h>
 #include <QtAppManPackage/installationreport.h>
 #include <QtAppManPackage/packageutilities.h>
+#include <QtAppManPackage/signature.h>
+#include <QtAppManPackage/developmenttoken.h>
 #include "packagingjob.h"
 #include "../shared/toolapplication.h"
 
@@ -36,6 +41,7 @@ enum Command {
     DevVerifyPackage,
     StoreSignPackage,
     StoreVerifyPackage,
+    CreateDevelopmentToken,
     YamlToJson
 };
 
@@ -49,6 +55,7 @@ int main(int argc, char *argv[])
         { DevVerifyPackage,   "dev-verify-package",   "Verify developer signature on package." },
         { StoreSignPackage,   "store-sign-package",   "Add store signature to package." },
         { StoreVerifyPackage, "store-verify-package", "Verify store signature on package." },
+        { CreateDevelopmentToken, "create-development-token", "Create a development mode token." },
         { YamlToJson,         "yaml-to-json",         "Convenience functionality for build systems (internal)." }
     });
 
@@ -263,6 +270,51 @@ int main(int argc, char *argv[])
                                               *--clp.positionalArguments().cend()));
             break;
 
+        case CreateDevelopmentToken: {
+            clp.addOption({{ u"o"_s, u"output"_s },
+                           u"Write the token to this file instead of stdout."_s, u"file"_s });
+            clp.addOption({{ u"p"_s, u"password"_s },
+                           u"Password for the PKCS#12 certificate in the form "
+                           "pass:<password>, env:<envvar>, file:<path>, fd:<number> or stdin. "
+                           "See the documentation for details."_s,
+                           u"format[:value]"_s });
+            clp.addPositionalArgument(u"certificate"_s, u"PKCS#12 developer certificate file."_s);
+            clp.process(tool);
+
+            if (clp.positionalArguments().size() != 2)
+                clp.showHelp(1);
+
+            const QString outputName = clp.value(u"o"_s);
+            if (outputName.isEmpty() && Console::stdoutIsConsoleWindow())
+                throw Exception("Refusing to write a binary token to a terminal. Use -o or redirect stdout.");
+
+            const QString password = tool.parsePasswordOption(clp.value(u"p"_s),
+                                                              u"PKCS#12 certificate password"_s);
+
+            QFile certFile(clp.positionalArguments().at(1));
+            if (!certFile.open(QIODevice::ReadOnly))
+                throw Exception(certFile, "Could not open the certificate file");
+
+            Signature sig(DevelopmentToken::payload());
+            sig.requireKeyUsage(Certificate::KeyUsage::Developer);
+            Certificate signer;
+            const QByteArray token = sig.create(certFile.readAll(), password.toUtf8(), &signer);
+            if (signer.packageIds().isEmpty())
+                throw Exception("Developer certificates that are not bound to package IDs are not allowed");
+
+            if (outputName.isEmpty()) {
+                if ((std::fwrite(token.constData(), 1, token.size(), stdout) != size_t(token.size()))
+                        || (std::fflush(stdout) != 0)) {
+                    throw Exception("Could not write the token to stdout");
+                }
+            } else {
+                QSaveFile out(outputName);
+                if (!out.open(QIODevice::WriteOnly) || (out.write(token) != token.size())
+                        || !out.commit())
+                    throw Exception(out, "Could not write the token file");
+            }
+            return 0;
+        }
         case YamlToJson: {
             clp.addOption({{ u"i"_s, u"document-index"_s }, u"Only output the specified YAML sub-document."_s, u"index"_s });
             clp.addPositionalArgument(u"yaml-file"_s, u"YAML file name, defaults to stdin (input)."_s);

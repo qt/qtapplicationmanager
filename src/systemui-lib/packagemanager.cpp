@@ -45,6 +45,7 @@
 #include <algorithm>
 #include <memory>
 #include <signature.h>
+#include <developmenttoken.h>
 
 using namespace Qt::StringLiterals;
 
@@ -345,20 +346,13 @@ void PackageManager::enableInstaller()
                     const QString iniPath = iniFile;
 #endif
                     QSettings devMode(iniPath, QSettings::IniFormat);
-                    d->developerSignature = devMode.value(u"developerSignature"_s).toByteArray();
-
-                    Signature s("developmentMode");
-                    s.requireMinimumCertificateVersion(minimumCertificateVersion());
-                    s.requireKeyUsage(Certificate::KeyUsage::Developer);
-                    s.requireRevocationCheck(d->certificateRevocationLists);
-                    s.requireCertificateRoles(d->certificateRoles);
-                    auto result = s.verify(d->developerSignature,
-                                           d->caCertificatesCommon + d->caCertificatesDeveloper);
-                    d->developerCertificate = result.signer();
+                    // the key is named "developerSignature" for historical reasons
+                    d->developmentToken = devMode.value(u"developerSignature"_s).toByteArray();
+                    d->developerCertificate = verifyDevelopmentToken(d->developmentToken);
                 } catch (const Exception &e) {
                     // we could not load the file, so try to get rid of it to at least start over
                     QFile::remove(iniFile);
-                    d->developerSignature.clear();
+                    d->developmentToken.clear();
                     d->developerCertificate = { };
 
                     qCWarning(LogInstaller) << "Restoring the last used developer-certificate failed:"
@@ -753,32 +747,50 @@ void PackageManager::setDeveloperCertificate(const QByteArray &pkcs12Data, const
     if (developmentMode() != PackageManager::DevelopmentMode::Application)
         throw Exception("Cannot set developer certificate when development mode is not 'Application'");
 
-    Certificate signer;
-    QByteArray signature;
+    QByteArray token;
 
     if (!pkcs12Data.isEmpty()) {
-        Signature s("developmentMode");
+        Signature s(DevelopmentToken::payload());
         s.requireMinimumCertificateVersion(minimumCertificateVersion());
         s.requireKeyUsage(Certificate::KeyUsage::Developer);
-        signature = s.create(pkcs12Data, pkcs12Password);
-
-        s.requireRevocationCheck(d->certificateRevocationLists);
-        const auto result = s.verify(signature, d->caCertificatesCommon + d->caCertificatesDeveloper);
-        signer = result.signer();
-
-        if (signer.packageIds().isEmpty())
-            throw Exception("Developer certificates that are not bound to package IDs are not allowed");
+        token = s.create(pkcs12Data, pkcs12Password);
     }
-    if ((signature == d->developerSignature) && (signer == d->developerCertificate))
+    setDevelopmentToken(token);
+}
+
+void PackageManager::setDevelopmentToken(const QByteArray &token)
+{
+    if (developmentMode() != PackageManager::DevelopmentMode::Application)
+        throw Exception("Cannot set development token when development mode is not 'Application'");
+
+    const Certificate signer = token.isEmpty() ? Certificate { } : verifyDevelopmentToken(token);
+
+    if ((token == d->developmentToken) && (signer == d->developerCertificate))
         return;
 
-    d->developerSignature = signature;
+    d->developmentToken = token;
     d->developerCertificate = signer;
     emit developerCertificateChanged();
 
     QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     QSettings devMode(dataDir.absoluteFilePath(u"development-mode.ini"_s), QSettings::IniFormat);
-    devMode.setValue(u"developerSignature"_s, d->developerSignature);
+    // the key is named "developerSignature" for historical reasons
+    devMode.setValue(u"developerSignature"_s, d->developmentToken);
+}
+
+// used when setting a token and when restoring the saved one on startup
+Certificate PackageManager::verifyDevelopmentToken(const QByteArray &token) const
+{
+    Signature s(DevelopmentToken::payload());
+    s.requireMinimumCertificateVersion(minimumCertificateVersion());
+    s.requireKeyUsage(Certificate::KeyUsage::Developer);
+    s.requireRevocationCheck(d->certificateRevocationLists);
+    s.requireCertificateRoles(d->certificateRoles);
+    const Certificate signer = s.verify(token, d->caCertificatesCommon + d->caCertificatesDeveloper).signer();
+
+    if (signer.packageIds().isEmpty())
+        throw Exception("Developer certificates that are not bound to package IDs are not allowed");
+    return signer;
 }
 
 /*!
@@ -1032,7 +1044,7 @@ Q_AUTOTEST_EXPORT void qtam_PackageManager_forceUnlockConfiguration()
 // development-mode.ini, so that enableInstaller()'s reload path can be verified
 Q_AUTOTEST_EXPORT void qtam_PackageManager_clearDeveloperCertificate(PackageManager *pm)
 {
-    pm->d->developerSignature.clear();
+    pm->d->developmentToken.clear();
     pm->d->developerCertificate = { };
 }
 

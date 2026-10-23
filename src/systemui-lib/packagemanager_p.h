@@ -32,7 +32,7 @@ public:
     bool enableInstaller = false;
     PackageManager::DevelopmentMode developmentMode = PackageManager::DevelopmentMode::Disabled;
     Certificate developerCertificate;
-    QByteArray developerSignature;
+    QByteArray developmentToken;
     bool allowInstallationOfUnsignedPackages = false;
     int minimumPackageFormatVersion = 0;
     bool useSudoForDirectoryRemoval = false;

@@ -151,7 +151,9 @@ The following commands are available:
 \row
     \li \span {style="white-space: nowrap"} {\c set-developer-certificate}
     \li \c{<certificate>}
-    \li Sets the developer certificate to be used when \e{development mode} is set to \e
+    \li \b{Deprecated:} use \c{set-development-token} instead.
+
+        Sets the developer certificate to be used when \e{development mode} is set to \e
         application. The certificate contains the package ids the developer is allowed to work with
         and the application manager will restrict access accordingly.
         The certificate has to be provided as a PKCS#12 file. If it is specified as \c{-}, the tool
@@ -188,6 +190,19 @@ The following commands are available:
         certificate, but just using the option \c{--clear}.
 
         \b{See also} \l{Package Installation}
+\row
+    \li \span {style="white-space: nowrap"} {\c set-development-token}
+    \li \c{<token>}
+    \li Sets the development mode token to be used when \e{development mode} is set to \e
+        application. The token is a signature that was created from the developer certificate on
+        the development machine via \c{appman-packager create-development-token}. The private key
+        and its password never reach the application manager. If the token file is specified as
+        \c{-}, the tool tries to read the token from \c stdin.
+
+        Clearing the currently set token can be done by not specifying any token, but just using
+        the option \c{--clear}.
+
+        \b{See also} \l{Setting the Development Mode Token}
 \row
     \li \span {style="white-space: nowrap"} {\c show-development-mode}
     \li (none)

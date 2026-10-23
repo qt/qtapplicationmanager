@@ -27,6 +27,8 @@
 #include "runtimefactory.h"
 #include "utilities.h"
 #include "sudo.h"
+#include "signature.h"
+#include "developmenttoken.h"
 
 #include "../error-checking.h"
 #include "../devmode.h"
@@ -55,6 +57,7 @@ private Q_SLOTS:
     void brokenMetadata();
     void iconFileName();
     void passwordOptions();
+    void developmentToken();
     void yamlToJson();
     void extraMetadata();
     void formatVersion();
@@ -711,6 +714,75 @@ void tst_PackagerTool::iconFileName()
     }
 }
 
+void tst_PackagerTool::developmentToken()
+{
+    const QStringList pwArgs { u"--password"_s, u"pass:"_s + m_devPassword };
+
+    // default: the token goes to stdout
+    QByteArray token;
+    {
+        PackagerTool p(QStringList { u"create-development-token"_s, m_devNarrowCertificate } + pwArgs);
+        QVERIFY2(p.call(), p.failure.constData());
+        token = p.stdOut;
+        QVERIFY(!token.isEmpty());
+        QVERIFY(p.stdErr.isEmpty());
+    }
+
+    // the token verifies against the developer CAs and carries the package binding
+    {
+        QByteArrayList cas;
+        for (const QString &caFile : m_commonCaFiles + m_devCaFiles) {
+            QFile f(caFile);
+            QVERIFY(f.open(QIODevice::ReadOnly));
+            cas << f.readAll();
+        }
+        Signature sig(DevelopmentToken::payload());
+        sig.requireKeyUsage(Certificate::KeyUsage::Developer);
+        Signature::VerificationResult result;
+        QVERIFY_THROWS_NO_EXCEPTION(result = sig.verify(token, cas));
+        QVERIFY(result.signer().matchPackageId(u"test-pkg"_s));
+    }
+
+    // -o writes the same data to a file and leaves stdout empty
+    {
+        const QString outFile = pathTo("devmode.token");
+        PackagerTool p(QStringList { u"create-development-token"_s, u"-o"_s, outFile,
+                                     m_devNarrowCertificate } + pwArgs);
+        QVERIFY2(p.call(), p.failure.constData());
+        QVERIFY(p.stdOut.isEmpty());
+
+        QFile f(outFile);
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QVERIFY(!f.readAll().isEmpty());
+    }
+
+    // wrong password
+    {
+        PackagerTool p({ u"create-development-token"_s, m_devNarrowCertificate,
+                         u"--password"_s, u"pass:wrong-password"_s });
+        QVERIFY(!p.call());
+        QVERIFY(p.stdOut.isEmpty());
+    }
+    // missing certificate file
+    {
+        PackagerTool p(QStringList { u"create-development-token"_s, pathTo("no-such-file") } + pwArgs);
+        QVERIFY(!p.call());
+        QVERIFY2(p.stdErr.contains("Could not open the certificate file"), p.stdErr.constData());
+    }
+    // legacy certificates without a version are rejected
+    {
+        PackagerTool p(QStringList { u"create-development-token"_s,
+                                     AM_TESTDATA_DIR u"certificates/dev-certs/dev-legacy.p12"_s } + pwArgs);
+        QVERIFY(!p.call());
+        QVERIFY(p.stdOut.isEmpty());
+    }
+    // argument validation
+    {
+        PackagerTool p({ u"create-development-token"_s });
+        QVERIFY(!p.call());
+        QVERIFY(p.stdOut.contains("Usage:"));
+    }
+}
 
 // Exercises ToolApplicationBase::parsePasswordOption through "appman-packager dev-sign-package",
 // which passes the parsed password straight to PKCS#12 decryption: the correct password produces a

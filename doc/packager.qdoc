@@ -118,6 +118,20 @@ package installations.
 
         \c{--json}: Output in JSON format instead of YAML.
 \row
+    \li \span {style="white-space: nowrap"} {\c create-development-token}
+    \li \c{<certificate>}
+    \li Creates a token for the \l{Development Mode}{application development mode} from the
+        developer \c certificate (in PKCS#12 format), which then can be set on the device via
+        \c{appman-controller set-development-token}. The certificate has to be bound to at least
+        one package id.
+
+        The token is written to \c stdout, unless the \c{-o} / \c{--output} option specifies
+        a file. The tool refuses to write to \c stdout if it is a terminal.
+
+        The password for the PKCS#12 certificate can be supplied via the \c{-p} / \c{--password}
+        option, using the same mechanisms as described for \l{packager-dev-sign-package}
+        {dev-sign-package}.
+\row
     \li \span {style="white-space: nowrap"} {\c dev-verify-package}
     \li \c{<package>}
 

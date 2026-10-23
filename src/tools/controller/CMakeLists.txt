@@ -9,6 +9,7 @@ qt_internal_add_app(appman-controller
         Qt::DBus
         Qt::Network
         Qt::AppManCommonPrivate
+        Qt::AppManPackagePrivate
     DEFINES
         AM_COMPILING_APPMAN
 )

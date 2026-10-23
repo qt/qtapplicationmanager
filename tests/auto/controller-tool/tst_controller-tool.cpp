@@ -19,6 +19,8 @@
 #include "qml-utilities.h"
 #include "qtyaml.h"
 #include "dbus-utilities.h"
+#include "signature.h"
+#include "developmenttoken.h"
 #include <QtAppManSystemUI/configuration.h>
 #include "../devmode.h"
 #include "../error-checking.h"
@@ -49,6 +51,7 @@ private Q_SLOTS:
     void startStop();
     void injectIntent();
     void developerCertificate();
+    void developmentToken();
     void developmentModeProperties();
 
 private:
@@ -429,6 +432,115 @@ void tst_ControllerTool::developerCertificate()
         // clearing removes the certificate again
         {
             ControllerTool ctrl({ u"set-developer-certificate"_s, u"--clear"_s });
+            QVERIFY2(ctrl.call(), ctrl.failure.constData());
+        }
+        {
+            QVariantMap out;
+            showDevelopmentMode(out);
+            QVERIFY(out.value(u"developerCertificate"_s).isNull());
+        }
+    }
+}
+
+void tst_ControllerTool::developmentToken()
+{
+    const QString narrowCert = QString::fromLatin1(AM_TESTDATA_DIR "certificates/dev-certs/dev-narrow.p12");
+    const QString otherCert = QString::fromLatin1(AM_TESTDATA_DIR "certificates/other-certs/other.p12");
+
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    // mimics what 'appman-packager create-development-token' does
+    auto createTokenFile = [&tmp](const QString &name, const QString &p12File) -> QString {
+        QFile p12(p12File);
+        if (!p12.open(QIODevice::ReadOnly))
+            return { };
+        Signature sig(DevelopmentToken::payload());
+        sig.requireKeyUsage(Certificate::KeyUsage::Developer);
+        const QByteArray token = sig.create(p12.readAll(), "password");
+
+        const QString tokenPath = tmp.filePath(name);
+        QFile tf(tokenPath);
+        if (!tf.open(QIODevice::WriteOnly) || (tf.write(token) != token.size()))
+            return { };
+        return tokenPath;
+    };
+
+    QString narrowToken;
+    QString otherToken;
+    QVERIFY_THROWS_NO_EXCEPTION(narrowToken = createTokenFile(u"narrow.token"_s, narrowCert));
+    QVERIFY_THROWS_NO_EXCEPTION(otherToken = createTokenFile(u"other.token"_s, otherCert));
+    QVERIFY(!narrowToken.isEmpty());
+    QVERIFY(!otherToken.isEmpty());
+
+    QFile garbage(tmp.filePath(u"garbage.token"_s));
+    QVERIFY(garbage.open(QIODevice::WriteOnly));
+    garbage.write("this is not a token");
+    garbage.close();
+
+    auto showDevelopmentMode = [](QVariantMap &out) {
+        ControllerTool ctrl({ u"show-development-mode"_s });
+        QVERIFY2(ctrl.call(), ctrl.failure.constData());
+        const auto docs = YamlParser::parseAllDocuments(ctrl.stdOut);
+        QCOMPARE(docs.size(), 1);
+        out = docs.at(0).toMap();
+    };
+
+    // argument validation: a token is required unless --clear is given
+    {
+        ControllerTool ctrl({ u"set-development-token"_s });
+        QVERIFY(!ctrl.call());
+        QVERIFY(ctrl.stdOut.contains("Usage:"));
+    }
+    {
+        ControllerTool ctrl({ u"set-development-token"_s, u"--clear"_s, narrowToken });
+        QVERIFY(!ctrl.call());
+        QVERIFY(ctrl.stdOut.contains("Usage:"));
+    }
+
+    // in System mode the token cannot be set
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::System);
+        ControllerTool ctrl({ u"set-development-token"_s, narrowToken });
+        QVERIFY(!ctrl.call());
+    }
+
+    // in Application mode the workflow is: set -> shows valid -> clear -> shows invalid again
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::Application);
+
+        // a missing token file is rejected
+        {
+            ControllerTool ctrl({ u"set-development-token"_s, tmp.filePath(u"no-such-file"_s) });
+            QVERIFY(!ctrl.call());
+            QVERIFY2(ctrl.stdErr.contains("could not open token file"), ctrl.stdErr.constData());
+        }
+        // garbage is rejected
+        {
+            ControllerTool ctrl({ u"set-development-token"_s, garbage.fileName() });
+            QVERIFY(!ctrl.call());
+        }
+        // a token from an untrusted CA is rejected
+        {
+            ControllerTool ctrl({ u"set-development-token"_s, otherToken });
+            QVERIFY(!ctrl.call());
+        }
+        // a token from the trusted developer CA is accepted
+        {
+            ControllerTool ctrl({ u"set-development-token"_s, narrowToken });
+            QVERIFY2(ctrl.call(), ctrl.failure.constData());
+        }
+        {
+            QVariantMap out;
+            showDevelopmentMode(out);
+            const QVariantMap cert = out.value(u"developerCertificate"_s).toMap();
+            QVERIFY(!cert.isEmpty());
+            const QStringList sans = cert.value(u"subjectAlternativeNames"_s).toStringList();
+            QVERIFY2(sans.contains(u"qtam://packageid/test-pkg"_s), qPrintable(sans.join(u',')));
+        }
+        // clearing removes the certificate again
+        {
+            ControllerTool ctrl({ u"set-development-token"_s, u"--clear"_s });
             QVERIFY2(ctrl.call(), ctrl.failure.constData());
         }
         {

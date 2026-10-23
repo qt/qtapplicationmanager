@@ -20,6 +20,8 @@
 #include "qmlinprocruntime.h"
 #include "packageutilities.h"
 #include "cacertificate.h"
+#include "signature.h"
+#include "developmenttoken.h"
 
 #include "../error-checking.h"
 #include "../devmode.h"
@@ -61,6 +63,7 @@ private Q_SLOTS:
     void systemDeveloperStoreSideload();
 
     void developerCertificate();
+    void developmentToken();
     void developmentModeApplication_data();
     void developmentModeApplication();
     void developmentModeApplicationReload();
@@ -639,6 +642,77 @@ void tst_PackageManager::developerCertificate()
         DevMode devMode(PackageManager::DevelopmentMode::Application);
         QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDeveloperCertificate(otherP12, "password"));
         QVERIFY(!m_pm->developerCertificate().isValid());
+    }
+
+    QFile::remove(iniFile);
+#endif
+}
+
+// Test the setDevelopmentToken() API contract: same rules as setDeveloperCertificate(), but the
+// signature is created outside of the application manager.
+void tst_PackageManager::developmentToken()
+{
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#else
+    const auto createToken = [](const QString &file) -> QByteArray {
+        QFile f(file);
+        if (!f.open(QIODevice::ReadOnly))
+            return { };
+        Signature sig(DevelopmentToken::payload());
+        sig.requireKeyUsage(Certificate::KeyUsage::Developer);
+        return sig.create(f.readAll(), "password");
+    };
+    QByteArray narrowToken;
+    QByteArray otherToken;
+    QVERIFY_THROWS_NO_EXCEPTION(narrowToken = createToken(AM_TESTDATA_DIR u"certificates/dev-certs/dev-narrow.p12"_s));
+    QVERIFY_THROWS_NO_EXCEPTION(otherToken = createToken(AM_TESTDATA_DIR u"certificates/other-certs/other.p12"_s));
+    QVERIFY(!narrowToken.isEmpty());
+    QVERIFY(!otherToken.isEmpty());
+
+    QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    const QString iniFile = dataDir.absoluteFilePath(u"development-mode.ini"_s);
+    QFile::remove(iniFile);
+
+    // setting a token in System / Disabled mode is not allowed
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::System);
+        QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDevelopmentToken(narrowToken));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+    }
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::Disabled);
+        QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDevelopmentToken(narrowToken));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+    }
+
+    {
+        DevMode devMode(PackageManager::DevelopmentMode::Application);
+        QSignalSpy certChangedSpy(m_pm, &PackageManager::developerCertificateChanged);
+
+        // garbage must not change anything
+        QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDevelopmentToken("not a token"));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+
+        // a token from an untrusted CA is rejected
+        QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDevelopmentToken(otherToken));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+
+        // a valid, package-bound token works and is persisted
+        QVERIFY_THROWS_NO_EXCEPTION(m_pm->setDevelopmentToken(narrowToken));
+        QVERIFY(m_pm->developerCertificate().isValid());
+        QVERIFY(m_pm->developerCertificate().matchPackageId(u"test-pkg"_s));
+        QCOMPARE(certChangedSpy.count(), 1);
+        QVERIFY(QFile::exists(iniFile));
+
+        // setting the same token again is a no-op
+        QVERIFY_THROWS_NO_EXCEPTION(m_pm->setDevelopmentToken(narrowToken));
+        QCOMPARE(certChangedSpy.count(), 1);
+
+        // an empty token clears everything again
+        QVERIFY_THROWS_NO_EXCEPTION(m_pm->setDevelopmentToken({ }));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+        QCOMPARE(certChangedSpy.count(), 2);
     }
 
     QFile::remove(iniFile);

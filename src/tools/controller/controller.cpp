@@ -25,11 +25,13 @@
 #include <iostream>
 
 #include <QtAppManCommon/global.h>
+#include <QtAppManCommon/console.h>
 #include <QtAppManCommon/exception.h>
 #include <QtAppManCommon/unixsignalhandler.h>
 #include <QtAppManCommon/utilities.h>
 #include <QtAppManCommon/qtyaml.h>
 #include <QtAppManCommon/dbus-utilities.h>
+#include <QtAppManPackage/developmenttoken.h>
 
 #include "dbus.h"
 #include "../shared/toolapplication.h"
@@ -77,6 +79,7 @@ static void injectIntentRequest(const QString &intentId, bool isBroadcast,
                                 const QString &jsonParameters) noexcept(false);
 static void setDeveloperCertificate(const QString &pkcs12Path, const QString &pkcs12Password,
                                     bool clear = false) noexcept(false);
+static void setDevelopmentToken(const QString &tokenPath, bool clear = false) noexcept(false);
 static void showDevelopmentMode(bool asJson = false) noexcept(false);
 
 // REMEMBER to update the completion file util/bash/appman-prompt, if you add new commands or options!
@@ -99,6 +102,7 @@ enum Command {
     ListInstances,
     InjectIntentRequest,
     SetDeveloperCertificate,
+    SetDevelopmentToken,
     ShowDevelopmentMode,
 };
 
@@ -124,7 +128,8 @@ int main(int argc, char *argv[])
         { ShowInstallationLocation,  "show-installation-location",  "Show details for installation location." },
         { ListInstances,             "list-instances",              "List all named application manager instances." },
         { InjectIntentRequest,       "inject-intent-request",       "Inject an intent request for testing." },
-        { SetDeveloperCertificate,   "set-developer-certificate",   "Set the developer certificate for development mode." },
+        { SetDeveloperCertificate,   "set-developer-certificate",   "Set the developer certificate for development mode (deprecated)." },
+        { SetDevelopmentToken,       "set-development-token",       "Set the development mode token." },
         { ShowDevelopmentMode,       "show-development-mode",       "Show the current development mode status." },
     });
 
@@ -385,6 +390,13 @@ int main(int argc, char *argv[])
             if (isClear && hasPassword)
                 throw Exception("Cannot use --password and --clear at the same time.");
 
+            if (!isClear) {
+                std::cerr << "INFO: set-developer-certificate is deprecated, because it sends the "
+                             "private key to the application manager. Please use "
+                             "'appman-packager create-development-token' and "
+                             "'set-development-token' instead." << std::endl;
+            }
+
             const QString certificate = isClear ? QString() : clp.positionalArguments().at(1);
             QString password = clp.value(u"p"_s);
 
@@ -394,6 +406,21 @@ int main(int argc, char *argv[])
             password = tool.parsePasswordOption(password, u"PKCS#12 certificate password"_s);
 
             tool.runLater([=] { setDeveloperCertificate(certificate, password, isClear); });
+            break;
+        }
+        case SetDevelopmentToken: {
+            clp.addPositionalArgument(u"token"_s, u"Development mode token file; can be - for stdin."_s);
+            clp.addOption({ u"clear"_s, u"Remove the currently set development mode token."_s });
+            clp.process(tool);
+
+            const bool isClear = clp.isSet(u"clear"_s);
+
+            if (clp.positionalArguments().size() != (isClear ? 1 : 2))
+                clp.showHelp(1);
+
+            const QString token = isClear ? QString() : clp.positionalArguments().at(1);
+
+            tool.runLater([=] { setDevelopmentToken(token, isClear); });
             break;
         }
         case ShowDevelopmentMode:
@@ -1029,6 +1056,34 @@ void setDeveloperCertificate(const QString &pkcs12Path, const QString &pkcs12Pas
         pkcs12Data = cf.readAll();
     }
     auto reply = dbus()->packager()->setDeveloperCertificate(pkcs12Data, pkcs12Password.toUtf8());
+    reply.waitForFinished();
+    if (reply.isError())
+        throw Exception("failed to call setDeveloperCertificate via DBus: %1").arg(reply.error().message());
+
+    qApp->exit(reply.value() ? 0 : 1);
+}
+
+void setDevelopmentToken(const QString &tokenPath, bool clear)
+{
+    dbus()->connectToPackager();
+
+    QByteArray token;
+    if (!clear) {
+        QFile tf;
+        bool isOpen = false;
+        if (tokenPath == u"-") { // sent via stdin
+            isOpen = tf.open(stdin, QIODevice::ReadOnly);
+        } else {
+            tf.setFileName(tokenPath);
+            isOpen = tf.open(QIODevice::ReadOnly);
+        }
+        if (!isOpen)
+            throw Exception(tf, "could not open token file");
+        token = tf.readAll();
+        if (token.isEmpty())
+            throw Exception("the token file is empty");
+    }
+    auto reply = dbus()->packager()->setDeveloperCertificate(DevelopmentToken::dbusMoniker(), token);
     reply.waitForFinished();
     if (reply.isError())
         throw Exception("failed to call setDeveloperCertificate via DBus: %1").arg(reply.error().message());

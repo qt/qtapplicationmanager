@@ -144,6 +144,11 @@ runSSL req -config openssl-dev-pkgidonly.cnf -newkey rsa:2048 -nodes -keyout dev
 runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-pkgidonly.crt -infiles dev-certs/dev-pkgidonly.csr
 runSSL pkcs12 -export -out dev-certs/dev-pkgidonly.p12 -password pass:password -inkey dev-certs/dev-pkgidonly-priv.key -nodes -in dev-certs/dev-pkgidonly.crt -name "Pkgid-only Developer Certificate"
 
+info "Generating, signing and exporting the \"no-pkgid\" developer certificate"
+runSSL req -config openssl-dev-nopkgid.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-nopkgid-priv.key -out dev-certs/dev-nopkgid.csr
+runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-nopkgid.crt -infiles dev-certs/dev-nopkgid.csr
+runSSL pkcs12 -export -out dev-certs/dev-nopkgid.p12 -password pass:password -inkey dev-certs/dev-nopkgid-priv.key -nodes -in dev-certs/dev-nopkgid.crt -name "No-pkgid Developer Certificate"
+
 info "Generating, signing and exporting the \"multiversion\" (malformed) developer certificate"
 runSSL req -config openssl-dev-multiversion.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-multiversion-priv.key -out dev-certs/dev-multiversion.csr
 runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-multiversion.crt -infiles dev-certs/dev-multiversion.csr

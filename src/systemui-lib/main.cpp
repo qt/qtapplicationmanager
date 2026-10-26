@@ -702,6 +702,7 @@ void Main::setupInstaller(const Configuration *cfg) noexcept(false)
 
     if (Q_UNLIKELY(hardwareId().isEmpty()))
         throw Exception("the installer is enabled, but the device-id is empty");
+    m_packageManager->setHardwareId(hardwareId());
 
     if (!isRunningOnEmbedded()) { // this is just for convenience sake during development
         if (Q_UNLIKELY(!cfg->yaml.applications.installationDir.isEmpty() && !QDir::root().mkpath(cfg->yaml.applications.installationDir)))

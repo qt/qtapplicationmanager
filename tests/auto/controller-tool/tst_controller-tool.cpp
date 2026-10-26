@@ -547,6 +547,7 @@ void tst_ControllerTool::developmentModeProperties()
         QCOMPARE(value(getAm("securityChecksEnabled")).toBool(), am->securityChecksEnabled());
         QCOMPARE(value(getAm("windowManagerCompositorReady")).toBool(), am->isWindowManagerCompositorReady());
         QCOMPARE(value(getPm("allowInstallationOfUnsignedPackages")).toBool(), pm->allowInstallationOfUnsignedPackages());
+        QVERIFY(!pm->hardwareId().isEmpty());
         QCOMPARE(value(getPm("hardwareId")).toString(), pm->hardwareId());
         QCOMPARE(value(getPm("installationLocation")).toMap().value(u"path"_s),
                  pm->installationLocation().value(u"path"_s));

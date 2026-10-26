@@ -19,6 +19,10 @@ public:
     static bool stdoutIsConsoleWindow();
     static bool stderrIsConsoleWindow();
     static int width();
+
+    // switch the stream to binary mode; only does something on Windows
+    static void ensureStdinIsBinary();
+    static void ensureStdoutIsBinary();
 };
 
 QT_END_NAMESPACE_AM

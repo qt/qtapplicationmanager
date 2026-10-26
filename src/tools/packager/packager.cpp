@@ -303,6 +303,7 @@ int main(int argc, char *argv[])
                 throw Exception("Developer certificates that are not bound to package IDs are not allowed");
 
             if (outputName.isEmpty()) {
+                Console::ensureStdoutIsBinary();
                 if ((std::fwrite(token.constData(), 1, token.size(), stdout) != size_t(token.size()))
                         || (std::fflush(stdout) != 0)) {
                     throw Exception("Could not write the token to stdout");

@@ -646,6 +646,7 @@ void installPackage(const QString &package, bool acknowledge) noexcept(false)
         auto *tf = new QTemporaryFile(qApp);
         QFile in;
 
+        Console::ensureStdinIsBinary();
         if (tf->open() && in.open(stdin, QIODevice::ReadOnly)) {
             packageFile = tf->fileName();
 
@@ -1046,6 +1047,7 @@ void setDeveloperCertificate(const QString &pkcs12Path, const QString &pkcs12Pas
         QFile cf;
         bool isOpen = false;
         if (pkcs12Path == u"-") { // sent via stdin
+            Console::ensureStdinIsBinary();
             isOpen = cf.open(stdin, QIODevice::ReadOnly);
         } else {
             cf.setFileName(pkcs12Path);
@@ -1072,6 +1074,7 @@ void setDevelopmentToken(const QString &tokenPath, bool clear)
         QFile tf;
         bool isOpen = false;
         if (tokenPath == u"-") { // sent via stdin
+            Console::ensureStdinIsBinary();
             isOpen = tf.open(stdin, QIODevice::ReadOnly);
         } else {
             tf.setFileName(tokenPath);

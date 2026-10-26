@@ -10,7 +10,9 @@
 
 #if defined(Q_OS_WIN)
 #  include <windows.h>
+#  include <fcntl.h>
 #  include <io.h>
+#  include <stdio.h>
 #  include <QOperatingSystemVersion>
 #  include <QThread>
 
@@ -203,6 +205,20 @@ bool Console::stdoutIsConsoleWindow()
 bool Console::stderrIsConsoleWindow()
 {
     return cg()->stderrIsConsoleWindow;
+}
+
+void Console::ensureStdinIsBinary()
+{
+#if defined(Q_OS_WIN)
+    _setmode(_fileno(stdin), _O_BINARY);
+#endif
+}
+
+void Console::ensureStdoutIsBinary()
+{
+#if defined(Q_OS_WIN)
+    _setmode(_fileno(stdout), _O_BINARY);
+#endif
 }
 
 int Console::width()

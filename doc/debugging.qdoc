@@ -113,6 +113,11 @@ This is a (incomplete) list of environment variables that influence debugging at
     \li AM_NO_CRASH_HANDLER
     \li If set to \c 1, no crash handler is installed. Use this, if the application manager's
         crash handler is interfering with other debugging tools you are using.
+\row
+    \li AM_IN_PROCESS_SYNC_INCUBATION
+    \li If set to \c 1, in-process QML applications are loaded and instantiated synchronously,
+        as in application manager versions before 6.10. This blocks the event loop while an
+        application is starting up. Use this, if the System UI relies on the old startup timing.
 \endtable
 
 \target DebugWrappers

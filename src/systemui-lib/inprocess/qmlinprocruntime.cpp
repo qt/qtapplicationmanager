@@ -31,11 +31,23 @@ using namespace Qt::StringLiterals;
 
 QT_BEGIN_NAMESPACE_AM
 
+// Restores the synchronous loading behavior of AM 6.9 and earlier
+static bool syncIncubation()
+{
+    static const bool sync = [] {
+        bool s = (qEnvironmentVariableIntValue("AM_IN_PROCESS_SYNC_INCUBATION") == 1);
+        qCDebug(LogQmlRuntime) << "Using" << (s ? "sync" : "async") << "component loading for in-process runtime";
+        return s;
+    }();
+    return sync;
+}
+
 class InProcessIncubator : public QQmlIncubator
 {
 public:
     explicit InProcessIncubator(QmlInProcRuntime *runtime)
-        : m_runtime(runtime)
+        : QQmlIncubator(syncIncubation() ? QQmlIncubator::Synchronous : QQmlIncubator::Asynchronous)
+        , m_runtime(runtime)
     { }
 
 protected:
@@ -150,7 +162,8 @@ bool QmlInProcRuntime::start()
         loadResources(variantToStringList(configuration().value(u"resources"_s)), currentDir);
         loadResources(variantToStringList(m_app->runtimeParameters().value(u"resources"_s)), codeDir);
 
-        m_component->loadUrl(qmlFileUrl, QQmlComponent::Asynchronous);
+        m_component->loadUrl(qmlFileUrl, syncIncubation() ? QQmlComponent::PreferSynchronous
+                                                          : QQmlComponent::Asynchronous);
 
         if (m_component->isError()) { // undocumented, but this can happen without a statusChange signal
             qCCritical(LogQmlRuntime).noquote().nospace() << "Failed to load component "

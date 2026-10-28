@@ -276,11 +276,20 @@ the newest version the application manager was built with. Since that default ex
 6.11 certificates, upgrading a device to 6.12 requires re-issuing them. Configuring a lower minimum
 re-enables the older certificates, together with their weaker guarantees.
 
+The opposite applies to developer certificates that are newer than the application manager: they
+might carry restrictions that it does not know about and therefore cannot enforce. The installer
+rejects any developer certificate that is newer than the
+\l {maximum certificate version}{configured maximum version}, which also defaults to the newest
+version the application manager was built with. Issue certificates with the oldest version that
+carries the restrictions you need, or configure a higher maximum, if you have to accept newer
+certificates on older devices.
+
 App-store certificates carry no restrictions, so the only relevant change for them is the \e{Key
 Usage} extension introduced with \c 6.11, which prevents developer and app-store certificates from
 being used interchangeably. For app-store certificates, the configured minimum version is therefore
 capped at \c 6.11: a \c 6.11 app-store certificate stays valid, while a \c 6.10 one is rejected,
-unless the configured minimum is lowered to \c 6.10.
+unless the configured minimum is lowered to \c 6.10. The configured maximum version does not apply
+to app-store certificates.
 
 Everything a certificate's version is derived from - the \c version entry as well as the \e{Key
 Usage} extension - is asserted by the issuing CA and cannot be changed by the holder of the

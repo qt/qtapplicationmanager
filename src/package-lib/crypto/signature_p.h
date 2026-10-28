@@ -20,6 +20,7 @@ class SignaturePrivate
 public:
     QByteArray hash;
     QVersionNumber requireMinimumCertificateVersion;
+    QVersionNumber requireMaximumCertificateVersion;
     Certificate::KeyUsages requiredKeyUsages;
     QString requirePackageId;
     QStringList requiredApplicationIds;

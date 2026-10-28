@@ -124,6 +124,7 @@ public:
     QString architecture() const;
     void loadCertificates(const QList<CaCertificate> &caCertificates, const QStringList &crls = { });
     void setMinimumCertificateVersion(const QVersionNumber &version);
+    void setMaximumCertificateVersion(const QVersionNumber &version);
     int minimumPackageFormatVersion() const;
     void setMinimumPackageFormatVersion(int version);
     void setAllowedInstallationURLs(const QStringList &allowedURLs);
@@ -217,6 +218,7 @@ private:
     QByteArrayList certificateRevocationLists() const;
     QHash<QByteArray, Signature::CertificateRole> certificateRoles() const;
     QVersionNumber minimumCertificateVersion() const;
+    QVersionNumber maximumCertificateVersion() const;
     Certificate verifyDevelopmentToken(const QByteArray &token) const noexcept(false);
 
     // this honors the useSudoForDirectoryRemoval flag

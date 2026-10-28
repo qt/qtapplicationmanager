@@ -31,6 +31,7 @@ private Q_SLOTS:
     void simpleConfig();
     void mergedConfig();
     void commandLineConfig();
+    void certificateVersionLimits();
 
 private:
     QDir pwd;
@@ -133,6 +134,8 @@ void tst_Configuration::defaultConfig()
 
     QCOMPARE(c.yaml.installer.caCertificates, {});
     QCOMPARE(c.yaml.installer.allowedURLs, {});
+    QVERIFY(c.yaml.installer.minimumCertificateVersion.isNull());
+    QVERIFY(c.yaml.installer.maximumCertificateVersion.isNull());
 
     QCOMPARE(c.yaml.plugins.container, {});
     QCOMPARE(c.yaml.plugins.startup, {});
@@ -256,6 +259,8 @@ void tst_Configuration::simpleConfig()
 
     QCOMPARE(c.yaml.installer.caCertificates, caCerts);
     QCOMPARE(c.yaml.installer.allowedURLs, QStringList({ u"url1"_s, u"url2"_s }));
+    QCOMPARE(c.yaml.installer.minimumCertificateVersion, QVersionNumber(6, 11));
+    QCOMPARE(c.yaml.installer.maximumCertificateVersion, QVersionNumber(6, 12));
 
     QCOMPARE(c.yaml.plugins.startup, QStringList({ u"s1"_s, u"s2"_s }));
     QCOMPARE(c.yaml.plugins.container, QStringList({ u"c1"_s, u"c2"_s }));
@@ -409,6 +414,8 @@ void tst_Configuration::mergedConfig()
 
     QCOMPARE(c.yaml.installer.caCertificates, caCerts);
     QCOMPARE(c.yaml.installer.allowedURLs, QStringList({ u"url1"_s, u"url2"_s, u"url3"_s }));
+    QCOMPARE(c.yaml.installer.minimumCertificateVersion, QVersionNumber(6, 11));
+    QCOMPARE(c.yaml.installer.maximumCertificateVersion, QVersionNumber(6, 13));
 
     QCOMPARE(c.yaml.plugins.container, QStringList({ u"c1"_s, u"c2"_s, u"c3"_s, u"c4"_s }));
     QCOMPARE(c.yaml.plugins.startup, QStringList({ u"s1"_s, u"s2"_s, u"s3"_s }));
@@ -541,6 +548,33 @@ void tst_Configuration::commandLineConfig()
 
     QCOMPARE(c.yaml.instanceId, u"appman"_s);
     QCOMPARE(c.yaml.shutdownTimeout.count(), 5000);
+}
+
+void tst_Configuration::certificateVersionLimits()
+{
+    // the unset maximum defaults to the current developer certificate version
+    {
+        Configuration c;
+        QVERIFY_THROWS_EXCEPTION(Exception, c.parseWithArguments({ u"test"_s, u"-o"_s,
+            u"installer: { minimumCertificateVersion: '99.0' }"_s }));
+    }
+    {
+        Configuration c;
+        QVERIFY_THROWS_EXCEPTION(Exception, c.parseWithArguments({ u"test"_s, u"-o"_s,
+            u"installer: { minimumCertificateVersion: '6.12', maximumCertificateVersion: '6.11' }"_s }));
+    }
+    {
+        Configuration c;
+        QVERIFY_THROWS_NO_EXCEPTION(c.parseWithArguments({ u"test"_s, u"-o"_s,
+            u"installer: { minimumCertificateVersion: '99.0', maximumCertificateVersion: '99.1' }"_s }));
+        QCOMPARE(c.yaml.installer.minimumCertificateVersion, QVersionNumber(99, 0));
+        QCOMPARE(c.yaml.installer.maximumCertificateVersion, QVersionNumber(99, 1));
+    }
+    {
+        Configuration c;
+        QVERIFY_THROWS_EXCEPTION(Exception, c.parseWithArguments({ u"test"_s, u"-o"_s,
+            u"installer: { maximumCertificateVersion: 'foo' }"_s }));
+    }
 }
 
 

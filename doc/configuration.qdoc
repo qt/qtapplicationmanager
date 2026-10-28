@@ -503,6 +503,19 @@ ui:
             security risk. For more details, see the \l {Public Key Infrastructure} {Installer
             documentation}.
     \row
+        \li [\c installer/maximumCertificateVersion]
+        \li string
+        \target maximum certificate version
+        \li The maximum version of developer certificates that the installer will accept when
+            verifying packages or development mode tokens, given as a Qt version string (e.g.
+            \c{"6.12"}). Certificates newer than this version are rejected. Store certificates are
+            not affected, as they carry no restrictions. If not set, it defaults to the version
+            this application manager was built with. Raising it above the built-in default
+            accepts certificates that might carry restrictions this application manager cannot
+            enforce and is a security risk. The \l{minimum certificate version} must not be higher
+            than this value. For more details, see the \l {Public Key Infrastructure} {Installer
+            documentation}.
+    \row
         \li [\c installer/minimumPackageFormatVersion]
         \li int
         \target minimum package format version

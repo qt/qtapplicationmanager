@@ -273,6 +273,7 @@ void InstallationTask::execute()
 
                 Signature devSig(m_extractor->installationReport().digest());
                 devSig.requireMinimumCertificateVersion(m_pm->minimumCertificateVersion());
+                devSig.requireMaximumCertificateVersion(m_pm->maximumCertificateVersion());
                 devSig.requireRevocationCheck(m_pm->certificateRevocationLists());
                 devSig.requireKeyUsage(Certificate::KeyUsage::Developer);
                 devSig.requirePackageId(m_packageId);

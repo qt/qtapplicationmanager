@@ -35,6 +35,8 @@ logging:
 installer:
   caCertificates: [ cert1, cert2 ]
   allowedURLs: [ url1, url2 ]
+  minimumCertificateVersion: '6.11'
+  maximumCertificateVersion: '6.12'
 
 dbus:
   iface1:

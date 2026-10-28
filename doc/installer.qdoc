@@ -234,7 +234,8 @@ add an explicit \c{*} entry for every type.
 
 App-store certificates are not restricted this way, as a store-signed package has been vetted by the
 app store, which is expected to check the package's contents: any restriction entries on an
-app-store certificate are ignored. They do need a \c version entry, though.
+app-store certificate are ignored. For the same reason, app-store certificates only need to be
+\c 6.11 certificates, see \l {Certificate Versions}{below}.
 
 \section2 Certificate Versions
 
@@ -269,12 +270,17 @@ Certificates that predate this mechanism are recognized by their contents:
 
 Restrictions that a certificate's version does not know about are not enforced, because such a
 certificate simply does not carry the corresponding entries: a 6.11 developer certificate can sign a
-package requesting any capability. This is why the installer rejects any certificate - developer or
-app-store - that is older than the \l {minimum certificate version}{configured minimum version},
-which defaults to the newest version the application manager was built with. Since that default
-excludes 6.10 and 6.11 certificates, upgrading a device to 6.12 requires re-issuing them.
-Configuring a lower minimum re-enables the older certificates, together with their weaker
-guarantees.
+package requesting any capability. This is why the installer rejects any developer certificate that
+is older than the \l {minimum certificate version}{configured minimum version}, which defaults to
+the newest version the application manager was built with. Since that default excludes 6.10 and
+6.11 certificates, upgrading a device to 6.12 requires re-issuing them. Configuring a lower minimum
+re-enables the older certificates, together with their weaker guarantees.
+
+App-store certificates carry no restrictions, so the only relevant change for them is the \e{Key
+Usage} extension introduced with \c 6.11, which prevents developer and app-store certificates from
+being used interchangeably. For app-store certificates, the configured minimum version is therefore
+capped at \c 6.11: a \c 6.11 app-store certificate stays valid, while a \c 6.10 one is rejected,
+unless the configured minimum is lowered to \c 6.10.
 
 Everything a certificate's version is derived from - the \c version entry as well as the \e{Key
 Usage} extension - is asserted by the issuing CA and cannot be changed by the holder of the

@@ -916,7 +916,7 @@ QHash<QByteArray, Signature::CertificateRole> PackageManager::certificateRoles()
 
 QVersionNumber PackageManager::minimumCertificateVersion() const
 {
-    return d->minimumCertificateVersion.isNull() ? Certificate::currentVersion()
+    return d->minimumCertificateVersion.isNull() ? Certificate::currentDeveloperVersion()
                                                  : d->minimumCertificateVersion;
 }
 

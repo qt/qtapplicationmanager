@@ -154,13 +154,24 @@ QVersionNumber Certificate::version() const
 
 /*!
     \internal
-    Returns the latest certificate policy version this build understands. Bump this \e only when
-    the set of certificate restrictions actually changes - not on every AM release. It is the
-    default value for the installer's minimum certificate version floor.
+    Returns the latest developer certificate policy version this build understands. Bump this
+    \e only when the set of certificate restrictions actually changes - not on every AM release.
+    It is the default value for the installer's minimum certificate version floor.
 */
-QVersionNumber Certificate::currentVersion()
+QVersionNumber Certificate::currentDeveloperVersion()
 {
     return QVersionNumber(6, 12);
+}
+
+/*!
+    \internal
+    Returns the latest certificate policy version that is relevant for app-store certificates.
+    These carry no restrictions, so only the 6.11 key-usage matters. This caps the minimum
+    certificate version floor for app-store certificates.
+*/
+QVersionNumber Certificate::currentStoreVersion()
+{
+    return QVersionNumber(6, 11);
 }
 
 /*! \qmlmethod list<string> Certificate::packageIds()

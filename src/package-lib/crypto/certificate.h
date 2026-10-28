@@ -67,7 +67,8 @@ public:
     bool operator!=(const Certificate &other) const;
 
     QVersionNumber version() const;
-    static QVersionNumber currentVersion();
+    static QVersionNumber currentDeveloperVersion();
+    static QVersionNumber currentStoreVersion();
 
     Q_INVOKABLE QStringList packageIds() const;
     Q_INVOKABLE bool matchPackageId(const QString &name) const;

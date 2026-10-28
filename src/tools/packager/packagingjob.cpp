@@ -422,10 +422,12 @@ void PackagingJob::execute() noexcept(false)
                 report.setStoreSignature(signature);
             }
 
-            if (signer.isValid() && (signer.version() < Certificate::currentVersion())) {
+            const QVersionNumber currentVersion = (m_mode == StoreSign)
+                    ? Certificate::currentStoreVersion() : Certificate::currentDeveloperVersion();
+            if (signer.isValid() && (signer.version() < currentVersion)) {
                 std::cerr << "WARNING: signing with a " << qPrintable(signer.version().toString())
                           << " certificate, which is older than this packager's certificate version "
-                          << qPrintable(Certificate::currentVersion().toString())
+                          << qPrintable(currentVersion.toString())
                           << ". Devices configured to require a newer certificate version will reject "
                              "this package." << std::endl;
             }

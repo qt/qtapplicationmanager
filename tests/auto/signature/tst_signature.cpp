@@ -39,6 +39,7 @@ private Q_SLOTS:
     void capabilityLoophole();
     void minimumVersionFloor_data();
     void minimumVersionFloor();
+    void storeMinimumVersionFloor();
 
 private:
     void parseInfo(const QByteArray &openSslInfo, QVariantMap &info);
@@ -722,6 +723,30 @@ void tst_Signature::minimumVersionFloor()
         QVERIFY_THROWS_NO_EXCEPTION(v.verify(sig, m_verifyingPEM));
     else
         AM_VERIFY_THROWS_EXCEPTION(u"Certificate version too old", v.verify(sig, m_verifyingPEM));
+}
+
+// For app-store certificates the floor is capped at 6.11
+void tst_Signature::storeMinimumVersionFloor()
+{
+    QByteArray hash("foo");
+    Signature s(hash);
+    QByteArray legacySig;
+    QByteArray pkgidOnlySig;
+    QVERIFY_THROWS_NO_EXCEPTION(legacySig = s.create(m_signingLegacyP12, m_signingPassword));
+    QVERIFY_THROWS_NO_EXCEPTION(pkgidOnlySig = s.create(m_signingPkgidOnlyP12, m_signingPassword));
+
+    Signature v(hash);
+    v.requireMinimumCertificateVersion(QVersionNumber(6, 12));
+    v.requireKeyUsage(Certificate::KeyUsage::Store);
+
+    // a 6.10 certificate is still too old
+    AM_VERIFY_THROWS_EXCEPTION(u"minimum required version is 6.11", v.verify(legacySig, m_verifyingPEM));
+    // a 6.11 certificate passes the floor and fails on the (developer) key-usage instead
+    AM_VERIFY_THROWS_EXCEPTION(u"Key usage mismatch", v.verify(pkgidOnlySig, m_verifyingPEM));
+
+    // a lower configured floor is not raised
+    v.requireMinimumCertificateVersion(QVersionNumber(6, 10));
+    QVERIFY_THROWS_NO_EXCEPTION(v.verify(legacySig, m_verifyingPEM));
 }
 
 QTEST_GUILESS_MAIN(tst_Signature)

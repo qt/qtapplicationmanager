@@ -752,6 +752,7 @@ void PackageManager::setDeveloperCertificate(const QByteArray &pkcs12Data, const
     if (!pkcs12Data.isEmpty()) {
         Signature s(DevelopmentToken::payload());
         s.requireMinimumCertificateVersion(minimumCertificateVersion());
+        s.requireMaximumCertificateVersion(maximumCertificateVersion());
         s.requireKeyUsage(Certificate::KeyUsage::Developer);
         token = s.create(pkcs12Data, pkcs12Password);
     }
@@ -783,6 +784,7 @@ Certificate PackageManager::verifyDevelopmentToken(const QByteArray &token) cons
 {
     Signature s(DevelopmentToken::payload());
     s.requireMinimumCertificateVersion(minimumCertificateVersion());
+    s.requireMaximumCertificateVersion(maximumCertificateVersion());
     s.requireKeyUsage(Certificate::KeyUsage::Developer);
     s.requireRevocationCheck(d->certificateRevocationLists);
     s.requireCertificateRoles(d->certificateRoles);
@@ -925,6 +927,19 @@ void PackageManager::setMinimumCertificateVersion(const QVersionNumber &version)
     if (isConfigurationLocked())
         return;
     d->minimumCertificateVersion = version;
+}
+
+QVersionNumber PackageManager::maximumCertificateVersion() const
+{
+    return d->maximumCertificateVersion.isNull() ? Certificate::currentDeveloperVersion()
+                                                 : d->maximumCertificateVersion;
+}
+
+void PackageManager::setMaximumCertificateVersion(const QVersionNumber &version)
+{
+    if (isConfigurationLocked())
+        return;
+    d->maximumCertificateVersion = version;
 }
 
 int PackageManager::minimumPackageFormatVersion() const

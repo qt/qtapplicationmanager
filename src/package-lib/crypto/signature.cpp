@@ -36,6 +36,11 @@ void Signature::requireMinimumCertificateVersion(const QVersionNumber &version)
     d->requireMinimumCertificateVersion = version;
 }
 
+void Signature::requireMaximumCertificateVersion(const QVersionNumber &version)
+{
+    d->requireMaximumCertificateVersion = version;
+}
+
 void Signature::requireKeyUsage(Certificate::KeyUsages keyUsages)
 {
     d->requiredKeyUsages = keyUsages;
@@ -121,15 +126,26 @@ void SignaturePrivate::checkSignerCertificate(const Certificate &signer)
     if (certVersion.isNull())
         throw Exception("the signing certificate has a missing or ambiguous version");
 
-    QVersionNumber minimumVersion = requireMinimumCertificateVersion;
     // app-store certificates carry no restrictions, so newer versions add nothing for them
-    if (requiredKeyUsages == Certificate::KeyUsages(Certificate::KeyUsage::Store))
+    const bool isStore = (requiredKeyUsages
+                          == Certificate::KeyUsages(Certificate::KeyUsage::Store));
+
+    QVersionNumber minimumVersion = requireMinimumCertificateVersion;
+    if (isStore)
         minimumVersion = std::min(minimumVersion, Certificate::currentStoreVersion());
 
     if (!minimumVersion.isNull() && (certVersion < minimumVersion)) {
         throw Exception("Certificate version too old: the certificate is a %1 certificate, but the "
                         "minimum required version is %2")
             .arg(certVersion.toString(), minimumVersion.toString());
+    }
+
+    // a newer certificate might carry restrictions that this build cannot enforce
+    if (!isStore && !requireMaximumCertificateVersion.isNull()
+            && (certVersion > requireMaximumCertificateVersion)) {
+        throw Exception("Certificate version too new: the certificate is a %1 certificate, but the "
+                        "maximum supported version is %2")
+            .arg(certVersion.toString(), requireMaximumCertificateVersion.toString());
     }
 
     // Per-version enforcement (the matchXxx() calls below allow-through anything a given

@@ -55,6 +55,7 @@ installer:
       scope: store
       role: issuer
   allowedURLs: [ url3 ]
+  maximumCertificateVersion: '6.13'
 
 dbus:
   iface1:

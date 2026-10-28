@@ -62,6 +62,7 @@ private Q_SLOTS:
     void extraMetadata();
     void formatVersion();
     void storeCertificateVersion();
+    void maximumCertificateVersion();
 
 private:
     QString pathTo(const char *file)
@@ -505,6 +506,32 @@ void tst_PackagerTool::storeCertificateVersion()
     }
 
     installPackage(pathTo("store611.store-signed.ampkg"));
+}
+
+// Developer certificates newer than the configured maximum are rejected
+void tst_PackagerTool::maximumCertificateVersion()
+{
+    QTemporaryDir tmp;
+    createInfoYaml(tmp);
+    createIconPng(tmp);
+    createIconPng(tmp, u"app-"_s);
+    createIconPng(tmp, u"intent-"_s);
+    createCode(tmp);
+
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("maxver.ampkg"), tmp.path() });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+    {
+        PackagerTool p({ u"dev-sign-package"_s, pathTo("maxver.ampkg"), pathTo("maxver.dev-signed.ampkg"),
+                         m_devCertificate, u"--password"_s, u"pass:"_s + m_devPassword });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+
+    m_pm->setMaximumCertificateVersion(QVersionNumber(6, 11));
+    failToInstallPackage(pathTo("maxver.dev-signed.ampkg"), u"Certificate version too new"_s);
+    m_pm->setMaximumCertificateVersion({ });
+    installPackage(pathTo("maxver.dev-signed.ampkg"));
 }
 
 void tst_PackagerTool::expired()

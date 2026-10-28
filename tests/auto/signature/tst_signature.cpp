@@ -40,6 +40,9 @@ private Q_SLOTS:
     void minimumVersionFloor_data();
     void minimumVersionFloor();
     void storeMinimumVersionFloor();
+    void maximumVersion_data();
+    void maximumVersion();
+    void storeMaximumVersion();
 
 private:
     void parseInfo(const QByteArray &openSslInfo, QVariantMap &info);
@@ -747,6 +750,58 @@ void tst_Signature::storeMinimumVersionFloor()
     // a lower configured floor is not raised
     v.requireMinimumCertificateVersion(QVersionNumber(6, 10));
     QVERIFY_THROWS_NO_EXCEPTION(v.verify(legacySig, m_verifyingPEM));
+}
+
+void tst_Signature::maximumVersion_data()
+{
+    QTest::addColumn<QByteArray>("p12");
+    QTest::addColumn<QVersionNumber>("maximum");
+    QTest::addColumn<bool>("shouldVerify");
+
+    QTest::newRow("6.12 cert, no maximum")     << m_signingP12          << QVersionNumber()      << true;
+    QTest::newRow("6.12 cert, 6.12 maximum")   << m_signingP12          << QVersionNumber(6, 12) << true;
+    QTest::newRow("6.12 cert, 6.13 maximum")   << m_signingP12          << QVersionNumber(6, 13) << true;
+    QTest::newRow("6.12 cert, 6.11 maximum")   << m_signingP12          << QVersionNumber(6, 11) << false;
+    QTest::newRow("6.11 cert, 6.11 maximum")   << m_signingPkgidOnlyP12 << QVersionNumber(6, 11) << true;
+    QTest::newRow("6.11 cert, 6.10 maximum")   << m_signingPkgidOnlyP12 << QVersionNumber(6, 10) << false;
+    QTest::newRow("legacy cert, 6.10 maximum") << m_signingLegacyP12    << QVersionNumber(6, 10) << true;
+}
+
+void tst_Signature::maximumVersion()
+{
+    QFETCH(QByteArray, p12);
+    QFETCH(QVersionNumber, maximum);
+    QFETCH(bool, shouldVerify);
+
+    QByteArray hash("foo");
+    Signature s(hash);
+    QByteArray sig;
+    QVERIFY_THROWS_NO_EXCEPTION(sig = s.create(p12, m_signingPassword));
+
+    Signature v(hash);
+    if (!maximum.isNull())
+        v.requireMaximumCertificateVersion(maximum);
+
+    if (shouldVerify)
+        QVERIFY_THROWS_NO_EXCEPTION(v.verify(sig, m_verifyingPEM));
+    else
+        AM_VERIFY_THROWS_EXCEPTION(u"Certificate version too new", v.verify(sig, m_verifyingPEM));
+}
+
+// The maximum does not apply to app-store certificates
+void tst_Signature::storeMaximumVersion()
+{
+    QByteArray hash("foo");
+    Signature s(hash);
+    QByteArray sig;
+    QVERIFY_THROWS_NO_EXCEPTION(sig = s.create(m_signingP12, m_signingPassword));
+
+    Signature v(hash);
+    v.requireMaximumCertificateVersion(QVersionNumber(6, 11));
+    v.requireKeyUsage(Certificate::KeyUsage::Store);
+
+    // the 6.12 certificate passes the maximum and fails on the (developer) key-usage instead
+    AM_VERIFY_THROWS_EXCEPTION(u"Key usage mismatch", v.verify(sig, m_verifyingPEM));
 }
 
 QTEST_GUILESS_MAIN(tst_Signature)

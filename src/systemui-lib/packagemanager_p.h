@@ -51,6 +51,7 @@ public:
     QByteArrayList certificateRevocationLists;
     QHash<QByteArray, Signature::CertificateRole> certificateRoles;
     QVersionNumber minimumCertificateVersion;
+    QVersionNumber maximumCertificateVersion;
     bool cleanupBrokenInstallationsDone = false;
 
 #if QT_CONFIG(am_installer)

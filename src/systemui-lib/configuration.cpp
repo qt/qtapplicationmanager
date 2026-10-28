@@ -29,6 +29,7 @@
 #include "sudo.h"
 #include "utilities.h"
 #include "cacertificate.h"
+#include "certificate.h"
 #include "installationreport.h"
 #include "configuration.h"
 #include "configuration_p.h"
@@ -360,6 +361,17 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     }
     d->data.instanceId = instanceId;
 
+    const auto &inst = d->data.installer;
+    const QVersionNumber minCertVersion = inst.minimumCertificateVersion.isNull()
+            ? Certificate::currentDeveloperVersion() : inst.minimumCertificateVersion;
+    const QVersionNumber maxCertVersion = inst.maximumCertificateVersion.isNull()
+            ? Certificate::currentDeveloperVersion() : inst.maximumCertificateVersion;
+    if (minCertVersion > maxCertVersion) {
+        throw Exception("installer/minimumCertificateVersion (%1) is higher than "
+                        "installer/maximumCertificateVersion (%2)")
+            .arg(minCertVersion.toString(), maxCertVersion.toString());
+    }
+
     // merge in the command-line options that map to YAML fields
     {
         ConfigurationData clcd;
@@ -448,6 +460,7 @@ void ConfigurationPrivate::merge(const ConfigurationData &from, ConfigurationDat
     MERGE_FIELD(installer.certificateRevocationLists);
     MERGE_FIELD(installer.allowedURLs);
     MERGE_FIELD(installer.minimumCertificateVersion);
+    MERGE_FIELD(installer.maximumCertificateVersion);
     MERGE_FIELD(installer.allowedExtendedAttributes);
     MERGE_FIELD(installer.minimumPackageFormatVersion);
     MERGE_FIELD(dbus.registrations);
@@ -648,6 +661,12 @@ void ConfigurationPrivate::loadFromSource(const QByteArray &source, const QStrin
                           cd.installer.minimumCertificateVersion = QVersionNumber::fromString(str);
                           if (cd.installer.minimumCertificateVersion.isNull())
                               throw YamlParserException(&yp, "invalid minimumCertificateVersion: '%1'").arg(str);
+                          } },
+                     { "maximumCertificateVersion", false, YamlParser::Scalar, [&]() {
+                          const QString str = yp.parseString();
+                          cd.installer.maximumCertificateVersion = QVersionNumber::fromString(str);
+                          if (cd.installer.maximumCertificateVersion.isNull())
+                              throw YamlParserException(&yp, "invalid maximumCertificateVersion: '%1'").arg(str);
                           } },
                      { "caCertificates", false, YamlParser::Scalar | YamlParser::List, [&]() {
                           if (yp.isScalar()) { // simple format (just a file path)

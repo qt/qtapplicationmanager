@@ -54,6 +54,7 @@ public:
     };
 
     void requireMinimumCertificateVersion(const QVersionNumber &version);
+    void requireMaximumCertificateVersion(const QVersionNumber &version);
     void requireKeyUsage(Certificate::KeyUsages keyUsages);
     void requirePackageId(const QString &packageId);
     void requireApplicationIds(const QStringList &applicationIds);

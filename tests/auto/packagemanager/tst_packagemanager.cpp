@@ -715,6 +715,12 @@ void tst_PackageManager::developmentToken()
         QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDevelopmentToken(noPkgIdToken));
         QVERIFY(!m_pm->developerCertificate().isValid());
 
+        // a token from a certificate newer than the configured maximum is rejected
+        m_pm->setMaximumCertificateVersion(QVersionNumber(6, 11));
+        QVERIFY_THROWS_EXCEPTION(Exception, m_pm->setDevelopmentToken(narrowToken));
+        QVERIFY(!m_pm->developerCertificate().isValid());
+        m_pm->setMaximumCertificateVersion({ });
+
         // a valid, package-bound token works and is persisted
         QVERIFY_THROWS_NO_EXCEPTION(m_pm->setDevelopmentToken(narrowToken));
         QVERIFY(m_pm->developerCertificate().isValid());

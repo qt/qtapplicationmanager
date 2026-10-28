@@ -41,6 +41,7 @@ set(TEST_DATA_FILES
     certificates/openssl-dev-pkgidonly.cnf
     certificates/openssl-dev-ca.cnf
     certificates/openssl-store.cnf
+    certificates/openssl-store-611.cnf
     certificates/openssl-store-ca.cnf
     certificates/openssl-other-ca.cnf
     certificates/openssl-other.cnf

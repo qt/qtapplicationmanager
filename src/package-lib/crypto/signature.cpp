@@ -6,6 +6,8 @@
 
 #include <QSet>
 
+#include <algorithm>
+
 #include "signature.h"
 #include "signature_p.h"
 #include "exception.h"
@@ -119,10 +121,15 @@ void SignaturePrivate::checkSignerCertificate(const Certificate &signer)
     if (certVersion.isNull())
         throw Exception("the signing certificate has a missing or ambiguous version");
 
-    if (!requireMinimumCertificateVersion.isNull() && (certVersion < requireMinimumCertificateVersion)) {
+    QVersionNumber minimumVersion = requireMinimumCertificateVersion;
+    // app-store certificates carry no restrictions, so newer versions add nothing for them
+    if (requiredKeyUsages == Certificate::KeyUsages(Certificate::KeyUsage::Store))
+        minimumVersion = std::min(minimumVersion, Certificate::currentStoreVersion());
+
+    if (!minimumVersion.isNull() && (certVersion < minimumVersion)) {
         throw Exception("Certificate version too old: the certificate is a %1 certificate, but the "
                         "minimum required version is %2")
-            .arg(certVersion.toString(), requireMinimumCertificateVersion.toString());
+            .arg(certVersion.toString(), minimumVersion.toString());
     }
 
     // Per-version enforcement (the matchXxx() calls below allow-through anything a given

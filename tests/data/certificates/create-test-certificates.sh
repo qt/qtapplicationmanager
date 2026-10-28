@@ -170,6 +170,11 @@ runSSL req -config openssl-store.cnf -newkey rsa:2048 -nodes -keyout store-certs
 runSSL ca -batch -config openssl-store-ca.cnf -policy signing_policy -extensions signing_req -out store-certs/store.crt -infiles store-certs/store.csr
 runSSL pkcs12 -export -password pass:password -out store-certs/store.p12 -inkey store-certs/store-priv.key -nodes -in store-certs/store.crt -name "Pelagicore App Store"
 
+info "Generating, signing and exporting the 6.11 store certificate"
+runSSL req -config openssl-store-611.cnf -newkey rsa:2048 -nodes -keyout store-certs/store-611-priv.key -out store-certs/store-611.csr
+runSSL ca -batch -config openssl-store-ca.cnf -policy signing_policy -extensions signing_req -out store-certs/store-611.crt -infiles store-certs/store-611.csr
+runSSL pkcs12 -export -password pass:password -out store-certs/store-611.p12 -inkey store-certs/store-611-priv.key -nodes -in store-certs/store-611.crt -name "Pelagicore App Store 6.11"
+
 
 if [ ! -f other-ca/other-ca.crt ]; then
     info "Generating the \"other\" CA"

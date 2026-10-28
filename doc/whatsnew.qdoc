@@ -101,6 +101,8 @@ hardening, but these changes may be interesting:
     device via \c{appman-controller set-development-token}. The old
     \c{appman-controller set-developer-certificate} command is deprecated. See
     \l{Setting the Development Mode Token}.
+\li App-store certificates only need to be 6.11 certificates now, as they carry no restrictions:
+    the \l{minimum certificate version}{configured minimum version} is capped at 6.11 for them.
 \endlist
 
 

@@ -61,6 +61,7 @@ private Q_SLOTS:
     void yamlToJson();
     void extraMetadata();
     void formatVersion();
+    void storeCertificateVersion();
 
 private:
     QString pathTo(const char *file)
@@ -472,6 +473,38 @@ void tst_PackagerTool::formatVersion()
     QDir checkDir(pathTo("internal-0"));
     QVERIFY(checkDir.cd(u"test-pkg"_s));
     QVERIFY(checkDir.exists(u"test.qml"_s));
+}
+
+// App-store certificates carry no restrictions, so a 6.11 one (no version SAN) is accepted with
+// the default minimum certificate version of 6.12.
+void tst_PackagerTool::storeCertificateVersion()
+{
+    QTemporaryDir tmp;
+    createInfoYaml(tmp);
+    createIconPng(tmp);
+    createIconPng(tmp, u"app-"_s);
+    createIconPng(tmp, u"intent-"_s);
+    createCode(tmp);
+
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("store611.ampkg"), tmp.path() });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+    {
+        PackagerTool p({ u"dev-sign-package"_s, pathTo("store611.ampkg"), pathTo("store611.dev-signed.ampkg"),
+                         m_devCertificate, u"--password"_s, u"pass:"_s + m_devPassword });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+    {
+        PackagerTool p({ u"store-sign-package"_s, pathTo("store611.dev-signed.ampkg"),
+                         pathTo("store611.store-signed.ampkg"),
+                         AM_TESTDATA_DIR u"certificates/store-certs/store-611.p12"_s,
+                         u"--password"_s, u"pass:"_s + m_storePassword });
+        QVERIFY2(p.call(), p.failure.constData());
+        QVERIFY2(!p.stdErr.contains("older than"), p.stdErr.constData());
+    }
+
+    installPackage(pathTo("store611.store-signed.ampkg"));
 }
 
 void tst_PackagerTool::expired()

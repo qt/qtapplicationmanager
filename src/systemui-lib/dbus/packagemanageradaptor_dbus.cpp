@@ -134,13 +134,8 @@ QDBusVariant PackageManagerAdaptor::developerCertificate() const
 
 QString PackageManagerAdaptor::hardwareId() const
 {
-    try {
-        checkDBusAccess();
-        checkDevelopmentModeSystem();
-
-        return PackageManager::instance()->hardwareId();
-
-    } catchExceptionAsDBusError({})
+    // needed by developers before they have a certificate
+    return PackageManager::instance()->hardwareId();
 }
 
 QString PackageManagerAdaptor::architecture() const

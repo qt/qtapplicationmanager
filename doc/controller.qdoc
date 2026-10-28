@@ -206,8 +206,9 @@ The following commands are available:
 \row
     \li \span {style="white-space: nowrap"} {\c show-development-mode}
     \li (none)
-    \li Shows the current development mode and set developer certificate of the application manager
-        in YAML format. Alternatively, use \c{--json} to get the output in JSON format instead.
+    \li Shows the current development mode, the \l{The Hardware ID}{hardware ID} and the set
+        developer certificate of the application manager in YAML format. Alternatively, use
+        \c{--json} to get the output in JSON format instead.
 \endtable
 
 The \c{appman-controller} naturally supports the standard Unix \c{--help} command-line option.

@@ -1106,6 +1106,15 @@ void showDevelopmentMode(bool asJson)
 
     QVariantMap out { { u"developmentMode"_s, devMode }, { u"developerCertificate"_s, devCert } };
 
+    // older application managers only allow reading the hardware id in 'system' mode
+    const QString hardwareId = dbus()->packager()->hardwareId();
+    if (dbus()->packager()->lastError().isValid()) {
+        std::cerr << "WARNING: Failed to read hardware ID: "
+                  << qPrintable(dbus()->packager()->lastError().message()) << '\n';
+    } else {
+        out.insert(u"hardwareId"_s, hardwareId);
+    }
+
     std::cout << (asJson ? QJsonDocument::fromVariant(out).toJson().constData()
                          : YamlEmitter::fromVariantDocuments({ out }).constData()) << '\n';
     qApp->quit();

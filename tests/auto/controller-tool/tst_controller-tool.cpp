@@ -403,6 +403,8 @@ void tst_ControllerTool::developerCertificate()
             showDevelopmentMode(out);
             QCOMPARE(out.value(u"developmentMode"_s).toString(), u"Application"_s);
             QVERIFY(out.value(u"developerCertificate"_s).isNull());
+            QVERIFY(!PackageManager::instance()->hardwareId().isEmpty());
+            QCOMPARE(out.value(u"hardwareId"_s).toString(), PackageManager::instance()->hardwareId());
         }
         // wrong password is rejected
         {
@@ -647,13 +649,15 @@ void tst_ControllerTool::developmentModeProperties()
         QCOMPARE(value(getPm("architecture")).toString(), pm->architecture());
         QCOMPARE(value(getPm("ready")).toBool(), pm->isReady());
         QCOMPARE(value(getPm("developerCertificate")), pm->developerCertificate().toVariant());
+        QVERIFY(!pm->hardwareId().isEmpty());
+        QCOMPARE(value(getPm("hardwareId")).toString(), pm->hardwareId());
     };
     // for system developers only
     auto checkSystemPropertiesDenied = [&]() {
         for (const char *name : { "singleProcess", "securityChecksEnabled", "windowManagerCompositorReady" })
             QVERIFY2(isDenied(getAm(name)), name);
-        for (const char *name : { "allowInstallationOfUnsignedPackages", "hardwareId",
-                                  "installationLocation", "documentLocation" }) {
+        for (const char *name : { "allowInstallationOfUnsignedPackages", "installationLocation",
+                                  "documentLocation" }) {
             QVERIFY2(isDenied(getPm(name)), name);
         }
     };
@@ -669,8 +673,6 @@ void tst_ControllerTool::developmentModeProperties()
         QCOMPARE(value(getAm("securityChecksEnabled")).toBool(), am->securityChecksEnabled());
         QCOMPARE(value(getAm("windowManagerCompositorReady")).toBool(), am->isWindowManagerCompositorReady());
         QCOMPARE(value(getPm("allowInstallationOfUnsignedPackages")).toBool(), pm->allowInstallationOfUnsignedPackages());
-        QVERIFY(!pm->hardwareId().isEmpty());
-        QCOMPARE(value(getPm("hardwareId")).toString(), pm->hardwareId());
         QCOMPARE(value(getPm("installationLocation")).toMap().value(u"path"_s),
                  pm->installationLocation().value(u"path"_s));
         QCOMPARE(value(getPm("documentLocation")).toMap().value(u"path"_s),

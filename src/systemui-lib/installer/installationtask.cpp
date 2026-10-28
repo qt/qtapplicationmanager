@@ -282,6 +282,9 @@ void InstallationTask::execute()
                 devSig.requireCategories(m_categories);
                 devSig.requireRuntimes(m_runtimes);
                 devSig.requireCertificateRoles(m_pm->certificateRoles());
+                // the developer's device binding does not apply to packages from the store
+                if (!hasStoreSignature)
+                    devSig.requireHardwareId(m_pm->hardwareId());
 
                 Signature::VerificationResult result;
                 try {

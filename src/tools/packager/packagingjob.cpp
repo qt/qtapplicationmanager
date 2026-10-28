@@ -422,12 +422,13 @@ void PackagingJob::execute() noexcept(false)
                 report.setStoreSignature(signature);
             }
 
-            const QVersionNumber currentVersion = (m_mode == StoreSign)
-                    ? Certificate::currentStoreVersion() : Certificate::currentDeveloperVersion();
-            if (signer.isValid() && (signer.version() < currentVersion)) {
+            const QVersionNumber minimumVersion = (m_mode == StoreSign)
+                    ? Certificate::currentStoreVersion()
+                    : Certificate::defaultMinimumDeveloperVersion();
+            if (signer.isValid() && (signer.version() < minimumVersion)) {
                 std::cerr << "WARNING: signing with a " << qPrintable(signer.version().toString())
-                          << " certificate, which is older than this packager's certificate version "
-                          << qPrintable(currentVersion.toString())
+                          << " certificate, which is older than the default minimum certificate "
+                             "version " << qPrintable(minimumVersion.toString())
                           << ". Devices configured to require a newer certificate version will reject "
                              "this package." << std::endl;
             }

@@ -362,10 +362,12 @@ void Configuration::parseWithArguments(const QStringList &arguments)
     d->data.instanceId = instanceId;
 
     const auto &inst = d->data.installer;
-    const QVersionNumber minCertVersion = inst.minimumCertificateVersion.isNull()
-            ? Certificate::currentDeveloperVersion() : inst.minimumCertificateVersion;
-    const QVersionNumber maxCertVersion = inst.maximumCertificateVersion.isNull()
-            ? Certificate::currentDeveloperVersion() : inst.maximumCertificateVersion;
+    const QVersionNumber minCertVersion = (inst.minimumCertificateVersion.isNull()
+            ? Certificate::defaultMinimumDeveloperVersion()
+            : inst.minimumCertificateVersion).normalized();
+    const QVersionNumber maxCertVersion = (inst.maximumCertificateVersion.isNull()
+            ? Certificate::currentDeveloperVersion()
+            : inst.maximumCertificateVersion).normalized();
     if (minCertVersion > maxCertVersion) {
         throw Exception("installer/minimumCertificateVersion (%1) is higher than "
                         "installer/maximumCertificateVersion (%2)")

@@ -149,6 +149,11 @@ runSSL req -config openssl-dev-nopkgid.cnf -newkey rsa:2048 -nodes -keyout dev-c
 runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-nopkgid.crt -infiles dev-certs/dev-nopkgid.csr
 runSSL pkcs12 -export -out dev-certs/dev-nopkgid.p12 -password pass:password -inkey dev-certs/dev-nopkgid-priv.key -nodes -in dev-certs/dev-nopkgid.crt -name "No-pkgid Developer Certificate"
 
+info "Generating, signing and exporting the \"bound\" developer certificate"
+runSSL req -config openssl-dev-bound.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-bound-priv.key -out dev-certs/dev-bound.csr
+runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-bound.crt -infiles dev-certs/dev-bound.csr
+runSSL pkcs12 -export -out dev-certs/dev-bound.p12 -password pass:password -inkey dev-certs/dev-bound-priv.key -nodes -in dev-certs/dev-bound.crt -name "Bound Developer Certificate"
+
 info "Generating, signing and exporting the \"multiversion\" (malformed) developer certificate"
 runSSL req -config openssl-dev-multiversion.cnf -newkey rsa:2048 -nodes -keyout dev-certs/dev-multiversion-priv.key -out dev-certs/dev-multiversion.csr
 runSSL ca -batch -config openssl-dev-ca.cnf -policy signing_policy -extensions signing_req -out dev-certs/dev-multiversion.crt -infiles dev-certs/dev-multiversion.csr

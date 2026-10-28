@@ -63,6 +63,7 @@ private Q_SLOTS:
     void formatVersion();
     void storeCertificateVersion();
     void maximumCertificateVersion();
+    void hardwareBoundDeveloperCertificate();
 
 private:
     QString pathTo(const char *file)
@@ -532,6 +533,43 @@ void tst_PackagerTool::maximumCertificateVersion()
     failToInstallPackage(pathTo("maxver.dev-signed.ampkg"), u"Certificate version too new"_s);
     m_pm->setMaximumCertificateVersion({ });
     installPackage(pathTo("maxver.dev-signed.ampkg"));
+}
+
+// The hardware-id binding of a developer certificate only applies to developer-signed packages:
+// it does not survive the store signing.
+void tst_PackagerTool::hardwareBoundDeveloperCertificate()
+{
+    QTemporaryDir tmp;
+    createInfoYaml(tmp);
+    createIconPng(tmp);
+    createIconPng(tmp, u"app-"_s);
+    createIconPng(tmp, u"intent-"_s);
+    createCode(tmp);
+
+    {
+        PackagerTool p({ u"create-package"_s, pathTo("bound.ampkg"), tmp.path() });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+    {
+        PackagerTool p({ u"dev-sign-package"_s, pathTo("bound.ampkg"), pathTo("bound.dev-signed.ampkg"),
+                         AM_TESTDATA_DIR u"certificates/dev-certs/dev-bound.p12"_s,
+                         u"--password"_s, u"pass:"_s + m_devPassword });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+    {
+        PackagerTool p({ u"store-sign-package"_s, pathTo("bound.dev-signed.ampkg"),
+                         pathTo("bound.store-signed.ampkg"), m_storeCertificate,
+                         u"--password"_s, u"pass:"_s + m_storePassword });
+        QVERIFY2(p.call(), p.failure.constData());
+    }
+
+    // the certificate is bound to m_hardwareId
+    installPackage(pathTo("bound.dev-signed.ampkg"));
+
+    m_pm->setHardwareId(u"other"_s);
+    failToInstallPackage(pathTo("bound.dev-signed.ampkg"), u"Hardware ID mismatch"_s);
+    installPackage(pathTo("bound.store-signed.ampkg"));
+    m_pm->setHardwareId(m_hardwareId);
 }
 
 void tst_PackagerTool::expired()

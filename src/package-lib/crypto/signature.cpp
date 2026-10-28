@@ -33,12 +33,17 @@ Signature::~Signature()
 
 void Signature::requireMinimumCertificateVersion(const QVersionNumber &version)
 {
-    d->requireMinimumCertificateVersion = version;
+    d->requireMinimumCertificateVersion = version.normalized();
 }
 
 void Signature::requireMaximumCertificateVersion(const QVersionNumber &version)
 {
-    d->requireMaximumCertificateVersion = version;
+    d->requireMaximumCertificateVersion = version.normalized();
+}
+
+void Signature::requireHardwareId(const QString &hardwareId)
+{
+    d->requireHardwareId = hardwareId;
 }
 
 void Signature::requireKeyUsage(Certificate::KeyUsages keyUsages)
@@ -188,6 +193,14 @@ void SignaturePrivate::checkSignerCertificate(const Certificate &signer)
             throw Exception("Runtimes mismatch: the certificate only allows '%1'; cannot sign '%2'")
                 .arg(signer.runtimes())
                 .arg(requiredRuntimes);
+        }
+    }
+
+    if (requireHardwareId) {
+        if (!signer.matchHardwareId(*requireHardwareId)) {
+            throw Exception("Hardware ID mismatch: the certificate only allows '%1'; this device is '%2'")
+                .arg(signer.hardwareIds())
+                .arg(*requireHardwareId);
         }
     }
 

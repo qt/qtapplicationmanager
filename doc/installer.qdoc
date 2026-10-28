@@ -196,6 +196,10 @@ alternative domain names for HTTPS server certificates. The following types are 
   \li \c runtime
   \li The \c runtime of every application in the package.
   \li 6.12
+\row
+  \li \c hardwareid
+  \li The \l{The Hardware ID}{hardware ID} of the device (optional, see below).
+  \li 6.12.1
 \endtable
 
 A package is only accepted if \e every value it requests is matched by at least one entry of the
@@ -226,6 +230,21 @@ requesting the \c qml runtime, and vice versa. Bind certificates to the actual r
 (\c qml-launcher, \c qml-inprocess, or \c native) - the \c qml alias resolves to a different runtime
 depending on whether the application manager runs in single- or multi-process mode, so a certificate
 bound to \c qml would not confine the package to either of them.
+
+\target Binding Developer Certificates to Devices
+A developer certificate can additionally be bound to one or more devices via \c hardwareid entries.
+Unlike the other types, this binding is optional: a certificate without any \c hardwareid entry is
+valid on every device. A bound certificate is only accepted on a device whose hardware ID matches one
+of the entries. The hardware IDs are matched verbatim and case-sensitively, without any wildcard
+support, as their format cannot be controlled. Characters that are not allowed in a URI path, like
+\c{/}, \c{#}, \c{?} or \c{%}, have to be percent-encoded. Developers can look up the hardware ID of
+a device via \c{appman-controller show-development-mode}.
+
+The binding applies to developer-signed packages and to the
+\l{Setting the Development Mode Token}{development mode token}, but not to the developer signature
+of store-signed packages: once a package has been vetted and signed by the app store, it is not
+restricted to the developer's devices anymore. If needed, the app store can bind the package to a
+device instead, see \l{Package Installation}.
 
 \note These restrictions are only enforced for certificate versions that carry them, so an
 unrestricted certificate is not the same thing as a certificate that omits the entries: see
@@ -266,21 +285,27 @@ Certificates that predate this mechanism are recognized by their contents:
   \li \c 6.12
   \li A \c{URI:qtam://version/6.12} entry.
   \li Package IDs, application IDs, capabilities, categories and runtimes.
+\row
+  \li \c 6.12.1
+  \li A \c{URI:qtam://version/6.12.1} entry.
+  \li Same as \c 6.12, plus the optional hardware ID binding.
 \endtable
 
 Restrictions that a certificate's version does not know about are not enforced, because such a
 certificate simply does not carry the corresponding entries: a 6.11 developer certificate can sign a
 package requesting any capability. This is why the installer rejects any developer certificate that
 is older than the \l {minimum certificate version}{configured minimum version}, which defaults to
-the newest version the application manager was built with. Since that default excludes 6.10 and
-6.11 certificates, upgrading a device to 6.12 requires re-issuing them. Configuring a lower minimum
-re-enables the older certificates, together with their weaker guarantees.
+the oldest version that carries all mandatory restrictions: \c 6.12. Since that default excludes
+6.10 and 6.11 certificates, upgrading a device to 6.12 requires re-issuing them. Configuring a lower
+minimum re-enables the older certificates, together with their weaker guarantees. Optional
+restrictions, like the hardware ID binding introduced with \c 6.12.1, do not raise the default
+minimum, as a certificate that does not use them is not any weaker.
 
 The opposite applies to developer certificates that are newer than the application manager: they
 might carry restrictions that it does not know about and therefore cannot enforce. The installer
 rejects any developer certificate that is newer than the
-\l {maximum certificate version}{configured maximum version}, which also defaults to the newest
-version the application manager was built with. Issue certificates with the oldest version that
+\l {maximum certificate version}{configured maximum version}, which defaults to the newest version
+the application manager was built with. Issue certificates with the oldest version that
 carries the restrictions you need, or configure a higher maximum, if you have to accept newer
 certificates on older devices.
 
@@ -302,7 +327,7 @@ verified when they were installed and are not re-checked.
 outright, independently of the configured minimum version.
 
 The \l {Packager}{\c appman-packager} tool warns when signing a package with a certificate that is
-older than the newest version the tool itself knows about, but still creates the package: the
+older than the default minimum version, but still creates the package: the
 packager and the target device can run different application manager versions, so only the device
 can decide whether a certificate is acceptable.
 

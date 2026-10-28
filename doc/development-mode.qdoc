@@ -114,6 +114,11 @@ package IDs, and, as of 6.12, also application IDs, capabilities, categories and
 in the \c{subjectAltName} X.509v3 extension as \c{URI:qtam://<type>/<value>} entries. For details on
 creating certificates, see \l{Package Installation}.
 
+As of 6.12.1, the certificate can also be
+\l{Binding Developer Certificates to Devices}{bound to specific devices}: a token created from such
+a certificate is only accepted on these devices. Use \c{appman-controller show-development-mode} to
+look up a device's hardware ID.
+
 The current token persists across application manager restarts; it is saved in the application
 manager's data directory. Clearing it is done with:
 

@@ -110,6 +110,10 @@ This release refines several of the security mechanisms that were introduced in 
     \l{maximum certificate version}{configured maximum version} are rejected, as they might carry
     restrictions that the application manager does not know about and therefore cannot enforce.
     See \l{Certificate Versions}.
+\li Developer certificates can be \l{Binding Developer Certificates to Devices}{bound to devices}
+    via their hardware ID. Such certificates use the new certificate version 6.12.1, which is the
+    new default \l{maximum certificate version}{maximum version}. The default
+    \l{minimum certificate version}{minimum version} stays at 6.12, as the binding is optional.
 \endlist
 
 

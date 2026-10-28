@@ -786,6 +786,7 @@ Certificate PackageManager::verifyDevelopmentToken(const QByteArray &token) cons
     s.requireMinimumCertificateVersion(minimumCertificateVersion());
     s.requireMaximumCertificateVersion(maximumCertificateVersion());
     s.requireKeyUsage(Certificate::KeyUsage::Developer);
+    s.requireHardwareId(d->hardwareId);
     s.requireRevocationCheck(d->certificateRevocationLists);
     s.requireCertificateRoles(d->certificateRoles);
     const Certificate signer = s.verify(token, d->caCertificatesCommon + d->caCertificatesDeveloper).signer();
@@ -918,7 +919,7 @@ QHash<QByteArray, Signature::CertificateRole> PackageManager::certificateRoles()
 
 QVersionNumber PackageManager::minimumCertificateVersion() const
 {
-    return d->minimumCertificateVersion.isNull() ? Certificate::currentDeveloperVersion()
+    return d->minimumCertificateVersion.isNull() ? Certificate::defaultMinimumDeveloperVersion()
                                                  : d->minimumCertificateVersion;
 }
 

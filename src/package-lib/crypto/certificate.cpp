@@ -145,7 +145,8 @@ QVersionNumber Certificate::version() const
         // a legitimate certificate carries exactly one version SAN
         if (versions.size() > 1)
             return QVersionNumber();
-        return QVersionNumber::fromString(versions.constFirst()); // null if unparseable
+        // null if unparseable; normalized, so that 6.12.0 equals 6.12
+        return QVersionNumber::fromString(versions.constFirst()).normalized();
     }
     if ((m_keyUsages == KeyUsages(KeyUsage::Store)) || (m_keyUsages == KeyUsages(KeyUsage::Developer)))
         return QVersionNumber(6, 11);
@@ -156,9 +157,21 @@ QVersionNumber Certificate::version() const
     \internal
     Returns the latest developer certificate policy version this build understands. Bump this
     \e only when the set of certificate restrictions actually changes - not on every AM release.
-    It is the default value for the installer's minimum certificate version floor.
+    It is the default value for the installer's maximum certificate version.
 */
 QVersionNumber Certificate::currentDeveloperVersion()
+{
+    return QVersionNumber(6, 12, 1);
+}
+
+/*!
+    \internal
+    Returns the default value for the installer's minimum developer certificate version: the oldest
+    version that carries all restrictions this build requires. Only bump this when a new mandatory
+    restriction is introduced: optional ones like the hardware-id binding (6.12.1) do not make
+    older certificates any weaker.
+*/
+QVersionNumber Certificate::defaultMinimumDeveloperVersion()
 {
     return QVersionNumber(6, 12);
 }
@@ -292,6 +305,35 @@ bool Certificate::matchRuntimes(const QStringList &runtimes) const
     if (isValid() && (version() < QVersionNumber(6, 12))) // runtime restrictions were introduced in 6.12
         return true;
     return sanValuesContainAll(m_subjectAlternativeNames, u"runtime", runtimes);
+}
+
+/*! \qmlmethod list<string> Certificate::hardwareIds()
+    \since 6.12
+
+    This function returns the list of hardware-ids the certificate is bound to.
+*/
+QStringList Certificate::hardwareIds() const
+{
+    return sanValues(m_subjectAlternativeNames, u"hardwareid");
+}
+
+/*!
+    \qmlmethod bool Certificate::matchHardwareId(string hardwareId)
+    \since 6.12
+
+    Returns \c true if the certificate is not bound to any hardware-ids, or if the given
+    \a hardwareId is one of them. Returns \c false otherwise.
+
+    \note Hardware-id entries are matched verbatim: there is no wildcard matching, as the format of
+    hardware-ids cannot be controlled.
+*/
+bool Certificate::matchHardwareId(const QString &hardwareId) const
+{
+    if (!isValid())
+        return false;
+    // the binding is optional, so certificates of any version may omit it
+    const QStringList ids = hardwareIds();
+    return ids.isEmpty() || (!hardwareId.isEmpty() && ids.contains(hardwareId));
 }
 
 QString Certificate::subjectAsString() const

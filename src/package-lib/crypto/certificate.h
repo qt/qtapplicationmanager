@@ -68,6 +68,7 @@ public:
 
     QVersionNumber version() const;
     static QVersionNumber currentDeveloperVersion();
+    static QVersionNumber defaultMinimumDeveloperVersion();
     static QVersionNumber currentStoreVersion();
 
     Q_INVOKABLE QStringList packageIds() const;
@@ -84,6 +85,9 @@ public:
 
     Q_INVOKABLE QStringList runtimes() const;
     Q_INVOKABLE bool matchRuntimes(const QStringList &runtimes) const;
+
+    Q_INVOKABLE QStringList hardwareIds() const;
+    Q_INVOKABLE bool matchHardwareId(const QString &hardwareId) const;
 
     Q_INVOKABLE QVariant toVariant() const;
 

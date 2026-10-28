@@ -6,6 +6,8 @@
 #ifndef SIGNATURE_P_H
 #define SIGNATURE_P_H
 
+#include <optional>
+
 #include <QStringList>
 #include <QHash>
 #include <QVariantMap>
@@ -27,6 +29,7 @@ public:
     QStringList requiredCapabilities;
     QStringList requiredCategories;
     QStringList requiredRuntimes;
+    std::optional<QString> requireHardwareId; // an empty id only matches unbound certificates
     QHash<QByteArray, Signature::CertificateRole> requiredRoles;
     QByteArrayList requiredCRLs;
 

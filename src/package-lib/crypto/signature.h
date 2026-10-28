@@ -61,6 +61,7 @@ public:
     void requireCapabilities(const QStringList &capabilities);
     void requireCategories(const QStringList &categories);
     void requireRuntimes(const QStringList &runtimes);
+    void requireHardwareId(const QString &hardwareId);
     void requireCertificateRoles(const QHash<QByteArray, CertificateRole> &trustedCertDataToRole);
     void requireRevocationCheck(const QByteArrayList &crls);
 

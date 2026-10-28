@@ -65,6 +65,8 @@ private Q_SLOTS:
 
     void developerCertificate();
     void developmentToken();
+    void developmentTokenHardwareBinding_data();
+    void developmentTokenHardwareBinding();
     void developmentModeApplication_data();
     void developmentModeApplication();
     void developmentModeApplicationReload();
@@ -739,6 +741,69 @@ void tst_PackageManager::developmentToken()
         QCOMPARE(certChangedSpy.count(), 2);
     }
 
+    QFile::remove(iniFile);
+#endif
+}
+
+void tst_PackageManager::developmentTokenHardwareBinding_data()
+{
+    QTest::addColumn<QString>("hardwareId");
+    QTest::addColumn<bool>("accepted");
+
+    // dev-bound is bound to "foobar" and "Bar/42 #?[x]%"
+    QTest::newRow("plain")              << u"foobar"_s         << true;
+    QTest::newRow("percent-encoded")    << u"Bar/42 #?[x]%"_s  << true;
+    QTest::newRow("different case")     << u"FOOBAR"_s         << false;
+    QTest::newRow("no wildcards")       << u"Bar/42 #Ax%"_s    << false;
+    QTest::newRow("encoded form")       << u"Bar%2F42%20%23%3F%5Bx%5D%25"_s << false;
+    QTest::newRow("other")              << u"other"_s          << false;
+    QTest::newRow("empty")              << u""_s               << false;
+}
+
+void tst_PackageManager::developmentTokenHardwareBinding()
+{
+#if !defined(QT_BUILD_INTERNAL)
+    QSKIP("This test requires a developer-build");
+#else
+    QFETCH(QString, hardwareId);
+    QFETCH(bool, accepted);
+
+    QFile f(AM_TESTDATA_DIR u"certificates/dev-certs/dev-bound.p12"_s);
+    QVERIFY(f.open(QIODevice::ReadOnly));
+    Signature sig(DevelopmentToken::payload());
+    sig.requireKeyUsage(Certificate::KeyUsage::Developer);
+    QByteArray boundToken;
+    QVERIFY_THROWS_NO_EXCEPTION(boundToken = sig.create(f.readAll(), "password"));
+
+    QDir dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    const QString iniFile = dataDir.absoluteFilePath(u"development-mode.ini"_s);
+    QFile::remove(iniFile);
+
+    DevMode devMode(PackageManager::DevelopmentMode::Application);
+    m_pm->setHardwareId(hardwareId);
+
+    if (accepted) {
+        QVERIFY_THROWS_NO_EXCEPTION(m_pm->setDevelopmentToken(boundToken));
+        QVERIFY(m_pm->developerCertificate().isValid());
+
+        // the saved token is dropped on startup, if the hardware id changed
+        qtam_PackageManager_clearDeveloperCertificate(m_pm);
+        m_pm->setHardwareId(u"other"_s);
+        m_pm->enableInstaller();
+        QVERIFY(!m_pm->developerCertificate().isValid());
+        QVERIFY(!QFile::exists(iniFile));
+    } else {
+        try {
+            m_pm->setDevelopmentToken(boundToken);
+            QFAIL("the token was accepted");
+        } catch (const Exception &e) {
+            QVERIFY2(e.errorString().contains(u"Hardware ID mismatch"), qPrintable(e.errorString()));
+        }
+        QVERIFY(!m_pm->developerCertificate().isValid());
+    }
+
+    m_pm->setHardwareId(m_hardwareId);
+    QVERIFY_THROWS_NO_EXCEPTION(m_pm->setDevelopmentToken({ }));
     QFile::remove(iniFile);
 #endif
 }

@@ -38,6 +38,7 @@ set(TEST_DATA_FILES
     certificates/openssl-dev-legacy.cnf
     certificates/openssl-dev-multiversion.cnf
     certificates/openssl-dev-nopkgid.cnf
+    certificates/openssl-dev-bound.cnf
     certificates/openssl-dev-pkgidonly.cnf
     certificates/openssl-dev-ca.cnf
     certificates/openssl-store.cnf

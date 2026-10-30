@@ -72,6 +72,12 @@ qt_internal_collect_command_environment(env_path env_plugin_path)
 
 qt_am_internal_find_host_packager()
 
+# re-create the packages whenever the packager changes (e.g. a new digest algorithm)
+set(packager_dependency "")
+if (TARGET ${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager)
+    set(packager_dependency ${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager)
+endif()
+
 if (WIN32)
     find_program(bash bash.exe
                  PATHS ENV PATH
@@ -113,14 +119,14 @@ if (WIN32)
         endif()
         add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/packages
                            COMMAND ${bash} -c 'export PATH="`cygpath -u -p \"${env_path}\"`:$$PATH" \; ${CMAKE_CURRENT_BINARY_DIR}/create-test-packages.sh \"${packager}\"'
-                           DEPENDS ${ALL_TEST_DATA_FILES}
+                           DEPENDS ${ALL_TEST_DATA_FILES} ${packager_dependency}
         )
     endif()
 else()
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/packages
                        COMMAND "${CMAKE_COMMAND}" -E env "PATH=${env_path}${QT_PATH_SEPARATOR}$ENV{PATH}"
                                ${CMAKE_CURRENT_BINARY_DIR}/create-test-packages.sh $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::appman-packager>
-                       DEPENDS ${ALL_TEST_DATA_FILES}
+                       DEPENDS ${ALL_TEST_DATA_FILES} ${packager_dependency}
     )
 endif()
 

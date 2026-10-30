@@ -368,7 +368,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
     };
 
     static const int journalSocket = []() {
-        // this part is a reimplementation of libsystemd code
+        // this part is a re-implementation of libsystemd code
         int s = qt_safe_socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
         if (s >= 0) {
             int bufSize = 8 * 1024 * 1024; // 8MB
@@ -397,7 +397,7 @@ bool Systemd::logToJournal(QtMsgType msgType, const QMessageLogContext &context,
         return false; // unrecoverable error
 
     // Plan B: Use a memfd to send the message in case it was too large or the socket buffer was full.
-    //         This part is a reimplementation of the libsystemd code.
+    //         This part is a re-implementation of the libsystemd code.
 
     static auto memfd_create_wrapper = [](const char *name, unsigned int mode) {
         // This is a wrapper around memfd_create() that adds compatibility with older kernels (< 6.3)

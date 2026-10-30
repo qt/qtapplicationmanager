@@ -97,7 +97,7 @@ with additional meta-data using standard-compliant mechanism.
 
 In addition to built-in applications, that are part of the System UI or the base installation,
 the application manager also supports third-party applications, that are dynamically installed,
-updated, and uninstalled.
+updated, and removed.
 
 Developing a built-in application compared to a third-party application is not much different,
 except for the additional packaging step for third-party applications. The application manager

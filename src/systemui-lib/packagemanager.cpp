@@ -245,7 +245,7 @@ using namespace Qt::StringLiterals;
     PackageObject that is also part of the model will be constructed later in the installation
     process.
 
-    In addition, the package's extra meta-data (signed and unsinged) is also supplied via \a
+    In addition, the package's extra meta-data (signed and unsigned) is also supplied via \a
     packageExtraMetaData and \a packageExtraSignedMetaData respectively as JavaScript objects.
     Both these objects are optional and need to be explicitly either populated during an
     application's packaging step or added by an intermediary app-store server.
@@ -271,7 +271,7 @@ using namespace Qt::StringLiterals;
 */
 
 /*!
-    \qmlsignal PackageManager::taskProgressChanged(string taskId, qreal progress)
+    \qmlsignal PackageManager::taskProgressChanged(string taskId, real progress)
 
     This signal is emitted whenever the task identified by \a taskId makes progress towards its
     completion. The \a progress is reported as a floating-point number ranging from \c 0.0 to \c 1.0.
@@ -1203,7 +1203,7 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
                 QFileInfo fi(checkFile);
                 if (!fi.exists() || !fi.isFile() || !fi.isReadable()) {
                     valid = false;
-                    qCDebug(LogInstaller) << "cleanup: uninstalling" << pkg->id() << "- file missing:" << checkFile;
+                    qCDebug(LogInstaller) << "cleanup: removing" << pkg->id() << "- file missing:" << checkFile;
                     break;
                 }
             }
@@ -1211,7 +1211,7 @@ void PackageManager::cleanupBrokenInstallations() noexcept(false)
                 QFileInfo fi(checkDir);
                 if (!fi.exists() || !fi.isDir() || !fi.isReadable()) {
                     valid = false;
-                    qCDebug(LogInstaller) << "cleanup: uninstalling" << pkg->id() << "- directory missing:" << checkDir;
+                    qCDebug(LogInstaller) << "cleanup: removing" << pkg->id() << "- directory missing:" << checkDir;
                     break;
                 }
             }

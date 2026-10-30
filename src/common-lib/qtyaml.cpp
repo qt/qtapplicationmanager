@@ -678,7 +678,7 @@ QVariant YamlParser::parseScalar()
                             deprecationWarning((base != 10) && !scalar.startsWith(u'0'),
                                                "signed non-decimal numbers", this);
                             deprecationWarning(base == 8,
-                                               "octal encoded nummbers with just a '0' prefix", this);
+                                               "octal encoded numbers with just a '0' prefix", this);
                             deprecationWarning(base == 2, "binary encoded numbers", this);
                         }
                     }

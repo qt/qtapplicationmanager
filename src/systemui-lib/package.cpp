@@ -26,7 +26,7 @@
     PackageManager will return pointers to this class.
 
     Make sure to \b not save references to a PackageObject across function calls: packages can
-    be deinstalled at any time, invalidating your reference. In case you do need a persistent
+    be removed at any time, invalidating your reference. In case you do need a persistent
     handle, use the id string.
 */
 

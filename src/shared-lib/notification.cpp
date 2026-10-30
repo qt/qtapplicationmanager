@@ -537,7 +537,7 @@ QStringList Notification::libnotifyActionList() const
         } else {
             QVariantMap map = action.toMap();
             if (map.size() != 1) {
-                qWarning("WARNING: an entry in a Notification.actions list needs to be eihter a string or a variant-map with a single entry");
+                qWarning("WARNING: an entry in a Notification.actions list needs to be either a string or a variant-map with a single entry");
                 continue; // skip
             }
             actionList << map.firstKey() << map.first().toString();

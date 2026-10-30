@@ -324,7 +324,7 @@ void QmlInProcApplicationManagerWindowImpl::findParentWindow(QObject *object)
 
 void QmlInProcApplicationManagerWindowImpl::setRelations(ApplicationManagerWindow *newParentWindow)
 {
-    // Only static window hieararchy supported
+    // Only static window hierarchy supported
     Q_ASSERT(!m_parentWindow && !m_parentVisibleConnection);
 
     m_parentWindow = newParentWindow;

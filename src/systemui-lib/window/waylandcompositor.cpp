@@ -141,7 +141,7 @@ QObject *WaylandCompositor::preConstructor(QObject *parent)
                 s_taggedLogging = true;
 
                 // We need to unset/change WAYLAND_DEBUG, so that libwayland-server does not
-                // activate its own logger in additon to our own.
+                // activate its own logger in addition to our own.
                 if (waylandDebugBoth) {
                     if (nestedLogging) {
                         qCInfo(LogWayland) << "The application manager is running as a nested compositor and WAYLAND_DEBUG=1 is set. "

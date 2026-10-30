@@ -149,7 +149,7 @@ using namespace Qt::StringLiterals;
         \li See the client side documentation of Notification::showProgress
     \row
         \li \c progress
-        \li qreal
+        \li real
         \li See the client side documentation of Notification::progress
     \row
         \li \c isSticky
@@ -170,7 +170,7 @@ using namespace Qt::StringLiterals;
     \row
         \li \c updated
         \li date
-        \li The timestamp denoting when the notification was last modififed
+        \li The timestamp denoting when the notification was last modified
 
     \endtable
 

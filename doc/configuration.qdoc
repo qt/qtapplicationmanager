@@ -263,7 +263,7 @@ ui:
             and as ApplicationInterface::systemProperties to all QML applications:
             \list
                 \li The System UI has access to public, protected, and private properties.
-                \li Built-in applilcations have access to public and protected properties.
+                \li Built-in applications have access to public and protected properties.
                 \li Installed (third party) applications have access to public properties only.
             \endlist
             Private keys overwrite identical protected and public keys; protected keys overwrite

@@ -29,7 +29,7 @@ QT_BEGIN_NAMESPACE_AM
     IntentServer and IntentModel will return pointers to this class.
 
     Make sure to \b not save references to an IntentObject across function calls: packages (and
-    with that, the intents contained within) can be deinstalled at any time, invalidating your
+    with that, the intents contained within) can be removed at any time, invalidating your
     reference. In case you do need a persistent handle, use the intentId together with the
     applicationId string.
 */

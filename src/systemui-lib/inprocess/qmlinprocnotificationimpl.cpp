@@ -38,7 +38,7 @@ void QmlInProcNotificationImpl::classBegin()
             if (rt->application())
                 m_applicationId = rt->application()->id();
         } else {
-            m_applicationId = u":sysui"_s;
+            m_applicationId = u":sysui:"_s;
         }
     }
     if (m_applicationId.isEmpty())

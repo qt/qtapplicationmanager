@@ -286,7 +286,7 @@ void SignaturePrivate::verifyCertificateRole(const QString &subject, int positio
         }
         break;
     case Signature::CertificateRole::Intermediate:
-        if ((position <= 2) || (position == (chainSize - 1))) {
+        if ((position <= 1) || (position == (chainSize - 1))) {
             throw Exception("Certificate '%1' has role 'Intermediate' but appears at position %2 in the verification chain")
                     .arg(subject).arg(position);
         }

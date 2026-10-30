@@ -63,6 +63,7 @@ private Q_SLOTS:
     void digestV3Header();
     void digestKnownAnswers_data();
     void digestKnownAnswers();
+    void digestV3KnownAnswerSorting();
 
     void oversizedHeader();
 
@@ -219,9 +220,11 @@ static QByteArray readFile(const QString &path)
 // Builds a package containing exactly the given entries. PackageCreator only needs them to exist
 // relative to sourceDir, so this can produce entry names that no sane packager would.
 static std::unique_ptr<QTemporaryFile> createPackage(const QDir &sourceDir, const QStringList &entries,
-                                                     bool extendedAttributes = false)
+                                                     bool extendedAttributes = false, int formatVersion = 0)
 {
     InstallationReport report(u"com.pelagicore.test"_s);
+    if (formatVersion)
+        report.setPackageFormatVersion(formatVersion);
     report.addFiles(entries);
     report.setDiskSpaceUsed(1);
     report.setIncludeExtendedAttributes(extendedAttributes);
@@ -321,7 +324,19 @@ void tst_PackageExtractor::duplicateEntry()
     QVERIFY(sourceDir.isValid());
     createFile(sourceDir.filePath(u"file"_s));
 
-    auto package = createPackage(QDir(sourceDir.path()), { u"file"_s, u"file"_s });
+    // the v3 digest rejects duplicate paths already when creating the package
+    InstallationReport report(u"com.pelagicore.test"_s);
+    report.setPackageFormatVersion(3);
+    report.addFiles({ u"file"_s, u"file"_s });
+    report.setDiskSpaceUsed(1);
+    QTemporaryFile v3Package;
+    QVERIFY(v3Package.open());
+    PackageCreator v3Creator(QDir(sourceDir.path()), &v3Package, report);
+    QVERIFY(!v3Creator.create());
+    QT_AM_CHECK_ERRORSTRING(v3Creator.errorString(), u"~.*duplicate entry 'file'"_s);
+
+    // the extractor itself still has to cope with a duplicate in a legacy package
+    auto package = createPackage(QDir(sourceDir.path()), { u"file"_s, u"file"_s }, false, 2);
     PackageExtractor extractor(QUrl::fromLocalFile(package->fileName()), m_extractDir->path());
     QVERIFY(!extractor.extract());
     QT_AM_CHECK_ERRORSTRING(extractor.errorString(), u"~could not create file .*[Ff]ile exists"_s);
@@ -538,6 +553,37 @@ void tst_PackageExtractor::digestV3Injective()
     QCOMPARE_NE(digestOf(asFile), digestOf(asDir));
     QCOMPARE_NE(digestOf(asFile), digestOf([&](PackageDigest &d) { file(d, u"b"_s, ""); }));
 
+    // v3 doesn't depend on the entry order, v2 does
+    auto abFiles = [&](PackageDigest &d) { file(d, u"a"_s, "1"); file(d, u"b"_s, "2"); };
+    auto baFiles = [&](PackageDigest &d) { file(d, u"b"_s, "2"); file(d, u"a"_s, "1"); };
+    QCOMPARE(digestOf(abFiles), digestOf(baFiles));
+    QCOMPARE_NE(digestOf(abFiles, 2), digestOf(baFiles, 2));
+
+    // the xattr order doesn't matter either
+    auto xattrAB = [&](PackageDigest &d) { file(d, u"f"_s, "x", { { "user.a", "1" }, { "user.b", "2" } }); };
+    auto xattrBA = [&](PackageDigest &d) { file(d, u"f"_s, "x", { { "user.b", "2" }, { "user.a", "1" } }); };
+    QCOMPARE(digestOf(xattrAB), digestOf(xattrBA));
+
+    // an empty and a null xattr value are the same
+    QCOMPARE(digestOf(xattrSplit("user.a", QByteArray())), digestOf(xattrSplit("user.a", QByteArray(""))));
+
+    // but a missing xattr is not
+    QCOMPARE_NE(digestOf(xattrSplit("user.a", "")), digestOf([&](PackageDigest &d) { file(d, u"f"_s, "x"); }));
+
+    // duplicate paths and xattr names are errors
+    PackageDigest dup(3);
+    QVERIFY_THROWS_NO_EXCEPTION({
+        file(dup, u"a"_s, "1");
+        dup.beginEntry(u"a"_s, true, 0);
+    });
+    QVERIFY_THROWS_EXCEPTION(Exception, dup.endEntry(0));
+    PackageDigest dupXattr(3);
+    QVERIFY_THROWS_NO_EXCEPTION({
+        dupXattr.beginEntry(u"a"_s, false, 0);
+        dupXattr.addXattr("user.a", "1");
+    });
+    QVERIFY_THROWS_EXCEPTION(Exception, dupXattr.addXattr("user.a", "2"));
+
     // an entry whose data doesn't match its declared size is an error
     PackageDigest d(3);
     QVERIFY_THROWS_NO_EXCEPTION(d.beginEntry(u"a"_s, false, 3));
@@ -601,7 +647,7 @@ void tst_PackageExtractor::digestKnownAnswers_data()
     QTest::addColumn<QByteArray>("digest");
 
     QTest::newRow("legacy") << 2 << "f2ef7476a96adf4ff8415aba8ca49167bbe12bf170bde559d13c0ecd1983312d"_ba;
-    QTest::newRow("injective") << 3 << "5f8366925f2482475c55aa2800d766703510ec9395aff5cfa9caaae3c665d76c"_ba;
+    QTest::newRow("injective") << 3 << "7ddbe52c083f7498dcf7c057b090e3066211702d6f8f8e8e5dcb78af7e8630b4"_ba;
 }
 
 void tst_PackageExtractor::digestKnownAnswers()
@@ -624,6 +670,40 @@ void tst_PackageExtractor::digestKnownAnswers()
         d.endEntry(5);
     });
     QCOMPARE(d.result().toHex(), digest);
+}
+
+// Pins the v3 sort order: entries by the UTF-8 bytes of their path (U+1F600 sorts after U+FF5E,
+// in UTF-16 it would be the other way around), xattrs by name. Calculated independently as well.
+void tst_PackageExtractor::digestV3KnownAnswerSorting()
+{
+    PackageDigest d(3);
+    QVERIFY_THROWS_NO_EXCEPTION({
+        d.addHeader({ { u"packageId"_s, u"com.pelagicore.test"_s },
+                      { u"extendedAttributes"_s, true },
+                      { u"extraSigned"_s, QVariantMap { { u"y"_s, 2 } } } });
+
+        d.beginEntry(u"\U0001F600"_s, false, 1);
+        d.addContent("4");
+        d.endEntry(1);
+
+        d.beginEntry(u"a/b"_s, false, 1);
+        d.addXattr("user.b", "2");
+        d.addXattr("user.a", "1");
+        d.addContent("1");
+        d.endEntry(1);
+
+        d.beginEntry(u"～"_s, false, 1);
+        d.addContent("3");
+        d.endEntry(1);
+
+        d.beginEntry(u"a-b"_s, false, 1);
+        d.addContent("2");
+        d.endEntry(1);
+
+        d.beginEntry(u"a"_s, true, 0);
+        d.endEntry(0);
+    });
+    QCOMPARE(d.result().toHex(), "32bdbddceadbfdedffb93d0a4ae81799d11487d81019a2332b235e9b5d858ce1"_ba);
 }
 
 void tst_PackageExtractor::oversizedHeader()

@@ -89,28 +89,36 @@ following parts, in this order:
 stream  := TAG header entry*
 TAG     := "AM" 0x00 "PKG3" 0x00
 header  := 'H' QVariant(QVariantMap)
-entry   := 'E' type QString(path) quint64(size) ('X' bytes(name) bytes(value))* [ 'C' <size bytes> ]
+entry   := 'E' type QString(path) quint64(size) bytes(xattrDigest) bytes(contentDigest)
 type    := 'F' | 'D'
 bytes   := quint32(length) <length bytes>
+xattrDigest   := SHA-256( quint32(count) (bytes(name) bytes(value))* )
+contentDigest := SHA-256(file content)
 \endcode
 
 \list
   \li \c TAG is the 8 bytes \c{41 4D 00 50 4B 47 33 00}. It is the first thing hashed.
-  \li \c 'H', \c 'E', \c 'X', \c 'C' and \c type are single \c quint8 values.
+  \li \c 'H', \c 'E' and \c type are single \c quint8 values.
   \li \c header is a \c QVariantMap with the following four entries: \c formatVersion (the
       integer \c 3), \c packageId (string), \c extendedAttributes (bool; \c false if absent in the
       header) and \c extraSigned (map; empty if absent in the header). All other header fields
       (e.g. \c extra and \c diskSpaceUsed) are not part of the digest.
-  \li There is one \c entry for every file and directory, in the order they appear in the archive
-      (excluding the \c{--PACKAGE-*} meta-data files). \c type is \c 'F' for files and \c 'D' for
+  \li There is one \c entry for every file and directory (excluding the \c{--PACKAGE-*} meta-data
+      files). The entries are sorted ascending by the UTF-8 bytes of their \c path (byte-wise
+      comparison), so the order of the entries in the archive does not matter for the digest.
+      Two entries with the same path are an error. (The archive must still have \c info.yaml and
+      the icon first, but that is checked separately.) \c type is \c 'F' for files and \c 'D' for
       directories, \c path is the path (normalized to Unicode normalization form C, without a
       trailing slash) and \c size is the size of the file content in bytes (always \c 0 for
       directories).
-  \li If extended attributes are included in the package (\c extendedAttributes in the header),
-      then every attribute of the entry is added as \c 'X', \c name and \c value in the order they
-      appear in the archive.
-  \li The \c 'C' section, containing exactly \c size bytes of the file's content, is only present
-      for files.
+  \li \c xattrDigest is the SHA-256 of the entry's extended attributes (if they are included in
+      the package, see \c extendedAttributes in the header): the number of attributes as
+      \c quint32, followed by every attribute as \c bytes(name) and \c bytes(value), sorted
+      ascending by name (byte-wise comparison). Two attributes with the same name are an error.
+      If there are no attributes, the count is \c 0 and nothing follows it. An empty value is
+      the same as a missing (null) one.
+  \li \c contentDigest is the SHA-256 of the file's content (exactly \c size bytes). For
+      directories, it is empty (length \c 0).
 \endlist
 
 \section2 Format versions 1 and 2 (legacy)

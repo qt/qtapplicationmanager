@@ -49,7 +49,7 @@ public:
 
     // the package header's formatVersion: this selects the digest algorithm; not serialized
     static constexpr int LatestPackageFormatVersion = 3;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 13, 0)
+#if QT_AM_VERSION >= QT_VERSION_CHECK(6, 13, 0)
     static constexpr int DefaultPackageFormatVersion = LatestPackageFormatVersion;
     static constexpr int DefaultMinimumPackageFormatVersion = LatestPackageFormatVersion;
 #else

@@ -35,14 +35,17 @@ namespace {
 // The now current digest (formatVersion 3) is injective. Everything that goes into the hash is
 // either a fixed-width field or has its length in front, so the byte stream can be parsed
 // unambiguously from left to right. All fields are written with QDataStream (version Qt_6_7).
+// The entries are hashed sorted by the UTF-8 bytes of their path, so the archive order doesn't matter.
 //  Layout:
 //   stream  := TAG header entry*
 //   TAG     := "AM\0PKG3\0"
 //   header  := 'H' QVariant(QVariantMap { formatVersion, packageId, extendedAttributes, extraSigned })
-//   entry   := 'E' type QString(path) quint64(size) ('X' bytes(name) bytes(value))* [ 'C' <size bytes> ]
-//   type    := 'F' | 'D'        (the 'C' section is only present for files)
+//   entry   := 'E' type QString(path) quint64(size) bytes(xattrDigest) bytes(contentDigest)
+//   type    := 'F' | 'D'
 //   bytes   := quint32(length) <length bytes>       (QDataStream::writeBytes)
-// 'H', 'E', 'X', 'C' and type are single quint8 values.
+//   xattrDigest   := SHA-256( quint32(count) (bytes(name) bytes(value))* ), sorted by name
+//   contentDigest := SHA-256(file content) for files, zero-length for directories
+// 'H', 'E' and type are single quint8 values.
 
 constexpr char v3Tag[8] = { 'A', 'M', '\0', 'P', 'K', 'G', '3', '\0' };
 
@@ -132,43 +135,29 @@ void PackageDigest::beginEntry(const QString &path, bool isDir, qint64 size) noe
         throw Exception("invalid size for entry '%1'").arg(path);
 
     m_inEntry = true;
-    m_contentStarted = false;
     m_entryIsDir = isDir;
     m_entryPath = path;
     m_entrySize = isDir ? 0 : size;
     m_contentSize = 0;
 
     if (!isLegacy()) {
-        streamToHash(m_hash, [&](QDataStream &ds) {
-            ds << quint8('E') << quint8(isDir ? 'D' : 'F') << path << quint64(m_entrySize);
-        });
+        m_entryXattrs.clear();
+        m_entryContent.reset();
     }
 }
 
-void PackageDigest::addXattr(QByteArrayView name, QByteArrayView value)
+void PackageDigest::addXattr(QByteArrayView name, QByteArrayView value) noexcept(false)
 {
-    Q_ASSERT(m_inEntry && !m_contentStarted);
+    Q_ASSERT(m_inEntry);
 
     if (isLegacy()) {
         m_hash.addData("XATTR/"_ba);
         m_hash.addData(name);
         m_hash.addData("/"_ba);
         m_hash.addData(value);
-    } else {
-        streamToHash(m_hash, [&](QDataStream &ds) {
-            ds << quint8('X');
-            writeBytes(ds, name);
-            writeBytes(ds, value);
-        });
-    }
-}
-
-void PackageDigest::startContent()
-{
-    if (!m_contentStarted) {
-        m_contentStarted = true;
-        if (!isLegacy() && !m_entryIsDir)
-            streamToHash(m_hash, [](QDataStream &ds) { ds << quint8('C'); });
+    } else if (!m_entryXattrs.emplace(name.toByteArray(), value.toByteArray()).second) {
+        throw Exception("duplicate extended attribute '%1' for '%2'")
+            .arg(QString::fromLatin1(name)).arg(m_entryPath);
     }
 }
 
@@ -176,9 +165,11 @@ void PackageDigest::addContent(QByteArrayView data)
 {
     Q_ASSERT(m_inEntry && !m_entryIsDir);
 
-    startContent();
     m_contentSize += data.size();
-    m_hash.addData(data);
+    if (isLegacy())
+        m_hash.addData(data);
+    else
+        m_entryContent.addData(data);
 }
 
 void PackageDigest::endEntry(qint64 actualSize) noexcept(false)
@@ -195,18 +186,55 @@ void PackageDigest::endEntry(qint64 actualSize) noexcept(false)
         return;
     }
 
-    startContent();
     if (m_entryIsDir)
         actualSize = 0;
     if ((m_contentSize != m_entrySize) || (actualSize != m_entrySize)) {
         throw Exception("size mismatch for '%1': expected %2, got %3 (hashed %4)")
             .arg(m_entryPath).arg(m_entrySize).arg(actualSize).arg(m_contentSize);
     }
+
+    // sha256(xattrs): names and values are written with writeBytes(), as a null QByteArray would
+    // otherwise be streamed differently from an empty one
+    QByteArray xattrs;
+    {
+        QDataStream ds(&xattrs, QDataStream::WriteOnly);
+        ds.setVersion(QDataStream::Qt_6_7);
+        ds << quint32(m_entryXattrs.size());
+        for (const auto &[name, value] : m_entryXattrs) {
+            writeBytes(ds, name);
+            writeBytes(ds, value);
+        }
+        if (ds.status() != QDataStream::Ok)
+            throw Exception("could not serialize data for the digest calculation");
+    }
+
+    Record record {
+        m_entryIsDir,
+        m_entryPath,
+        quint64(m_entrySize),
+        QCryptographicHash::hash(xattrs, QCryptographicHash::Sha256),
+        m_entryIsDir ? QByteArray() : m_entryContent.result()
+    };
+    if (!m_records.emplace(m_entryPath.toUtf8(), std::move(record)).second)
+        throw Exception("duplicate entry '%1'").arg(m_entryPath);
 }
 
-QByteArray PackageDigest::result()
+QByteArray PackageDigest::result() noexcept(false)
 {
     Q_ASSERT(!m_inEntry);
+
+    if (isLegacy())
+        return m_hash.result();
+
+    for (const auto &it : m_records) {
+        const Record &record = it.second;
+        streamToHash(m_hash, [&](QDataStream &ds) {
+            ds << quint8('E') << quint8(record.isDir ? 'D' : 'F') << record.path << record.size;
+            writeBytes(ds, record.xattrDigest);
+            writeBytes(ds, record.contentDigest);
+        });
+    }
+    m_records.clear();
     return m_hash.result();
 }
 

@@ -484,10 +484,37 @@ ui:
             Please use \l{Extra Wayland Sockets}{Systemd Wayland socket activation} instead.
     \row
         \li [\c installer/caCertificates]
-        \li list<string>
+        \li list<object>
         \target ca certificates
-        \li A list of file paths to CA-certificates that are used to verify packages. For more
-            details, see the \l {Public Key Infrastructure} {Installer documentation}.
+        \li A list of CA-certificates that are used to verify packages. For more details, see the
+            \l {Public Key Infrastructure} {Installer documentation}. Each entry can either be just
+            a file path, which is the same as an object with only the \c file key set, or an object
+            with the following keys:
+            \list
+            \li \c{file} (string): the file path to the PEM encoded CA-certificate. This key is
+                mandatory.
+            \li \c{scope} (string): restricts which signatures this certificate is trusted for
+                (default: \c common).
+                \list
+                \li \c common: developer and store signatures.
+                \li \c developer: developer signatures only.
+                \li \c store: store signatures only.
+                \endlist
+                If the developer and the store CA share a common root CA, restricting the scopes
+                prevents a developer certificate from being accepted as a store certificate and
+                vice versa.
+            \li \c{role} (string): the position this certificate has to take in the verification
+                chain of a signature (default: \c any). Verification fails, if the certificate
+                appears anywhere else.
+                \list
+                \li \c any: any position.
+                \li \c issuer: the CA that directly issued the signing certificate.
+                \li \c intermediate: a CA between the issuer and the root CA.
+                \li \c root: the self-signed root CA at the end of the chain.
+                \endlist
+            \endlist
+            The same certificate cannot be added more than once, not even with a different
+            \c scope or \c role.
     \row
         \li [\c installer/minimumCertificateVersion]
         \li string

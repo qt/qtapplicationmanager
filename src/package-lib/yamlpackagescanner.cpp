@@ -207,7 +207,7 @@ PackageInfo *YamlPackageScanner::scan(QIODevice *source, const QString &fileName
                               if (visibilityStr == u"private") {
                                   intentInfo->m_visibility = IntentInfo::Private;
                               } else if (visibilityStr != u"public") {
-                                  throw YamlParserException(&yp, "intent visibilty '%2' is invalid on intent %1 (valid values are either 'public' or 'private'")
+                                  throw YamlParserException(&yp, "intent visibility '%2' is invalid on intent %1 (valid values are either 'public' or 'private'")
                                       .arg(intentInfo->m_id).arg(visibilityStr);
                               } } },
                          { legacy ? "handledBy" : "handlingApplicationId", false,  YamlParser::Scalar, [&]() {

@@ -425,7 +425,7 @@ void Sudo::forkServer(DropPrivileges dropPrivileges)
 #  endif
 
         if (setUser.isValid() && setGroup.isValid()) {
-            // combine the user's supplementary groups with the additonal groups given to --setuid:
+            // combine the user's supplementary groups with the additional groups given to --setuid:
             auto supGids = setUser.supplementaryGroupIds(setGroup);
             setSupGids.unite(supGids);
             setSupGids.remove(setGroup.gid());

@@ -108,7 +108,7 @@ public:
     Q_SIGNAL void notificationClosed(uint id, uint reason);
     Q_SIGNAL void notificationActionInvoked(uint id, const QString &actionKey);
 
-    // DBusNotificationImplemetation API
+    // DBusNotificationImplementation API
     uint showNotification(Notification *notification);
     void closeNotification(Notification *notification);
 

@@ -113,7 +113,7 @@ QT_BEGIN_NAMESPACE_AM
 
 /*! \qmlsignal IntentServer::intentAboutToBeRemoved(Intent intent)
     Emitted when an existing \a intent is going to be removed from the intentList (e.g. on
-    application deinstallation).
+    application removal).
 */
 
 

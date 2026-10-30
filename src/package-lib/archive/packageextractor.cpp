@@ -150,7 +150,7 @@ qint64 PackageExtractorPrivate::readTar(struct archive *ar, const void **archive
     forever {
         // the event loop is gone
         if (!m_loop.isRunning()) {
-            archive_set_error(ar, -1, "no eventlopp");
+            archive_set_error(ar, -1, "no eventloop");
             return -1;
         }
         // we have been canceled

@@ -47,10 +47,10 @@ void DeinstallationTask::execute()
 
     try {
         // we cannot rely on a check in PackageManager::removePackage()
-        // things might have changed in the meantime (e.g. multiple deinstallation request)
+        // things might have changed in the meantime (e.g. multiple removal request)
         auto package = PackageManager::instance()->package(packageId());
         if (!package) {
-            // the package has already been deinstalled - nothing more to do here
+            // the package has already been removed - nothing more to do here
             throw Exception(Error::NotInstalled, "Cannot remove package %1 because it is not installed")
                     .arg(m_packageId);
         }
@@ -130,7 +130,7 @@ void DeinstallationTask::execute()
             Qt::BlockingQueuedConnection);
 
         if (!finishOk)
-            qCWarning(LogInstaller) << "PackageManager did not approve deinstallation of " << m_packageId;
+            qCWarning(LogInstaller) << "PackageManager did not approve removal of " << m_packageId;
 
     } catch (const Exception &e) {
         // we need to call those ApplicationManager methods in the correct thread

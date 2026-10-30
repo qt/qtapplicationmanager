@@ -497,7 +497,7 @@ void Main::setupRuntimesAndContainers(const Configuration *cfg)
         ContainerFactory::instance()->registerContainer(new ProcessContainerManager());
 #else
         if (!cfg->yaml.runtimes.additionalLaunchers.isEmpty())
-            qCWarning(LogSystem) << "Addtional runtime launchers are ignored in single-process mode";
+            qCWarning(LogSystem) << "Additional runtime launchers are ignored in single-process mode";
 #endif
         QStringList systemContainerPluginPaths;
         const QDir systemContainerPluginDir(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QDir::separator() + u"appman_container"_s);

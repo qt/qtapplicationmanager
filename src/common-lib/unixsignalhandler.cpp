@@ -39,7 +39,7 @@ UnixSignalHandler::UnixSignalHandler()
 #if defined(AM_POSIX_SIGNALS)
     // Please note: sigaltstack is a per-thread setting only.
     // Setup alternate signal stack (to get backtrace for stack overflow)
-    // Canonical size might not be suffcient to get QML backtrace, so we double it
+    // Canonical size might not be sufficient to get QML backtrace, so we double it
     size_t stackSize = size_t(SIGSTKSZ) * 2 + MINSIGSTKSZ;
     stack_t sigstack;
     // ASAN and valgrind would report malloc() as a leak. In addition, we avoid the

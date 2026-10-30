@@ -239,7 +239,7 @@ int IntentModel::mapToSource(int ourIndex) const
 /*!
     \qmlmethod int IntentModel::mapFromSource(int index)
 
-    Maps an intenet's \a index from the IntentServer model to the corresponding index in
+    Maps an intent's \a index from the IntentServer model to the corresponding index in
     this model. Returns \c -1 if the specified \a index is invalid.
 */
 int IntentModel::mapFromSource(int sourceIndex) const

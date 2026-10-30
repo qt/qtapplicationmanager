@@ -29,7 +29,7 @@
     ApplicationManager and ApplicationModel will return pointers to this class.
 
     Make sure to \b not save references to an ApplicationObject across function calls: packages (and
-    with that, the applications contained within) can be deinstalled at any time, invalidating your
+    with that, the applications contained within) can be removed at any time, invalidating your
     reference. In case you do need a persistent handle, use the id string.
 */
 /*!

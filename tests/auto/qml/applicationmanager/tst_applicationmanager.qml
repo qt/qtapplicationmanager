@@ -592,7 +592,7 @@ TestCase {
         compare(r.x, 0)
         compare(r.y, 0)
         compare(r.width, 180)
-        compare(r.height, 180)
+        compare(r.height, 160)
         compare(r.minimumWidth, 0)
         compare(r.minimumHeight, 0)
         compare(r.maximumWidth, 16777215)

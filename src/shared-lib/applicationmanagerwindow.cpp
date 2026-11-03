@@ -29,6 +29,11 @@ QT_BEGIN_NAMESPACE_AM
 
     In contrast to a \l Window, an ApplicationManagerWindow is visible by default.
 
+    The ApplicationManagerWindow attached properties can be attached to any Item. They reflect the
+    ApplicationManagerWindow the Item is currently shown in, and follow it when the Item is
+    reparented or moved to another window. If the Item is not part of an ApplicationManagerWindow's
+    scene, the attached properties have their default values.
+
     Additional details can be found in the section about \l {The Root Element}{the root element}
     and \l {Application Windows}{application windows}.
 
@@ -634,8 +639,8 @@ void ApplicationManagerWindowAttached::reconnect(ApplicationManagerWindow *newWi
     \qmlattachedproperty ApplicationManagerWindow ApplicationManagerWindow::window
     \readonly
 
-    This attached property holds the item's ApplicationManagerWindow.
-    The ApplicationManagerWindow attached property can be attached to any Item.
+    This attached property holds the item's ApplicationManagerWindow or \c null if the item is not
+    shown in any ApplicationManagerWindow.
 */
 ApplicationManagerWindow *ApplicationManagerWindowAttached::window() const
 {
@@ -646,7 +651,8 @@ ApplicationManagerWindow *ApplicationManagerWindowAttached::window() const
     \qmlattachedproperty QtObject ApplicationManagerWindow::backingObject
     \readonly
 
-    This attached property holds backingObject of the ApplicationManagerWindow.
+    This attached property holds backingObject of the ApplicationManagerWindow or \c null if the
+    item is not shown in any ApplicationManagerWindow.
 
     \sa ApplicationManagerWindow::backingObject
 */
@@ -661,8 +667,8 @@ QObject *ApplicationManagerWindowAttached::backingObject() const
 
     This attached property holds whether the window is currently shown
     in the windowing system as normal, minimized, maximized, fullscreen or
-    hidden. The \c ApplicationManagerWindow attached property can be attached to any Item. If the
-    item is not shown in any ApplicationManagerWindow, the value will be \l {QWindow::}{Hidden}.
+    hidden. If the item is not shown in any ApplicationManagerWindow, the value will be
+    \l {QWindow::}{Hidden}.
 
     \sa visible, {qml-amwindow-visibility-prop}{visibility}
 */
@@ -674,8 +680,8 @@ QWindow::Visibility ApplicationManagerWindowAttached::visibility() const
 /*!
     \qmlattachedproperty bool ApplicationManagerWindow::active
 
-    This attached property tells whether the window is active. The ApplicationManagerWindow
-    attached property can be attached to any Item.
+    This attached property tells whether the window is active. If the item is not shown in any
+    ApplicationManagerWindow, the value will be \c false.
 */
 bool ApplicationManagerWindowAttached::isActive() const
 {
@@ -687,8 +693,8 @@ bool ApplicationManagerWindowAttached::isActive() const
     \readonly
 
     This attached property holds the item which currently has active focus or
-    \c null if there is no item with active focus. The ApplicationManagerWindow attached property
-    can be attached to any Item.
+    \c null if there is no item with active focus or the item is not shown in any
+    ApplicationManagerWindow.
 */
 QQuickItem *ApplicationManagerWindowAttached::activeFocusItem() const
 {
@@ -700,8 +706,7 @@ QQuickItem *ApplicationManagerWindowAttached::activeFocusItem() const
     \readonly
 
     This attached property holds the invisible root item of the scene or
-    \c null if the item is not in a window. The ApplicationManagerWindow attached property
-    can be attached to any Item.
+    \c null if the item is not shown in any ApplicationManagerWindow.
 */
 QQuickItem *ApplicationManagerWindowAttached::contentItem() const
 {
@@ -713,12 +718,12 @@ QQuickItem *ApplicationManagerWindowAttached::contentItem() const
     \qmlattachedproperty int ApplicationManagerWindow::height
     \readonly
 
-    These attached properties hold the size of the item's window.
-    The ApplicationManagerWindow attached property can be attached to any Item.
+    These attached properties hold the size of the item's window. If the item is not shown in any
+    ApplicationManagerWindow, the values will be \c 0.
 */
 int ApplicationManagerWindowAttached::width() const
 {
-    return m_amwindow ? m_amwindow->height() : 0;
+    return m_amwindow ? m_amwindow->width() : 0;
 }
 
 int ApplicationManagerWindowAttached::height() const

@@ -13,7 +13,7 @@ ApplicationManagerWindow {
 
     title: "Test"
     width: 180
-    height: 180
+    height: 160
     visible: true
     color: active ? "green" : "grey"
 

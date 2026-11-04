@@ -6,6 +6,7 @@
 #ifndef PACKAGECREATOR_P_H
 #define PACKAGECREATOR_P_H
 
+#include <QtCore/QSet>
 #include <QtCore/QVariantMap>
 #include <QtAppManPackage/packagecreator.h>
 
@@ -37,6 +38,7 @@ private:
     QByteArray m_digest;
     const InstallationReport &m_report;
     QVariantMap m_metaData;
+    QSet<QByteArray> m_allowedXattrs; // empty: all
 
     friend class PackageCreator;
 };

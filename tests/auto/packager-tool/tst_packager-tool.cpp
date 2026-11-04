@@ -12,6 +12,8 @@
 #if defined(Q_OS_LINUX)
 #  include <unistd.h>
 #  include <fcntl.h>
+#  include <errno.h>
+#  include <sys/xattr.h>
 #endif
 
 #include "global.h"
@@ -60,6 +62,8 @@ private Q_SLOTS:
     void developmentToken();
     void yamlToJson();
     void extraMetadata();
+    void extendedAttributes_data();
+    void extendedAttributes();
     void formatVersion();
     void storeCertificateVersion();
     void maximumCertificateVersion();
@@ -1104,6 +1108,62 @@ void tst_PackagerTool::extraMetadata()
 
     const QVariantMap expectedSignedMeta {{ u"secret"_s, 42 }};
     QCOMPARE(report.extraSignedMetaData(), expectedSignedMeta);
+}
+
+void tst_PackagerTool::extendedAttributes_data()
+{
+    QTest::addColumn<bool>("withX");
+
+    QTest::newRow("only-X") << false;
+    QTest::newRow("x-and-X") << true;
+}
+
+void tst_PackagerTool::extendedAttributes()
+{
+#if !defined(Q_OS_LINUX)
+    QSKIP("Extended attributes are only supported on Linux");
+#else
+    QFETCH(bool, withX);
+
+    QTemporaryDir tmp;
+    QVERIFY(createInfoYaml(tmp));
+    createIconPng(tmp);
+    createIconPng(tmp, u"app-"_s);
+    createIconPng(tmp, u"intent-"_s);
+    QVERIFY(createCode(tmp));
+
+    const QByteArray codePath = QFile::encodeName(QDir(tmp.path()).absoluteFilePath(u"test.qml"_s));
+    if ((::setxattr(codePath.constData(), "user.am-test", "value", 5, 0) != 0)
+            || (::setxattr(codePath.constData(), "user.am-other", "other", 5, 0) != 0)) {
+        QSKIP("The filesystem does not support user extended attributes");
+    }
+
+    const QString pkg = pathTo("xattr.ampkg");
+    QStringList args { u"create-package"_s, pkg, tmp.path(), u"-X"_s, u"user.am-test"_s };
+    if (withX)
+        args << u"-x"_s;
+    PackagerTool p(args);
+    QVERIFY2(p.call(), p.failure.constData());
+
+    QTemporaryDir extractDir;
+    QVERIFY(extractDir.isValid());
+    PackageExtractor extractor(QUrl::fromLocalFile(pkg), extractDir.path());
+    QVERIFY2(extractor.extract(), qPrintable(extractor.errorString()));
+    QVERIFY(extractor.installationReport().includeExtendedAttributes());
+
+    const QByteArray extractedPath = QFile::encodeName(QDir(extractDir.path()).absoluteFilePath(u"test.qml"_s));
+    char value[16];
+    QCOMPARE(::getxattr(extractedPath.constData(), "user.am-test", value, sizeof(value)), ssize_t(5));
+    QCOMPARE(QByteArray(value, 5), "value"_ba);
+    const ssize_t otherSize = ::getxattr(extractedPath.constData(), "user.am-other", value, sizeof(value));
+    const int otherErrno = errno;
+    QCOMPARE(otherSize, ssize_t(-1));
+    QCOMPARE(otherErrno, ENODATA);
+
+    // empty names are rejected
+    PackagerTool bad({ u"create-package"_s, pathTo("xattr-bad.ampkg"), tmp.path(), u"-X"_s, QString() });
+    QVERIFY(!bad.call());
+#endif
 }
 
 bool tst_PackagerTool::createInfoYaml(QTemporaryDir &tmp, const std::function<void(QVariantMap &)> &manipulate)

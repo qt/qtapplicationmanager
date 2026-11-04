@@ -80,6 +80,7 @@ int main(int argc, char *argv[])
             clp.addOption({{ u"extra-signed-metadata"_s,      u"s"_s }, u"Add extra, digitally signed, meta-data to the package, supplied on the command line."_s, u"yaml-snippet"_s });
             clp.addOption({{ u"extra-signed-metadata-file"_s, u"S"_s }, u"Add extra, digitally signed, meta-data to the package, read from file."_s, u"yaml-file"_s });
             clp.addOption({{ u"include-extended-attributes"_s, u"x"_s }, u"Include xattrs on files and directories, if available."_s });
+            clp.addOption({{ u"extended-attribute"_s, u"X"_s }, u"Include only this xattr on files and directories (can be given multiple times; implies -x)."_s, u"name"_s });
             clp.addOption({{ u"pre-package-command"_s, u"p"_s }, u"Calls this command on each packaged file, before it gets packaged (split on whitespace, no shell-style quoting)."_s , u"command"_s });
             clp.addOption({ u"format-version"_s, u"The package format version, between 2 and %1. Only use an older version if you need to support older application-manager versions."_s.arg(LatestFormatVersion),
                             u"version"_s, QString::number(InstallationReport::DefaultPackageFormatVersion) });
@@ -138,12 +139,19 @@ int main(int argc, char *argv[])
                                                                  clp.values(u"extra-signed-metadata-file"_s),
                                                                  true);
 
+            const QStringList allowedXattrs = clp.values(u"extended-attribute"_s);
+            for (const QString &name : allowedXattrs) {
+                if (name.isEmpty())
+                    throw Exception("Empty attribute name given to --extended-attribute / -X");
+            }
+
             p.reset(PackagingJob::create(clp.positionalArguments().at(1),
                                          clp.positionalArguments().at(2),
                                          formatVersion,
                                          extraMetaDataMap,
                                          extraSignedMetaDataMap,
-                                         clp.isSet(u"include-extended-attributes"_s),
+                                         clp.isSet(u"include-extended-attributes"_s) || clp.isSet(u"extended-attribute"_s),
+                                         allowedXattrs,
                                          clp.value(u"pre-package-command"_s),
                                          clp.isSet(u"json"_s)));
             break;

@@ -32,7 +32,8 @@ This release is mostly about security and quality-of-life improvements.
     pre-6.12 certificates. See \l{Certificate Versions}.
 \li POSIX extended attributes in packages need to be white-listed via
     \l{allowed xattrs}{installer/allowedExtendedAttributes}. Installing a package that carries any
-    other extended attribute fails.
+    other extended attribute fails. \c{appman-packager create-package} got a new \c{-X} option to
+    package only the named extended attributes.
 \li As the external D-Bus interfaces are disabled by default since
     \l{Qt ApplicationManager 6.11}{6.11}, the application manager's own D-Bus policy mechanism was
     not particularly useful anymore and has been removed. Use the \c dbus-daemon configuration for

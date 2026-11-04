@@ -1136,9 +1136,12 @@ void TrustedSaveFile::commit()
         // No helper: replace the target ourselves. QFile::rename() won't overwrite, so drop any
         // existing target first. Not atomic - but the fallback has no privilege separation anyway;
         // the privileged helper path is the atomic one.
-        flush();
         const QString tempPath = fileName();
+        if (!flush())
+            throw Exception("could not flush trusted file %1: %2").arg(d->relPath, errorString());
         close();
+        if (error() != QFileDevice::NoError)
+            throw Exception("could not close trusted file %1: %2").arg(d->relPath, errorString());
         QFile::remove(d->fallbackFinalPath);
         if (!QFile::rename(tempPath, d->fallbackFinalPath)) {
             QFile::remove(tempPath);
@@ -1150,7 +1153,8 @@ void TrustedSaveFile::commit()
 
     if (!d->client)
         throw Exception("the sudo-helper connection for this trusted file is no longer available");
-    flush();
+    if (!flush())
+        throw Exception("could not flush trusted file %1: %2").arg(d->relPath, errorString());
     d->client->d->commitTrusted(handle());
     d->committed = true;
 }

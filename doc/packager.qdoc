@@ -57,6 +57,17 @@ package installations.
         \c{--extra-signed-metadata-file} or \c{-S}: Add the given YAML file to the
             packages's \c extra meta-data (see also PackageManager::taskRequestingInstallationAcknowledge)
 
+        \c{--include-extended-attributes} or \c{-x}: Include the POSIX extended attributes (xattrs)
+            of all files and directories in the package, if the filesystem supports them. POSIX ACLs
+            are never included. The device only accepts the attributes listed in
+            \l{allowed xattrs}{installer/allowedExtendedAttributes}.
+
+        \c{--extended-attribute} or \c{-X}: Include only the extended attribute with the given
+            name, instead of all of them. This option can be given multiple times, the names have
+            to match exactly (no wildcards) and should match the entries in
+            \l{allowed xattrs}{installer/allowedExtendedAttributes}. Using this option implies
+            \c{-x}.
+
         \c{--pre-package-command} or \c{-p}: Use the given command to prepare the files that are
             copied into the package. The command will be called with the path to each file in the
             source directory, and it should return a zero exit code on success. The given command is

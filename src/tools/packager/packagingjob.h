@@ -19,7 +19,9 @@ public:
                                 int formatVersion,
                                 const QVariantMap &extraMetaData = QVariantMap(),
                                 const QVariantMap &extraSignedMetaData = QVariantMap(),
-                                bool includeExtendedAttributes = false, const QString &prePackageCmd = QString(),
+                                bool includeExtendedAttributes = false,
+                                const QStringList &allowedExtendedAttributes = QStringList(),
+                                const QString &prePackageCmd = QString(),
                                 bool asJson = false);
 
     static PackagingJob *developerSign(const QString &sourceName, const QString &destinationName,
@@ -54,6 +56,7 @@ private:
     QString m_output;
     int m_resultCode = 0;
     bool m_includeExtendedAttributes = false;
+    QStringList m_allowedExtendedAttributes; // create only
     QString m_prePackageCmd;
     bool m_asJson = false;
     int m_formatVersion = 0; // create only

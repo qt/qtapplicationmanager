@@ -55,6 +55,8 @@ private Q_SLOTS:
     void duplicateEntry();
     void symlinkBypass();
     void extendedAttributes();
+    void allowedExtendedAttributes_data();
+    void allowedExtendedAttributes();
 
     void createAndExtractDigest_data();
     void createAndExtractDigest();
@@ -219,7 +221,8 @@ static QByteArray readFile(const QString &path)
 // Builds a package containing exactly the given entries. PackageCreator only needs them to exist
 // relative to sourceDir, so this can produce entry names that no sane packager would.
 static std::unique_ptr<QTemporaryFile> createPackage(const QDir &sourceDir, const QStringList &entries,
-                                                     bool extendedAttributes = false, int formatVersion = 0)
+                                                     bool extendedAttributes = false, int formatVersion = 0,
+                                                     const QSet<QByteArray> &allowedXattrs = { })
 {
     InstallationReport report(u"com.pelagicore.test"_s);
     if (formatVersion)
@@ -231,6 +234,7 @@ static std::unique_ptr<QTemporaryFile> createPackage(const QDir &sourceDir, cons
     auto package = std::make_unique<QTemporaryFile>();
     QVERIFY(package->open());
     PackageCreator creator(sourceDir, package.get(), report);
+    creator.setAllowedExtendedAttributes(allowedXattrs);
     QVERIFY2(creator.create(), qPrintable(creator.errorString()));
     package->close();
     return package;
@@ -402,6 +406,56 @@ void tst_PackageExtractor::extendedAttributes()
         const ssize_t size = ::getxattr(QFile::encodeName(path).constData(), "user.am-test", value, sizeof(value));
         QCOMPARE(size, ssize_t(5));
         QCOMPARE(QByteArray(value, 5), "value"_ba);
+    }
+#endif
+}
+
+void tst_PackageExtractor::allowedExtendedAttributes_data()
+{
+    QTest::addColumn<QSet<QByteArray>>("allowed");
+    QTest::addColumn<QByteArrayList>("expected");
+
+    QTest::newRow("subset") << QSet<QByteArray> { "user.am-test" } << QByteArrayList { "user.am-test" };
+    QTest::newRow("both") << QSet<QByteArray> { "user.am-test", "user.am-other" }
+                          << QByteArrayList { "user.am-other", "user.am-test" };
+    QTest::newRow("unknown") << QSet<QByteArray> { "user.am-unknown" } << QByteArrayList { };
+    QTest::newRow("empty") << QSet<QByteArray>() << QByteArrayList { "user.am-other", "user.am-test" };
+}
+
+void tst_PackageExtractor::allowedExtendedAttributes()
+{
+#if !defined(Q_OS_LINUX)
+    QSKIP("Extended attributes are only supported on Linux");
+#else
+    QFETCH(QSet<QByteArray>, allowed);
+    QFETCH(QByteArrayList, expected);
+
+    QTemporaryDir sourceDir;
+    QVERIFY(sourceDir.isValid());
+    QDir src(sourceDir.path());
+    QVERIFY(src.mkdir(u"sub"_s));
+    createFile(src.filePath(u"sub/file"_s), "content");
+
+    // other attributes already present (e.g. security.selinux) are filtered out by the whitelist
+    for (const QString &path : { src.filePath(u"sub"_s), src.filePath(u"sub/file"_s) }) {
+        const QByteArray localPath = QFile::encodeName(path);
+        if ((::setxattr(localPath.constData(), "user.am-test", "value", 5, 0) != 0)
+                || (::setxattr(localPath.constData(), "user.am-other", "other", 5, 0) != 0)) {
+            QSKIP("The filesystem does not support user extended attributes");
+        }
+    }
+
+    auto package = createPackage(src, { u"sub"_s, u"sub/file"_s }, true /*extendedAttributes*/, 0, allowed);
+    PackageExtractor extractor(QUrl::fromLocalFile(package->fileName()), m_extractDir->path());
+    QVERIFY2(extractor.extract(), qPrintable(extractor.errorString()));
+
+    // only check our own names: the extracted files may get e.g. an SE-Linux label from the kernel
+    QDir dest(m_extractDir->path());
+    for (const QString &path : { dest.filePath(u"sub"_s), dest.filePath(u"sub/file"_s) }) {
+        for (const QByteArray &name : { "user.am-test"_ba, "user.am-other"_ba }) {
+            const ssize_t size = ::getxattr(QFile::encodeName(path).constData(), name.constData(), nullptr, 0);
+            QCOMPARE((size >= 0), expected.contains(name));
+        }
     }
 #endif
 }

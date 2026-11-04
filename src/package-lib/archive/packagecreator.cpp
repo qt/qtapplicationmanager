@@ -67,6 +67,11 @@ void PackageCreator::setSourceDirectory(const QDir &sourceDir)
     d->m_sourcePath = sourceDir.absolutePath() + u'/';
 }
 
+void PackageCreator::setAllowedExtendedAttributes(const QSet<QByteArray> &names)
+{
+    d->m_allowedXattrs = names;
+}
+
 bool PackageCreator::create()
 {
     if (!wasCanceled())
@@ -280,6 +285,8 @@ bool PackageCreatorPrivate::create()
                     if (xattrName.isEmpty())
                         continue;
                     if (xattrName.startsWith("system.posix_acl"))
+                        continue;
+                    if (!m_allowedXattrs.isEmpty() && !m_allowedXattrs.contains(xattrName))
                         continue;
                     QByteArray xattrValue;
                     xattrValue.resize(65536);

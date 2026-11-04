@@ -41,13 +41,15 @@ PackagingJob *PackagingJob::create(const QString &destinationName, const QString
                                    int formatVersion,
                                    const QVariantMap &extraMetaData,
                                    const QVariantMap &extraSignedMetaData,
-                                   bool includeExtendedAttributes, const QString &prePackageCmd,
-                                   bool asJson)
+                                   bool includeExtendedAttributes,
+                                   const QStringList &allowedExtendedAttributes,
+                                   const QString &prePackageCmd, bool asJson)
 {
     auto *p = new PackagingJob();
     p->m_mode = Create;
     p->m_formatVersion = formatVersion;
     p->m_includeExtendedAttributes = includeExtendedAttributes;
+    p->m_allowedExtendedAttributes = allowedExtendedAttributes;
     p->m_prePackageCmd = prePackageCmd;
     p->m_asJson = asJson;
     p->m_destinationName = destinationName;
@@ -262,6 +264,12 @@ void PackagingJob::execute() noexcept(false)
 
         // finally create the package
         PackageCreator creator(source, &destination, report);
+        if (!m_allowedExtendedAttributes.isEmpty()) {
+            QSet<QByteArray> allowedXattrs;
+            for (const QString &name : std::as_const(m_allowedExtendedAttributes))
+                allowedXattrs.insert(name.toUtf8());
+            creator.setAllowedExtendedAttributes(allowedXattrs);
+        }
         if (!creator.create())
             throw Exception("could not create package %1: %2").arg(package->id()).arg(creator.errorString());
         destination.commit();

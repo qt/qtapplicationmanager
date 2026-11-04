@@ -7,6 +7,7 @@
 #define PACKAGECREATOR_H
 
 #include <QtCore/QObject>
+#include <QtCore/QSet>
 
 #include <QtAppManPackage/qtappmanpackageglobal.h>
 
@@ -30,6 +31,8 @@ public:
 
     QDir sourceDirectory() const;
     void setSourceDirectory(const QDir &sourceDir);
+
+    void setAllowedExtendedAttributes(const QSet<QByteArray> &names);
 
     bool create();
 

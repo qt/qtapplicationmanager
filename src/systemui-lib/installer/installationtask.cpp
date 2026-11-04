@@ -327,15 +327,16 @@ void InstallationTask::execute()
         // tasks here for the finishInstallation() step
         QMutexLocker finishLocker(&s_serializeFinishInstallation);
 
-        finishInstallation();
+        InstallationReport report = finishInstallation();
 
         // At this point, the installation is done, so we cannot throw anymore.
 
         // we need to call those PackageManager methods in the correct thread
         bool finishOk = false;
-        QMetaObject::invokeMethod(PackageManager::instance(), [this, &finishOk]()
-            { finishOk = PackageManager::instance()->finishedPackageInstall(m_packageId); },
-            Qt::BlockingQueuedConnection);
+        QMetaObject::invokeMethod(PackageManager::instance(), [this, &finishOk, &report]() {
+                finishOk = PackageManager::instance()->finishedPackageInstall(
+                    m_packageId, std::make_unique<InstallationReport>(report));
+            }, Qt::BlockingQueuedConnection);
 
         if (!finishOk)
             qCWarning(LogInstaller) << "PackageManager rejected the installation of " << m_packageId;
@@ -532,7 +533,7 @@ void InstallationTask::startInstallation() noexcept(false)
     m_applicationDir.setPath(installationDir.absoluteFilePath(m_packageId));
 }
 
-void InstallationTask::finishInstallation() noexcept(false)
+InstallationReport InstallationTask::finishInstallation() noexcept(false)
 {
     QDir documentDirectory(m_documentPath);
     ScopedDirectoryCreator documentDirCreator;
@@ -598,6 +599,8 @@ void InstallationTask::finishInstallation() noexcept(false)
 #endif
 
     m_errorString.clear();
+
+    return report;
 }
 
 QT_END_NAMESPACE_AM

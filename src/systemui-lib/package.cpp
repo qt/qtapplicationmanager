@@ -293,7 +293,7 @@ bool Package::isBlocked() const
 
 bool Package::block()
 {
-    bool blockedNow = (m_blocked.fetchAndAddOrdered(1) == 0);
+    bool blockedNow = m_blocked.testAndSetOrdered(0, 1);
     if (blockedNow) {
         m_blockedApps = info()->applications();
         m_blockedAppsCount = int(m_blockedApps.count());
@@ -304,7 +304,7 @@ bool Package::block()
 
 bool Package::unblock()
 {
-    bool unblockedNow = (m_blocked.fetchAndSubOrdered(1) == 1);
+    bool unblockedNow = m_blocked.testAndSetOrdered(1, 0);
     if (unblockedNow) {
         m_blockedApps.clear();
         m_blockedAppsCount = 0;

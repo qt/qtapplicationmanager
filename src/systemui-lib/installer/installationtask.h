@@ -45,7 +45,7 @@ protected:
 
 private:
     void startInstallation() noexcept(false);
-    void finishInstallation() noexcept(false);
+    InstallationReport finishInstallation() noexcept(false);
     void checkExtractedFile(const QString &file) noexcept(false);
     void checkDeveloperCertificate() const noexcept(false);
 

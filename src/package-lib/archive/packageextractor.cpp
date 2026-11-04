@@ -433,14 +433,18 @@ void PackageExtractorPrivate::extract()
                     readPosition += __LA_INT64_T(bytesRead);
 
                     switch (packageEntryType) {
-                    case PackageEntry_File:
+                    case PackageEntry_File: {
                         digest->addContent({ buffer, qsizetype(bytesRead) });
                         if (manifestDigest)
                             manifestDigest->addData({ buffer, qsizetype(bytesRead) });
 
-                        if (!f.write(buffer, qint64(bytesRead)))
-                            throw Exception(f, "could not write to file");
+                        qint64 bytesWritten = f.write(buffer, qint64(bytesRead));
+                        if (bytesWritten != qint64(bytesRead)) {
+                            throw Exception(f, "could only write %1 of %2 bytes to file")
+                                .arg(bytesWritten).arg(bytesRead);
+                        }
                         break;
+                    }
                     // the header and footer are buffered in memory, so bound their attacker-controlled size
                     case PackageEntry_Header:
                         if ((header.size() + qsizetype(bytesRead)) > 1024*1024)
@@ -467,7 +471,9 @@ void PackageExtractorPrivate::extract()
                 break;
 
             case PackageEntry_File:
-                f.close();
+                f.close(); // flushes the write buffer
+                if (f.error() != QFileDevice::NoError)
+                    throw Exception(f, "could not close the file");
                 if (manifestDigest)
                     m_report.setManifestDigest(manifestDigest->result());
                 Q_FALLTHROUGH();

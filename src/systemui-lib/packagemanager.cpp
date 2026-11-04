@@ -1796,7 +1796,7 @@ bool PackageManager::startingPackageRemoval(const QString &id)
     return true;
 }
 
-bool PackageManager::finishedPackageInstall(const QString &id)
+bool PackageManager::finishedPackageInstall(const QString &id, std::unique_ptr<InstallationReport> report)
 {
     Package *package = fromId(id);
     if (!package)
@@ -1823,18 +1823,12 @@ bool PackageManager::finishedPackageInstall(const QString &id)
 
         // attach the installation report (unless we're just downgrading a built-in)
         if (!isDowngrade) {
-            // installationtask.cpp has already committed the report to its final root-owned location
-            auto ir = std::make_unique<InstallationReport>(package->id());
-            try {
-                auto irfile = SudoClient::instance()->openTrustedFile(QStandardPaths::StateLocation,
-                                                                      u"installation-reports/"_s + newPackageInfo->id() + u".yaml"_s);
-                ir->deserialize(irfile.get());
-            } catch (const Exception &e) {
-                qCCritical(LogInstaller) << "Could not read the new installation-report for package"
-                                         << package->id() << ":" << e.errorString();
-                return false;
-            }
-            newPackageInfo->setInstallationReport(ir.release());
+            // installationtask.cpp has already committed this report to disk
+            Q_ASSERT(report);
+            if (report)
+                newPackageInfo->setInstallationReport(report.release());
+            else
+                qCCritical(LogInstaller) << "Missing installation-report for package" << package->id();
         }
 
         if (isUpdate || isDowngrade) {

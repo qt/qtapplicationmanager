@@ -6,10 +6,13 @@
 #ifndef PACKAGEMANAGER_H
 #define PACKAGEMANAGER_H
 
+#include <memory>
+
 #include <QtCore/QObject>
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QVersionNumber>
 #include <QtAppManSystemUI/qtappmansystemuiglobal.h>
+#include <QtAppManPackage/installationreport.h>
 #include <QtAppManPackage/packageinfo.h>
 #include <QtAppManSystemUI/asynchronoustask.h>
 #include <QtAppManSystemUI/cacertificate.h>
@@ -196,7 +199,7 @@ Q_SIGNALS:
 protected:
     Package *startingPackageInstallation(PackageInfo *info);
     bool startingPackageRemoval(const QString &id);
-    bool finishedPackageInstall(const QString &id);
+    bool finishedPackageInstall(const QString &id, std::unique_ptr<InstallationReport> report = { });
     bool canceledPackageInstall(const QString &id);
 
 private:

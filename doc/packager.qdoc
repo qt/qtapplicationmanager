@@ -78,9 +78,10 @@ package installations.
             file signatures.
 
         \c{--format-version}: The \l{The Checksum Algorithm}{package format version} to create.
-            The default is the latest version supported by this tool. Only choose an older version
-            (2) for packages that need to be installed on devices that run an application manager
-            without support for the latest version. The installer may refuse older versions, see
+            The default is version 2, so that packages can still be installed on devices that run
+            an application manager older than 6.12.1. Choose version 3 for the more robust digest,
+            if all target devices support it. The default will change to 3 with Qt 6.13. The
+            installer can be configured to refuse older versions, see
             \l{minimum package format version}{installer/minimumPackageFormatVersion}.
 
         All of the extra-meta-data options are merged together, so all options can be used together

@@ -33,6 +33,8 @@ private Q_SLOTS:
     void parallel();
     void generate();
     void emitter();
+    void specialDoubles();
+    void readAfterError();
 
 private:
     // version shortcuts for tests()
@@ -542,6 +544,41 @@ void tst_Yaml::emitter()
 
     QCOMPARE(yamlV11, expectedV11);
     QCOMPARE(yamlV12, expectedV12);
+}
+
+void tst_Yaml::specialDoubles()
+{
+    const QVariantMap m {
+        { u"inf"_s, qInf() },
+        { u"ninf"_s, -qInf() },
+        { u"nan"_s, qQNaN() },
+        { u"num"_s, 1.5 }
+    };
+
+    for (auto version : { YamlVersion::V1_1, YamlVersion::V1_2 }) {
+        const QByteArray yaml = YamlEmitter::fromVariantDocuments({ m }, version);
+        QVERIFY(!yaml.isEmpty());
+
+        QVector<QVariant> docs;
+        QVERIFY_THROWS_NO_EXCEPTION(docs = YamlParser::parseAllDocuments(yaml));
+        QCOMPARE(docs.size(), 1);
+
+        const QVariantMap r = docs.at(0).toMap();
+        QCOMPARE(r.value(u"inf"_s).toDouble(), qInf());
+        QCOMPARE(r.value(u"ninf"_s).toDouble(), -qInf());
+        QVERIFY(qIsNaN(r.value(u"nan"_s).toDouble()));
+        QCOMPARE(r.value(u"num"_s).toDouble(), 1.5);
+    }
+}
+
+void tst_Yaml::readAfterError()
+{
+    // after a syntax error libyaml only returns YAML_NO_EVENT, which used to make
+    // nextEvent() spin forever
+    YamlParser p("a: [1\n");
+    QVERIFY_THROWS_NO_EXCEPTION(QVERIFY(p.nextDocument()));
+    QVERIFY_THROWS_EXCEPTION(Exception, p.parseMap());
+    QVERIFY_THROWS_EXCEPTION(Exception, p.nextDocument());
 }
 
 QTEST_GUILESS_MAIN(tst_Yaml)

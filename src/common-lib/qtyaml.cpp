@@ -117,10 +117,18 @@ void YamlEmitterPrivate::emitVariant(const QVariant &value)
     case QMetaType::ULongLong:
         emitScalar(QByteArray::number(value.toULongLong()));
         break;
-    case QMetaType::Double:
-        emitScalar(QByteArray::number(value.toDouble(), 'g', QLocale::FloatingPointShortest),
-                   false, "tag:yaml.org,2002:float");
+    case QMetaType::Double: {
+        const double d = value.toDouble();
+        QByteArray ba;
+        if (qIsNaN(d))
+            ba = ".nan";
+        else if (qIsInf(d))
+            ba = (d < 0) ? "-.inf" : ".inf";
+        else
+            ba = QByteArray::number(d, 'g', QLocale::FloatingPointShortest);
+        emitScalar(ba, false, "tag:yaml.org,2002:float");
         break;
+    }
     default:
     case QMetaType::QString:
         emitScalar(value.toString().toUtf8(), true);
@@ -402,12 +410,13 @@ void YamlParser::nextEvent()
     if (d->event.type != YAML_NO_EVENT)
         yaml_event_delete(&d->event);
 
-    do {
-        if (!yaml_parser_parse(&d->parser, &d->event))
-            throw YamlParserException(this, "invalid YAML syntax");
-        if (d->event.type == YAML_ALIAS_EVENT)
-            throw YamlParserException(this, "anchors and aliases are not supported");
-    } while (d->event.type == YAML_NO_EVENT);
+    if (!yaml_parser_parse(&d->parser, &d->event))
+        throw YamlParserException(this, "invalid YAML syntax");
+    // libyaml returns success with YAML_NO_EVENT once the stream has ended
+    if (d->event.type == YAML_NO_EVENT)
+        throw YamlParserException(this, "unexpected end of YAML data");
+    if (d->event.type == YAML_ALIAS_EVENT)
+        throw YamlParserException(this, "anchors and aliases are not supported");
 }
 
 bool YamlParser::isScalar() const

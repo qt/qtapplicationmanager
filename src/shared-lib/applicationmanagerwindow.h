@@ -153,8 +153,6 @@ private:
 class Q_APPMANSHARED_EXPORT ApplicationManagerWindowAttached : public QObject
 {
     Q_OBJECT
-    QML_ADDED_IN_VERSION(2, 7)
-    QML_ANONYMOUS
     Q_PROPERTY(QtAM::ApplicationManagerWindow *window READ window NOTIFY windowChanged FINAL)
     Q_PROPERTY(QObject *backingObject READ backingObject NOTIFY backingObjectChanged FINAL)
     Q_PROPERTY(QWindow::Visibility visibility READ visibility NOTIFY visibilityChanged FINAL)

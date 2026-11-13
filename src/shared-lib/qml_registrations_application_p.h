@@ -27,6 +27,14 @@ class ForeignApplicationManagerWindow
     QML_ADDED_IN_VERSION(2, 0)
 };
 
+class ForeignApplicationManagerWindowAttached
+{
+    Q_GADGET
+    QML_FOREIGN(QtAM::ApplicationManagerWindowAttached)
+    QML_ANONYMOUS
+    QML_ADDED_IN_VERSION(2, 7)
+};
+
 class ForeignApplicationInterface
 {
     Q_GADGET

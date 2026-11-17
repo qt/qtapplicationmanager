@@ -5,6 +5,7 @@
 
 #include <QGuiApplication>
 #include <QDebug>
+#include <QtGui/QSurfaceFormat>
 #include <QtQml/QQmlEngine>
 #include <QtQml/private/qqmlmetatype_p.h>
 #include <QtQuick/QQuickItem>
@@ -142,6 +143,16 @@ void WaylandApplicationManagerWindowImpl::classBegin()
     // We cannot set this is in the constructor, because the base class thinks it's
     // componentComplete between the constructor and classBegin.
     m_qwindow->setFlags(m_qwindow->flags() | Qt::FramelessWindowHint);
+
+    // Qt's wayland-egl integration stopped implicitly requesting an alpha channel (qtbase
+    // 94f96210518). Without one, translucent windows render black and shm buffers end up
+    // with an undefined alpha byte in the compositor (QTBUG-152334).
+    QSurfaceFormat format = m_qwindow->requestedFormat();
+    if (format.alphaBufferSize() < 8) {
+        format.setAlphaBufferSize(8);
+        m_qwindow->setFormat(format);
+    }
+
     m_qwindow->setWidth(1024);
     m_qwindow->setHeight(768);
     m_qwindow->setVisible(true);

@@ -6,6 +6,7 @@
 #include <QCoreApplication>
 #include <QTimer>
 #include <QMetaObject>
+#include <QTimer>
 
 #include "logging.h"
 #include "abstractcontainer.h"
@@ -38,12 +39,12 @@ QuickLauncher *QuickLauncher::instance()
 
 QuickLauncher::QuickLauncher(QObject *parent)
     : QObject(parent)
+    , m_rebuildTimer(new QTimer(this))
+    , m_idleCpu(new CpuReader())
 { }
 
 QuickLauncher::~QuickLauncher()
 {
-    if (m_idleTimerId)
-        killTimer(m_idleTimerId);
     delete m_idleCpu;
     s_instance = nullptr;
 }
@@ -80,31 +81,24 @@ void QuickLauncher::initialize(int runtimesPerContainer, qreal idleLoad)
         }
     }
 
-    if (idleLoad > 0) {
-        m_idleThreshold = idleLoad;
-        m_idleCpu = new CpuReader();
-        m_idleTimerId = startTimer(1000);
-    }
+    m_idleThreshold = idleLoad;
+    m_rebuildTimer->setInterval(1000);
+    m_rebuildTimer->setSingleShot(true);
+    m_rebuildTimer->callOnTimeout(this, &QuickLauncher::rebuild);
+
     triggerRebuild();
-}
-
-void QuickLauncher::timerEvent(QTimerEvent *te)
-{
-    if (te && te->timerId() == m_idleTimerId) {
-        bool nowIdle = (m_idleCpu->readLoadValue() <= m_idleThreshold);
-        if (nowIdle != m_isIdle) {
-            m_isIdle = nowIdle;
-
-            if (m_isIdle)
-                rebuild();
-        }
-    }
 }
 
 void QuickLauncher::rebuild()
 {
     if (m_shuttingDown)
         return;
+
+    if (!qFuzzyIsNull(m_idleThreshold) && (m_idleCpu->readLoadValue() > m_idleThreshold)) {
+        // CPU load too high, try again later
+        triggerRebuild();
+        return;
+    }
 
     int todo = 0;
     int done = 0;
@@ -154,12 +148,12 @@ void QuickLauncher::rebuild()
         }
     }
     if (todo > done)
-        triggerRebuild(1000);
+        triggerRebuild();
 }
 
-void QuickLauncher::triggerRebuild(int delay)
+void QuickLauncher::triggerRebuild()
 {
-    QTimer::singleShot(delay, this, &QuickLauncher::rebuild);
+    m_rebuildTimer->start();
 }
 
 void QuickLauncher::removeEntry(AbstractContainer *container, AbstractRuntime *runtime)

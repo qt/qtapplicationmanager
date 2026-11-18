@@ -77,6 +77,8 @@ CpuReader::CpuReader()
         s_sysFs.reset(new SysFsReader("/proc/stat", 256));
         if (!s_sysFs->isOpen())
             qCWarning(LogSystem) << "WARNING: could not read CPU statistics from" << s_sysFs->fileName();
+        else
+            (void) readLoadValue(); // prime the m_last* values
     }
 }
 
@@ -334,6 +336,8 @@ IoReader::IoReader(const char *device)
 {
     if (!m_sysFs->isOpen())
         qCWarning(LogSystem) << "WARNING: could not read I/O statistics from" << m_sysFs->fileName();
+    else
+        (void) readLoadValue(); // prime the m_last* values
 }
 
 IoReader::~IoReader()
